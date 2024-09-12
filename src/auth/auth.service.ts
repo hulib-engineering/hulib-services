@@ -384,9 +384,9 @@ export class AuthService {
 
     user.password = password;
 
-    // await this.sessionService.deleteByUserId({
-    //   userId: user.id,
-    // });
+    await this.sessionService.deleteByUserId({
+      userId: user.id,
+    });
 
     await this.usersService.update(user.id, user);
   }
