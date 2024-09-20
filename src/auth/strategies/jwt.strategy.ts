@@ -11,7 +11,7 @@ import { SessionService } from '../../session/session.service';
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     configService: ConfigService<AllConfigType>,
-    private readonly sessionService: SessionService
+    private readonly sessionService: SessionService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -21,7 +21,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   // Why we don't check if the user exists in the database:
   // https://github.com/brocoders/nestjs-boilerplate/blob/main/docs/auth.md#about-jwt-strategy
-  public async validate(payload: JwtPayloadType): Promise<OrNeverType<JwtPayloadType>> {
+  public async validate(
+    payload: JwtPayloadType,
+  ): Promise<OrNeverType<JwtPayloadType>> {
     if (!payload.id) {
       throw new UnauthorizedException();
     }
