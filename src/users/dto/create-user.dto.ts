@@ -8,9 +8,11 @@ import {
   MinLength,
 } from 'class-validator';
 import { FileDto } from '../../files/dto/file.dto';
+import { GenderDto } from '../../genders/dto/gender.dto';
 import { RoleDto } from '../../roles/dto/role.dto';
 import { StatusDto } from '../../statuses/dto/status.dto';
 import { lowerCaseTransformer } from '../../utils/transformers/lower-case.transformer';
+import { GenderEnum } from '../../genders/genders.enum';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'test1@example.com', type: String })
@@ -27,13 +29,18 @@ export class CreateUserDto {
 
   socialId?: string | null;
 
-  @ApiProperty({ example: 'John', type: String })
+  @ApiProperty({ example: 'John Doe', type: String })
   @IsNotEmpty()
-  firstName: string | null;
+  fullName: string | null;
 
-  @ApiProperty({ example: 'Doe', type: String })
-  @IsNotEmpty()
-  lastName: string | null;
+  @ApiPropertyOptional({ example: { id: GenderEnum.other }, type: GenderDto })
+  @IsOptional()
+  @Type(() => GenderDto)
+  gender?: GenderDto | null;
+
+  @ApiProperty({ example: '1970-01-01' })
+  @IsOptional()
+  birthday?: string | null;
 
   @ApiPropertyOptional({ type: () => FileDto })
   @IsOptional()

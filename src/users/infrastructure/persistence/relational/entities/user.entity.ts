@@ -8,12 +8,12 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  JoinColumn,
-  OneToOne,
+  // JoinColumn,
+  // OneToOne,
 } from 'typeorm';
 import { RoleEntity } from '../../../../../roles/infrastructure/persistence/relational/entities/role.entity';
 import { StatusEntity } from '../../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
-import { FileEntity } from '../../../../../files/infrastructure/persistence/relational/entities/file.entity';
+// import { FileEntity } from '../../../../../files/infrastructure/persistence/relational/entities/file.entity';
 
 import { AuthProvidersEnum } from '../../../../../auth/auth-providers.enum';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
@@ -23,6 +23,7 @@ import { EntityRelationalHelper } from '../../../../../utils/relational-entity-h
 // in your project and return an ORM entity directly in response.
 import { Exclude, Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { GenderEntity } from '../../../../../genders/infrastructure/persistence/relational/entities/gender.entity';
 
 @Entity({
   name: 'user',
@@ -75,28 +76,35 @@ export class UserEntity extends EntityRelationalHelper {
 
   @ApiProperty({
     type: String,
-    example: 'John',
+    example: 'John Doe',
   })
   @Index()
   @Column({ type: String, nullable: true })
-  firstName: string | null;
+  fullName: string | null;
+
+  @ApiProperty({
+    type: () => GenderEntity,
+  })
+  @ManyToOne(() => GenderEntity, {
+    eager: true,
+  })
+  gender?: GenderEntity;
 
   @ApiProperty({
     type: String,
-    example: 'Doe',
+    example: '1970-01-01',
   })
-  @Index()
   @Column({ type: String, nullable: true })
-  lastName: string | null;
+  birthday?: string | null;
 
-  @ApiProperty({
-    type: () => FileEntity,
-  })
-  @OneToOne(() => FileEntity, {
-    eager: true,
-  })
-  @JoinColumn()
-  photo?: FileEntity | null;
+  // @ApiProperty({
+  //   type: () => FileEntity,
+  // })
+  // @OneToOne(() => FileEntity, {
+  //   eager: true,
+  // })
+  // @JoinColumn()
+  // photo?: FileEntity | null;
 
   @ApiProperty({
     type: () => RoleEntity,

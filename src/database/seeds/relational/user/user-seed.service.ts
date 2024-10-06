@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { RoleEnum } from '../../../../roles/roles.enum';
 import { StatusEnum } from '../../../../statuses/statuses.enum';
 import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { GenderEnum } from '../../../../genders/genders.enum';
 
 @Injectable()
 export class UserSeedService {
@@ -29,8 +30,7 @@ export class UserSeedService {
 
       await this.repository.save(
         this.repository.create({
-          firstName: 'Super',
-          lastName: 'Admin',
+          fullName: 'Super Admin',
           email: 'admin@example.com',
           password,
           role: {
@@ -59,10 +59,13 @@ export class UserSeedService {
 
       await this.repository.save(
         this.repository.create({
-          firstName: 'John',
-          lastName: 'Doe',
+          fullName: 'John Doe',
           email: 'john.doe@example.com',
           password,
+          gender: {
+            id: GenderEnum.male,
+            name: 'Male',
+          },
           role: {
             id: RoleEnum.reader,
             name: 'Admin',

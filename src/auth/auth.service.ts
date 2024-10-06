@@ -144,8 +144,7 @@ export class AuthService {
 
       user = await this.usersService.create({
         email: socialEmail ?? null,
-        firstName: socialData.firstName ?? null,
-        lastName: socialData.lastName ?? null,
+        fullName: `${socialData.firstName} ${socialData.lastName}` ?? null,
         socialId: socialData.id,
         provider: authProvider,
         role,
@@ -197,6 +196,9 @@ export class AuthService {
     const user = await this.usersService.create({
       ...dto,
       email: dto.email,
+      gender: {
+        id: dto.gender.id,
+      },
       role: {
         id: RoleEnum.reader,
       },

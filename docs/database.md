@@ -158,7 +158,7 @@ npm run seed:run:relational
     import { Repository } from 'typeorm';
     import { RoleEntity } from '../../../../roles/infrastructure/persistence/relational/entities/role.entity';
     import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
-    import { StatusEntity } from '../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
+    import { GenderEntity } from '../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
 
     @Injectable()
     export class UserFactory {
@@ -167,8 +167,8 @@ npm run seed:run:relational
         private repositoryUser: Repository<UserEntity>,
         @InjectRepository(RoleEntity)
         private repositoryRole: Repository<RoleEntity>,
-        @InjectRepository(StatusEntity)
-        private repositoryStatus: Repository<StatusEntity>,
+        @InjectRepository(GenderEntity)
+        private repositoryStatus: Repository<GenderEntity>,
       ) {}
 
       createRandomUser() {
@@ -230,10 +230,10 @@ npm run seed:run:relational
 
     import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
     import { RoleEntity } from '../../../../roles/infrastructure/persistence/relational/entities/role.entity';
-    import { StatusEntity } from '../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
+    import { GenderEntity } from '../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
 
     @Module({
-      imports: [TypeOrmModule.forFeature([UserEntity, Role, Status])],
+      imports: [TypeOrmModule.forFeature([UserEntity, Role, Gender])],
       providers: [UserSeedService, UserFactory],
       exports: [UserSeedService, UserFactory],
     })
