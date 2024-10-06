@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { TypeOrmConfigService } from '../../typeorm-config.service';
+import { GenderSeedModule } from './gender/gender-seed.module';
 import { RoleSeedModule } from './role/role-seed.module';
 import { StatusSeedModule } from './status/status-seed.module';
 import { UserSeedModule } from './user/user-seed.module';
@@ -12,6 +13,7 @@ import appConfig from '../../../config/app.config';
 
 @Module({
   imports: [
+    GenderSeedModule,
     RoleSeedModule,
     StatusSeedModule,
     UserSeedModule,

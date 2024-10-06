@@ -1,8 +1,9 @@
 import { Exclude, Expose } from 'class-transformer';
-import { FileType } from '../../files/domain/file';
+// import { FileType } from '../../files/domain/file';
 import { Role } from '../../roles/domain/role';
 import { Status } from '../../statuses/domain/status';
 import { ApiProperty } from '@nestjs/swagger';
+import { Gender } from '../../genders/domain/gender';
 
 const idType = Number;
 
@@ -41,20 +42,25 @@ export class User {
 
   @ApiProperty({
     type: String,
-    example: 'John',
+    example: 'John Doe',
   })
-  firstName: string | null;
+  fullName: string | null;
+
+  @ApiProperty({
+    type: () => Gender,
+  })
+  gender?: Gender | null;
 
   @ApiProperty({
     type: String,
-    example: 'Doe',
+    example: '1970-01-01',
   })
-  lastName: string | null;
+  birthday?: string | null;
 
-  @ApiProperty({
-    type: () => FileType,
-  })
-  photo?: FileType | null;
+  // @ApiProperty({
+  //   type: () => FileType,
+  // })
+  // photo?: FileType | null;
 
   @ApiProperty({
     type: () => Role,

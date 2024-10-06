@@ -15,6 +15,7 @@ import { RoleEnum } from '../roles/roles.enum';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { DeepPartial } from '../utils/types/deep-partial.type';
+import { GenderEnum } from '../genders/genders.enum';
 
 @Injectable()
 export class UsersService {
@@ -61,6 +62,20 @@ export class UsersService {
         });
       }
       clonedPayload.photo = fileObject;
+    }
+
+    if (clonedPayload.gender?.id) {
+      const genderObject = Object.values(GenderEnum)
+        .map(String)
+        .includes(String(clonedPayload.gender.id));
+      if (!genderObject) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            role: 'genderNotExists',
+          },
+        });
+      }
     }
 
     if (clonedPayload.role?.id) {
@@ -160,20 +175,20 @@ export class UsersService {
       }
     }
 
-    if (clonedPayload.photo?.id) {
-      const fileObject = await this.filesService.findById(
-        clonedPayload.photo.id,
-      );
-      if (!fileObject) {
-        throw new UnprocessableEntityException({
-          status: HttpStatus.UNPROCESSABLE_ENTITY,
-          errors: {
-            photo: 'imageNotExists',
-          },
-        });
-      }
-      clonedPayload.photo = fileObject;
-    }
+    // if (clonedPayload.photo?.id) {
+    //   const fileObject = await this.filesService.findById(
+    //     clonedPayload.photo.id,
+    //   );
+    //   if (!fileObject) {
+    //     throw new UnprocessableEntityException({
+    //       status: HttpStatus.UNPROCESSABLE_ENTITY,
+    //       errors: {
+    //         photo: 'imageNotExists',
+    //       },
+    //     });
+    //   }
+    //   clonedPayload.photo = fileObject;
+    // }
 
     if (clonedPayload.role?.id) {
       const roleObject = Object.values(RoleEnum)

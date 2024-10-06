@@ -12,17 +12,32 @@ export class RoleSeedService {
   ) {}
 
   async run() {
-    const countUser = await this.repository.count({
+    const countHumanBooks = await this.repository.count({
+      where: {
+        id: RoleEnum.humanBook,
+      },
+    });
+
+    if (!countHumanBooks) {
+      await this.repository.save(
+        this.repository.create({
+          id: RoleEnum.humanBook,
+          name: 'Human Book',
+        }),
+      );
+    }
+
+    const countReaders = await this.repository.count({
       where: {
         id: RoleEnum.reader,
       },
     });
 
-    if (!countUser) {
+    if (!countReaders) {
       await this.repository.save(
         this.repository.create({
           id: RoleEnum.reader,
-          name: 'User',
+          name: 'Reader',
         }),
       );
     }

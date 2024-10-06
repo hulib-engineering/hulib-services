@@ -1,9 +1,10 @@
-import { FileEntity } from '../../../../../files/infrastructure/persistence/relational/entities/file.entity';
-import { FileMapper } from '../../../../../files/infrastructure/persistence/relational/mappers/file.mapper';
+// import { FileEntity } from '../../../../../files/infrastructure/persistence/relational/entities/file.entity';
+// import { FileMapper } from '../../../../../files/infrastructure/persistence/relational/mappers/file.mapper';
 import { RoleEntity } from '../../../../../roles/infrastructure/persistence/relational/entities/role.entity';
 import { StatusEntity } from '../../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
 import { User } from '../../../../domain/user';
 import { UserEntity } from '../entities/user.entity';
+import { GenderEntity } from '../../../../../genders/infrastructure/persistence/relational/entities/gender.entity';
 
 export class UserMapper {
   static toDomain(raw: UserEntity): User {
@@ -14,11 +15,12 @@ export class UserMapper {
     domainEntity.previousPassword = raw.previousPassword;
     domainEntity.provider = raw.provider;
     domainEntity.socialId = raw.socialId;
-    domainEntity.firstName = raw.firstName;
-    domainEntity.lastName = raw.lastName;
-    if (raw.photo) {
-      domainEntity.photo = FileMapper.toDomain(raw.photo);
-    }
+    domainEntity.fullName = raw.fullName;
+    domainEntity.birthday = raw.birthday;
+    // if (raw.photo) {
+    //   domainEntity.photo = FileMapper.toDomain(raw.photo);
+    // }
+    domainEntity.gender = raw.gender;
     domainEntity.role = raw.role;
     domainEntity.status = raw.status;
     domainEntity.createdAt = raw.createdAt;
@@ -28,6 +30,13 @@ export class UserMapper {
   }
 
   static toPersistence(domainEntity: User): UserEntity {
+    let gender: GenderEntity | undefined = undefined;
+
+    if (domainEntity.gender) {
+      gender = new GenderEntity();
+      gender.id = Number(domainEntity.gender.id);
+    }
+
     let role: RoleEntity | undefined = undefined;
 
     if (domainEntity.role) {
@@ -35,15 +44,15 @@ export class UserMapper {
       role.id = Number(domainEntity.role.id);
     }
 
-    let photo: FileEntity | undefined | null = undefined;
+    // const photo: FileEntity | undefined | null = undefined;
 
-    if (domainEntity.photo) {
-      photo = new FileEntity();
-      photo.id = domainEntity.photo.id;
-      photo.path = domainEntity.photo.path;
-    } else if (domainEntity.photo === null) {
-      photo = null;
-    }
+    // if (domainEntity.photo) {
+    //   photo = new FileEntity();
+    //   photo.id = domainEntity.photo.id;
+    //   photo.path = domainEntity.photo.path;
+    // } else if (domainEntity.photo === null) {
+    //   photo = null;
+    // }
 
     let status: StatusEntity | undefined = undefined;
 
@@ -61,9 +70,10 @@ export class UserMapper {
     persistenceEntity.previousPassword = domainEntity.previousPassword;
     persistenceEntity.provider = domainEntity.provider;
     persistenceEntity.socialId = domainEntity.socialId;
-    persistenceEntity.firstName = domainEntity.firstName;
-    persistenceEntity.lastName = domainEntity.lastName;
-    persistenceEntity.photo = photo;
+    persistenceEntity.fullName = domainEntity.fullName;
+    persistenceEntity.birthday = domainEntity.birthday;
+    // persistenceEntity.photo = photo;
+    persistenceEntity.gender = gender;
     persistenceEntity.role = role;
     persistenceEntity.status = status;
     persistenceEntity.createdAt = domainEntity.createdAt;
