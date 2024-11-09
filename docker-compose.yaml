@@ -34,6 +34,7 @@ services:
       - ${DATA_FOLDER}/pgadmin/servers.json:/pgadmin4/servers.json
     ports:
       - '5433:80'
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; npm start'
     restart: always
 
   # Uncomment to use adminer
