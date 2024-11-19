@@ -15,7 +15,7 @@ export class MailService {
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
 
-  async userSignUp(mailData: MailData<{ hash: string }>): Promise<void> {
+  async userSignUp(mailData: MailData<{ code: number }>): Promise<void> {
     const i18n = I18nContext.current();
     let emailConfirmTitle: MaybeType<string>;
     let text1: MaybeType<string>;
@@ -31,17 +31,10 @@ export class MailService {
       ]);
     }
 
-    const url = new URL(
-      this.configService.getOrThrow('app.frontendDomain', {
-        infer: true,
-      }) + '/confirm-email',
-    );
-    url.searchParams.set('hash', mailData.data.hash);
-
     await this.mailerService.sendMail({
       to: mailData.to,
       subject: emailConfirmTitle,
-      text: `${url.toString()} ${emailConfirmTitle}`,
+      text: `${mailData.data.code.toString()} ${emailConfirmTitle}`,
       templatePath: path.join(
         this.configService.getOrThrow('app.workingDirectory', {
           infer: true,
@@ -53,7 +46,7 @@ export class MailService {
       ),
       context: {
         title: emailConfirmTitle,
-        url: url.toString(),
+        code: mailData.data.code.toString(),
         actionTitle: emailConfirmTitle,
         app_name: this.configService.get('app.name', { infer: true }),
         text1,

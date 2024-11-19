@@ -24,6 +24,7 @@ import { LoginResponseDto } from './dto/login-response.dto';
 import { NullableType } from '../utils/types/nullable.type';
 import { User } from '../users/domain/user';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
+import { RegisterResponseDto } from './dto/register-response.dto';
 
 @ApiTags('Auth')
 @Controller({
@@ -46,8 +47,10 @@ export class AuthController {
   }
 
   @Post('email/register')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async register(@Body() createUserDto: AuthRegisterLoginDto): Promise<void> {
+  @HttpCode(HttpStatus.CREATED)
+  async register(
+    @Body() createUserDto: AuthRegisterLoginDto,
+  ): Promise<RegisterResponseDto> {
     return this.service.register(createUserDto);
   }
 
@@ -56,15 +59,15 @@ export class AuthController {
   async confirmEmail(
     @Body() confirmEmailDto: AuthConfirmEmailDto,
   ): Promise<void> {
-    return this.service.confirmEmail(confirmEmailDto.hash);
+    return this.service.confirmEmail(confirmEmailDto.id);
   }
 
-  @Post('email/confirm/new')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async confirmNewEmail(
+  @Post('otp/resend')
+  @HttpCode(HttpStatus.OK)
+  async resendOTP(
     @Body() confirmEmailDto: AuthConfirmEmailDto,
-  ): Promise<void> {
-    return this.service.confirmNewEmail(confirmEmailDto.hash);
+  ): Promise<Pick<RegisterResponseDto, 'code'>> {
+    return this.service.resendOTP(confirmEmailDto.id);
   }
 
   @Post('forgot/password')
