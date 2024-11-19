@@ -11,6 +11,8 @@ import {
   HttpStatus,
   HttpCode,
   SerializeOptions,
+  Request,
+  Put,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -37,8 +39,8 @@ import { RolesGuard } from '../roles/roles.guard';
 import { infinityPagination } from '../utils/infinity-pagination';
 
 @ApiBearerAuth()
-@Roles(RoleEnum.admin)
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+// @Roles(RoleEnum.admin)
+// @UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiTags('Users')
 @Controller({
   path: 'users',
@@ -54,6 +56,8 @@ export class UsersController {
     groups: ['admin'],
   })
   @Post()
+  @Roles(RoleEnum.admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createProfileDto: CreateUserDto): Promise<User> {
     return this.usersService.create(createProfileDto);
@@ -66,6 +70,8 @@ export class UsersController {
     groups: ['admin'],
   })
   @Get()
+  @Roles(RoleEnum.admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.OK)
   async findAll(
     @Query() query: QueryUserDto,
@@ -96,6 +102,8 @@ export class UsersController {
     groups: ['admin'],
   })
   @Get(':id')
+  @Roles(RoleEnum.admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
@@ -113,6 +121,8 @@ export class UsersController {
     groups: ['admin'],
   })
   @Patch(':id')
+  @Roles(RoleEnum.admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
@@ -127,6 +137,8 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @Roles(RoleEnum.admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
     type: String,
@@ -135,5 +147,19 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: User['id']): Promise<void> {
     return this.usersService.remove(id);
+  }
+
+  @ApiOkResponse({
+    type: User,
+  })
+  @Put('update-profile')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  updateProfile(
+    @Request() request,
+    @Body() updateProfileDto: UpdateUserDto,
+  ): Promise<User | null> {
+    console.log('request.user.id', request.user.id);
+    return this.usersService.update(request.user.id, updateProfileDto);
   }
 }

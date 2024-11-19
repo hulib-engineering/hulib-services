@@ -190,7 +190,7 @@ export class UsersService {
     //   clonedPayload.photo = fileObject;
     // }
 
-    if (clonedPayload.role?.id) {
+    if (!!clonedPayload.role) {
       const roleObject = Object.values(RoleEnum)
         .map(String)
         .includes(String(clonedPayload.role.id));
@@ -204,7 +204,7 @@ export class UsersService {
       }
     }
 
-    if (clonedPayload.status?.id) {
+    if (!!clonedPayload.status) {
       const statusObject = Object.values(StatusEnum)
         .map(String)
         .includes(String(clonedPayload.status.id));
@@ -213,6 +213,20 @@ export class UsersService {
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
             status: 'statusNotExists',
+          },
+        });
+      }
+    }
+
+    if (!!clonedPayload.gender) {
+      const genderObject = Object.values(GenderEnum)
+        .map(String)
+        .includes(String(clonedPayload.gender.id));
+      if (!genderObject) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            status: 'genderNotExists',
           },
         });
       }
