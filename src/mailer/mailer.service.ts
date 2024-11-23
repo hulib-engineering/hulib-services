@@ -36,6 +36,9 @@ export class MailerService {
               type: 'OAuth2',
               user: configService.get('mail.user', { infer: true }),
               clientId: configService.get('google.clientId', { infer: true }),
+              clientSecret: configService.get('google.clientSecret', {
+                infer: true,
+              }),
               refreshToken: configService.get('google.refreshToken', {
                 infer: true,
               }),
