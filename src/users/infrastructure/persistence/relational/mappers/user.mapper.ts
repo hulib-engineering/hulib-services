@@ -5,6 +5,8 @@ import { StatusEntity } from '../../../../../statuses/infrastructure/persistence
 import { User } from '../../../../domain/user';
 import { UserEntity } from '../entities/user.entity';
 import { GenderEntity } from '../../../../../genders/infrastructure/persistence/relational/entities/gender.entity';
+import { RoleEnum } from '../../../../../roles/roles.enum';
+import { StatusEnum } from '../../../../../statuses/statuses.enum';
 
 export class UserMapper {
   static toDomain(raw: UserEntity): User {
@@ -35,6 +37,7 @@ export class UserMapper {
     if (domainEntity.gender) {
       gender = new GenderEntity();
       gender.id = Number(domainEntity.gender.id);
+      gender.name = RoleEnum[String(gender.id)];
     }
 
     let role: RoleEntity | undefined = undefined;
@@ -42,6 +45,7 @@ export class UserMapper {
     if (domainEntity.role) {
       role = new RoleEntity();
       role.id = Number(domainEntity.role.id);
+      role.name = RoleEnum[String(role.id)];
     }
 
     // const photo: FileEntity | undefined | null = undefined;
@@ -59,6 +63,7 @@ export class UserMapper {
     if (domainEntity.status) {
       status = new StatusEntity();
       status.id = Number(domainEntity.status.id);
+      status.name = StatusEnum[String(status.id)];
     }
 
     const persistenceEntity = new UserEntity();
