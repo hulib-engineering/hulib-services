@@ -215,7 +215,8 @@ export class AuthService {
     await this.mailService.userSignUp({
       to: dto.email,
       data: {
-        code: randomInt(100000, 999999),
+        code,
+        name: dto.fullName,
       },
     });
 
@@ -255,9 +256,10 @@ export class AuthService {
     const code = randomInt(100000, 999999);
 
     await this.mailService.userSignUp({
-      to: user.email ?? '',
+      to: user.email || '',
       data: {
-        code: randomInt(100000, 999999),
+        name: user.fullName || '',
+        code,
       },
     });
 
@@ -297,8 +299,10 @@ export class AuthService {
     await this.mailService.forgotPassword({
       to: email,
       data: {
+        name: user.fullName,
         hash,
         tokenExpires,
+        tokenExpiresIn,
       },
     });
   }
