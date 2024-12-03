@@ -16,6 +16,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
@@ -45,7 +46,7 @@ import { infinityPagination } from '../utils/infinity-pagination';
   version: '1',
 })
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @ApiCreatedResponse({
     type: User,
@@ -135,5 +136,31 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: User['id']): Promise<void> {
     return this.usersService.remove(id);
+  }
+
+  @Patch('upgrade/:id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+        },
+      },
+      required: ['action'],
+      description: 'Action to upgrade user: reject or accept',
+    },
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  upgrade(
+    @Param('id') id: User['id'],
+    @Body() { action }: { action: string },
+  ): Promise<User | { message: string } | void> {
+    return this.usersService.upgrade(id, action);
   }
 }

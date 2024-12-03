@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpStatus,
   Injectable,
   UnprocessableEntityException,
@@ -16,6 +17,7 @@ import { StatusEnum } from '../statuses/statuses.enum';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { DeepPartial } from '../utils/types/deep-partial.type';
 import { GenderEnum } from '../genders/genders.enum';
+import { Action, Approval } from './approval.enum';
 
 @Injectable()
 export class UsersService {
@@ -26,6 +28,7 @@ export class UsersService {
 
   async create(createProfileDto: CreateUserDto): Promise<User> {
     const clonedPayload = {
+      approval: Approval.notRequested,
       provider: AuthProvidersEnum.email,
       ...createProfileDto,
     };
@@ -223,5 +226,28 @@ export class UsersService {
 
   async remove(id: User['id']): Promise<void> {
     await this.usersRepository.remove(id);
+  }
+
+  async upgrade(id: User['id'], action: string): Promise<void> {
+    console.log(action);
+    if (action === Action.accept) {
+      await this.usersRepository.update(id, {
+        role: {
+          id: RoleEnum.humanBook,
+        },
+        approval: Approval.approved,
+      });
+    } else if (action === Action.reject) {
+      await this.usersRepository.update(id, {
+        approval: Approval.rejected,
+      });
+    } else {
+      throw new BadRequestException({
+        status: HttpStatus.BAD_REQUEST,
+        errors: {
+          action: 'invalidAction',
+        },
+      });
+    }
   }
 }

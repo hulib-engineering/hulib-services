@@ -20,6 +20,9 @@ export class UserMapper {
     // if (raw.photo) {
     //   domainEntity.photo = FileMapper.toDomain(raw.photo);
     // }
+    if (raw.approval) {
+      domainEntity.approval = raw.approval;
+    }
     domainEntity.gender = raw.gender;
     domainEntity.role = raw.role;
     domainEntity.status = raw.status;
@@ -31,6 +34,7 @@ export class UserMapper {
 
   static toPersistence(domainEntity: User): UserEntity {
     let gender: GenderEntity | undefined = undefined;
+    let approval: string | null | undefined = undefined;
 
     if (domainEntity.gender) {
       gender = new GenderEntity();
@@ -61,6 +65,10 @@ export class UserMapper {
       status.id = Number(domainEntity.status.id);
     }
 
+    if (domainEntity.approval) {
+      approval = domainEntity.approval;
+    }
+
     const persistenceEntity = new UserEntity();
     if (domainEntity.id && typeof domainEntity.id === 'number') {
       persistenceEntity.id = domainEntity.id;
@@ -76,6 +84,7 @@ export class UserMapper {
     persistenceEntity.gender = gender;
     persistenceEntity.role = role;
     persistenceEntity.status = status;
+    persistenceEntity.approval = approval;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
     persistenceEntity.deletedAt = domainEntity.deletedAt;

@@ -4,6 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
   UnprocessableEntityException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import ms from 'ms';
 import crypto from 'crypto';
@@ -28,6 +29,7 @@ import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
+import { Approval } from '../users/approval.enum';
 
 @Injectable()
 export class AuthService {
@@ -591,5 +593,42 @@ export class AuthService {
       refreshToken,
       tokenExpires,
     };
+  }
+
+  async upgradeAccout(
+    userId: User['id'],
+  ): Promise<User | { message: string } | null> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    if (user.role?.id === RoleEnum.humanBook) {
+      return {
+        message: 'Bạn đã được Admin phê duyệt trở thành Human Book',
+      };
+    }
+
+    if (user.approval === Approval.pending) {
+      return {
+        message: 'Bạn đã đăng kí trở thành Human Book. Chờ Admin phê duyệt',
+      };
+    }
+
+    try {
+      if (!user.approval || user.approval === Approval.notRequested) {
+        await this.usersService.update(userId, {
+          approval: Approval.pending,
+        });
+        return {
+          message: 'Bạn đã đăng kí trở thành công. Chờ Admin phê duyệt nhé!',
+        };
+      }
+
+      return null;
+    } catch (e) {
+      console.log(e);
+      throw new InternalServerErrorException();
+    }
   }
 }
