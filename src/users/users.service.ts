@@ -224,4 +224,8 @@ export class UsersService {
   async remove(id: User['id']): Promise<void> {
     await this.usersRepository.remove(id);
   }
+  
+  async updatePassword(userId: string, newPassword: string): Promise<void> {
+    await this.usersRepository.update(userId, { password: newPassword });
+  }
 }

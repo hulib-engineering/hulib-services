@@ -24,6 +24,8 @@ import { LoginResponseDto } from './dto/login-response.dto';
 import { NullableType } from '../utils/types/nullable.type';
 import { User } from '../users/domain/user';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
+import {AuthChangePasswordDto} from './dto/auth-change-password.dto';
+
 
 @ApiTags('Auth')
 @Controller({
@@ -82,6 +84,17 @@ export class AuthController {
       resetPasswordDto.hash,
       resetPasswordDto.password,
     );
+  }
+
+  @ApiBearerAuth()
+  @Post('change/password')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async changePassword(
+    @Request() request,
+    @Body() changePasswordDto : AuthChangePasswordDto
+  ): Promise<void>{
+    await this.service.changePassword(request.user.id, changePasswordDto );
   }
 
   @ApiBearerAuth()
