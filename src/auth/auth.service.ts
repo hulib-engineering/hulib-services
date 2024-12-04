@@ -17,7 +17,7 @@ import { SocialInterface } from '../social/interfaces/social.interface';
 import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 import { NullableType } from '../utils/types/nullable.type';
 import { LoginResponseDto } from './dto/login-response.dto';
-import {AuthChangePasswordDto} from './dto/auth-change-password.dto';
+import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { ConfigService } from '@nestjs/config';
 import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
 import { JwtPayloadType } from './strategies/types/jwt-payload.type';
@@ -29,7 +29,6 @@ import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
-
 
 @Injectable()
 export class AuthService {
@@ -497,8 +496,9 @@ export class AuthService {
   }
 
   async changePassword(
-    userId: string, newPasswordDto: AuthChangePasswordDto
-  ): Promise<void>{
+    userId: string,
+    newPasswordDto: AuthChangePasswordDto,
+  ): Promise<void> {
     const { currentPassword, newPassword, confirmPassword } = newPasswordDto;
 
     if (newPassword !== confirmPassword) {
@@ -519,8 +519,11 @@ export class AuthService {
           confirmPassword: 'userNotFound',
         },
       });
-    } 
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password!);
+    }
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password!,
+    );
 
     if (!isCurrentPasswordValid) {
       throw new UnprocessableEntityException({
