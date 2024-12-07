@@ -29,6 +29,7 @@ import { MailService } from '../mail/mail.service';
 import { RoleEnum } from '../roles/roles.enum';
 import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
+import { SmsService } from '../sms/sms.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
 import { RegisterResponseDto } from './dto/register-response.dto';
@@ -40,6 +41,7 @@ export class AuthService {
     private usersService: UsersService,
     private sessionService: SessionService,
     private mailService: MailService,
+    private smsService: SmsService,
     private configService: ConfigService<AllConfigType>,
   ) {}
 
@@ -213,13 +215,20 @@ export class AuthService {
 
     const code = randomInt(100000, 999999);
 
-    await this.mailService.userSignUp({
-      to: dto.email,
-      data: {
+    if (!dto.parentPhoneNumber || dto.parentPhoneNumber === '') {
+      await this.mailService.userSignUp({
+        to: dto.email,
+        data: {
+          code,
+          name: dto.fullName,
+        },
+      });
+    } else {
+      await this.smsService.sendSms({
+        to: dto.parentPhoneNumber,
         code,
-        name: dto.fullName,
-      },
-    });
+      });
+    }
 
     return { id: user.id, email: dto.email, code: code.toString() };
   }

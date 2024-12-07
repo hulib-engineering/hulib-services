@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, MinLength } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { lowerCaseTransformer } from '../../utils/transformers/lower-case.transformer';
 import { GenderDto } from '../../genders/dto/gender.dto';
@@ -27,4 +27,9 @@ export class AuthRegisterLoginDto {
   @ApiProperty({ example: '1970-01-01' })
   @IsNotEmpty()
   birthday: string;
+
+  @ApiProperty({ example: '11234567890' })
+  @IsOptional()
+  @IsNotEmpty()
+  parentPhoneNumber?: string;
 }
