@@ -16,7 +16,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiBearerAuth,
-  ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
@@ -36,6 +35,7 @@ import { User } from './domain/user';
 import { UsersService } from './users.service';
 import { RolesGuard } from '../roles/roles.guard';
 import { infinityPagination } from '../utils/infinity-pagination';
+import { upgradeDto } from './dto/ugrade.dto';
 
 @ApiBearerAuth()
 @Roles(RoleEnum.admin)
@@ -46,7 +46,7 @@ import { infinityPagination } from '../utils/infinity-pagination';
   version: '1',
 })
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @ApiCreatedResponse({
     type: User,
@@ -144,22 +144,10 @@ export class UsersController {
     type: String,
     required: true,
   })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-        },
-      },
-      required: ['action'],
-      description: 'Action to upgrade user: reject or accept',
-    },
-  })
   @HttpCode(HttpStatus.NO_CONTENT)
   upgrade(
     @Param('id') id: User['id'],
-    @Body() { action }: { action: string },
+    @Body() { action }: upgradeDto,
   ): Promise<User | { message: string } | void> {
     return this.usersService.upgrade(id, action);
   }
