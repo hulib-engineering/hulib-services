@@ -16,7 +16,7 @@ import { StatusEnum } from '../statuses/statuses.enum';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { DeepPartial } from '../utils/types/deep-partial.type';
 import { GenderEnum } from '../genders/genders.enum';
-
+import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 @Injectable()
 export class UsersService {
   constructor(
@@ -223,5 +223,23 @@ export class UsersService {
 
   async remove(id: User['id']): Promise<void> {
     await this.usersRepository.remove(id);
+  }
+
+  async getAuthorDetailById(
+    id: string | number,
+  ): Promise<GetAuthorDetailByIdDto> {
+    const user = await this.usersRepository.findById(id);
+
+    if (!user) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          confirmPassword: 'userNotFound',
+        },
+      });
+    }
+    // ignore password & previousPassword
+    const { password, previousPassword, ...userWithoutPassword } = user;
+    return userWithoutPassword as GetAuthorDetailByIdDto;
   }
 }

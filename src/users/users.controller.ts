@@ -35,6 +35,7 @@ import { User } from './domain/user';
 import { UsersService } from './users.service';
 import { RolesGuard } from '../roles/roles.guard';
 import { infinityPagination } from '../utils/infinity-pagination';
+import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 
 @ApiBearerAuth()
 @Roles(RoleEnum.admin)
@@ -135,5 +136,13 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: User['id']): Promise<void> {
     return this.usersService.remove(id);
+  }
+
+  @Get('author/:id')
+  @ApiOkResponse({ type: GetAuthorDetailByIdDto })
+  async getAuthorDetailById(
+    @Param('id') id: string,
+  ): Promise<GetAuthorDetailByIdDto> {
+    return this.usersService.getAuthorDetailById(id);
   }
 }
