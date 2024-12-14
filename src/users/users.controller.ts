@@ -11,6 +11,7 @@ import {
   HttpStatus,
   HttpCode,
   SerializeOptions,
+  Request,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -138,10 +139,25 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  @Get('author/:id')
+  @Get('author/me')
   @ApiOkResponse({ type: GetAuthorDetailByIdDto })
-  async getAuthorDetailById(
-    @Param('id') id: string,
+  async getMyAuthorDetailById(
+    @Request() rep: any,
+  ): Promise<GetAuthorDetailByIdDto> {
+    const userId = rep.user.id;
+    return this.usersService.getAuthorDetailById(userId);
+  }
+
+  @ApiOkResponse({ type: GetAuthorDetailByIdDto })
+  @Get('author/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  async findPublicProfile(
+    @Param('id') id: User['id'],
   ): Promise<GetAuthorDetailByIdDto> {
     return this.usersService.getAuthorDetailById(id);
   }
