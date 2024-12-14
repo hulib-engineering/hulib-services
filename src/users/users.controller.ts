@@ -40,8 +40,8 @@ import { infinityPagination } from '../utils/infinity-pagination';
 import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 
 @ApiBearerAuth()
-// @Roles(RoleEnum.admin)
-// @UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles(RoleEnum.admin)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiTags('Users')
 @Controller({
   path: 'users',
@@ -152,14 +152,14 @@ export class UsersController {
 
   @Get('author/me')
   @ApiOkResponse({ type: GetAuthorDetailByIdDto })
-  async getMyAuthorDetailById(
+  async getAuthorDetailById(
     @Request() rep: any,
   ): Promise<GetAuthorDetailByIdDto> {
     const userId = rep.user.id;
     return this.usersService.getAuthorDetailById(userId);
   }
 
-  // public /id
+  // public id
   @ApiOkResponse({ type: GetAuthorDetailByIdDto })
   @Get('author/:id')
   @HttpCode(HttpStatus.OK)
@@ -168,7 +168,7 @@ export class UsersController {
     type: String,
     required: true,
   })
-  async findPublicProfile(
+  async findPublicId(
     @Param('id') id: User['id'],
   ): Promise<GetAuthorDetailByIdDto> {
     return this.usersService.getAuthorDetailById(id);
