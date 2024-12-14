@@ -10,6 +10,8 @@ import crypto from 'crypto';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
+import { randomInt } from 'crypto';
+
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
 import { AuthProvidersEnum } from './auth-providers.enum';
@@ -17,6 +19,7 @@ import { SocialInterface } from '../social/interfaces/social.interface';
 import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 import { NullableType } from '../utils/types/nullable.type';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { ConfigService } from '@nestjs/config';
 import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.type';
 import { JwtPayloadType } from './strategies/types/jwt-payload.type';
@@ -26,8 +29,10 @@ import { MailService } from '../mail/mail.service';
 import { RoleEnum } from '../roles/roles.enum';
 import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
+import { SmsService } from '../sms/sms.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
+import { RegisterResponseDto } from './dto/register-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -36,6 +41,7 @@ export class AuthService {
     private usersService: UsersService,
     private sessionService: SessionService,
     private mailService: MailService,
+    private smsService: SmsService,
     private configService: ConfigService<AllConfigType>,
   ) {}
 
@@ -192,7 +198,7 @@ export class AuthService {
     };
   }
 
-  async register(dto: AuthRegisterLoginDto): Promise<void> {
+  async register(dto: AuthRegisterLoginDto): Promise<RegisterResponseDto> {
     const user = await this.usersService.create({
       ...dto,
       email: dto.email,
@@ -207,51 +213,28 @@ export class AuthService {
       },
     });
 
-    const hash = await this.jwtService.signAsync(
-      {
-        confirmEmailUserId: user.id,
-      },
-      {
-        secret: this.configService.getOrThrow('auth.confirmEmailSecret', {
-          infer: true,
-        }),
-        expiresIn: this.configService.getOrThrow('auth.confirmEmailExpires', {
-          infer: true,
-        }),
-      },
-    );
+    const code = randomInt(100000, 999999);
 
-    await this.mailService.userSignUp({
-      to: dto.email,
-      data: {
-        hash,
-      },
-    });
-  }
-
-  async confirmEmail(hash: string): Promise<void> {
-    let userId: User['id'];
-
-    try {
-      const jwtData = await this.jwtService.verifyAsync<{
-        confirmEmailUserId: User['id'];
-      }>(hash, {
-        secret: this.configService.getOrThrow('auth.confirmEmailSecret', {
-          infer: true,
-        }),
-      });
-
-      userId = jwtData.confirmEmailUserId;
-    } catch {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          hash: `invalidHash`,
+    if (!dto.parentPhoneNumber || dto.parentPhoneNumber === '') {
+      await this.mailService.userSignUp({
+        to: dto.email,
+        data: {
+          code,
+          name: dto.fullName,
         },
+      });
+    } else {
+      await this.smsService.sendSms({
+        to: dto.parentPhoneNumber,
+        code,
       });
     }
 
-    const user = await this.usersService.findById(userId);
+    return { id: user.id, email: dto.email, code: code.toString() };
+  }
+
+  async confirmEmail(id: string | number): Promise<void> {
+    const user = await this.usersService.findById(id);
 
     if (
       !user ||
@@ -270,32 +253,8 @@ export class AuthService {
     await this.usersService.update(user.id, user);
   }
 
-  async confirmNewEmail(hash: string): Promise<void> {
-    let userId: User['id'];
-    let newEmail: User['email'];
-
-    try {
-      const jwtData = await this.jwtService.verifyAsync<{
-        confirmEmailUserId: User['id'];
-        newEmail: User['email'];
-      }>(hash, {
-        secret: this.configService.getOrThrow('auth.confirmEmailSecret', {
-          infer: true,
-        }),
-      });
-
-      userId = jwtData.confirmEmailUserId;
-      newEmail = jwtData.newEmail;
-    } catch {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          hash: `invalidHash`,
-        },
-      });
-    }
-
-    const user = await this.usersService.findById(userId);
+  async resendOTP(id: string | number): Promise<RegisterResponseDto> {
+    const user = await this.usersService.findById(id);
 
     if (!user) {
       throw new NotFoundException({
@@ -304,12 +263,17 @@ export class AuthService {
       });
     }
 
-    user.email = newEmail;
-    user.status = {
-      id: StatusEnum.active,
-    };
+    const code = randomInt(100000, 999999);
 
-    await this.usersService.update(user.id, user);
+    await this.mailService.userSignUp({
+      to: user.email || '',
+      data: {
+        name: user.fullName || '',
+        code,
+      },
+    });
+
+    return { id, email: user.email ?? '', code: code.toString() };
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -345,8 +309,10 @@ export class AuthService {
     await this.mailService.forgotPassword({
       to: email,
       data: {
+        name: user.fullName,
         hash,
         tokenExpires,
+        tokenExpiresIn,
       },
     });
   }
@@ -492,6 +458,49 @@ export class AuthService {
     await this.usersService.update(userJwtPayload.id, userDto);
 
     return this.usersService.findById(userJwtPayload.id);
+  }
+
+  async changePassword(
+    userId: string,
+    newPasswordDto: AuthChangePasswordDto,
+  ): Promise<void> {
+    const { currentPassword, newPassword, confirmPassword } = newPasswordDto;
+
+    if (newPassword !== confirmPassword) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          confirmPassword: 'incorrectConfirmPassword',
+        },
+      });
+    }
+
+    const user = await this.usersService.findById(userId);
+
+    if (!user) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          confirmPassword: 'userNotFound',
+        },
+      });
+    }
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password!,
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          confirmPassword: 'incorrectCurrentPasswordValid',
+        },
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.usersService.updatePassword(userId, hashedPassword);
   }
 
   async refreshToken(
