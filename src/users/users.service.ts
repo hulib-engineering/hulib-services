@@ -239,8 +239,8 @@ export class UsersService {
       });
     }
     // ignore password & previousPassword
-    const { password, previousPassword, ...userWithoutPassword } = user;
-    console.log(password, previousPassword);
-    return userWithoutPassword as GetAuthorDetailByIdDto;
+    delete user.password;
+    delete user.previousPassword;
+    return user;
   }
 }
