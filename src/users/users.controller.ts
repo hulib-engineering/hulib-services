@@ -150,15 +150,6 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  @Get('author/me')
-  @ApiOkResponse({ type: GetAuthorDetailByIdDto })
-  async getAuthorDetailById(
-    @Request() rep: any,
-  ): Promise<GetAuthorDetailByIdDto> {
-    const userId = rep.user.id;
-    return this.usersService.getAuthorDetailById(userId);
-  }
-
   // public id
   @ApiOkResponse({ type: GetAuthorDetailByIdDto })
   @Get('author/:id')
@@ -168,7 +159,7 @@ export class UsersController {
     type: String,
     required: true,
   })
-  async findPublicId(
+  async getAuthorDetailById(
     @Param('id') id: User['id'],
   ): Promise<GetAuthorDetailByIdDto> {
     return this.usersService.getAuthorDetailById(id);
