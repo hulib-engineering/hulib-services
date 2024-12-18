@@ -16,4 +16,4 @@ services:
     ports:
       - ${APP_PORT}:${APP_PORT}
     env_file:
-      - .env  # Chỉ định file .env
+      - .env # Chỉ định file .env

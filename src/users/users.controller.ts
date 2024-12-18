@@ -37,10 +37,11 @@ import { User } from './domain/user';
 import { UsersService } from './users.service';
 import { RolesGuard } from '../roles/roles.guard';
 import { infinityPagination } from '../utils/infinity-pagination';
+import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 
 @ApiBearerAuth()
-// @Roles(RoleEnum.admin)
-// @UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles(RoleEnum.admin)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiTags('Users')
 @Controller({
   path: 'users',
@@ -147,6 +148,21 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: User['id']): Promise<void> {
     return this.usersService.remove(id);
+  }
+
+  // public id
+  @ApiOkResponse({ type: GetAuthorDetailByIdDto })
+  @Get('author/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  async getAuthorDetailById(
+    @Param('id') id: User['id'],
+  ): Promise<GetAuthorDetailByIdDto> {
+    return this.usersService.getAuthorDetailById(id);
   }
 
   @ApiOkResponse({
