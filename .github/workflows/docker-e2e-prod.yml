@@ -20,6 +20,7 @@ jobs:
           PASSPHRASE: ${{ secrets.PASSPHRASE }}
           HOST: ${{ secrets.HOST }}
         run: |
+          mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/hulibservice_rsa
           chmod 600 ~/.ssh/hulibservice_rsa
           eval $(ssh-agent -s)
