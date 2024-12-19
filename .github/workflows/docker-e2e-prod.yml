@@ -1,4 +1,4 @@
-name: NestJS API CI
+name: NestJS Production API CI
 
 on:
   push:
