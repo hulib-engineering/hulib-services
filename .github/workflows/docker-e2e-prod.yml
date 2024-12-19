@@ -1,4 +1,4 @@
-name: NestJS Production API CI
+name: NestJS API CI
 
 on:
   push:
@@ -11,8 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       # <database-relational-block>
       - name: Run e2e tests for NestJS with TypeORM
@@ -30,6 +29,3 @@ jobs:
         with:
           name: prod-logs
           path: prod.log
-
-      - name: Deploy
-        run: git pull && ./deploy.sh
