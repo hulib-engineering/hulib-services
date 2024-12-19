@@ -4,11 +4,8 @@
 # In ra thời gian deploy
 echo "Starting deployment at $(date)"
 
-# 1. Di chuyển đến thư mục dự án (nếu cần)
-# cd hulib-services || exit
-
-# echo "Pulling latest code from repository..."
-# git pull || { echo "Failed pull"; exit 1; }
+echo "Pulling latest code from repository..."
+git pull || { echo "Failed pull"; exit 1; }
 
 echo "Stopping Docker images..."
 sudo docker-compose -f docker-compose.prod.yaml down || { echo "Failed to stop containers"; exit 1; }
