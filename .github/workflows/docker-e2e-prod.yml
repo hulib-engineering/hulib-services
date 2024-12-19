@@ -14,17 +14,13 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@v4'
 
-      - name: 'executing remote ssh commands using password'
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          PASSPHRASE: ${{ secrets.PASSPHRASE }}
-          HOST: ${{ secrets.HOST }}
-        run: |
-          mkdir -p ~/.ssh
-          echo $SSH_PRIVATE_KEY > ~/.ssh/hulibservice_rsa
-          chmod 600 ~/.ssh/hulibservice_rsa
-          eval $(ssh-agent -s)
-          ssh-add ~/.ssh/hulibservice_rsa
-          ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
-          chmod +x auto_ssh.sh
-          ./auto_ssh.sh -i ~/.ssh/hulibservice_rsa -p $PASSPHRASE -u vodacluc -h $HOST -c "./deploy.sh"
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: vodacluc
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          port: 22
+          script: ./deploy.sh
+
