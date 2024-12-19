@@ -14,7 +14,7 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@v4'
 
-      - name: executing remote ssh commands using password
+      - name: 'Executing remote ssh'
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST }}
@@ -22,5 +22,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
           port: 22
-          script: ./deploy.sh
+          script: whoami
 
+      - name: 'Deploy script'
+        run: |
+          chmod +x deploy.sh
+          ./deploy.sh
