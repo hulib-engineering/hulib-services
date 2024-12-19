@@ -25,5 +25,6 @@ jobs:
           chmod 600 ~/.ssh/hulibservice_rsa
           eval $(ssh-agent -s)
           ssh-add ~/.ssh/hulibservice_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
           chmod +x auto_ssh.sh
           ./auto_ssh.sh -i ~/.ssh/hulibservice_rsa -p ${{ secrets.PASSPHRASE }} -u vodacluc -h ${{ secrets.HOST }} -c "./deploy.sh"
