@@ -14,18 +14,16 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@v4'
 
-      - name: 'Run building test for NestJS with TypeORM'
-        id: relational
-        run: |
-          docker compose -f docker-compose.prod.yaml up --build --exit-code-from api
+      # - name: 'Run building test for NestJS with TypeORM'
+      #   id: relational
+      #   run: |
+      #     docker compose -f docker-compose.prod.yaml up --build --exit-code-from api
       
-      - name: Copy prod.log from container to host
-        if: ${{ failure() && steps.relational.conclusion == 'failure' }}
-        run: docker cp ci-relational-api-1:/usr/src/app/prod.log .
+      # - name: Copy prod.log from container to host
+      #   run: docker cp ci-relational-api-1:/usr/src/app/prod.log .
       # </database-relational-block>
 
       - name: 'Executing remote ssh and deploy script'
-        if: ${{ failure() && steps.relational.conclusion != 'failure' }}
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST }}
