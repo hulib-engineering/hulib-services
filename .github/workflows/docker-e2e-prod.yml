@@ -14,6 +14,10 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@v4'
 
+      - name: 'Run building test for NestJS with TypeORM'
+        run: |
+          ./deploy.sh
+
       - name: 'Executing remote ssh and deploy script'
         uses: appleboy/ssh-action@v1.2.0
         with:
