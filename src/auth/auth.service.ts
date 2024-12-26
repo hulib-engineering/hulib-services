@@ -244,6 +244,18 @@ export class AuthService {
     await this.usersService.update(user.id, user);
   }
 
+  async checkEmailExisted(email: string): Promise<void> {
+    const userObject = await this.usersService.findByEmail(email);
+    if (userObject) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          email: 'emailAlreadyExists',
+        },
+      });
+    }
+  }
+
   async resendOTP(id: string | number): Promise<RegisterResponseDto> {
     const user = await this.usersService.findById(id);
 
