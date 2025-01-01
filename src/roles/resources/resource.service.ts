@@ -18,5 +18,4 @@ export class ResourceService {
     const resource = this.resourceRepository.create(resourceData);
     return this.resourceRepository.save(resource);
   }
-
 }

@@ -1,6 +1,6 @@
 import {
   Entity,
- PrimaryColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
@@ -8,7 +8,6 @@ import {
 } from 'typeorm';
 import { RoleEntity } from '../../infrastructure/persistence/relational/entities/role.entity';
 import { ApiProperty } from '@nestjs/swagger';
-
 
 @Entity('permissions')
 export class PermissionEnity {

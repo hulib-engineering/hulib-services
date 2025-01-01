@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body } from '@nestjs/common';
 import { ResourceService } from './resource.service';
 import { ResourceEntity } from './entities/resource.entity';
 
