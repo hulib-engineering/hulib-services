@@ -165,6 +165,22 @@ export class UsersController {
     return this.usersService.getAuthorDetailById(id);
   }
 
+  // only reader
+  @ApiOkResponse({ type: GetAuthorDetailByIdDto })
+  @Get('reader/:id')
+  @Roles(RoleEnum.reader)
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  async getReaderDetailById(
+    @Param('id') id: User['id'],
+  ): Promise<GetAuthorDetailByIdDto> {
+    return this.usersService.getAuthorDetailById(id);
+  }
+
   @ApiOkResponse({
     type: User,
   })
