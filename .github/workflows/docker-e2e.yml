@@ -19,10 +19,17 @@ jobs:
           sed -i '/"prepare": ".*husky.*"/d' package.json
           sed -i '/"husky": ".*"/d' package.json
 
+      # Clean up any existing containers and volumes
+      - name: Clean Docker environment
+        run: |
+          docker compose -f docker-compose.relational.ci.yaml down -v
+          docker system prune -f
+
       # <database-relational-block>
       - name: Run e2e tests for NestJS with TypeORM
         id: relational
-        run: docker compose -f docker-compose.relational.ci.yaml --env-file env-example-relational -p ci-relational up --build --exit-code-from api
+        run: |
+          docker compose -f docker-compose.relational.ci.yaml --env-file env-example-relational -p ci-relational up --build --exit-code-from api
 
       - name: Copy prod.log from container to host
         if: ${{ failure() && steps.relational.conclusion == 'failure' }}
@@ -35,3 +42,8 @@ jobs:
         with:
           name: prod-logs
           path: prod.log
+
+      # Clean up after tests
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.relational.ci.yaml down -v

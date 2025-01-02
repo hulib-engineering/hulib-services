@@ -3,6 +3,8 @@ set -e
 
 /opt/wait-for-it.sh postgres:5432
 # Lấy thời gian hiện tại (format: YYYYMMDDHHMMSS)
+npm run schema:drop
+
 CURRENT_TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 
 # Tạo tên migration với thời gian hiện tại
