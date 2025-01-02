@@ -2,9 +2,9 @@ name: NestJS API CI
 
 on:
   push:
-    branches: [main]
+    branches: [feature/163142_config_cicd_pipeline]
   pull_request:
-    branches: [main]
+    branches: [feature/163142_config_cicd_pipeline]
 
 jobs:
   build:
