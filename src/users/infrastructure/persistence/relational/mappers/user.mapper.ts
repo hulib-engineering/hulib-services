@@ -22,6 +22,9 @@ export class UserMapper {
     // if (raw.photo) {
     //   domainEntity.photo = FileMapper.toDomain(raw.photo);
     // }
+    if (raw.approval) {
+      domainEntity.approval = raw.approval;
+    }
     domainEntity.gender = raw.gender;
     domainEntity.role = raw.role;
     domainEntity.status = raw.status;
@@ -38,6 +41,12 @@ export class UserMapper {
       gender = new GenderEntity();
       gender.id = Number(domainEntity.gender.id);
       gender.name = RoleEnum[String(gender.id)];
+    }
+
+    let approval: string | null | undefined = undefined;
+
+    if (domainEntity.approval) {
+      approval = domainEntity.approval;
     }
 
     let role: RoleEntity | undefined = undefined;
@@ -81,6 +90,7 @@ export class UserMapper {
     persistenceEntity.gender = gender;
     persistenceEntity.role = role;
     persistenceEntity.status = status;
+    persistenceEntity.approval = approval;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
     persistenceEntity.deletedAt = domainEntity.deletedAt;
