@@ -13,6 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Remove Husky from package.json for CI environment
+      - name: Remove Husky for CI
+        run: |
+          sed -i '/"prepare": ".*husky.*"/d' package.json
+          sed -i '/"husky": ".*"/d' package.json
+
       # <database-relational-block>
       - name: Run e2e tests for NestJS with TypeORM
         id: relational
