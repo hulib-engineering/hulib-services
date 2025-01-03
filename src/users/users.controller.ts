@@ -149,7 +149,7 @@ export class UsersController {
   remove(@Param('id') id: User['id']): Promise<void> {
     return this.usersService.remove(id);
   }
-  
+
   // public id
   @ApiOkResponse({ type: GetAuthorDetailByIdDto })
   @Get('author/:id')
