@@ -1,0 +1,19 @@
+services:
+  maildev:
+    build:
+      context: .
+      dockerfile: maildev.Dockerfile
+    ports:
+      - ${MAIL_CLIENT_PORT}:1080
+    expose:
+      - 1080
+      - 1025
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    env_file:
+      - .env # Chỉ định file .env

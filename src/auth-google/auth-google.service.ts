@@ -15,8 +15,8 @@ export class AuthGoogleService {
 
   constructor(private configService: ConfigService<AllConfigType>) {
     this.google = new OAuth2Client(
-      configService.get('google.clientId', { infer: true }),
-      configService.get('google.clientSecret', { infer: true }),
+      configService.get('google.appId', { infer: true }),
+      configService.get('google.appSecret', { infer: true }),
     );
   }
 
@@ -26,7 +26,7 @@ export class AuthGoogleService {
     const ticket = await this.google.verifyIdToken({
       idToken: loginDto.idToken,
       audience: [
-        this.configService.getOrThrow('google.clientId', { infer: true }),
+        this.configService.getOrThrow('google.appId', { infer: true }),
       ],
     });
 

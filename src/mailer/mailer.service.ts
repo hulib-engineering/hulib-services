@@ -4,21 +4,46 @@ import { ConfigService } from '@nestjs/config';
 import nodemailer from 'nodemailer';
 import Handlebars from 'handlebars';
 import { AllConfigType } from '../config/config.type';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class MailerService {
   private readonly transporter: nodemailer.Transporter;
+  private google: OAuth2Client;
+
   constructor(private readonly configService: ConfigService<AllConfigType>) {
+    this.google = new OAuth2Client(
+      configService.get('google.clientId', { infer: true }),
+      configService.get('google.clientSecret', { infer: true }),
+    );
+
+    this.google.setCredentials({
+      refresh_token: configService.get('google.refreshToken', { infer: true }),
+    });
     this.transporter = nodemailer.createTransport({
       host: configService.get('mail.host', { infer: true }),
       port: configService.get('mail.port', { infer: true }),
       ignoreTLS: configService.get('mail.ignoreTLS', { infer: true }),
       secure: configService.get('mail.secure', { infer: true }),
       requireTLS: configService.get('mail.requireTLS', { infer: true }),
-      auth: {
-        user: configService.get('mail.user', { infer: true }),
-        pass: configService.get('mail.password', { infer: true }),
-      },
+      auth:
+        this.configService.get('app.nodeEnv', { infer: true }) === 'development'
+          ? {
+              user: configService.get('mail.user', { infer: true }),
+              pass: configService.get('mail.password', { infer: true }),
+            }
+          : {
+              type: 'OAuth2',
+              user: configService.get('mail.user', { infer: true }),
+              clientId: configService.get('google.clientId', { infer: true }),
+              clientSecret: configService.get('google.clientSecret', {
+                infer: true,
+              }),
+              refreshToken: configService.get('google.refreshToken', {
+                infer: true,
+              }),
+              accessToken: this.google.getAccessToken(),
+            },
     });
   }
 

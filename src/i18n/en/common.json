@@ -1,4 +1,8 @@
 {
-  "confirmEmail": "Confirm email",
-  "resetPassword": "Reset password"
+  "confirmEmail": "Welcome to HuLib – Complete Your Registration",
+  "resetPassword": "Reset Your HuLib’s Password",
+  "dear": "Dear",
+  "bestRegards": "Best regards",
+  "smsPt1": "Hello friend! Your child has registered for an account at HuLib. The OTP for confirmation is",
+  "smsPt2": "valid for 5 minutes. Please do not share this code."
 }

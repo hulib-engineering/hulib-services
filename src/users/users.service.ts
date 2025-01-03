@@ -16,7 +16,7 @@ import { StatusEnum } from '../statuses/statuses.enum';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { DeepPartial } from '../utils/types/deep-partial.type';
 import { GenderEnum } from '../genders/genders.enum';
-
+import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 @Injectable()
 export class UsersService {
   constructor(
@@ -190,7 +190,7 @@ export class UsersService {
     //   clonedPayload.photo = fileObject;
     // }
 
-    if (clonedPayload.role?.id) {
+    if (!!clonedPayload.role) {
       const roleObject = Object.values(RoleEnum)
         .map(String)
         .includes(String(clonedPayload.role.id));
@@ -204,7 +204,7 @@ export class UsersService {
       }
     }
 
-    if (clonedPayload.status?.id) {
+    if (!!clonedPayload.status) {
       const statusObject = Object.values(StatusEnum)
         .map(String)
         .includes(String(clonedPayload.status.id));
@@ -218,10 +218,47 @@ export class UsersService {
       }
     }
 
+    if (!!clonedPayload.gender) {
+      const genderObject = Object.values(GenderEnum)
+        .map(String)
+        .includes(String(clonedPayload.gender.id));
+      if (!genderObject) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            status: 'genderNotExists',
+          },
+        });
+      }
+    }
+
     return this.usersRepository.update(id, clonedPayload);
   }
 
   async remove(id: User['id']): Promise<void> {
     await this.usersRepository.remove(id);
+  }
+
+  async getAuthorDetailById(
+    id: string | number,
+  ): Promise<GetAuthorDetailByIdDto> {
+    const user = await this.usersRepository.findById(id);
+
+    if (!user) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          confirmPassword: 'userNotFound',
+        },
+      });
+    }
+    // ignore password & previousPassword
+    delete user.password;
+    delete user.previousPassword;
+    return user;
+  }
+
+  async updatePassword(userId: string, newPassword: string): Promise<void> {
+    await this.usersRepository.update(userId, { password: newPassword });
   }
 }

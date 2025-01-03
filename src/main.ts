@@ -14,7 +14,18 @@ import { AllConfigType } from './config/config.type';
 import { ResolvePromisesInterceptor } from './utils/serializer.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule, {
+    cors: {
+      origin: [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://hulib-fe-dev.vercel.app',
+        'https://hulib.vercel.app',
+      ],
+      credentials: true,
+      preflightContinue: false,
+    },
+  });
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   const configService = app.get(ConfigService<AllConfigType>);
 
