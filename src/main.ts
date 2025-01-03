@@ -21,6 +21,7 @@ async function bootstrap() {
         'http://localhost:3001',
         'https://hulib-fe-dev.vercel.app',
         'https://hulib.vercel.app',
+        'https://hulib.org',
       ],
       credentials: true,
       preflightContinue: false,
