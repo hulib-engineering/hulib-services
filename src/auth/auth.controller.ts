@@ -26,6 +26,7 @@ import { User } from '../users/domain/user';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
 import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
+import { AuthValidateEmailDto } from './dto/auth-validate-email.dto';
 
 @ApiTags('Auth')
 @Controller({
@@ -53,6 +54,14 @@ export class AuthController {
     @Body() createUserDto: AuthRegisterLoginDto,
   ): Promise<RegisterResponseDto> {
     return this.service.register(createUserDto);
+  }
+
+  @Post('email/validate')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async validateEmail(
+    @Body() validateEmailDto: AuthValidateEmailDto,
+  ): Promise<void> {
+    return this.service.checkEmailExisted(validateEmailDto.email);
   }
 
   @Post('email/confirm')
