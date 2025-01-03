@@ -149,10 +149,11 @@ export class UsersController {
   remove(@Param('id') id: User['id']): Promise<void> {
     return this.usersService.remove(id);
   }
-
+  
   // public id
   @ApiOkResponse({ type: GetAuthorDetailByIdDto })
   @Get('author/:id')
+  @Roles(RoleEnum.reader, RoleEnum.admin)
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
@@ -160,22 +161,6 @@ export class UsersController {
     required: true,
   })
   async getAuthorDetailById(
-    @Param('id') id: User['id'],
-  ): Promise<GetAuthorDetailByIdDto> {
-    return this.usersService.getAuthorDetailById(id);
-  }
-
-  // only reader
-  @ApiOkResponse({ type: GetAuthorDetailByIdDto })
-  @Get('reader/:id')
-  @Roles(RoleEnum.reader)
-  @HttpCode(HttpStatus.OK)
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-  })
-  async getReaderDetailById(
     @Param('id') id: User['id'],
   ): Promise<GetAuthorDetailByIdDto> {
     return this.usersService.getAuthorDetailById(id);
