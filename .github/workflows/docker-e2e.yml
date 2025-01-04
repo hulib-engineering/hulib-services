@@ -13,18 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Remove Husky from package.json for CI environment
-      - name: Remove Husky for CI
-        run: |
-          sed -i '/"prepare": ".*husky.*"/d' package.json
-          sed -i '/"husky": ".*"/d' package.json
-
-      # Clean up any existing containers and volumes
-      - name: Clean Docker environment
-        run: |
-          docker compose -f docker-compose.relational.ci.yaml down -v
-          docker system prune -f
-
       # <database-relational-block>
       # - name: Run e2e tests for NestJS with TypeORM
       #   id: relational
@@ -39,8 +27,3 @@ jobs:
         with:
           name: prod-logs
           path: prod.log
-
-      # Clean up after tests
-      - name: Cleanup
-        if: always()
-        run: docker compose -f docker-compose.relational.ci.yaml down -v

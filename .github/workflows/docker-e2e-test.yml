@@ -16,8 +16,10 @@ jobs:
 
       
       - name: 'Healthcheck database'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          psql "${{ secrets.DATABASE_URL }}" -c "SELECT 1;"
+          psql $DATABASE_URL -c "SELECT 1;"
 
       # - name: 'Run building test for NestJS with TypeORM'
       #   id: relational
@@ -28,14 +30,14 @@ jobs:
       #   run: docker cp ci-relational-api-1:/usr/src/app/prod.log .
       # </database-relational-block>
 
-      # - name: 'Executing remote ssh and deploy script'
-      #   uses: appleboy/ssh-action@v1.2.0
-      #   with:
-      #     host: ${{ secrets.HOST }}
-      #     username: vodacluc
-      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
-      #     passphrase: ${{ secrets.PASSPHRASE }}
-      #     port: 22
-      #     script: |
-      #       chmod +x deploy.sh
-      #       ./deploy.sh
+      - name: 'Executing remote ssh and deploy script'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: vodacluc
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          port: 22
+          script: |
+            chmod +x deploy.sh
+            ./deploy.sh
