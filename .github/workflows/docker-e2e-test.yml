@@ -18,8 +18,12 @@ jobs:
       - name: 'Healthcheck database'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_HOST: ep-lively-recipe-a11mpbm9.ap-southeast-1.aws.neon.tech
+          DATABASE_PORT: 5432
+          DATABASE_USER: hulibdb_owner
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
         run: |
-          psql $DATABASE_URL -c "SELECT 1;"
+          pg_isready -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER
 
       # - name: 'Run building test for NestJS with TypeORM'
       #   id: relational
