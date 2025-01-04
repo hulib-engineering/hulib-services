@@ -2,9 +2,9 @@ name: NestJS Production API CI
 
 on:
   push:
-    branches: [main]
+    branches: [fix/product_cicd]
   pull_request:
-    branches: [main]
+    branches: [fix/product_cicd]
 
 jobs:
   build:
