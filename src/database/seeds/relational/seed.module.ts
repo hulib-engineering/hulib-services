@@ -11,8 +11,14 @@ import { UserSeedModule } from './user/user-seed.module';
 import databaseConfig from '../../config/database.config';
 import appConfig from '../../../config/app.config';
 
+import { permissionsSeedModule } from './permissions/permissions-seed.module';
+
+import { resourcesSeedModule } from './resources/resources-seed.module';
+
 @Module({
   imports: [
+    resourcesSeedModule,
+    permissionsSeedModule,
     GenderSeedModule,
     RoleSeedModule,
     StatusSeedModule,
