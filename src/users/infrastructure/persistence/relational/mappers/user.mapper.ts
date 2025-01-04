@@ -1,5 +1,5 @@
 import { FileEntity } from '../../../../../files/infrastructure/persistence/relational/entities/file.entity';
-import { FileMapper } from '../../../../../files/infrastructure/persistence/relational/mappers/file.mapper';
+// import { FileMapper } from '../../../../../files/infrastructure/persistence/relational/mappers/file.mapper';
 import { RoleEntity } from '../../../../../roles/infrastructure/persistence/relational/entities/role.entity';
 import { StatusEntity } from '../../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
 import { User } from '../../../../domain/user';
@@ -19,8 +19,11 @@ export class UserMapper {
     domainEntity.socialId = raw.socialId;
     domainEntity.fullName = raw.fullName;
     domainEntity.birthday = raw.birthday;
-    if (raw.photo) {
-      domainEntity.photo = FileMapper.toDomain(raw.photo);
+    // if (raw.photo) {
+    //   domainEntity.photo = FileMapper.toDomain(raw.photo);
+    // }
+    if (raw.approval) {
+      domainEntity.approval = raw.approval;
     }
     domainEntity.gender = raw.gender;
     domainEntity.role = raw.role;
@@ -38,6 +41,12 @@ export class UserMapper {
       gender = new GenderEntity();
       gender.id = Number(domainEntity.gender.id);
       gender.name = RoleEnum[String(gender.id)];
+    }
+
+    let approval: string | null | undefined = undefined;
+
+    if (domainEntity.approval) {
+      approval = domainEntity.approval;
     }
 
     let role: RoleEntity | undefined = undefined;
@@ -81,6 +90,7 @@ export class UserMapper {
     persistenceEntity.gender = gender;
     persistenceEntity.role = role;
     persistenceEntity.status = status;
+    persistenceEntity.approval = approval;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
     persistenceEntity.deletedAt = domainEntity.deletedAt;

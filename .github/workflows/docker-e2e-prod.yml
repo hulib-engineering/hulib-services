@@ -14,14 +14,15 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@v4'
 
-      # - name: 'Run building test for NestJS with TypeORM'
-      #   id: relational
-      #   run: |
-      #     docker compose -f docker-compose.prod.yaml up --build --exit-code-from api
-      
-      # - name: Copy prod.log from container to host
-      #   run: docker cp ci-relational-api-1:/usr/src/app/prod.log .
-      # </database-relational-block>
+      - name: 'Healthcheck database'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_HOST: ep-lively-recipe-a11mpbm9.ap-southeast-1.aws.neon.tech
+          DATABASE_PORT: 5432
+          DATABASE_USER: hulibdb_owner
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        run: |
+          pg_isready -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER
 
       - name: 'Executing remote ssh and deploy script'
         uses: appleboy/ssh-action@v1.2.0

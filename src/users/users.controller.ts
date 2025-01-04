@@ -38,6 +38,7 @@ import { UsersService } from './users.service';
 import { RolesGuard } from '../roles/roles.guard';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
+import { UpgradeDto } from './dto/upgrade.dto';
 
 @ApiBearerAuth()
 @Roles(RoleEnum.admin)
@@ -177,5 +178,19 @@ export class UsersController {
   ): Promise<User | null> {
     console.log('request.user.id', request.user.id);
     return this.usersService.update(request.user.id, updateProfileDto);
+  }
+
+  @Patch('upgrade/:id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  upgrade(
+    @Param('id') id: User['id'],
+    @Body() { action }: UpgradeDto,
+  ): Promise<User | { message: string } | void> {
+    return this.usersService.upgrade(id, action);
   }
 }

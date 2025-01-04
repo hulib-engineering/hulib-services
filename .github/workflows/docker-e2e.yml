@@ -2,9 +2,9 @@ name: NestJS API CI
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
   pull_request:
-    branches: [main]
+    branches: [develop]
 
 jobs:
   build:
@@ -14,9 +14,9 @@ jobs:
       - uses: actions/checkout@v4
 
       # <database-relational-block>
-      # - name: Run e2e tests for NestJS with TypeORM
-      #   id: relational
-      #   run: docker compose -f docker-compose.relational.ci.yaml --env-file env-example-relational -p ci-relational up --build --exit-code-from api
+      - name: Run e2e tests for NestJS with TypeORM
+        id: relational
+        run: docker compose -f docker-compose.relational.ci.yaml --env-file env-example-relational -p ci-relational up --build --exit-code-from api
 
       # - name: Copy prod.log from container to host
       #   run: docker cp ci-relational-api-1:/usr/src/app/prod.log .
