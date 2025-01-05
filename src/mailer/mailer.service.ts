@@ -63,16 +63,20 @@ export class MailerService {
       })(context);
     }
 
-    await this.transporter.sendMail({
-      ...mailOptions,
-      from: mailOptions.from
-        ? mailOptions.from
-        : `"${this.configService.get('mail.defaultName', {
-            infer: true,
-          })}" <${this.configService.get('mail.defaultEmail', {
-            infer: true,
-          })}>`,
-      html: mailOptions.html ? mailOptions.html : html,
-    });
+    try {
+      await this.transporter.sendMail({
+        ...mailOptions,
+        from: mailOptions.from
+          ? mailOptions.from
+          : `"${this.configService.get('mail.defaultName', {
+              infer: true,
+            })}" <${this.configService.get('mail.defaultEmail', {
+              infer: true,
+            })}>`,
+        html: mailOptions.html ? mailOptions.html : html,
+      });
+    } catch (e) {
+      console.error('Error sending email: ', e);
+    }
   }
 }
