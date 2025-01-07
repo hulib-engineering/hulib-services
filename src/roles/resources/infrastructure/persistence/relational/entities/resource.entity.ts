@@ -5,14 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
-  ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { PermissionEnity } from '../../../../../permissions/infrastructure/persistence/relational/entities/permissions.entity';
 
 @Entity('resource')
 export class ResourceEntity {
-  @ManyToOne(() => PermissionEnity, (permission) => permission.id)
   @PrimaryGeneratedColumn('uuid')
   @ApiProperty({
     type: Number,
@@ -28,6 +27,9 @@ export class ResourceEntity {
 
   @Column({ length: 50, nullable: true })
   description: string;
+
+  @OneToMany(() => PermissionEnity, (permission) => permission.id)
+  permissions: PermissionEnity[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
