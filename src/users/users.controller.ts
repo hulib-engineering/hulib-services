@@ -38,6 +38,7 @@ import { UsersService } from './users.service';
 import { RolesGuard } from '../roles/roles.guard';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
+// import { Role } from '../roles/domain/role';
 
 @ApiBearerAuth()
 @Roles(RoleEnum.admin)
@@ -153,6 +154,7 @@ export class UsersController {
   // public id
   @ApiOkResponse({ type: GetAuthorDetailByIdDto })
   @Get('author/:id')
+  @Roles(RoleEnum.admin, RoleEnum.reader)
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',
