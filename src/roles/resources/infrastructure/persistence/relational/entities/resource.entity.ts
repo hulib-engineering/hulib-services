@@ -4,14 +4,16 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  PrimaryGeneratedColumn,
   ManyToOne,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { PermissionEnity } from '../../permissions/entities/permissions.entity';
+import { PermissionEnity } from '../../../../../permissions/infrastructure/persistence/relational/entities/permissions.entity';
 
 @Entity('resource')
 export class ResourceEntity {
   @ManyToOne(() => PermissionEnity, (permission) => permission.id)
+  @PrimaryGeneratedColumn('uuid')
   @ApiProperty({
     type: Number,
   })

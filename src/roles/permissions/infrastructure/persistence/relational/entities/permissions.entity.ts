@@ -7,16 +7,16 @@ import {
   UpdateDateColumn,
   ManyToMany,
 } from 'typeorm';
-import { RoleEntity } from '../../infrastructure/persistence/relational/entities/role.entity';
-// import { ApiProperty } from '@nestjs/swagger';
+import { RoleEntity } from '../../../../../infrastructure/persistence/relational/entities/role.entity';
+import { ApiProperty } from '@nestjs/swagger';
+// import { ResourceEntity } from '../../../../../resources/infrastructure/persistence/relational/entities/resource.entity';
 
 @Entity('permissions')
 export class PermissionEnity {
-  // @ApiProperty({
-  //   type: Number,
-  // })
-  // @PrimaryColumn()
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
+  @ApiProperty({
+    type: Number,
+  })
   id: number;
 
   @Column({ length: 50 })

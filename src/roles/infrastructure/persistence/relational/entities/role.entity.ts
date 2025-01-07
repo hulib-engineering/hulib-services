@@ -1,7 +1,7 @@
 import { Column, Entity, JoinTable, ManyToMany, PrimaryColumn } from 'typeorm';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
-import { PermissionEnity } from '../../../../permissions/entities/permissions.entity';
+import { PermissionEnity } from '../../../../permissions/infrastructure/persistence/relational/entities/permissions.entity';
 @Entity({
   name: 'role',
 })

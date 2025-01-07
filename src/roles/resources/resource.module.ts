@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ResourceEntity } from './entities/resource.entity';
+import { ResourceEntity } from './infrastructure/persistence/relational/entities/resource.entity';
 import { ResourceService } from './resource.service';
 import { ResourceController } from './resource.controller';
 

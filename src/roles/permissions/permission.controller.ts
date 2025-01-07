@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
 import { PermissionService } from './permission.service';
-import { PermissionEnity } from './entities/permissions.entity';
+import { PermissionEnity } from './infrastructure/persistence/relational/entities/permissions.entity';
 
 @Controller('permissions')
 export class PermissionController {

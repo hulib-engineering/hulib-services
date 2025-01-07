@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ResourceEntity } from '../../../../roles/resources/entities/resource.entity';
+import { ResourceEntity } from '../../../../roles/resources/infrastructure/persistence/relational/entities/resource.entity';
 import { resourcesSeedService } from './resources-seed.service';
 
 @Module({

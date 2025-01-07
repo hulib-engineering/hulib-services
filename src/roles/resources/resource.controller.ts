@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
 import { ResourceService } from './resource.service';
-import { ResourceEntity } from './entities/resource.entity';
+import { ResourceEntity } from './infrastructure/persistence/relational/entities/resource.entity';
 
 @Controller('resources')
 export class ResourceController {
