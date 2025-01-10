@@ -10,6 +10,7 @@ import {
   UpdateDateColumn,
   JoinColumn,
   OneToOne,
+  OneToMany,
 } from 'typeorm';
 import { RoleEntity } from '../../../../../roles/infrastructure/persistence/relational/entities/role.entity';
 import { StatusEntity } from '../../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
@@ -18,12 +19,10 @@ import { FileEntity } from '../../../../../files/infrastructure/persistence/rela
 import { AuthProvidersEnum } from '../../../../../auth/auth-providers.enum';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
 
-// We use class-transformer in ORM entity and domain entity.
-// We duplicate these rules because you can choose not to use adapters
-// in your project and return an ORM entity directly in response.
 import { Exclude, Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { GenderEntity } from '../../../../../genders/infrastructure/persistence/relational/entities/gender.entity';
+import { BookEntity } from '../../../../../books/infrastructure/persistence/relational/entities/book.entity';
 
 @Entity({
   name: 'user',
@@ -125,6 +124,9 @@ export class UserEntity extends EntityRelationalHelper {
   @ApiProperty()
   @Column({ type: String, nullable: true })
   approval?: string | null;
+
+  @OneToMany(() => BookEntity, (book) => book.author)
+  books: BookEntity[];
 
   @ApiProperty()
   @CreateDateColumn()
