@@ -41,7 +41,7 @@ import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 // import { Role } from '../roles/domain/role';
 
 @ApiBearerAuth()
-@Roles(RoleEnum.admin)
+// @Roles(RoleEnum.admin)
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiTags('Users')
 @Controller({
@@ -153,16 +153,10 @@ export class UsersController {
 
   // public id
   @ApiOkResponse({ type: GetAuthorDetailByIdDto })
-  @Get('author/:id')
   @Roles(RoleEnum.admin, RoleEnum.reader)
-  @HttpCode(HttpStatus.OK)
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-  })
+  @Get('author/:id')
   async getAuthorDetailById(
-    @Param('id') id: User['id'],
+    @Param('id') id: string,
   ): Promise<GetAuthorDetailByIdDto> {
     return this.usersService.getAuthorDetailById(id);
   }
