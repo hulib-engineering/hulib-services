@@ -72,6 +72,23 @@ export class User {
   })
   status?: Status;
 
+  @ApiProperty({
+    type: String,
+    example: '11234567890',
+  })
+  parentPhoneNumber?: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: '11234567891',
+  })
+  phoneNumber?: string | null;
+
+  @ApiProperty({
+    type: String,
+  })
+  address?: string | null;
+
   @ApiProperty()
   createdAt: Date;
 
