@@ -38,13 +38,9 @@ export class BookEntity {
 
   @ApiProperty({
     type: () => UserEntity,
-    description: 'The author of the book (a user with the role of humanBook)',
   })
-  @ManyToOne(() => UserEntity, (user) => user.books, {
-    nullable: false,
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'authorId' })
+  @ManyToOne(() => UserEntity, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn()
   author: UserEntity;
 
   @ApiProperty({
