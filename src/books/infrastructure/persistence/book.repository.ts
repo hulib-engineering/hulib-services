@@ -1,3 +1,7 @@
+import { Book } from '../../domain/book';
+
 export abstract class BooksRepository {
-  // abstract create(data: DeepPartial<BookEntity>): Promise<BookEntity>;
+  abstract createBook(
+    data: Omit<Book, 'id' | 'createdAt' | 'deletedAt' | 'updatedAt'>,
+  ): Promise<Book>;
 }

@@ -14,4 +14,4 @@ import { BookEntity } from './entities/book.entity';
   ],
   exports: [BooksRepository],
 })
-export class RelationalUserPersistenceModule {}
+export class RelationalBookPersistenceModule {}

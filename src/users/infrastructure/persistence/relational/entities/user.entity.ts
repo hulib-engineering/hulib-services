@@ -80,6 +80,12 @@ export class UserEntity extends EntityRelationalHelper {
   fullName: string | null;
 
   @ApiProperty({
+    type: String,
+  })
+  @Column({ type: String, nullable: true })
+  approval: string | null;
+
+  @ApiProperty({
     type: () => GenderEntity,
   })
   @ManyToOne(() => GenderEntity, {

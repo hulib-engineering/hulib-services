@@ -21,7 +21,7 @@ export class Book {
   })
   @IsNotEmpty()
   @IsString()
-  title: string | null;
+  title: string;
 
   @ApiProperty({
     type: String,
@@ -34,14 +34,14 @@ export class Book {
     type: () => Tag,
   })
   @IsOptional()
-  tag: Tag | null;
+  tag: Tag[] | null;
 
-  @ApiProperty({})
+  @ApiProperty()
   createdAt: Date;
 
-  @ApiProperty({})
+  @ApiProperty()
   updatedAt: Date;
 
-  @ApiProperty({})
+  @ApiProperty()
   deletedAt: Date;
 }

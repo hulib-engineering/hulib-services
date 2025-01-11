@@ -1,17 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Allow } from 'class-validator';
-
-const idType = Number;
+import { Book } from '../../books/domain/book';
 
 export class Tag {
   @ApiProperty({
-    type: idType,
+    type: Number,
   })
   id: number | string;
 
-  @Allow()
   @ApiProperty({
     type: String,
   })
   content?: string;
+
+  @ApiProperty({
+    type: String,
+  })
+  books: Book[];
 }
