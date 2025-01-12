@@ -10,6 +10,7 @@ import { StatusSeedModule } from './status/status-seed.module';
 import { UserSeedModule } from './user/user-seed.module';
 import databaseConfig from '../../config/database.config';
 import appConfig from '../../../config/app.config';
+import { TopicSeedModule } from './topic/topic-seed.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import appConfig from '../../../config/app.config';
     RoleSeedModule,
     StatusSeedModule,
     UserSeedModule,
+    TopicSeedModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig, appConfig],

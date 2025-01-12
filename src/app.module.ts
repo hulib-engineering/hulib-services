@@ -31,8 +31,14 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   },
 });
 
+import { HumanBooksModule } from './human-books/human-books.module';
+
+import { TopicsModule } from './topics/topics.module';
+
 @Module({
   imports: [
+    TopicsModule,
+    HumanBooksModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [

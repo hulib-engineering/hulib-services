@@ -34,6 +34,10 @@ import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { Approval } from '../users/approval.enum';
+import { RegisterToHumanBookDto } from './dto/register-to-human-book';
+import { HumanBooks } from '../human-books/domain/human-books';
+import { HumanBooksService } from '../human-books/human-books.service';
+import { UpdateHumanBooksDto } from './dto/update-human-book';
 
 @Injectable()
 export class AuthService {
@@ -43,6 +47,7 @@ export class AuthService {
     private sessionService: SessionService,
     private mailService: MailService,
     private configService: ConfigService<AllConfigType>,
+    private humanBooksService: HumanBooksService,
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
@@ -640,5 +645,67 @@ export class AuthService {
       console.log(e);
       throw new InternalServerErrorException();
     }
+  }
+
+  async registerToHumanBook(
+    userId: User['id'],
+    createHumanBooksDto: RegisterToHumanBookDto,
+  ): Promise<HumanBooks> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    // TODO: check if user has already a human book
+    const humanBook = await this.humanBooksService.findByUserId(userId);
+    if (humanBook) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          humanBook: 'userAlreadyHasHumanBook',
+        },
+      });
+    }
+
+    const educationStart = new Date(createHumanBooksDto.educationStart);
+    const educationEnd = createHumanBooksDto.educationEnd
+      ? new Date(createHumanBooksDto.educationEnd)
+      : null;
+
+    return await this.humanBooksService.create({
+      ...createHumanBooksDto,
+      user,
+      educationStart,
+      educationEnd,
+    });
+  }
+
+  async updateHumanBook(
+    userId: User['id'],
+    updateHumanBooksDto: UpdateHumanBooksDto,
+  ): Promise<HumanBooks | null> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    const humanBook = await this.humanBooksService.findByUserId(userId);
+    if (!humanBook) {
+      throw new NotFoundException();
+    }
+
+    const educationStart = updateHumanBooksDto.educationStart
+      ? new Date(updateHumanBooksDto.educationStart)
+      : null;
+    const educationEnd = updateHumanBooksDto.educationEnd
+      ? new Date(updateHumanBooksDto.educationEnd)
+      : null;
+
+    return await this.humanBooksService.update(humanBook.id, {
+      ...updateHumanBooksDto,
+      educationStart: educationStart ?? undefined,
+      educationEnd: educationEnd ?? undefined,
+      user,
+    });
   }
 }
