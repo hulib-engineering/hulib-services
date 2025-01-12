@@ -23,6 +23,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { AllConfigType } from './config/config.type';
 import { SessionModule } from './session/session.module';
 import { MailerModule } from './mailer/mailer.module';
+import { TopicsModule } from './topics/topics.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -31,14 +32,9 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   },
 });
 
-import { HumanBooksModule } from './human-books/human-books.module';
-
-import { TopicsModule } from './topics/topics.module';
-
 @Module({
   imports: [
     TopicsModule,
-    HumanBooksModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [

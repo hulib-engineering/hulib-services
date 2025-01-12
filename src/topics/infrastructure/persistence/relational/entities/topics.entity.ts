@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
-import { HumanBooksEntity } from '../../../../../human-books/infrastructure/persistence/relational/entities/human-books.entity';
+import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
 
 @Entity({
   name: 'topics',
@@ -31,9 +31,9 @@ export class TopicsEntity extends EntityRelationalHelper {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToMany(() => HumanBooksEntity)
+  @ManyToMany(() => UserEntity)
   @JoinTable({
     name: 'humanBook_sharing_topic',
   })
-  humanBooks: HumanBooksEntity[];
+  users: UserEntity[];
 }

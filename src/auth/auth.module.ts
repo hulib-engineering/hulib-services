@@ -9,7 +9,6 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { MailModule } from '../mail/mail.module';
 import { SessionModule } from '../session/session.module';
 import { UsersModule } from '../users/users.module';
-import { HumanBooksModule } from '../human-books/human-books.module';
 
 @Module({
   imports: [
@@ -18,7 +17,6 @@ import { HumanBooksModule } from '../human-books/human-books.module';
     PassportModule,
     MailModule,
     JwtModule.register({}),
-    HumanBooksModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtRefreshStrategy, AnonymousStrategy],

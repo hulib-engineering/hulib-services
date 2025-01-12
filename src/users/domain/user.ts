@@ -4,6 +4,7 @@ import { Role } from '../../roles/domain/role';
 import { Status } from '../../statuses/domain/status';
 import { ApiProperty } from '@nestjs/swagger';
 import { Gender } from '../../genders/domain/gender';
+import { Topics } from '../../topics/domain/topics';
 
 const idType = Number;
 
@@ -91,6 +92,26 @@ export class User {
 
   @ApiProperty()
   approval?: string | null;
+
+  @ApiProperty()
+  bio?: string | null;
+
+  @ApiProperty()
+  videoUrl?: string | null;
+
+  @ApiProperty()
+  education?: string | null;
+
+  @ApiProperty()
+  educationStart?: Date | null;
+
+  @ApiProperty()
+  educationEnd?: Date | null;
+
+  @ApiProperty({
+    type: () => [Topics],
+  })
+  topics?: Topics[];
 
   @ApiProperty()
   createdAt: Date;

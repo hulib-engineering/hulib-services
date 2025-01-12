@@ -22,9 +22,9 @@ CREATE TABLE "topics"
 
 CREATE TABLE "humanBook_sharing_topic"
 (
-    "humanBooksId" INT NOT NULL,
+    "userId" INT NOT NULL,
     "topicsId" INT NOT NULL,
-    PRIMARY KEY ("humanBooksId", "topicsId"),
-    CONSTRAINT fk_human_books FOREIGN KEY ("humanBooksId") REFERENCES "humanBooks" ("id") ON DELETE CASCADE,
+    PRIMARY KEY ("userId", "topicsId"),
+    CONSTRAINT fk_user FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE,
     CONSTRAINT fk_topics FOREIGN KEY ("topicsId") REFERENCES "topics" ("id") ON DELETE CASCADE
 );

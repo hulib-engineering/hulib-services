@@ -28,8 +28,6 @@ import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { AuthValidateEmailDto } from './dto/auth-validate-email.dto';
 import { RegisterToHumanBookDto } from './dto/register-to-human-book';
-import { HumanBooks } from '../human-books/domain/human-books';
-import { UpdateHumanBooksDto } from './dto/update-human-book';
 
 @ApiTags('Auth')
 @Controller({
@@ -194,21 +192,21 @@ export class AuthController {
   public registerToHumanBooks(
     @Request() request,
     @Body() createHumanBooksDto: RegisterToHumanBookDto,
-  ): Promise<HumanBooks> {
+  ): Promise<User | null> {
     return this.service.registerToHumanBook(
       request.user.id,
       createHumanBooksDto,
     );
   }
 
-  @ApiBearerAuth()
-  @Patch('update/human-books')
-  @UseGuards(AuthGuard('jwt'))
-  @HttpCode(HttpStatus.OK)
-  public updateHumanBooks(
-    @Request() request,
-    @Body() updateHumanBooksDto: UpdateHumanBooksDto,
-  ): Promise<HumanBooks | null> {
-    return this.service.updateHumanBook(request.user.id, updateHumanBooksDto);
-  }
+  // @ApiBearerAuth()
+  // @Patch('update/human-books')
+  // @UseGuards(AuthGuard('jwt'))
+  // @HttpCode(HttpStatus.OK)
+  // public updateHumanBooks(
+  //   @Request() request,
+  //   @Body() updateHumanBooksDto: UpdateHumanBooksDto,
+  // ): Promise<User | null> {
+  //   return this.service.updateHumanBook(request.user.id, updateHumanBooksDto);
+  // }
 }

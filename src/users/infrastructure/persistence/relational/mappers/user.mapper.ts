@@ -7,10 +7,19 @@ import { UserEntity } from '../entities/user.entity';
 import { GenderEntity } from '../../../../../genders/infrastructure/persistence/relational/entities/gender.entity';
 import { RoleEnum } from '../../../../../roles/roles.enum';
 import { StatusEnum } from '../../../../../statuses/statuses.enum';
+import { TopicsMapper } from '../../../../../topics/infrastructure/persistence/relational/mappers/topics.mapper';
+import { TopicsEntity } from '../../../../../topics/infrastructure/persistence/relational/entities/topics.entity';
 
 export class UserMapper {
   static toDomain(raw: UserEntity): User {
     const domainEntity = new User();
+
+    if (raw.topics) {
+      domainEntity.topics = raw.topics.map((topic) =>
+        TopicsMapper.toDomain(topic),
+      );
+    }
+
     domainEntity.id = raw.id;
     domainEntity.email = raw.email;
     domainEntity.password = raw.password;
@@ -22,6 +31,7 @@ export class UserMapper {
     // if (raw.photo) {
     //   domainEntity.photo = FileMapper.toDomain(raw.photo);
     // }
+
     if (raw.approval) {
       domainEntity.approval = raw.approval;
     }
@@ -34,6 +44,12 @@ export class UserMapper {
     domainEntity.address = raw.address;
     domainEntity.phoneNumber = raw.phoneNumber;
     domainEntity.parentPhoneNumber = raw.parentPhoneNumber;
+    domainEntity.bio = raw.bio;
+    domainEntity.videoUrl = raw.videoUrl;
+    domainEntity.education = raw.education;
+    domainEntity.educationStart = raw.educationStart;
+    domainEntity.educationEnd = raw.educationEnd;
+    domainEntity.topics = raw.topics;
     return domainEntity;
   }
 
@@ -78,6 +94,16 @@ export class UserMapper {
       status.name = StatusEnum[String(status.id)];
     }
 
+    let topics: TopicsEntity[] | undefined | null = undefined;
+
+    if (domainEntity.topics) {
+      topics = domainEntity.topics.map((topic) => {
+        const topicEntity = new TopicsEntity();
+        topicEntity.id = topic.id;
+        return topicEntity;
+      });
+    }
+
     const persistenceEntity = new UserEntity();
     if (domainEntity.id && typeof domainEntity.id === 'number') {
       persistenceEntity.id = domainEntity.id;
@@ -100,6 +126,12 @@ export class UserMapper {
     persistenceEntity.address = domainEntity.address;
     persistenceEntity.phoneNumber = domainEntity.phoneNumber;
     persistenceEntity.parentPhoneNumber = domainEntity.parentPhoneNumber;
+    persistenceEntity.bio = domainEntity.bio;
+    persistenceEntity.videoUrl = domainEntity.videoUrl;
+    persistenceEntity.education = domainEntity.education;
+    persistenceEntity.educationStart = domainEntity.educationStart;
+    persistenceEntity.educationEnd = domainEntity.educationEnd;
+    persistenceEntity.topics = topics;
     return persistenceEntity;
   }
 }
