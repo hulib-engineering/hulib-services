@@ -143,6 +143,10 @@ export class UserEntity extends EntityRelationalHelper {
   phoneNumber?: string | null;
 
   @ApiProperty()
+  @Column({ type: String, nullable: true })
+  approval?: string | null;
+
+  @ApiProperty()
   @CreateDateColumn()
   createdAt: Date;
 

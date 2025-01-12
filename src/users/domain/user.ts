@@ -90,6 +90,9 @@ export class User {
   address?: string | null;
 
   @ApiProperty()
+  approval?: string | null;
+
+  @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()
