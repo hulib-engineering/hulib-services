@@ -173,4 +173,14 @@ export class AuthController {
   public async delete(@Request() request): Promise<void> {
     return this.service.softDelete(request.user);
   }
+
+  @ApiBearerAuth()
+  @Patch('upgrade/me')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  public async upgradeAccount(
+    @Request() request,
+  ): Promise<User | { message: string } | null> {
+    return this.service.upgradeAccout(request.user.id);
+  }
 }

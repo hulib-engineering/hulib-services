@@ -73,6 +73,9 @@ export class User {
   status?: Status;
 
   @ApiProperty()
+  approval?: string | null;
+
+  @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()

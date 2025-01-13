@@ -4,6 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
   UnprocessableEntityException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import ms from 'ms';
 import crypto from 'crypto';
@@ -32,6 +33,7 @@ import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
 import { RegisterResponseDto } from './dto/register-response.dto';
+import { Approval } from '../users/approval.enum';
 
 @Injectable()
 export class AuthService {
@@ -603,5 +605,40 @@ export class AuthService {
       refreshToken,
       tokenExpires,
     };
+  }
+
+  async upgradeAccout(
+    userId: User['id'],
+  ): Promise<User | { message: string } | null> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException();
+    }
+    if (user.role?.id === RoleEnum.humanBook) {
+      return {
+        message: 'You have been approved to become a Human Book',
+      };
+    }
+    if (user.approval === Approval.pending) {
+      return {
+        message:
+          'You have registered to become a Human Book. Wait for Admin approval!',
+      };
+    }
+    try {
+      if (!user.approval || user.approval === Approval.notRequested) {
+        await this.usersService.update(userId, {
+          approval: Approval.pending,
+        });
+        return {
+          message:
+            'You have registered to become a Human Book. Wait for Admin approval!',
+        };
+      }
+      return null;
+    } catch (e) {
+      console.log(e);
+      throw new InternalServerErrorException();
+    }
   }
 }

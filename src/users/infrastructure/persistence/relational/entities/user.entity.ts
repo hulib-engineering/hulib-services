@@ -18,9 +18,6 @@ import { FileEntity } from '../../../../../files/infrastructure/persistence/rela
 import { AuthProvidersEnum } from '../../../../../auth/auth-providers.enum';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
 
-// We use class-transformer in ORM entity and domain entity.
-// We duplicate these rules because you can choose not to use adapters
-// in your project and return an ORM entity directly in response.
 import { Exclude, Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { GenderEntity } from '../../../../../genders/infrastructure/persistence/relational/entities/gender.entity';
@@ -81,6 +78,12 @@ export class UserEntity extends EntityRelationalHelper {
   @Index()
   @Column({ type: String, nullable: true })
   fullName: string | null;
+
+  @ApiProperty({
+    type: String,
+  })
+  @Column({ type: String, nullable: true })
+  approval: string | null;
 
   @ApiProperty({
     type: () => GenderEntity,

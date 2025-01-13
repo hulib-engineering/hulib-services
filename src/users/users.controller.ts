@@ -38,10 +38,10 @@ import { UsersService } from './users.service';
 import { RolesGuard } from '../roles/roles.guard';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
-// import { Role } from '../roles/domain/role';
+import { UpgradeDto } from './dto/upgrade.dto';
 
 @ApiBearerAuth()
-// @Roles(RoleEnum.admin)
+@Roles(RoleEnum.admin)
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiTags('Users')
 @Controller({
@@ -153,10 +153,15 @@ export class UsersController {
 
   // public id
   @ApiOkResponse({ type: GetAuthorDetailByIdDto })
-  @Roles(RoleEnum.admin, RoleEnum.reader)
   @Get('author/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
   async getAuthorDetailById(
-    @Param('id') id: string,
+    @Param('id') id: User['id'],
   ): Promise<GetAuthorDetailByIdDto> {
     return this.usersService.getAuthorDetailById(id);
   }
@@ -173,5 +178,19 @@ export class UsersController {
   ): Promise<User | null> {
     console.log('request.user.id', request.user.id);
     return this.usersService.update(request.user.id, updateProfileDto);
+  }
+
+  @Patch('upgrade/:id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  upgrade(
+    @Param('id') id: User['id'],
+    @Body() { action }: UpgradeDto,
+  ): Promise<User | { message: string } | void> {
+    return this.usersService.upgrade(id, action);
   }
 }
