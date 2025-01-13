@@ -10,6 +10,8 @@ import {
   UpdateDateColumn,
   JoinColumn,
   OneToOne,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { RoleEntity } from '../../../../../roles/infrastructure/persistence/relational/entities/role.entity';
 import { StatusEntity } from '../../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
@@ -21,6 +23,7 @@ import { EntityRelationalHelper } from '../../../../../utils/relational-entity-h
 import { Exclude, Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { GenderEntity } from '../../../../../genders/infrastructure/persistence/relational/entities/gender.entity';
+import { TopicsEntity } from '../../../../../topics/infrastructure/persistence/relational/entities/topics.entity';
 
 @Entity({
   name: 'user',
@@ -144,6 +147,36 @@ export class UserEntity extends EntityRelationalHelper {
   })
   @Column({ type: String, nullable: true })
   phoneNumber?: string | null;
+
+  @ApiProperty()
+  @Column({ type: String, nullable: true })
+  approval?: string | null;
+
+  @ApiProperty()
+  @Column({ type: String, nullable: true })
+  bio?: string | null;
+
+  @ApiProperty()
+  @Column({ type: String, nullable: true })
+  videoUrl?: string | null;
+
+  @ApiProperty()
+  @Column({ type: String, nullable: true })
+  education?: string | null;
+
+  @ApiProperty()
+  @Column({ type: Date, nullable: true })
+  educationStart?: Date | null;
+
+  @ApiProperty()
+  @Column({ type: Date, nullable: true })
+  educationEnd?: Date | null;
+
+  @ManyToMany(() => TopicsEntity)
+  @JoinTable({
+    name: 'humanBook_sharing_topic',
+  })
+  topics?: TopicsEntity[];
 
   @ApiProperty()
   @CreateDateColumn()
