@@ -125,6 +125,30 @@ export class UserEntity extends EntityRelationalHelper {
   })
   status?: StatusEntity;
 
+  @ApiProperty({
+    type: String,
+  })
+  @Column({ type: String, nullable: true })
+  address?: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: '11234567890',
+  })
+  @Column({ type: String, nullable: true })
+  parentPhoneNumber?: string | null;
+
+  @ApiProperty({
+    type: String,
+    example: '11234567891',
+  })
+  @Column({ type: String, nullable: true })
+  phoneNumber?: string | null;
+
+  @ApiProperty()
+  @Column({ type: String, nullable: true })
+  approval?: string | null;
+
   @ApiProperty()
   @CreateDateColumn()
   createdAt: Date;

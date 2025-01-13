@@ -12,15 +12,10 @@ export class AuthUpdateDto {
   // @IsOptional()
   // photo?: FileDto | null;
 
-  @ApiPropertyOptional({ example: 'John' })
+  @ApiPropertyOptional({ example: 'John Doe' })
   @IsOptional()
   @IsNotEmpty({ message: 'mustBeNotEmpty' })
-  firstName?: string;
-
-  @ApiPropertyOptional({ example: 'Doe' })
-  @IsOptional()
-  @IsNotEmpty({ message: 'mustBeNotEmpty' })
-  lastName?: string;
+  fullName?: string;
 
   @ApiPropertyOptional({ example: 'new.email@example.com' })
   @IsOptional()
@@ -53,4 +48,19 @@ export class AuthUpdateDto {
   @IsOptional()
   // @IsNotEmpty({ message: 'mustBeNotEmpty' })
   oldPassword?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNotEmpty()
+  address?: string;
+
+  @ApiPropertyOptional({ example: '11234567890' })
+  @IsOptional()
+  @IsNotEmpty()
+  parentPhoneNumber?: string;
+
+  @ApiPropertyOptional({ example: '11234567891' })
+  @IsOptional()
+  @IsNotEmpty()
+  phoneNumber?: string;
 }
