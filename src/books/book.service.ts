@@ -31,7 +31,7 @@ export class BooksService {
       authorName: book.author.fullName ?? '',
       title: book.title,
       abstract: book.abstract ?? '',
-      tags: book.tag ? book.tag : [],
+      tags: book.tag || [],
       author: book.author,
       createdAt: book.createdAt,
       updatedAt: book.updatedAt,

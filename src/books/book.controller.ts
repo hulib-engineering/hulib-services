@@ -23,6 +23,8 @@ import { RolesGuard } from '../roles/roles.guard';
 import { Book } from './domain/book';
 import { createNewHumanBookDto } from './dto/create-new-human-book.dto';
 import { HumanBookDetailDto } from './dto/human-book-detail.dto';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
 
 @ApiBearerAuth()
 // @Roles(RoleEnum.admin, RoleEnum.reader)
@@ -37,6 +39,7 @@ export class BooksController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @Roles(RoleEnum.reader)
   @ApiCreatedResponse({ type: Book })
   async create(@Body() createBookDto: createNewHumanBookDto): Promise<Book> {
     return this.booksService.createBook(createBookDto);
@@ -44,7 +47,7 @@ export class BooksController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  // @Roles(RoleEnum.admin, RoleEnum.reader)
+  @Roles(RoleEnum.reader)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiOkResponse({ type: HumanBookDetailDto })
   @ApiParam({ name: 'id', type: 'number', description: 'ID của human book' })

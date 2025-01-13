@@ -93,9 +93,6 @@ export class User {
   approval?: string | null;
 
   @ApiProperty()
-  approval?: string | null;
-
-  @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()
