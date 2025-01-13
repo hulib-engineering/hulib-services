@@ -4,6 +4,7 @@ import { SeedModule } from './seed.module';
 import { StatusSeedService } from './status/status-seed.service';
 import { UserSeedService } from './user/user-seed.service';
 import { GenderSeedService } from './gender/gender-seed.service';
+import { TopicSeedService } from './topic/topic-seed.service';
 
 const runSeed = async () => {
   const app = await NestFactory.create(SeedModule);
@@ -13,6 +14,7 @@ const runSeed = async () => {
   await app.get(RoleSeedService).run();
   await app.get(StatusSeedService).run();
   await app.get(UserSeedService).run();
+  await app.get(TopicSeedService).run();
 
   await app.close();
 };
