@@ -34,6 +34,7 @@ import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { Approval } from '../users/approval.enum';
+import { RegisterToHumanBookDto } from './dto/register-to-human-book';
 
 @Injectable()
 export class AuthService {
@@ -641,4 +642,61 @@ export class AuthService {
       throw new InternalServerErrorException();
     }
   }
+
+  async registerToHumanBook(
+    userId: User['id'],
+    createHumanBooksDto: RegisterToHumanBookDto,
+  ): Promise<User | null> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    // TODO: check if user has already a human book
+    // const humanBook = await this.humanBooksService.findByUserId(userId);
+    // if (humanBook) {
+    //   throw new UnprocessableEntityException({
+    //     status: HttpStatus.UNPROCESSABLE_ENTITY,
+    //     errors: {
+    //       humanBook: 'userAlreadyHasHumanBook',
+    //     },
+    //   });
+    // }
+
+    const educationStart = new Date(createHumanBooksDto.educationStart);
+    const educationEnd = createHumanBooksDto.educationEnd
+      ? new Date(createHumanBooksDto.educationEnd)
+      : null;
+
+    return await this.usersService.update(userId, {
+      ...user,
+      ...createHumanBooksDto,
+      educationStart,
+      educationEnd,
+    });
+  }
+
+  // async updateHumanBook(
+  //   userId: User['id'],
+  //   updateHumanBooksDto: UpdateHumanBooksDto,
+  // ): Promise<User | null> {
+  //   const user = await this.usersService.findById(userId);
+  //   if (!user) {
+  //     throw new NotFoundException();
+  //   }
+
+  //   const educationStart = updateHumanBooksDto.educationStart
+  //     ? new Date(updateHumanBooksDto.educationStart)
+  //     : null;
+  //   const educationEnd = updateHumanBooksDto.educationEnd
+  //     ? new Date(updateHumanBooksDto.educationEnd)
+  //     : null;
+
+  //   return await this.usersService.update(userId, {
+  //     ...user,
+  //     ...updateHumanBooksDto,
+  //     educationStart: educationStart,
+  //     educationEnd: educationEnd,
+  //   });
+  // }
 }
