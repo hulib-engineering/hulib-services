@@ -21,9 +21,9 @@ export class BooksRelationalRepository extends BooksRepository {
     return BooksMapper.toDomain(createdBook);
   }
 
-  async findById(id: number): Promise<Book | null> {
+  async findById(id: Book['id']): Promise<Book | null> {
     const bookEntity = await this.booksRepository.findOne({
-      where: { id },
+      where: { id: Number(id) },
       relations: ['author', 'tag'],
     });
 

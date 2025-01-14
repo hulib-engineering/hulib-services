@@ -10,10 +10,9 @@ export class Book {
   id: number | string;
 
   @ApiProperty({
-    type: String,
+    type: UserEntity,
   })
   @IsNotEmpty()
-  @IsString()
   author: UserEntity;
 
   @ApiProperty({
@@ -26,9 +25,8 @@ export class Book {
   @ApiProperty({
     type: String,
   })
-  @IsOptional()
   @IsString()
-  abstract: string | null;
+  abstract: string;
 
   @ApiProperty({
     type: () => Tag,

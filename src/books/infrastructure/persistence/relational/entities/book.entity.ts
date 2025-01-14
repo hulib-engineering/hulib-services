@@ -30,10 +30,9 @@ export class BookEntity extends EntityRelationalHelper {
 
   @ApiProperty({
     type: String,
-    nullable: true,
   })
-  @Column({ type: 'text', nullable: true })
-  abstract?: string | null;
+  @Column({ type: 'text' })
+  abstract?: string;
 
   @ApiProperty({
     type: () => UserEntity,

@@ -9,7 +9,7 @@ export class BooksMapper {
     const domainEntity = new Book();
     domainEntity.id = raw.id;
     domainEntity.title = raw.title;
-    domainEntity.abstract = raw.abstract || null;
+    domainEntity.abstract = raw.abstract || '';
     domainEntity.author = raw.author;
     domainEntity.tag =
       raw.tag?.map(
@@ -29,7 +29,7 @@ export class BooksMapper {
     const persistenceEntity = new BookEntity();
     persistenceEntity.id = Number(domainEntity.id);
     persistenceEntity.title = domainEntity.title;
-    persistenceEntity.abstract = domainEntity.abstract || null;
+    persistenceEntity.abstract = domainEntity.abstract;
     persistenceEntity.author = UserMapper.toPersistence(domainEntity.author);
     persistenceEntity.tag =
       domainEntity.tag?.map((tag) => {

@@ -1,13 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { UserEntity } from '../../users/infrastructure/persistence/relational/entities/user.entity';
 import { TagEntity } from '../../tags/infrastructure/persistence/relational/entities/tag.entity';
 import { Tag } from '../../tags/domain/tag';
+import { IsNumber } from 'class-validator';
 
 export class createNewHumanBookDto {
   @ApiProperty({
     type: String,
   })
-  title: string | null;
+  title: string;
 
   @ApiPropertyOptional({
     type: String,
@@ -15,10 +15,9 @@ export class createNewHumanBookDto {
   })
   abstract?: string;
 
-  @ApiProperty({
-    type: () => UserEntity,
-  })
-  author: UserEntity;
+  @ApiProperty()
+  @IsNumber()
+  author_id: number;
 
   @ApiPropertyOptional({
     type: () => TagEntity,
