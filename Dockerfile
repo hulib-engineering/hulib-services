@@ -3,12 +3,6 @@ FROM node:20.17.0-alpine
 RUN apk add --no-cache bash
 RUN npm i -g @nestjs/cli typescript ts-node
 
-
-WORKDIR /tmp/app
-COPY package*.json ./
-RUN npm_config_ignore_scripts=true npm install
-
-WORKDIR /usr/src/app
 COPY package*.json /tmp/app/
 RUN cd /tmp/app && npm install
 
