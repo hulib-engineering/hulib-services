@@ -34,7 +34,7 @@ import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { Approval } from '../users/approval.enum';
-import { RegisterToHumanBookDto } from './dto/register-to-human-book';
+import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
 
 @Injectable()
 export class AuthService {
@@ -673,6 +673,7 @@ export class AuthService {
       ...createHumanBooksDto,
       educationStart,
       educationEnd,
+      approval: Approval.pending,
     });
   }
 

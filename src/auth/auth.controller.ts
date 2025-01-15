@@ -27,7 +27,7 @@ import { RefreshResponseDto } from './dto/refresh-response.dto';
 import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { AuthValidateEmailDto } from './dto/auth-validate-email.dto';
-import { RegisterToHumanBookDto } from './dto/register-to-human-book';
+import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
 
 @ApiTags('Auth')
 @Controller({
@@ -188,6 +188,9 @@ export class AuthController {
   @ApiBearerAuth()
   @Post('register/human-books')
   @UseGuards(AuthGuard('jwt'))
+  @ApiOkResponse({
+    type: User,
+  })
   @HttpCode(HttpStatus.OK)
   public registerToHumanBooks(
     @Request() request,
