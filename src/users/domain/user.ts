@@ -5,6 +5,7 @@ import { Status } from '../../statuses/domain/status';
 import { ApiProperty } from '@nestjs/swagger';
 import { Gender } from '../../genders/domain/gender';
 import { Topics } from '../../topics/domain/topics';
+import { Approval } from '../approval.enum';
 
 const idType = Number;
 
@@ -90,22 +91,40 @@ export class User {
   })
   address?: string | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    example: Approval.pending,
+  })
   approval?: string | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    example: 'Lorem ipsum dolor sit amet',
+  })
   bio?: string | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    example: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  })
   videoUrl?: string | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    example: 'Lorem ipsum dolor sit amet',
+  })
   education?: string | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: Date,
+    example: '2011-10-05T14:48:00.000Z',
+  })
   educationStart?: Date | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: Date,
+    example: '2011-10-05T14:48:00.000Z',
+  })
   educationEnd?: Date | null;
 
   @ApiProperty({
