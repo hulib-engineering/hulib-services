@@ -51,16 +51,13 @@ export class AuthUpdateDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsNotEmpty()
   address?: string;
 
   @ApiPropertyOptional({ example: '11234567890' })
   @IsOptional()
-  @IsNotEmpty()
   parentPhoneNumber?: string;
 
   @ApiPropertyOptional({ example: '11234567891' })
   @IsOptional()
-  @IsNotEmpty()
   phoneNumber?: string;
 }

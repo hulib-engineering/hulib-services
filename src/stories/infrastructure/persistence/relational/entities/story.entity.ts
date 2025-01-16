@@ -1,0 +1,63 @@
+import {
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+  Column,
+  DeleteDateColumn,
+  ManyToOne,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
+import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
+import { ApiProperty } from '@nestjs/swagger';
+import { FileEntity } from '../../../../../files/infrastructure/persistence/relational/entities/file.entity';
+import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
+
+@Entity({
+  name: 'story',
+})
+export class StoryEntity extends EntityRelationalHelper {
+  @ApiProperty({
+    type: Number,
+  })
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @ApiProperty()
+  @Column({ type: String, unique: true })
+  title: string;
+
+  @ApiProperty({
+    type: String,
+    example: 'some story abstract',
+  })
+  @Column({ type: String, nullable: true })
+  abstract?: string | null;
+
+  @OneToOne(() => FileEntity, {
+    eager: true,
+  })
+  @JoinColumn()
+  cover?: FileEntity | null;
+
+  @ApiProperty({
+    type: () => UserEntity,
+  })
+  @ManyToOne(() => UserEntity, {
+    eager: true,
+  })
+  humanBook?: UserEntity | null;
+
+  @ApiProperty()
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @ApiProperty()
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @ApiProperty()
+  @DeleteDateColumn()
+  deletedAt: Date;
+}
