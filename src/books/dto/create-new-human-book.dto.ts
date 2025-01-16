@@ -17,7 +17,7 @@ export class createNewHumanBookDto {
 
   @ApiProperty()
   @IsNumber()
-  author_id: number;
+  authorId: number;
 
   @ApiPropertyOptional({
     type: () => TagEntity,
