@@ -1,5 +1,4 @@
 import { FileEntity } from '../../../../../files/infrastructure/persistence/relational/entities/file.entity';
-// import { FileMapper } from '../../../../../files/infrastructure/persistence/relational/mappers/file.mapper';
 import { RoleEntity } from '../../../../../roles/infrastructure/persistence/relational/entities/role.entity';
 import { StatusEntity } from '../../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
 import { User } from '../../../../domain/user';
@@ -119,7 +118,7 @@ export class UserMapper {
     persistenceEntity.gender = gender;
     persistenceEntity.role = role;
     persistenceEntity.status = status;
-    persistenceEntity.approval = approval;
+    persistenceEntity.approval = approval || null;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
     persistenceEntity.deletedAt = domainEntity.deletedAt;

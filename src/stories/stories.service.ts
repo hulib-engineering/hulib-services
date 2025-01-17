@@ -1,0 +1,61 @@
+import {
+  HttpStatus,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { CreateStoryDto } from './dto/create-story.dto';
+import { UpdateStoryDto } from './dto/update-story.dto';
+import { StoryRepository } from './infrastructure/persistence/story.repository';
+import { IPaginationOptions } from '../utils/types/pagination-options';
+import { Story } from './domain/story';
+import { UsersService } from '../users/users.service';
+
+@Injectable()
+export class StoriesService {
+  constructor(
+    private readonly storiesRepository: StoryRepository,
+    private usersService: UsersService,
+  ) {}
+
+  async create(createStoriesDto: CreateStoryDto) {
+    const humanBook = await this.usersService.findById(
+      createStoriesDto.humanBook.id,
+    );
+
+    if (!humanBook) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          email: 'notFound',
+        },
+      });
+    }
+
+    return this.storiesRepository.create({ ...createStoriesDto, humanBook });
+  }
+
+  findAllWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }) {
+    return this.storiesRepository.findAllWithPagination({
+      paginationOptions: {
+        page: paginationOptions.page,
+        limit: paginationOptions.limit,
+      },
+    });
+  }
+
+  findOne(id: Story['id']) {
+    return this.storiesRepository.findById(id);
+  }
+
+  update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {
+    return this.storiesRepository.update(id, updateStoriesDto);
+  }
+
+  remove(id: Story['id']) {
+    return this.storiesRepository.remove(id);
+  }
+}
