@@ -17,7 +17,7 @@ export class BooksService {
   ) {}
 
   async createBook(createBookDto: createNewHumanBookDto): Promise<Book> {
-    const authorId = createBookDto.author_id;
+    const authorId = createBookDto.authorId;
     const author = await this.usersRepository.findById(authorId);
 
     if (!author) {

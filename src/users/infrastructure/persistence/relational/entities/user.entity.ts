@@ -150,10 +150,6 @@ export class UserEntity extends EntityRelationalHelper {
 
   @ApiProperty()
   @Column({ type: String, nullable: true })
-  approval?: string | null;
-
-  @ApiProperty()
-  @Column({ type: String, nullable: true })
   bio?: string | null;
 
   @ApiProperty()
