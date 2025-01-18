@@ -60,4 +60,8 @@ export class AuthUpdateDto {
   @ApiPropertyOptional({ example: '11234567891' })
   @IsOptional()
   phoneNumber?: string;
+
+  @ApiPropertyOptional({ example: '1970-01-01' })
+  @IsOptional()
+  birthday?: string | null;
 }
