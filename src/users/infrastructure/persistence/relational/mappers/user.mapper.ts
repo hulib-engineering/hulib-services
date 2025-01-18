@@ -8,6 +8,7 @@ import { RoleEnum } from '../../../../../roles/roles.enum';
 import { StatusEnum } from '../../../../../statuses/statuses.enum';
 import { TopicsMapper } from '../../../../../topics/infrastructure/persistence/relational/mappers/topics.mapper';
 import { TopicsEntity } from '../../../../../topics/infrastructure/persistence/relational/entities/topics.entity';
+import { FileMapper } from '../../../../../files/infrastructure/persistence/relational/mappers/file.mapper';
 
 export class UserMapper {
   static toDomain(raw: UserEntity): User {
@@ -27,9 +28,10 @@ export class UserMapper {
     domainEntity.socialId = raw.socialId;
     domainEntity.fullName = raw.fullName;
     domainEntity.birthday = raw.birthday;
-    // if (raw.photo) {
-    //   domainEntity.photo = FileMapper.toDomain(raw.photo);
-    // }
+
+    if (raw.photo) {
+      domainEntity.photo = FileMapper.toDomain(raw.photo);
+    }
 
     if (raw.approval) {
       domainEntity.approval = raw.approval;
