@@ -24,7 +24,11 @@ export class StoryEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ApiProperty()
+
+  @ApiProperty({
+    type: String,
+    example: 'Story title',
+  })
   @Column({ type: String, unique: true })
   title: string;
 
@@ -48,6 +52,13 @@ export class StoryEntity extends EntityRelationalHelper {
     eager: true,
   })
   humanBook?: UserEntity | null;
+
+  @ApiProperty({
+    type: Number,
+    example: 4,
+  })
+  @Column({ type: Number, nullable: true })
+  rating?: number | null;
 
   @ApiProperty()
   @CreateDateColumn()

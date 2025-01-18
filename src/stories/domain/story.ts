@@ -32,6 +32,12 @@ export class Story {
   })
   humanBook: User;
 
+  @ApiProperty({
+    type: Number,
+    example: 4,
+  })
+  rating?: number | null;
+
   @ApiProperty()
   createdAt: Date;
 

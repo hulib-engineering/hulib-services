@@ -23,6 +23,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { AllConfigType } from './config/config.type';
 import { SessionModule } from './session/session.module';
 import { MailerModule } from './mailer/mailer.module';
+import { BooksModule } from './books/book.module';
 import { TopicsModule } from './topics/topics.module';
 import { StoriesModule } from './stories/stories.module';
 
@@ -83,6 +84,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     MailModule,
     MailerModule,
     HomeModule,
+    BooksModule,
   ],
 })
 export class AppModule {}
