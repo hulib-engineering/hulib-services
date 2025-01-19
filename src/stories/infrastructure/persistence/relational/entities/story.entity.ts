@@ -24,7 +24,6 @@ export class StoryEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-
   @ApiProperty({
     type: String,
     example: 'Story title',
