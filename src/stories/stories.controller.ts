@@ -108,4 +108,17 @@ export class StoriesController {
   remove(@Param('id') id: Story['id']) {
     return this.storiesService.remove(id);
   }
+
+  @Get('details/:id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Story,
+  })
+  async getStoryDetails(@Param('id') id: number) {
+    return this.storiesService.findDetailedStory(id);
+  }
 }

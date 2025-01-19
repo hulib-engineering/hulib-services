@@ -58,4 +58,19 @@ export class StoriesService {
   remove(id: Story['id']) {
     return this.storiesRepository.remove(id);
   }
+
+  async findDetailedStory(id: number): Promise<Story> {
+    const story = await this.storiesRepository.findById(id);
+
+    if (!story) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          story: 'notFoundStory',
+        },
+      });
+    }
+
+    return story;
+  }
 }
