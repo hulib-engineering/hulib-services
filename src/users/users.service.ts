@@ -132,6 +132,21 @@ export class UsersService {
     return this.usersRepository.findById(id);
   }
 
+  async findHumanBookById(id: User['id']): Promise<NullableType<User>> {
+    const humanBook = await this.usersRepository.findHumanBookById(id);
+
+    if (!humanBook) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'humanBookNotFound',
+        },
+      });
+    }
+
+    return humanBook;
+  }
+
   findByEmail(email: User['email']): Promise<NullableType<User>> {
     return this.usersRepository.findByEmail(email);
   }
