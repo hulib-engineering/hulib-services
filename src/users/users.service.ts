@@ -19,6 +19,7 @@ import { DeepPartial } from '../utils/types/deep-partial.type';
 import { GenderEnum } from '../genders/genders.enum';
 import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 import { Action, Approval } from './approval.enum';
+import { randomInt } from 'node:crypto';
 @Injectable()
 export class UsersService {
   constructor(
@@ -265,26 +266,94 @@ export class UsersService {
     await this.usersRepository.update(userId, { password: newPassword });
   }
 
-  async upgrade(id: User['id'], action: string): Promise<void> {
-    console.log(action);
-    if (action === Action.accept) {
-      await this.usersRepository.update(id, {
-        role: {
-          id: RoleEnum.humanBook,
-        },
-        approval: Approval.approved,
-      });
-    } else if (action === Action.reject) {
-      await this.usersRepository.update(id, {
-        approval: Approval.rejected,
-      });
-    } else {
-      throw new BadRequestException({
-        status: HttpStatus.BAD_REQUEST,
+  // async upgrade(id: User['id'], action: string): Promise<void> {
+  //   console.log(action);
+  //   const code = randomInt(100000, 999999);
+
+  //   if (action === Action.accept) {
+  //     await this.usersRepository.update(id, {
+  //       role: {
+  //         id: RoleEnum.humanBook,
+  //       },
+  //       approval: Approval.approved,
+  //     });
+  //   } else if (action === Action.reject) {
+  //     await this.usersRepository.update(id, {
+  //       approval: Approval.rejected,
+  //     });
+  //   } else {
+  //     throw new BadRequestException({
+  //       status: HttpStatus.BAD_REQUEST,
+  //       errors: {
+  //         action: 'invalidAction',
+  //       },
+  //     });
+  //   }
+  // }
+  async upgrade(
+    id: User['id'],
+    action: string,
+  ): Promise<{ approval: Approval; message: string; code: number }> {
+    const user = await this.usersRepository.findById(id);
+
+    if (!user) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          action: 'invalidAction',
+          user: 'userNotFound',
         },
       });
+    }
+
+    const code = randomInt(100000, 999999);
+
+    switch (action) {
+      case Action.accept:
+        if (user.approval === Approval.approved) {
+          return {
+            approval: Approval.approved,
+            message: 'User has already been approved.',
+            code,
+          };
+        }
+
+        await this.usersRepository.update(id, {
+          role: { id: RoleEnum.humanBook },
+          approval: Approval.approved,
+        });
+
+        return {
+          approval: Approval.approved,
+          message: 'User has been successfully approved.',
+          code,
+        };
+
+      case Action.reject:
+        if (user.approval === Approval.rejected) {
+          return {
+            approval: Approval.rejected,
+            message: 'User has already been rejected.',
+            code,
+          };
+        }
+
+        await this.usersRepository.update(id, {
+          approval: Approval.rejected,
+        });
+
+        return {
+          approval: Approval.rejected,
+          message: 'User has been successfully rejected.',
+          code,
+        };
+
+      default:
+        throw new BadRequestException({
+          status: HttpStatus.BAD_REQUEST,
+          errors: {
+            action: 'invalidAction',
+          },
+        });
     }
   }
 }
