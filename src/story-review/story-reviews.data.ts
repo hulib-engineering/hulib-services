@@ -255,8 +255,8 @@ export const storyReviewHistogramData: StoryReviewHistogram[] = [
 ];
 
 export const storyReviewOverviewData: StoryReviewOverview = {
-    rating: 4,
-    numberOfReviews: 25,
-    histogram: storyReviewHistogramData,
-    outStanding: storyReviewsData[0],
-  };
+  rating: 4,
+  numberOfReviews: 25,
+  histogram: storyReviewHistogramData,
+  outStanding: storyReviewsData[0],
+};

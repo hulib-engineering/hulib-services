@@ -27,7 +27,7 @@ import { FindAllStoriesDto } from './dto/find-all-stories.dto';
 import { User } from '../users/domain/user';
 import { UsersService } from '../users/users.service';
 import { StoryReview } from '../story-review/domain/story-review';
-import { storyReviewsData } from '../story-review/story-reviews.data';
+import { storyReviewOverviewData, storyReviewsData } from '../story-review/story-reviews.data';
 import { storiesData } from './stories.data';
 
 @ApiTags('Stories')
@@ -171,5 +171,15 @@ export class StoriesController {
       data: storyReviewsData,
       hasNextPage: false,
     }
+  }
+
+  @Get(':id/reviews-overview')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  getReviewsOverview(@Param('id') id: Story['id']) {
+    return storyReviewOverviewData;
   }
 }
