@@ -26,6 +26,7 @@ import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
 import { User } from '../users/domain/user';
 import { UsersService } from '../users/users.service';
+import { StoryReview } from '../story-review/domain/story-review';
 
 @ApiTags('Stories')
 // @ApiBearerAuth()
@@ -85,6 +86,19 @@ export class StoriesController {
     return this.storiesService.findOne(id);
   }
 
+  @Get(':id/similar')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Story,
+  })
+  getSimilarStories(@Param('id') id: Story['id']) {
+    return []
+  }
+
   @Patch(':id')
   @ApiParam({
     name: 'id',
@@ -111,7 +125,7 @@ export class StoriesController {
     return this.storiesService.remove(id);
   }
 
-  @Get('details/:id')
+  @Get(':id/details')
   @ApiParam({
     name: 'id',
     type: String,
@@ -124,7 +138,7 @@ export class StoriesController {
     return this.storiesService.findDetailedStory(id);
   }
 
-  @Get('human-book/:id')
+  @Get(':id/human-book')
   @ApiParam({
     name: 'id',
     type: String,
@@ -136,5 +150,13 @@ export class StoriesController {
   })
   getHumanBook(@Param('id') id: User['id']) {
     return this.usersService.findHumanBookById(id);
+  }
+
+  @Get(':id/reviews')
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(StoryReview),
+  })
+  getReviews(@Param('id') id: Story['id']) {
+    return []
   }
 }
