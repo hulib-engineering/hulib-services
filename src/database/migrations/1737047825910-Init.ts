@@ -14,7 +14,6 @@ export class Init1737047825910 implements MigrationInterface {
                         PRIMARY KEY,
                 path varchar                         NOT NULL
             );
-
             CREATE TABLE IF NOT EXISTS gender
             (
                 id   integer NOT NULL
@@ -22,7 +21,6 @@ export class Init1737047825910 implements MigrationInterface {
                         PRIMARY KEY,
                 name varchar NOT NULL
             );
-
             CREATE TABLE IF NOT EXISTS role
             (
                 id   integer NOT NULL
@@ -44,7 +42,6 @@ export class Init1737047825910 implements MigrationInterface {
                 "deletedAt" time,
                 "userId"    integer
             );
-
             CREATE TABLE IF NOT EXISTS status
             (
                 id   integer NOT NULL
@@ -91,7 +88,6 @@ export class Init1737047825910 implements MigrationInterface {
                 "educationStart"    date,
                 "educationEnd"      date
             );
-
             CREATE TABLE IF NOT EXISTS "humanBooks"
             (
                 id               serial
@@ -109,7 +105,6 @@ export class Init1737047825910 implements MigrationInterface {
                 "createdAt"      timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
                 "updatedAt"      timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
             );
-
             CREATE TABLE IF NOT EXISTS topics
             (
                 id          serial
@@ -119,7 +114,6 @@ export class Init1737047825910 implements MigrationInterface {
                 "createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
                 "updatedAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
             );
-
             CREATE TABLE IF NOT EXISTS "humanBook_sharing_topic"
             (
                 "userId"   integer NOT NULL

@@ -27,6 +27,8 @@ import {
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
+import { User } from '../users/domain/user';
+import { UsersService } from '../users/users.service';
 
 @ApiTags('Stories')
 @ApiBearerAuth()
@@ -36,7 +38,10 @@ import { FindAllStoriesDto } from './dto/find-all-stories.dto';
   version: '1',
 })
 export class StoriesController {
-  constructor(private readonly storiesService: StoriesService) {}
+  constructor(
+    private readonly storiesService: StoriesService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post()
   @ApiCreatedResponse({
@@ -107,5 +112,32 @@ export class StoriesController {
   })
   remove(@Param('id') id: Story['id']) {
     return this.storiesService.remove(id);
+  }
+
+  @Get('details/:id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Story,
+  })
+  async getStoryDetails(@Param('id') id: number) {
+    return this.storiesService.findDetailedStory(id);
+  }
+
+  @Get('human-book/:id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+    example: '7',
+  })
+  @ApiOkResponse({
+    type: User,
+  })
+  getHumanBook(@Param('id') id: User['id']) {
+    return this.usersService.findHumanBookById(id);
   }
 }
