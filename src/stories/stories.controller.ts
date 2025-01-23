@@ -26,6 +26,7 @@ import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
 import { User } from '../users/domain/user';
 import { UsersService } from '../users/users.service';
+import { StoryReview } from '../story-review/domain/story-review';
 
 @ApiTags('Stories')
 // @ApiBearerAuth()
@@ -149,5 +150,13 @@ export class StoriesController {
   })
   getHumanBook(@Param('id') id: User['id']) {
     return this.usersService.findHumanBookById(id);
+  }
+
+  @Get(':id/reviews')
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(StoryReview),
+  })
+  getReviews(@Param('id') id: Story['id']) {
+    return []
   }
 }
