@@ -11,7 +11,7 @@ export class StoryReviewOverview {
 
   @ApiProperty({
     type: Number,
-    example: 125,
+    example: 25,
   })
   numberOfReviews?: number | null;
 

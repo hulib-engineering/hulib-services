@@ -40,7 +40,4 @@ export class GetAuthorDetailByIdDto {
 
   @ApiProperty()
   updatedAt: Date;
-
-  @ApiProperty()
-  deletedAt: Date;
 }

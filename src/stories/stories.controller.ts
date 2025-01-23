@@ -27,6 +27,8 @@ import { FindAllStoriesDto } from './dto/find-all-stories.dto';
 import { User } from '../users/domain/user';
 import { UsersService } from '../users/users.service';
 import { StoryReview } from '../story-review/domain/story-review';
+import { storyReviewsData } from '../story-review/story-reviews.data';
+import { storiesData } from './stories.data';
 
 @ApiTags('Stories')
 // @ApiBearerAuth()
@@ -83,7 +85,7 @@ export class StoriesController {
     type: Story,
   })
   findOne(@Param('id') id: Story['id']) {
-    return this.storiesService.findOne(id);
+    return storiesData[0]
   }
 
   @Get(':id/similar')
@@ -93,10 +95,13 @@ export class StoriesController {
     required: true,
   })
   @ApiOkResponse({
-    type: Story,
+    type: InfinityPaginationResponse(Story),
   })
   getSimilarStories(@Param('id') id: Story['id']) {
-    return []
+    return {
+      data: storiesData,
+      hasNextPage: false,
+    }
   }
 
   @Patch(':id')
@@ -153,10 +158,18 @@ export class StoriesController {
   }
 
   @Get(':id/reviews')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
   @ApiOkResponse({
     type: InfinityPaginationResponse(StoryReview),
   })
   getReviews(@Param('id') id: Story['id']) {
-    return []
+    return {
+      data: storyReviewsData,
+      hasNextPage: false,
+    }
   }
 }
