@@ -1,7 +1,7 @@
 import { StoryReview } from './domain/story-review';
-import { Story } from '../stories/domain/story';
 import { StoryReviewOverview } from './domain/story-review-overview';
 import { StoryReviewHistogram } from './domain/story-review-histogram';
+import { userData } from '../users/users.data';
 
 export const storyReviewsData: StoryReview[] = [
   {
@@ -11,6 +11,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15'),
+    user: userData[0],
   },
   {
     id: 2,
@@ -19,6 +20,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-16'),
     updatedAt: new Date('2024-01-16'),
+    user: userData[0],
   },
   {
     id: 3,
@@ -27,6 +29,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-17'),
     updatedAt: new Date('2024-01-17'),
+    user: userData[0],
   },
   {
     id: 4,
@@ -35,6 +38,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-18'),
     updatedAt: new Date('2024-01-18'),
+    user: userData[0],
   },
   {
     id: 5,
@@ -43,6 +47,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-19'),
     updatedAt: new Date('2024-01-19'),
+    user: userData[0],
   },
   {
     id: 6,
@@ -51,6 +56,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-01-20'),
+    user: userData[0],
   },
   {
     id: 7,
@@ -59,6 +65,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-21'),
     updatedAt: new Date('2024-01-21'),
+    user: userData[0],
   },
   {
     id: 8,
@@ -67,6 +74,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-22'),
     updatedAt: new Date('2024-01-22'),
+    user: userData[0],
   },
   {
     id: 9,
@@ -75,6 +83,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-23'),
     updatedAt: new Date('2024-01-23'),
+    user: userData[0],
   },
   {
     id: 10,
@@ -83,6 +92,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-24'),
     updatedAt: new Date('2024-01-24'),
+    user: userData[0],
   },
   {
     id: 11,
@@ -91,6 +101,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-25'),
     updatedAt: new Date('2024-01-25'),
+    user: userData[0],
   },
   {
     id: 12,
@@ -99,6 +110,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-26'),
     updatedAt: new Date('2024-01-26'),
+    user: userData[0],
   },
   {
     id: 13,
@@ -107,6 +119,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-27'),
     updatedAt: new Date('2024-01-27'),
+    user: userData[0],
   },
   {
     id: 14,
@@ -115,6 +128,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-28'),
     updatedAt: new Date('2024-01-28'),
+    user: userData[0],
   },
   {
     id: 15,
@@ -123,6 +137,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-29'),
     updatedAt: new Date('2024-01-29'),
+    user: userData[0],
   },
   {
     id: 16,
@@ -131,6 +146,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-30'),
     updatedAt: new Date('2024-01-30'),
+    user: userData[0],
   },
   {
     id: 17,
@@ -139,6 +155,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-01-31'),
     updatedAt: new Date('2024-01-31'),
+    user: userData[0],
   },
   {
     id: 18,
@@ -147,6 +164,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-02-01'),
     updatedAt: new Date('2024-02-01'),
+    user: userData[0],
   },
   {
     id: 19,
@@ -155,6 +173,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-02-02'),
     updatedAt: new Date('2024-02-02'),
+    user: userData[0],
   },
   {
     id: 20,
@@ -163,6 +182,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-02-03'),
     updatedAt: new Date('2024-02-03'),
+    user: userData[0],
   },
   {
     id: 21,
@@ -171,6 +191,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-02-04'),
     updatedAt: new Date('2024-02-04'),
+    user: userData[0],
   },
   {
     id: 22,
@@ -179,6 +200,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-02-05'),
     updatedAt: new Date('2024-02-05'),
+    user: userData[0],
   },
   {
     id: 23,
@@ -187,6 +209,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-02-06'),
     updatedAt: new Date('2024-02-06'),
+    user: userData[0],
   },
   {
     id: 24,
@@ -195,6 +218,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-02-07'),
     updatedAt: new Date('2024-02-07'),
+    user: userData[0],
   },
   {
     id: 25,
@@ -203,6 +227,7 @@ export const storyReviewsData: StoryReview[] = [
     rating: 4,
     createdAt: new Date('2024-02-08'),
     updatedAt: new Date('2024-02-08'),
+    user: userData[0],
   },
 ];
 
