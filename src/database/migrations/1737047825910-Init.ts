@@ -1,9 +1,12 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
+
 export class Init1737047825910 implements MigrationInterface {
-  name = 'Init1737047825910';
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
+    name = 'Init1737047825910'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
             CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
             CREATE TABLE IF NOT EXISTS file
             (
                 id   uuid DEFAULT uuid_generate_v4() NOT NULL
@@ -25,7 +28,9 @@ export class Init1737047825910 implements MigrationInterface {
                         PRIMARY KEY,
                 name varchar NOT NULL
             );
+
             CREATE SEQUENCE public.session_id_seq;
+
             CREATE TABLE IF NOT EXISTS session
             (
                 id          integer DEFAULT NEXTVAL('session_id_seq'::regclass) NOT NULL
@@ -44,7 +49,9 @@ export class Init1737047825910 implements MigrationInterface {
                         PRIMARY KEY,
                 name varchar NOT NULL
             );
+
             CREATE SEQUENCE public.user_id_seq;
+
             CREATE TABLE IF NOT EXISTS "user"
             (
                 id                  integer DEFAULT NEXTVAL('user_id_seq'::regclass) NOT NULL
@@ -121,18 +128,20 @@ export class Init1737047825910 implements MigrationInterface {
                     PRIMARY KEY ("userId", "topicsId")
             );
             `);
-  }
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE IF EXISTS "humanBook_sharing_topic"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "humanBooks"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "topics"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "user"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "status"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "role"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "gender"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "file"`);
-    await queryRunner.query(`DROP TABLE IF EXISTS "session"`);
-    await queryRunner.query(`DROP SEQUENCE IF EXISTS "session_id_seq"`);
-    await queryRunner.query(`DROP SEQUENCE IF EXISTS "user_id_seq"`);
-  }
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`DROP TABLE IF EXISTS "humanBook_sharing_topic"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "humanBooks"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "topics"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "user"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "status"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "role"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "gender"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "file"`);
+        await queryRunner.query(`DROP TABLE IF EXISTS "session"`);
+        await queryRunner.query(`DROP SEQUENCE IF EXISTS "session_id_seq"`);
+        await queryRunner.query(`DROP SEQUENCE IF EXISTS "user_id_seq"`);
+    }
+
 }
