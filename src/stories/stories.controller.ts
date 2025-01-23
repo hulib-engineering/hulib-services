@@ -85,6 +85,19 @@ export class StoriesController {
     return this.storiesService.findOne(id);
   }
 
+  @Get(':id/similar')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Story,
+  })
+  getSimilarStories(@Param('id') id: Story['id']) {
+    return []
+  }
+
   @Patch(':id')
   @ApiParam({
     name: 'id',
@@ -111,7 +124,7 @@ export class StoriesController {
     return this.storiesService.remove(id);
   }
 
-  @Get('details/:id')
+  @Get(':id/details')
   @ApiParam({
     name: 'id',
     type: String,
@@ -124,7 +137,7 @@ export class StoriesController {
     return this.storiesService.findDetailedStory(id);
   }
 
-  @Get('human-book/:id')
+  @Get(':id/human-book')
   @ApiParam({
     name: 'id',
     type: String,

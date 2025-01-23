@@ -26,6 +26,7 @@ import { MailerModule } from './mailer/mailer.module';
 import { BooksModule } from './books/book.module';
 import { TopicsModule } from './topics/topics.module';
 import { StoriesModule } from './stories/stories.module';
+import { FavStoriesModule } from './fav-stories/fav-stories.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -37,6 +38,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
 @Module({
   imports: [
     StoriesModule,
+    FavStoriesModule,
     TopicsModule,
     ConfigModule.forRoot({
       isGlobal: true,
