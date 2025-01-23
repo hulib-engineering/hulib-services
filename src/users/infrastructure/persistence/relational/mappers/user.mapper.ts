@@ -41,7 +41,6 @@ export class UserMapper {
     domainEntity.status = raw.status;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
-    domainEntity.deletedAt = raw.deletedAt;
     domainEntity.address = raw.address;
     domainEntity.phoneNumber = raw.phoneNumber;
     domainEntity.parentPhoneNumber = raw.parentPhoneNumber;
@@ -123,7 +122,7 @@ export class UserMapper {
     persistenceEntity.approval = approval || null;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
-    persistenceEntity.deletedAt = domainEntity.deletedAt;
+    persistenceEntity.deletedAt = null;
     persistenceEntity.address = domainEntity.address;
     persistenceEntity.phoneNumber = domainEntity.phoneNumber;
     persistenceEntity.parentPhoneNumber = domainEntity.parentPhoneNumber;

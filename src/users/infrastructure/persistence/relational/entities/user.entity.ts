@@ -183,6 +183,6 @@ export class UserEntity extends EntityRelationalHelper {
   updatedAt: Date;
 
   @ApiProperty()
-  @DeleteDateColumn()
-  deletedAt: Date;
+  @DeleteDateColumn({ nullable: true })
+  deletedAt: Date | null;
 }
