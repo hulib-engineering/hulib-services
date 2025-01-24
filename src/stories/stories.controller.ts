@@ -58,21 +58,23 @@ export class StoriesController {
   async findAll(
     @Query() query: FindAllStoriesDto,
   ): Promise<InfinityPaginationResponseDto<Story>> {
-    const page = query?.page ?? 1;
-    let limit = query?.limit ?? 10;
-    if (limit > 50) {
-      limit = 50;
-    }
+    // const page = query?.page ?? 1;
+    // let limit = query?.limit ?? 10;
 
-    return infinityPagination(
-      await this.storiesService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
-      }),
-      { page, limit },
-    );
+    // return infinityPagination(
+    //   await this.storiesService.findAllWithPagination({
+    //     paginationOptions: {
+    //       page,
+    //       limit,
+    //     },
+    //   }),
+    //   { page, limit },
+    // );
+
+    return {
+      data: storiesData,
+      hasNextPage: false
+    }
   }
 
   @Get(':id')
