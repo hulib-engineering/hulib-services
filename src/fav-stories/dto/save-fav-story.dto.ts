@@ -1,13 +1,9 @@
-import {
-    IsString,
-} from 'class-validator';
+import { IsString } from 'class-validator';
 
-import {
-    ApiProperty,
-} from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class SaveFavStoryDto {
-    @ApiProperty()
-    @IsString()
-    storyId: string;
+  @ApiProperty()
+  @IsString()
+  storyId: string;
 }

@@ -1,6 +1,4 @@
 import { Story } from './domain/story';
-import { User } from '../users/domain/user';
-import { FileType } from '../files/domain/file';
 import { storyReviewOverviewData } from '../story-review/story-reviews.data';
 
 export const storiesData: Story[] = [
