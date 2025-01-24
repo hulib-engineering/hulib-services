@@ -73,4 +73,31 @@ export class StoriesService {
 
     return story;
   }
+
+  async findSimilarStories({
+    paginationOptions,
+    id,
+  }: {
+    paginationOptions: IPaginationOptions;
+    id: Story['id'];
+  }): Promise<Story[]> {
+    const story = await this.storiesRepository.findById(id);
+
+    if (!story) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          story: 'notFoundStory',
+        },
+      });
+    }
+
+    return this.storiesRepository.findSimilarStories({
+      paginationOptions: {
+        page: paginationOptions.page,
+        limit: paginationOptions.limit,
+      },
+      story,
+    });
+  }
 }

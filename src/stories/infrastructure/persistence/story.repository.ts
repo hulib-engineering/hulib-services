@@ -22,4 +22,12 @@ export abstract class StoryRepository {
   ): Promise<Story | null>;
 
   abstract remove(id: Story['id']): Promise<void>;
+
+  abstract findSimilarStories({
+    paginationOptions,
+    story,
+  }: {
+    paginationOptions: IPaginationOptions;
+    story: Story;
+  }): Promise<Story[]>;
 }

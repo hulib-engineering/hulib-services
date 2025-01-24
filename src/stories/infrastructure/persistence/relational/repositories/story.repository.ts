@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { StoryEntity } from '../entities/story.entity';
 import { NullableType } from '../../../../../utils/types/nullable.type';
 import { Story } from '../../../../domain/story';
@@ -67,5 +67,35 @@ export class StoriesRelationalRepository implements StoryRepository {
 
   async remove(id: Story['id']): Promise<void> {
     await this.storiesRepository.delete(id);
+  }
+
+  async findSimilarStories({
+    paginationOptions,
+    story,
+  }: {
+    paginationOptions: IPaginationOptions;
+    story: Story;
+  }): Promise<Story[]> {
+    const entities = await this.storiesRepository.find({
+      where: [
+        {
+          humanBook: {
+            id: Number(story.humanBook.id),
+          },
+        },
+        {
+          topics: {
+            id: In((story.topics || []).map((topic) => topic.id)),
+          },
+        },
+        {
+          id: Not(story.id), // exclude the current story
+        },
+      ],
+      skip: (paginationOptions.page - 1) * paginationOptions.limit,
+      take: paginationOptions.limit,
+    });
+
+    return entities.map((entity) => StoryMapper.toDomain(entity));
   }
 }
