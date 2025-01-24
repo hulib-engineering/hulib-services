@@ -6,37 +6,42 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
   Query,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
 import {
-  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { Story } from './domain/story';
-import { AuthGuard } from '@nestjs/passport';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
+import { User } from '../users/domain/user';
+import { UsersService } from '../users/users.service';
+import { StoryReview } from '../story-review/domain/story-review';
+import { storyReviewOverviewData, storyReviewsData } from '../story-review/story-reviews.data';
+import { storiesData } from './stories.data';
 
 @ApiTags('Stories')
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+// @ApiBearerAuth()
+// @UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'stories',
   version: '1',
 })
 export class StoriesController {
-  constructor(private readonly storiesService: StoriesService) {}
+  constructor(
+    private readonly storiesService: StoriesService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post()
   @ApiCreatedResponse({
@@ -80,7 +85,23 @@ export class StoriesController {
     type: Story,
   })
   findOne(@Param('id') id: Story['id']) {
-    return this.storiesService.findOne(id);
+    return storiesData[0]
+  }
+
+  @Get(':id/similar')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(Story),
+  })
+  getSimilarStories(@Param('id') id: Story['id']) {
+    return {
+      data: storiesData,
+      hasNextPage: false,
+    }
   }
 
   @Patch(':id')
@@ -107,5 +128,58 @@ export class StoriesController {
   })
   remove(@Param('id') id: Story['id']) {
     return this.storiesService.remove(id);
+  }
+
+  @Get(':id/details')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Story,
+  })
+  async getStoryDetails(@Param('id') id: number) {
+    return this.storiesService.findDetailedStory(id);
+  }
+
+  @Get(':id/human-book')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+    example: '7',
+  })
+  @ApiOkResponse({
+    type: User,
+  })
+  getHumanBook(@Param('id') id: User['id']) {
+    return this.usersService.findHumanBookById(id);
+  }
+
+  @Get(':id/reviews')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(StoryReview),
+  })
+  getReviews(@Param('id') id: Story['id']) {
+    return {
+      data: storyReviewsData,
+      hasNextPage: false,
+    }
+  }
+
+  @Get(':id/reviews-overview')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  getReviewsOverview(@Param('id') id: Story['id']) {
+    return storyReviewOverviewData;
   }
 }

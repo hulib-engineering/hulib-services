@@ -9,6 +9,7 @@ import { User } from '../../../../domain/user';
 import { UserRepository } from '../../user.repository';
 import { UserMapper } from '../mappers/user.mapper';
 import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+import { RoleEnum } from '../../../../../roles/roles.enum';
 
 @Injectable()
 export class UsersRelationalRepository implements UserRepository {
@@ -60,6 +61,9 @@ export class UsersRelationalRepository implements UserRepository {
   async findById(id: User['id']): Promise<NullableType<User>> {
     const entity = await this.usersRepository.findOne({
       where: { id: Number(id) },
+      relations: {
+        topics: true,
+      },
     });
 
     return entity ? UserMapper.toDomain(entity) : null;
@@ -114,5 +118,18 @@ export class UsersRelationalRepository implements UserRepository {
 
   async remove(id: User['id']): Promise<void> {
     await this.usersRepository.softDelete(id);
+  }
+
+  async findHumanBookById(id: User['id']): Promise<NullableType<User>> {
+    const entity = await this.usersRepository.findOne({
+      where: { id: Number(id), role: { id: RoleEnum.humanBook } },
+      relations: {
+        topics: true,
+      },
+    });
+
+    if (!entity) return null;
+
+    return UserMapper.toDomain(entity);
   }
 }
