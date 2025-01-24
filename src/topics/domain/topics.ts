@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-
-export class Topics {
+export class Topic {
   @ApiProperty({
     type: Number,
   })
@@ -15,3 +14,5 @@ export class Topics {
   @ApiProperty()
   updatedAt: Date;
 }
+
+export class Topics extends Topic {}

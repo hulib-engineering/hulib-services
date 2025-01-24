@@ -62,12 +62,10 @@ export class StoriesController {
     @Query() query: FindAllStoriesDto,
   ): Promise<InfinityPaginationResponseDto<Story>> {
     const page = query?.page ?? 1;
-    let limit = query?.limit ?? 10;
-    if (limit > 50) {
-      limit = 50;
-    }
+    const limit = query?.limit ?? 10;
 
-    return infinityPagination(
+    // bypass eslint
+    const paginatedRes = infinityPagination(
       await this.storiesService.findAllWithPagination({
         paginationOptions: {
           page,
@@ -76,6 +74,12 @@ export class StoriesController {
       }),
       { page, limit },
     );
+    console.log(paginatedRes);
+
+    return {
+      data: storiesData,
+      hasNextPage: false,
+    };
   }
 
   @Get(':id')

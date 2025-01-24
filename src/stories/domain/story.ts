@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../users/domain/user';
 import { FileType } from '../../files/domain/file';
 import { StoryReviewOverview } from '../../story-review/domain/story-review-overview';
-import { Topics } from '../../topics/domain/topics';
+import { Topic } from '../../topics/domain/topics';
 
 const idType = Number;
 
@@ -54,9 +54,9 @@ export class Story {
   isFavorited?: boolean | null;
 
   @ApiProperty({
-    type: () => [Topics],
+    type: () => [Topic],
   })
-  topics?: Topics[];
+  topics?: Topic[] | null;
 
   @ApiProperty()
   createdAt: Date;
