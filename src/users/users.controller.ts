@@ -23,20 +23,20 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { Roles } from '../roles/roles.decorator';
-import { RoleEnum } from '../roles/roles.enum';
+import { Roles } from '@roles/roles.decorator';
+import { RoleEnum } from '@roles/roles.enum';
 import { AuthGuard } from '@nestjs/passport';
 
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
-} from '../utils/dto/infinity-pagination-response.dto';
-import { NullableType } from '../utils/types/nullable.type';
+} from '@utils/dto/infinity-pagination-response.dto';
+import { NullableType } from '@utils/types/nullable.type';
 import { QueryUserDto } from './dto/query-user.dto';
 import { User } from './domain/user';
 import { UsersService } from './users.service';
-import { RolesGuard } from '../roles/roles.guard';
-import { infinityPagination } from '../utils/infinity-pagination';
+import { RolesGuard } from '@roles/roles.guard';
+import { infinityPagination } from '@utils/infinity-pagination';
 import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 import { UpgradeDto } from './dto/upgrade.dto';
 

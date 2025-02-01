@@ -3,7 +3,7 @@ import { StoriesService } from './stories.service';
 import { StoriesController } from './stories.controller';
 import { RelationalStoriesPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 
-import { UsersModule } from '../users/users.module';
+import { UsersModule } from '@users/users.module';
 
 @Module({
   imports: [RelationalStoriesPersistenceModule, UsersModule],

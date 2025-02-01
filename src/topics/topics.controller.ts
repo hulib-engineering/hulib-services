@@ -5,8 +5,8 @@ import { Topics } from './domain/topics';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
-} from '../utils/dto/infinity-pagination-response.dto';
-import { infinityPagination } from '../utils/infinity-pagination';
+} from '@utils/dto/infinity-pagination-response.dto';
+import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllTopicsDto } from './dto/find-all-topics.dto';
 
 @ApiTags('Topics')

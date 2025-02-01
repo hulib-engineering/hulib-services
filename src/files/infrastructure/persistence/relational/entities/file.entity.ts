@@ -5,11 +5,11 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { Transform } from 'class-transformer';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { AppConfig } from '../../../../../config/app-config.type';
-import appConfig from '../../../../../config/app.config';
-import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
-import { FileConfig, FileDriver } from '../../../../config/file-config.type';
-import fileConfig from '../../../../config/file.config';
+import { AppConfig } from '@config/app-config.type';
+import appConfig from '@config/app.config';
+import { EntityRelationalHelper } from '@utils/relational-entity-helper';
+import { FileConfig, FileDriver } from '@files/config/file-config.type';
+import fileConfig from '@files/config/file.config';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Entity({ name: 'file' })

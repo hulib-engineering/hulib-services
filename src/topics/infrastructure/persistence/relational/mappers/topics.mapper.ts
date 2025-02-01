@@ -1,5 +1,5 @@
-import { Topics } from '../../../../domain/topics';
-import { TopicsEntity } from '../entities/topics.entity';
+import { Topics } from '@topics/domain/topics';
+import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
 
 export class TopicsMapper {
   static toDomain(raw: TopicsEntity): Topics {

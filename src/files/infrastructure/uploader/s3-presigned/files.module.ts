@@ -11,8 +11,8 @@ import { S3Client } from '@aws-sdk/client-s3';
 import multerS3 from 'multer-s3';
 
 import { FilesS3PresignedService } from './files.service';
-import { RelationalFilePersistenceModule } from '../../persistence/relational/relational-persistence.module';
-import { AllConfigType } from '../../../../config/config.type';
+import { RelationalFilePersistenceModule } from '@files/infrastructure/persistence/relational/relational-persistence.module';
+import { AllConfigType } from '@config/config.type';
 
 const infrastructurePersistenceModule = RelationalFilePersistenceModule;
 

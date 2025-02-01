@@ -1,6 +1,6 @@
-import { UserMapper } from '../../../../../users/infrastructure/persistence/relational/mappers/user.mapper';
-import { Story } from '../../../../domain/story';
-import { StoryEntity } from '../entities/story.entity';
+import { UserMapper } from '@users/infrastructure/persistence/relational/mappers/user.mapper';
+import { Story } from '@stories/domain/story';
+import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 
 export class StoryMapper {
   static toDomain(raw: StoryEntity): Story {

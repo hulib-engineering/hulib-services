@@ -21,13 +21,13 @@ import { Story } from './domain/story';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
-} from '../utils/dto/infinity-pagination-response.dto';
-import { infinityPagination } from '../utils/infinity-pagination';
+} from '@utils/dto/infinity-pagination-response.dto';
+import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
-import { User } from '../users/domain/user';
-import { UsersService } from '../users/users.service';
-import { StoryReview } from '../story-review/domain/story-review';
-import { storyReviewOverviewData, storyReviewsData } from '../story-review/story-reviews.data';
+import { User } from '@users/domain/user';
+import { UsersService } from '@users/users.service';
+import { StoryReview } from '@story-review/domain/story-review';
+import { storyReviewOverviewData, storyReviewsData } from '@story-review/story-reviews.data';
 import { storiesData } from './stories.data';
 
 @ApiTags('Stories')

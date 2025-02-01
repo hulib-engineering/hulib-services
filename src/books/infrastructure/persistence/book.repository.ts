@@ -1,4 +1,4 @@
-import { Book } from '../../domain/book';
+import { Book } from '@books/domain/book';
 
 export abstract class BooksRepository {
   abstract createBook(

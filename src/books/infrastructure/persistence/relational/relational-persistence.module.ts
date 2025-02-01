@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { BooksRepository } from '../book.repository';
+import { BooksRepository } from '@books/infrastructure/persistence/book.repository';
 import { BooksRelationalRepository } from './repositories/book.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BookEntity } from './entities/book.entity';
+import { BookEntity } from '@books/infrastructure/persistence/relational/entities/book.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([BookEntity])],

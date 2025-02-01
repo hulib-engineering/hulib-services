@@ -9,10 +9,10 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
+import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
-import { FileEntity } from '../../../../../files/infrastructure/persistence/relational/entities/file.entity';
-import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { FileEntity } from '@files/infrastructure/persistence/relational/entities/file.entity';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 
 @Entity({
   name: 'story',

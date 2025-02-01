@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber } from 'class-validator';
-import { Role } from '../domain/role';
+import { Role } from '@roles/domain/role';
 
 export class RoleDto implements Role {
   @ApiProperty()

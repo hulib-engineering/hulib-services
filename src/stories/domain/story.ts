@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '../../users/domain/user';
-import { FileType } from '../../files/domain/file';
-import { StoryReviewOverview } from '../../story-review/domain/story-review-overview';
-import { Topic } from '../../topics/domain/topics';
+import { User } from '@users/domain/user';
+import { FileType } from '@files/domain/file';
+import { StoryReviewOverview } from '@story-review/domain/story-review-overview';
+import { Topic } from '@topics/domain/topics';
 
 const idType = Number;
 

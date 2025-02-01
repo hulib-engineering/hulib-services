@@ -1,8 +1,8 @@
-import { Book } from '../../../../domain/book';
-import { BookEntity } from '../entities/book.entity';
-import { UserMapper } from '../../../../../users/infrastructure/persistence/relational/mappers/user.mapper';
-import { TagEntity } from '../../../../../tags/infrastructure/persistence/relational/entities/tag.entity';
-import { Tag } from '../../../../../tags/domain/tag';
+import { Book } from '@books/domain/book';
+import { BookEntity } from '@books/infrastructure/persistence/relational/entities/book.entity';
+import { UserMapper } from '@users/infrastructure/persistence/relational/mappers/user.mapper';
+import { TagEntity } from '@tags/infrastructure/persistence/relational/entities/tag.entity';
+import { Tag } from '@tags/domain/tag';
 
 export class BooksMapper {
   static toDomain(raw: BookEntity): Book {

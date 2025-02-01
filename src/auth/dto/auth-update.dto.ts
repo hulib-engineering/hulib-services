@@ -1,11 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsOptional, MinLength } from 'class-validator';
-import { FileDto } from '../../files/dto/file.dto';
+import { FileDto } from '@files/dto/file.dto';
 import { Transform, Type } from 'class-transformer';
-import { lowerCaseTransformer } from '../../utils/transformers/lower-case.transformer';
-import { StatusDto } from '../../statuses/dto/status.dto';
-import { GenderEnum } from '../../genders/genders.enum';
-import { GenderDto } from '../../genders/dto/gender.dto';
+import { lowerCaseTransformer } from '@utils/transformers/lower-case.transformer';
+import { StatusDto } from '@statuses/dto/status.dto';
+import { GenderEnum } from '@genders/genders.enum';
+import { GenderDto } from '@genders/dto/gender.dto';
 
 export class AuthUpdateDto {
   // @ApiPropertyOptional({ type: () => FileDto })

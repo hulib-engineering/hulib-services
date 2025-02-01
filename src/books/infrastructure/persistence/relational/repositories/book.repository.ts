@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BooksRepository } from '../../book.repository';
-import { Book } from '../../../../domain/book';
-import { BookEntity } from '../entities/book.entity';
-import { BooksMapper } from '../mappers/book.mapper';
+import { BooksRepository } from '@books/infrastructure/persistence/book.repository';
+import { Book } from '@books/domain/book';
+import { BookEntity } from '@books/infrastructure/persistence/relational/entities/book.entity';
+import { BooksMapper } from '@books/infrastructure/persistence/relational/mappers/book.mapper';
 
 @Injectable()
 export class BooksRelationalRepository extends BooksRepository {

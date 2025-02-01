@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsOptional, MinLength } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { lowerCaseTransformer } from '../../utils/transformers/lower-case.transformer';
-import { GenderDto } from '../../genders/dto/gender.dto';
-import { GenderEnum } from '../../genders/genders.enum';
+import { lowerCaseTransformer } from '@utils/transformers/lower-case.transformer';
+import { GenderDto } from '@genders/dto/gender.dto';
+import { GenderEnum } from '@genders/genders.enum';
 
 export class AuthRegisterLoginDto {
   @ApiProperty({ example: 'test1@example.com', type: String })

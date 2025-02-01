@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { UserEntity } from '../entities/user.entity';
-import { NullableType } from '../../../../../utils/types/nullable.type';
-import { FilterUserDto, SortUserDto } from '../../../../dto/query-user.dto';
-import { User } from '../../../../domain/user';
-import { UserRepository } from '../../user.repository';
-import { UserMapper } from '../mappers/user.mapper';
-import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
-import { RoleEnum } from '../../../../../roles/roles.enum';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { NullableType } from '@utils/types/nullable.type';
+import { FilterUserDto, SortUserDto } from '@users/dto/query-user.dto';
+import { User } from '@users/domain/user';
+import { UserRepository } from '@users/infrastructure/persistence/user.repository';
+import { UserMapper } from '@users/infrastructure/persistence/relational/mappers/user.mapper';
+import { IPaginationOptions } from '@utils/types/pagination-options';
+import { RoleEnum } from '@roles/roles.enum';
 
 @Injectable()
 export class UsersRelationalRepository implements UserRepository {

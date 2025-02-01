@@ -5,20 +5,20 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { NullableType } from '../utils/types/nullable.type';
+import { NullableType } from '@utils/types/nullable.type';
 import { FilterUserDto, SortUserDto } from './dto/query-user.dto';
 import { UserRepository } from './infrastructure/persistence/user.repository';
 import { User } from './domain/user';
 import bcrypt from 'bcryptjs';
-import { AuthProvidersEnum } from '../auth/auth-providers.enum';
-import { FilesService } from '../files/files.service';
-import { RoleEnum } from '../roles/roles.enum';
-import { StatusEnum } from '../statuses/statuses.enum';
-import { IPaginationOptions } from '../utils/types/pagination-options';
-import { DeepPartial } from '../utils/types/deep-partial.type';
-import { GenderEnum } from '../genders/genders.enum';
+import { AuthProvidersEnum } from '@auth/auth-providers.enum';
+import { FilesService } from '@files/files.service';
+import { RoleEnum } from '@roles/roles.enum';
+import { StatusEnum } from '@statuses/statuses.enum';
+import { IPaginationOptions } from '@utils/types/pagination-options';
+import { DeepPartial } from '@utils/types/deep-partial.type';
+import { GenderEnum } from '@genders/genders.enum';
 import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
-import { Action, Approval } from './approval.enum';
+import { Action, Approval } from '@users/approval.enum';
 @Injectable()
 export class UsersService {
   constructor(

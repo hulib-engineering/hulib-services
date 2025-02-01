@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GenderEntity } from '../../../../genders/infrastructure/persistence/relational/entities/gender.entity';
-import { GenderEnum } from '../../../../genders/genders.enum';
+import { GenderEntity } from '@genders/infrastructure/persistence/relational/entities/gender.entity';
+import { GenderEnum } from '@genders/genders.enum';
 
 @Injectable()
 export class GenderSeedService {

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Tag } from '../domain/tag';
+import { Tag } from '@tags/domain/tag';
 import { IsNumber } from 'class-validator';
-import { Book } from '../../books/domain/book';
+import { Book } from '@books/domain/book';
 
 export class TagDto implements Tag {
   content?: string | undefined;

@@ -7,9 +7,9 @@ import {
   ManyToMany,
   JoinTable,
 } from 'typeorm';
-import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
+import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 
 @Entity({
   name: 'topics',

@@ -1,7 +1,7 @@
 import { Column, Entity, ManyToMany, PrimaryColumn } from 'typeorm';
-import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
+import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
-import { BookEntity } from '../../../../../books/infrastructure/persistence/relational/entities/book.entity';
+import { BookEntity } from '@books/infrastructure/persistence/relational/entities/book.entity';
 
 @Entity({
   name: 'tag',
