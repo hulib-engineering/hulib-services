@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { StoryReviewHistogram } from './story-review-histogram';
-import { StoryReview } from './story-review';
+import { StoryReview } from './story-review.entity';
 
 export class StoryReviewOverview {
   @ApiProperty({

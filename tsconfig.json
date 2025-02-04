@@ -38,9 +38,10 @@
       "@users/*": ["src/users/*"],
       "@utils/*": ["src/utils/*"],
       "@genders/*": ["src/genders/*"],
-      "@story-review/*": ["src/story-review/*"],
+      "@story-reviews/*": ["src/story-reviews/*"],
       "@social/*": ["src/social/*"],
       "@tags/*": ["src/tags/*"],
+      "@prisma/*": ["src/prisma/*"],
       "@test/*": ["test/*"]
     }
   }

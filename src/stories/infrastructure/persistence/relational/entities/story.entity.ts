@@ -52,12 +52,12 @@ export class StoryEntity extends EntityRelationalHelper {
   })
   humanBook?: UserEntity | null;
 
-  @ApiProperty({
-    type: Number,
-    example: 4,
-  })
-  @Column({ type: Number, nullable: true })
-  rating?: number | null;
+  // @ApiProperty({
+  //   type: Number,
+  //   example: 4,
+  // })
+  // @Column({ type: Number, nullable: true })
+  // rating?: number | null;
 
   @ApiProperty()
   @CreateDateColumn()
@@ -67,7 +67,7 @@ export class StoryEntity extends EntityRelationalHelper {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ApiProperty()
-  @DeleteDateColumn()
-  deletedAt: Date;
+  // @ApiProperty()
+  // @DeleteDateColumn()
+  // deletedAt: Date;
 }

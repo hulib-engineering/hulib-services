@@ -11,7 +11,7 @@ export class StoryMapper {
     if (raw.humanBook) {
       domainEntity.humanBook = UserMapper.toDomain(raw.humanBook);
     }
-    domainEntity.rating = raw.rating;
+    // domainEntity.rating = raw.rating;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -30,7 +30,7 @@ export class StoryMapper {
         domainEntity.humanBook,
       );
     }
-    persistenceEntity.rating = domainEntity.rating;
+    // persistenceEntity.rating = domainEntity.rating;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 

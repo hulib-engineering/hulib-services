@@ -13,6 +13,7 @@ model file {
   id   String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   path String @db.VarChar
   user user[]
+  stories story[]
 }
 
 model gender {
@@ -76,6 +77,7 @@ model topics {
   createdAt               DateTime                  @default(now()) @db.Timestamp(6)
   updatedAt               DateTime                  @default(now()) @db.Timestamp(6)
   humanBook_sharing_topic humanBook_sharing_topic[]
+  stories                 story[]                   @relation("StoryTopics")
 }
 
 model user {
@@ -104,8 +106,37 @@ model user {
   educationEnd            DateTime?                 @db.Date
   humanBook_sharing_topic humanBook_sharing_topic[]
   humanBooks              humanBooks[]
+  storyReview             storyReview[]
+  stories                 story[]
   gender                  gender?                   @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file                    file?                     @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   role                    role?                     @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   status                  status?                   @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model story {
+  id          Int           @id @default(autoincrement())
+  title       String        @db.VarChar
+  abstract    String?       @db.VarChar
+  coverId     String?       @db.Uuid
+  humanBookId Int
+  createdAt   DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime      @default(now()) @db.Timestamp(6)
+  cover       file?         @relation(fields: [coverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  humanBook   user          @relation(fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  storyReview storyReview[]
+  topics      topics[]      @relation("StoryTopics")
+}
+
+model storyReview {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  title     String    @db.VarChar
+  comment   String    @db.VarChar
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  userId    Int
+  storyId   Int
+  story     story     @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      user      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_story_review_user")
 }
