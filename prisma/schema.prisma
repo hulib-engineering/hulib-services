@@ -1,10 +1,12 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  extensions = [uuidOssp(map: "uuid-ossp")]
 }
 
 model file {
@@ -102,20 +104,8 @@ model user {
   educationEnd            DateTime?                 @db.Date
   humanBook_sharing_topic humanBook_sharing_topic[]
   humanBooks              humanBooks[]
-  storyReview             storyReview[]
   gender                  gender?                   @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file                    file?                     @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   role                    role?                     @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   status                  status?                   @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model storyReview {
-  id Int @id @default(autoincrement())
-  rating Int
-  title String @db.VarChar
-  comment String @db.VarChar
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  updatedAt DateTime @default(now()) @db.Timestamp(6)
-  userId Int
-  user user @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_story_review_user")
 }
