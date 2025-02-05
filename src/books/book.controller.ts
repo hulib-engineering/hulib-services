@@ -17,7 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { BooksService } from './book.service';
-import { RolesGuard } from '../roles/roles.guard';
+import { RolesGuard } from '@roles/roles.guard';
 import { Book } from './domain/book';
 import { createNewHumanBookDto } from './dto/create-new-human-book.dto';
 import { HumanBookDetailDto } from './dto/human-book-detail.dto';

@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FileEntity } from '../entities/file.entity';
 import { Repository } from 'typeorm';
-import { FileRepository } from '../../file.repository';
+import { FileRepository } from '@files/infrastructure/persistence/file.repository';
 
 import { FileMapper } from '../mappers/file.mapper';
-import { FileType } from '../../../../domain/file';
-import { NullableType } from '../../../../../utils/types/nullable.type';
+import { FileType } from '@files/domain/file';
+import { NullableType } from '@utils/types/nullable.type';
 
 @Injectable()
 export class FileRelationalRepository implements FileRepository {

@@ -6,8 +6,8 @@ import {
 import { BooksRepository } from './infrastructure/persistence/book.repository';
 import { Book } from './domain/book';
 import { createNewHumanBookDto } from './dto/create-new-human-book.dto';
-import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
-import { UserRepository } from '../users/infrastructure/persistence/user.repository';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { UserRepository } from '@users/infrastructure/persistence/user.repository';
 
 @Injectable()
 export class BooksService {

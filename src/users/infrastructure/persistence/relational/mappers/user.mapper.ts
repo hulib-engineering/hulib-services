@@ -1,14 +1,14 @@
-import { FileEntity } from '../../../../../files/infrastructure/persistence/relational/entities/file.entity';
-import { RoleEntity } from '../../../../../roles/infrastructure/persistence/relational/entities/role.entity';
-import { StatusEntity } from '../../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
-import { User } from '../../../../domain/user';
-import { UserEntity } from '../entities/user.entity';
-import { GenderEntity } from '../../../../../genders/infrastructure/persistence/relational/entities/gender.entity';
-import { RoleEnum } from '../../../../../roles/roles.enum';
-import { StatusEnum } from '../../../../../statuses/statuses.enum';
-import { TopicsMapper } from '../../../../../topics/infrastructure/persistence/relational/mappers/topics.mapper';
-import { TopicsEntity } from '../../../../../topics/infrastructure/persistence/relational/entities/topics.entity';
-import { FileMapper } from '../../../../../files/infrastructure/persistence/relational/mappers/file.mapper';
+import { FileEntity } from '@files/infrastructure/persistence/relational/entities/file.entity';
+import { RoleEntity } from '@roles/infrastructure/persistence/relational/entities/role.entity';
+import { StatusEntity } from '@statuses/infrastructure/persistence/relational/entities/status.entity';
+import { User } from '@users/domain/user';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { GenderEntity } from '@genders/infrastructure/persistence/relational/entities/gender.entity';
+import { RoleEnum } from '@roles/roles.enum';
+import { StatusEnum } from '@statuses/statuses.enum';
+import { TopicsMapper } from '@topics/infrastructure/persistence/relational/mappers/topics.mapper';
+import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
+import { FileMapper } from '@files/infrastructure/persistence/relational/mappers/file.mapper';
 
 export class UserMapper {
   static toDomain(raw: UserEntity): User {

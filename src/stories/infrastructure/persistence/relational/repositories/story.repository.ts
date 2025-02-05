@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { StoryEntity } from '../entities/story.entity';
-import { NullableType } from '../../../../../utils/types/nullable.type';
-import { Story } from '../../../../domain/story';
-import { StoryRepository } from '../../story.repository';
-import { StoryMapper } from '../mappers/story.mapper';
-import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
+import { NullableType } from '@utils/types/nullable.type';
+import { Story } from '@stories/domain/story';
+import { StoryRepository } from '@stories/infrastructure/persistence/story.repository';
+import { StoryMapper } from '@stories/infrastructure/persistence/relational/mappers/story.mapper';
+import { IPaginationOptions } from '@utils/types/pagination-options';
 
 @Injectable()
 export class StoriesRelationalRepository implements StoryRepository {

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TopicsEntity } from '../../../../topics/infrastructure/persistence/relational/entities/topics.entity';
+import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
 import { TopicSeedService } from './topic-seed.service';
 
 @Module({

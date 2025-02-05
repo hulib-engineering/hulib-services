@@ -9,10 +9,10 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
+import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
-import { FileEntity } from '../../../../../files/infrastructure/persistence/relational/entities/file.entity';
-import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { FileEntity } from '@files/infrastructure/persistence/relational/entities/file.entity';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 
 @Entity({
   name: 'story',
@@ -52,12 +52,12 @@ export class StoryEntity extends EntityRelationalHelper {
   })
   humanBook?: UserEntity | null;
 
-  @ApiProperty({
-    type: Number,
-    example: 4,
-  })
-  @Column({ type: Number, nullable: true })
-  rating?: number | null;
+  // @ApiProperty({
+  //   type: Number,
+  //   example: 4,
+  // })
+  // @Column({ type: Number, nullable: true })
+  // rating?: number | null;
 
   @ApiProperty()
   @CreateDateColumn()
@@ -67,7 +67,7 @@ export class StoryEntity extends EntityRelationalHelper {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ApiProperty()
-  @DeleteDateColumn()
-  deletedAt: Date;
+  // @ApiProperty()
+  // @DeleteDateColumn()
+  // deletedAt: Date;
 }

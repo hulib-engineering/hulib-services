@@ -10,9 +10,9 @@ import {
   ManyToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
-import { TagEntity } from '../../../../../tags/infrastructure/persistence/relational/entities/tag.entity';
-import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { TagEntity } from '@tags/infrastructure/persistence/relational/entities/tag.entity';
+import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 
 @Entity({ name: 'books' })
 export class BookEntity extends EntityRelationalHelper {

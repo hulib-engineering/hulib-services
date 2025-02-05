@@ -1,11 +1,11 @@
 import { Exclude, Expose } from 'class-transformer';
-import { FileType } from '../../files/domain/file';
-import { Role } from '../../roles/domain/role';
-import { Status } from '../../statuses/domain/status';
+import { FileType } from '@files/domain/file';
+import { Role } from '@roles/domain/role';
+import { Status } from '@statuses/domain/status';
 import { ApiProperty } from '@nestjs/swagger';
-import { Gender } from '../../genders/domain/gender';
-import { Topics } from '../../topics/domain/topics';
-import { Approval } from '../approval.enum';
+import { Gender } from '@genders/domain/gender';
+import { Topics } from '@topics/domain/topics';
+import { Approval } from '@users/approval.enum';
 
 const idType = Number;
 

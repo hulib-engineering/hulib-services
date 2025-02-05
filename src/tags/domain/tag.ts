@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Book } from '../../books/domain/book';
+import { Book } from '@books/domain/book';
 
 export class Tag {
   @ApiProperty({

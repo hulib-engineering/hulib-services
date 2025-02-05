@@ -1,8 +1,8 @@
 import { Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { Role } from '../../roles/domain/role';
-import { Status } from '../../statuses/domain/status';
-import { Gender } from '../../genders/domain/gender';
+import { Role } from '@roles/domain/role';
+import { Status } from '@statuses/domain/status';
+import { Gender } from '@genders/domain/gender';
 
 export class GetAuthorDetailByIdDto {
   @ApiProperty()

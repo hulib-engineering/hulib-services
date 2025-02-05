@@ -1,7 +1,7 @@
-import { DeepPartial } from '../../../utils/types/deep-partial.type';
-import { NullableType } from '../../../utils/types/nullable.type';
-import { IPaginationOptions } from '../../../utils/types/pagination-options';
-import { Topics } from '../../domain/topics';
+import { DeepPartial } from '@utils/types/deep-partial.type';
+import { NullableType } from '@utils/types/nullable.type';
+import { IPaginationOptions } from '@utils/types/pagination-options';
+import { Topics } from '@topics/domain/topics';
 
 export abstract class TopicsRepository {
   abstract create(

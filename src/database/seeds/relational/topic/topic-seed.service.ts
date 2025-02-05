@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TopicsEntity } from '../../../../topics/infrastructure/persistence/relational/entities/topics.entity';
+import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
 
 @Injectable()
 export class TopicSeedService {

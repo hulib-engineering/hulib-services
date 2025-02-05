@@ -3,8 +3,8 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { FileRepository } from '../../persistence/file.repository';
-import { FileType } from '../../../domain/file';
+import { FileRepository } from '@files/infrastructure/persistence/file.repository';
+import { FileType } from '@files/domain/file';
 
 @Injectable()
 export class FilesS3Service {

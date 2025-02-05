@@ -17,6 +17,32 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "paths": {
+      "@auth/*": ["src/auth/*"],
+      "@auth-facebook/*": ["src/auth-facebook/*"],
+      "@auth-google/*": ["src/auth-google/*"],
+      "@books/*": ["src/books/*"],
+      "@config/*": ["src/config/*"],
+      "@database/*": ["src/database/*"],
+      "@fav-stories/*": ["src/fav-stories/*"],
+      "@files/*": ["src/files/*"],
+      "@home/*": ["src/home/*"],
+      "@mail/*": ["src/mail/*"],
+      "@mailer/*": ["src/mailer/*"],
+      "@roles/*": ["src/roles/*"],
+      "@session/*": ["src/session/*"],
+      "@stories/*": ["src/stories/*"],
+      "@statuses/*": ["src/statuses/*"],
+      "@topics/*": ["src/topics/*"],
+      "@users/*": ["src/users/*"],
+      "@utils/*": ["src/utils/*"],
+      "@genders/*": ["src/genders/*"],
+      "@story-reviews/*": ["src/story-reviews/*"],
+      "@social/*": ["src/social/*"],
+      "@tags/*": ["src/tags/*"],
+      "@prisma/*": ["src/prisma/*"],
+      "@test/*": ["test/*"]
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '../../users/domain/user';
-import { Tag } from '../../tags/domain/tag';
+import { User } from '@users/domain/user';
+import { Tag } from '@tags/domain/tag';
 
 export class HumanBookDetailDto {
   @ApiProperty({ example: 1 })

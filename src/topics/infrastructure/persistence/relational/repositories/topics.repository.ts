@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, Repository } from 'typeorm';
-import { TopicsEntity } from '../entities/topics.entity';
-import { NullableType } from '../../../../../utils/types/nullable.type';
-import { Topics } from '../../../../domain/topics';
-import { TopicsRepository } from '../../topics.repository';
-import { TopicsMapper } from '../mappers/topics.mapper';
-import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
+import { NullableType } from '@utils/types/nullable.type';
+import { Topics } from '@topics/domain/topics';
+import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repository';
+import { TopicsMapper } from '@topics/infrastructure/persistence/relational/mappers/topics.mapper';
+import { IPaginationOptions } from '@utils/types/pagination-options';
 
 @Injectable()
 export class TopicsRelationalRepository implements TopicsRepository {

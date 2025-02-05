@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '../../users/domain/user';
-import { FileType } from '../../files/domain/file';
-import { StoryReviewOverview } from '../../story-review/domain/story-review-overview';
-import { Topic } from '../../topics/domain/topics';
+import { User } from '@users/domain/user';
+import { FileType } from '@files/domain/file';
+import { StoryReviewOverview } from '@story-reviews/entities/story-review-overview';
+import { Topic } from '@topics/domain/topics';
 
 const idType = Number;
 
@@ -33,14 +33,7 @@ export class Story {
     type: () => User,
   })
   humanBook: User;
-
-  @ApiProperty({
-    type: Number,
-    example: 4,
-    deprecated: true,
-  })
-  rating?: number | null;
-
+  
   @ApiProperty({
     type: () => StoryReviewOverview,
   })

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsOptional, IsString } from 'class-validator';
-import { TopicDto } from '../../topics/dto/topic.dto';
+import { TopicDto } from '@topics/dto/topic.dto';
 
 export class RegisterToHumanBookDto {
   @ApiProperty()

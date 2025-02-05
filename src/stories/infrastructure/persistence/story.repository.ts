@@ -1,7 +1,7 @@
-import { DeepPartial } from '../../../utils/types/deep-partial.type';
-import { NullableType } from '../../../utils/types/nullable.type';
-import { IPaginationOptions } from '../../../utils/types/pagination-options';
-import { Story } from '../../domain/story';
+import { DeepPartial } from '@utils/types/deep-partial.type';
+import { NullableType } from '@utils/types/nullable.type';
+import { IPaginationOptions } from '@utils/types/pagination-options';
+import { Story } from '@stories/domain/story';
 
 export abstract class StoryRepository {
   abstract create(

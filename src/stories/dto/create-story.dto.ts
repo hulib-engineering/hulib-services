@@ -10,8 +10,8 @@ import {
   ApiProperty,
   ApiPropertyOptional,
 } from '@nestjs/swagger';
-import { FileDto } from '../../files/dto/file.dto';
-import { UserDto } from '../../users/dto/user.dto';
+import { FileDto } from '@files/dto/file.dto';
+import { UserDto } from '@users/dto/user.dto';
 import { Type } from 'class-transformer';
 
 export class CreateStoryDto {

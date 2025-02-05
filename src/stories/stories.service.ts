@@ -6,15 +6,16 @@ import {
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
 import { StoryRepository } from './infrastructure/persistence/story.repository';
-import { IPaginationOptions } from '../utils/types/pagination-options';
+import { IPaginationOptions } from '@utils/types/pagination-options';
 import { Story } from './domain/story';
-import { UsersService } from '../users/users.service';
-
+import { UsersService } from '@users/users.service';
+import { PrismaService } from '@prisma/prisma.service';
 @Injectable()
 export class StoriesService {
   constructor(
     private readonly storiesRepository: StoryRepository,
     private usersService: UsersService,
+    private prisma: PrismaService,
   ) {}
 
   async create(createStoriesDto: CreateStoryDto) {
@@ -48,7 +49,9 @@ export class StoriesService {
   }
 
   findOne(id: Story['id']) {
-    return this.storiesRepository.findById(id);
+    return this.prisma.story.findUnique({
+      where: { id }
+    });
   }
 
   update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {

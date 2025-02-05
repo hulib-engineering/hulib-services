@@ -3,15 +3,17 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { DataSource, DataSourceOptions } from 'typeorm';
-import { TypeOrmConfigService } from '../../typeorm-config.service';
+import { TypeOrmConfigService } from '@database/typeorm-config.service';
 import { GenderSeedModule } from './gender/gender-seed.module';
 import { RoleSeedModule } from './role/role-seed.module';
 import { StatusSeedModule } from './status/status-seed.module';
 import { UserSeedModule } from './user/user-seed.module';
-import databaseConfig from '../../config/database.config';
-import appConfig from '../../../config/app.config';
+import databaseConfig from '@database/config/database.config';
+import appConfig from '@config/app.config';
 import { TopicSeedModule } from './topic/topic-seed.module';
-
+import { PrismaModule } from '@prisma/prisma.module';
+import { StoryReviewSeedModule } from './story-review/story-review-seed.module';
+import { StorySeedModule } from './story/story-seed.module';
 @Module({
   imports: [
     GenderSeedModule,
@@ -19,6 +21,8 @@ import { TopicSeedModule } from './topic/topic-seed.module';
     StatusSeedModule,
     UserSeedModule,
     TopicSeedModule,
+    StorySeedModule,
+    StoryReviewSeedModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig, appConfig],
@@ -30,6 +34,7 @@ import { TopicSeedModule } from './topic/topic-seed.module';
         return new DataSource(options).initialize();
       },
     }),
+    PrismaModule,
   ],
 })
 export class SeedModule {}
