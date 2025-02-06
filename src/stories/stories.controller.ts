@@ -5,7 +5,7 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
+  // Delete,
   Query,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
@@ -65,7 +65,10 @@ export class StoriesController {
           limit: query?.limit ?? DEFAULT_LIMIT,
         },
       }),
-      { page: query?.page ?? DEFAULT_PAGE, limit: query?.limit ?? DEFAULT_LIMIT },
+      {
+        page: query?.page ?? DEFAULT_PAGE,
+        limit: query?.limit ?? DEFAULT_LIMIT,
+      },
     );
   }
 
@@ -79,7 +82,7 @@ export class StoriesController {
     type: Story,
   })
   findOne(@Param('id') id: Story['id']) {
-    return this.storiesService.findOne(id)
+    return this.storiesService.findOne(id);
   }
 
   @Patch(':id')

@@ -7,19 +7,19 @@ export class StorySeedService {
 
   async run() {
     const storyCount = await this.prisma.story.count();
-    const humanBook = await this.prisma.user.findFirst();
-    const cover = await this.prisma.file.findFirst();
+    // const humanBook = await this.prisma.user.findFirst();
+    // const cover = await this.prisma.file.findFirst();
     const topics = await this.prisma.topics.findMany();
-    
+
     if (!storyCount) {
       await this.prisma.story.create({
-        data: { 
+        data: {
           id: 1,
           title: 'Story 1',
           humanBookId: 1,
           coverId: '1',
           topics: {
-            connect: topics.map(topic => ({ id: topic.id })),
+            connect: topics.map((topic) => ({ id: topic.id })),
           },
           createdAt: new Date(),
           updatedAt: new Date(),

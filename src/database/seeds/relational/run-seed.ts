@@ -5,8 +5,8 @@ import { StatusSeedService } from './status/status-seed.service';
 import { UserSeedService } from './user/user-seed.service';
 import { GenderSeedService } from './gender/gender-seed.service';
 import { TopicSeedService } from './topic/topic-seed.service';
-import { StoryReviewSeedService } from './story-review/story-review-seed.service';
-import { StorySeedService } from './story/story-seed.service';
+// import { StoryReviewSeedService } from './story-review/story-review-seed.service';
+// import { StorySeedService } from './story/story-seed.service';
 
 const runSeed = async () => {
   const app = await NestFactory.create(SeedModule);
@@ -24,4 +24,3 @@ const runSeed = async () => {
 };
 
 void runSeed();
-

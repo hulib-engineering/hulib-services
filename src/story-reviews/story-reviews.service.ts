@@ -10,7 +10,7 @@ export class StoryReviewsService {
 
   create(createStoryReviewDto: CreateStoryReviewDto) {
     return this.prisma.storyReview.create({
-      data: createStoryReviewDto
+      data: createStoryReviewDto,
     });
   }
 
@@ -43,11 +43,13 @@ export class StoryReviewsService {
     paginationOptions: IPaginationOptions;
   }) {
     const skip = (paginationOptions.page - 1) * paginationOptions.limit;
-    const where = filterOptions ? {
-      ...filterOptions,
-      storyId: filterOptions.storyId
-    } : undefined;
-    
+    const where = filterOptions
+      ? {
+          ...filterOptions,
+          storyId: filterOptions.storyId,
+        }
+      : undefined;
+
     return this.prisma.storyReview.findMany({
       where,
       skip,
@@ -60,6 +62,27 @@ export class StoryReviewsService {
       where: { storyId },
     });
 
-    return reviews;
+    const totalReviews = reviews.length;
+    const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
+    const averageRating = totalRating / totalReviews;
+
+    const ratingDistribution = reviews.reduce((acc, review) => {
+      acc[review.rating] = acc[review.rating] ? acc[review.rating] + 1 : 1;
+      return acc;
+    }, {});
+
+    const outstandingReview = reviews.reduce((acc, review) => {
+      if (review.rating > acc.rating) {
+        return review;
+      }
+      return acc;
+    }, reviews[0]);
+
+    return {
+      averageRating,
+      totalReviews,
+      ratingDistribution,
+      outstandingReview,
+    };
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';    
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma-client/prisma.service';
 
 @Injectable()
@@ -21,16 +21,21 @@ export class StoryReviewSeedService {
               rating: 4,
               userId: user?.id ?? 1,
               storyId: 1,
-              createdAt: new Date(`2024-${id <= 17 ? '01' : '02'}-${
-                id <= 17 ? id + 14 : id - 17
-              }`),
-              updatedAt: new Date(`2024-${id <= 17 ? '01' : '02'}-${
-                id <= 17 ? id + 14 : id - 17
-              }`),
+              createdAt: new Date(
+                `2024-${id <= 17 ? '01' : '02'}-${
+                  id <= 17 ? id + 14 : id - 17
+                }`,
+              ),
+              updatedAt: new Date(
+                `2024-${id <= 17 ? '01' : '02'}-${
+                  id <= 17 ? id + 14 : id - 17
+                }`,
+              ),
             },
           }),
         ),
       );
+      console.log(reviews);
     }
   }
 
