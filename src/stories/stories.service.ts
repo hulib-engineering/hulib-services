@@ -9,7 +9,7 @@ import { StoryRepository } from './infrastructure/persistence/story.repository';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { Story } from './domain/story';
 import { UsersService } from '@users/users.service';
-import { PrismaService } from '@prisma/prisma.service';
+import { PrismaService } from 'src/prisma-client/prisma.service';
 @Injectable()
 export class StoriesService {
   constructor(

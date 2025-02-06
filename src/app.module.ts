@@ -28,7 +28,7 @@ import { TopicsModule } from './topics/topics.module';
 import { StoriesModule } from './stories/stories.module';
 import { FavStoriesModule } from './fav-stories/fav-stories.module';
 import { StoryReviewsModule } from './story-reviews/story-reviews.module';
-import { PrismaModule } from './prisma/prisma.module';
+import { PrismaModule } from './prisma-client/prisma-client.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,

@@ -41,7 +41,7 @@
       "@story-reviews/*": ["src/story-reviews/*"],
       "@social/*": ["src/social/*"],
       "@tags/*": ["src/tags/*"],
-      "@prisma/*": ["src/prisma/*"],
+      "@prisma-client/*": ["src/prisma-client/*"],
       "@test/*": ["test/*"]
     }
   }
