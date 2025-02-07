@@ -10,7 +10,7 @@ export class StoryReviewsService {
 
   create(createStoryReviewDto: CreateStoryReviewDto) {
     return this.prisma.storyReview.create({
-      data: createStoryReviewDto
+      data: createStoryReviewDto,
     });
   }
 
@@ -43,11 +43,13 @@ export class StoryReviewsService {
     paginationOptions: IPaginationOptions;
   }) {
     const skip = (paginationOptions.page - 1) * paginationOptions.limit;
-    const where = filterOptions ? {
-      ...filterOptions,
-      storyId: filterOptions.storyId
-    } : undefined;
-    
+    const where = filterOptions
+      ? {
+          ...filterOptions,
+          storyId: filterOptions.storyId,
+        }
+      : undefined;
+
     return this.prisma.storyReview.findMany({
       where,
       skip,

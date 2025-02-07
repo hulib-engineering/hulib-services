@@ -1,6 +1,7 @@
 import { UserMapper } from '@users/infrastructure/persistence/relational/mappers/user.mapper';
 import { Story } from '@stories/domain/story';
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
+import { TopicsMapper } from '@topics/infrastructure/persistence/relational/mappers/topics.mapper';
 
 export class StoryMapper {
   static toDomain(raw: StoryEntity): Story {
@@ -11,6 +12,13 @@ export class StoryMapper {
     if (raw.humanBook) {
       domainEntity.humanBook = UserMapper.toDomain(raw.humanBook);
     }
+
+    if (raw.topics) {
+      domainEntity.topics = raw.topics.map((topic) =>
+        TopicsMapper.toDomain(topic),
+      );
+    }
+    domainEntity.topics = raw.topics;
     // domainEntity.rating = raw.rating;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;

@@ -33,7 +33,7 @@ export class Story {
     type: () => User,
   })
   humanBook: User;
-  
+
   @ApiProperty({
     type: () => StoryReviewOverview,
   })

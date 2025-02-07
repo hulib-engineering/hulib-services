@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';    
-import { PrismaService } from 'src/prisma-client/prisma.service';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '@prisma-client/prisma-client.service';
 
 @Injectable()
 export class StoryReviewSeedService {
@@ -11,7 +11,7 @@ export class StoryReviewSeedService {
 
     if (!reviewCount) {
       // Create all reviews
-      const reviews = await Promise.all(
+      await Promise.all(
         Array.from({ length: 25 }, (_, i) => i + 1).map((id) =>
           this.prisma.storyReview.create({
             data: {
@@ -21,12 +21,16 @@ export class StoryReviewSeedService {
               rating: 4,
               userId: user?.id ?? 1,
               storyId: 1,
-              createdAt: new Date(`2024-${id <= 17 ? '01' : '02'}-${
-                id <= 17 ? id + 14 : id - 17
-              }`),
-              updatedAt: new Date(`2024-${id <= 17 ? '01' : '02'}-${
-                id <= 17 ? id + 14 : id - 17
-              }`),
+              createdAt: new Date(
+                `2024-${id <= 17 ? '01' : '02'}-${
+                  id <= 17 ? id + 14 : id - 17
+                }`,
+              ),
+              updatedAt: new Date(
+                `2024-${id <= 17 ? '01' : '02'}-${
+                  id <= 17 ? id + 14 : id - 17
+                }`,
+              ),
             },
           }),
         ),

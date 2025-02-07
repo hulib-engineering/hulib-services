@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   Query,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
@@ -24,7 +23,6 @@ import {
 } from '@utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
-import { UsersService } from '@users/users.service';
 import { DEFAULT_LIMIT } from '../utils/dto/pagination-input.dto';
 import { DEFAULT_PAGE } from '../utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
@@ -40,7 +38,6 @@ export class StoriesController {
   constructor(
     private readonly storiesService: StoriesService,
     private readonly storyReviewService: StoryReviewsService,
-    private readonly usersService: UsersService,
   ) {}
 
   @Post()
@@ -58,14 +55,25 @@ export class StoriesController {
   async findAll(
     @Query() query: FindAllStoriesDto,
   ): Promise<InfinityPaginationResponseDto<Story>> {
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      filters: filterOptions,
+      sort: sortOptions,
+    } = query || {};
     return infinityPagination(
       await this.storiesService.findAllWithPagination({
         paginationOptions: {
-          page: query?.page ?? DEFAULT_PAGE,
-          limit: query?.limit ?? DEFAULT_LIMIT,
+          page,
+          limit,
         },
+        filterOptions,
+        sortOptions,
       }),
-      { page: query?.page ?? DEFAULT_PAGE, limit: query?.limit ?? DEFAULT_LIMIT },
+      {
+        page,
+        limit,
+      },
     );
   }
 
@@ -79,7 +87,7 @@ export class StoriesController {
     type: Story,
   })
   findOne(@Param('id') id: Story['id']) {
-    return this.storiesService.findOne(id)
+    return this.storiesService.findOne(id);
   }
 
   @Patch(':id')

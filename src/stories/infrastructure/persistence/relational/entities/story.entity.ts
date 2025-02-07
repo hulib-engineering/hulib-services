@@ -4,15 +4,17 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   Column,
-  DeleteDateColumn,
   ManyToOne,
   OneToOne,
   JoinColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
 import { FileEntity } from '@files/infrastructure/persistence/relational/entities/file.entity';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
 
 @Entity({
   name: 'story',
@@ -51,6 +53,12 @@ export class StoryEntity extends EntityRelationalHelper {
     eager: true,
   })
   humanBook?: UserEntity | null;
+
+  @ManyToMany(() => TopicsEntity)
+  @JoinTable({
+    name: 'story_topic',
+  })
+  topics?: TopicsEntity[];
 
   // @ApiProperty({
   //   type: Number,

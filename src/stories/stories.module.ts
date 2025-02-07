@@ -8,7 +8,11 @@ import { StoryReviewsModule } from '@story-reviews/story-reviews.module';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 
 @Module({
-  imports: [RelationalStoriesPersistenceModule, UsersModule, StoryReviewsModule],
+  imports: [
+    RelationalStoriesPersistenceModule,
+    UsersModule,
+    StoryReviewsModule,
+  ],
   controllers: [StoriesController],
   providers: [StoriesService, StoryReviewsService],
   exports: [StoriesService, RelationalStoriesPersistenceModule],
