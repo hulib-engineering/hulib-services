@@ -21,7 +21,10 @@ jobs:
       # - name: Copy prod.log from container to host
       #   run: docker cp ci-relational-api-1:/usr/src/app/prod.log .
       # </database-relational-block>
-
+      - name: Run unit tests
+        run: npm run test
+        continue-on-error: true
+        
       - name: Upload prod.log to artifacts for debugging
         uses: actions/upload-artifact@v4
         with:

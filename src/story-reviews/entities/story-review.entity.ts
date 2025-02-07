@@ -1,28 +1,28 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { User } from "@users/domain/user";
+import { ApiProperty } from '@nestjs/swagger';
+import { User } from '@users/domain/user';
 
 export class StoryReview {
-    @ApiProperty()
-    id: number;
+  @ApiProperty()
+  id: number;
 
-    @ApiProperty()
-    rating: number;
+  @ApiProperty()
+  rating: number;
 
-    @ApiProperty()
-    title: string;
+  @ApiProperty()
+  title: string;
 
-    @ApiProperty()
-    comment: string;
+  @ApiProperty()
+  comment: string;
 
-    @ApiProperty({
-        type: () => User,
-        description: 'The user who wrote the review',
-    })
-    user: User;
+  @ApiProperty({
+    type: () => User,
+    description: 'The user who wrote the review',
+  })
+  user: User;
 
-    @ApiProperty()
-    createdAt: Date;
+  @ApiProperty()
+  createdAt: Date;
 
-    @ApiProperty()
-    updatedAt: Date;
+  @ApiProperty()
+  updatedAt: Date;
 }

@@ -138,7 +138,33 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@auth/(.*)$": "<rootDir>/auth/$1",
+      "^@auth-facebook/(.*)$": "<rootDir>/auth-facebook/$1",
+      "^@auth-google/(.*)$": "<rootDir>/auth-google/$1",
+      "^@books/(.*)$": "<rootDir>/books/$1",
+      "^@config/(.*)$": "<rootDir>/config/$1",
+      "^@database/(.*)$": "<rootDir>/database/$1",
+      "^@fav-stories/(.*)$": "<rootDir>/fav-stories/$1",
+      "^@files/(.*)$": "<rootDir>/files/$1",
+      "^@home/(.*)$": "<rootDir>/home/$1",
+      "^@mail/(.*)$": "<rootDir>/mail/$1",
+      "^@mailer/(.*)$": "<rootDir>/mailer/$1",
+      "^@roles/(.*)$": "<rootDir>/roles/$1",
+      "^@session/(.*)$": "<rootDir>/session/$1",
+      "^@stories/(.*)$": "<rootDir>/stories/$1",
+      "^@statuses/(.*)$": "<rootDir>/statuses/$1",
+      "^@topics/(.*)$": "<rootDir>/topics/$1",
+      "^@users/(.*)$": "<rootDir>/users/$1",
+      "^@utils/(.*)$": "<rootDir>/utils/$1",
+      "^@genders/(.*)$": "<rootDir>/genders/$1",
+      "^@story-reviews/(.*)$": "<rootDir>/story-reviews/$1",
+      "^@social/(.*)$": "<rootDir>/social/$1",
+      "^@tags/(.*)$": "<rootDir>/tags/$1",
+      "^@prisma-client/(.*)$": "<rootDir>/prisma-client/$1",
+      "^@test/(.*)$": "../test/$1"
+    }
   },
   "engines": {
     "node": ">=16.0.0",

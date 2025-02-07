@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '@prisma-client/prisma-client.service';
 import { CreateStoryReviewDto } from './dto/create-story-review.dto';
 import { UpdateStoryReviewDto } from './dto/update-story-review.dto';
 import { IPaginationOptions } from '../utils/types/pagination-options';
@@ -10,7 +10,7 @@ export class StoryReviewsService {
 
   create(createStoryReviewDto: CreateStoryReviewDto) {
     return this.prisma.storyReview.create({
-      data: createStoryReviewDto
+      data: createStoryReviewDto,
     });
   }
 
@@ -43,11 +43,13 @@ export class StoryReviewsService {
     paginationOptions: IPaginationOptions;
   }) {
     const skip = (paginationOptions.page - 1) * paginationOptions.limit;
-    const where = filterOptions ? {
-      ...filterOptions,
-      storyId: filterOptions.storyId
-    } : undefined;
-    
+    const where = filterOptions
+      ? {
+          ...filterOptions,
+          storyId: filterOptions.storyId,
+        }
+      : undefined;
+
     return this.prisma.storyReview.findMany({
       where,
       skip,
