@@ -59,10 +59,19 @@ export class StoryReviewsService {
 
   async getReviewsOverview(storyId: number) {
     const reviews = await this.prisma.storyReview.findMany({
-      where: { storyId },
+      where: { storyId: parseInt(storyId as any, 10) },
     });
 
     const totalReviews = reviews.length;
+    if (!totalReviews) {
+      return {
+        averageRating: 0,
+        totalReviews: 0,
+        ratingDistribution: {},
+        outstandingReview: null,
+      };
+    }
+
     const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
     const averageRating = totalRating / totalReviews;
 
@@ -72,7 +81,7 @@ export class StoryReviewsService {
     }, {});
 
     const outstandingReview = reviews.reduce((acc, review) => {
-      if (review.rating > acc.rating) {
+      if (new Date(review.createdAt) > new Date(acc.createdAt)) {
         return review;
       }
       return acc;
