@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../prisma-client/prisma-client.service';
+import { PrismaService } from '@prisma-client/prisma-client.service';
+
 
 @Injectable()
 export class StorySeedService {
@@ -9,6 +10,7 @@ export class StorySeedService {
     const storyCount = await this.prisma.story.count();
     // const humanBook = await this.prisma.user.findFirst();
     // const cover = await this.prisma.file.findFirst();
+
     const topics = await this.prisma.topics.findMany();
 
     if (!storyCount) {

@@ -11,7 +11,7 @@ import { UserSeedModule } from './user/user-seed.module';
 import databaseConfig from '@database/config/database.config';
 import appConfig from '@config/app.config';
 import { TopicSeedModule } from './topic/topic-seed.module';
-import { PrismaModule } from '../../../prisma-client/prisma-client.module';
+import { PrismaModule } from '@prisma-client/prisma-client.module';
 import { StoryReviewSeedModule } from './story-review/story-review-seed.module';
 import { StorySeedModule } from './story/story-seed.module';
 @Module({

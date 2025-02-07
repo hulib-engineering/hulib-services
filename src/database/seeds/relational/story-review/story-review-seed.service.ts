@@ -11,7 +11,7 @@ export class StoryReviewSeedService {
 
     if (!reviewCount) {
       // Create all reviews
-      const reviews = await Promise.all(
+      await Promise.all(
         Array.from({ length: 25 }, (_, i) => i + 1).map((id) =>
           this.prisma.storyReview.create({
             data: {

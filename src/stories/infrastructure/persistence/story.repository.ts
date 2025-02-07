@@ -2,6 +2,10 @@ import { DeepPartial } from '@utils/types/deep-partial.type';
 import { NullableType } from '@utils/types/nullable.type';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { Story } from '@stories/domain/story';
+import {
+  FilterStoryDto,
+  SortStoryDto,
+} from '@stories/dto/find-all-stories.dto';
 
 export abstract class StoryRepository {
   abstract create(
@@ -10,8 +14,11 @@ export abstract class StoryRepository {
 
   abstract findAllWithPagination({
     paginationOptions,
+    sortOptions,
   }: {
     paginationOptions: IPaginationOptions;
+    filterOptions?: FilterStoryDto | null;
+    sortOptions?: SortStoryDto[] | null;
   }): Promise<Story[]>;
 
   abstract findById(id: Story['id']): Promise<NullableType<Story>>;
