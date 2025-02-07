@@ -3,6 +3,7 @@ import { PrismaService } from '@prisma-client/prisma-client.service';
 import { CreateStoryReviewDto } from './dto/create-story-review.dto';
 import { UpdateStoryReviewDto } from './dto/update-story-review.dto';
 import { IPaginationOptions } from '../utils/types/pagination-options';
+import { StoryReviewOverview } from './entities/story-review-overview';
 
 @Injectable()
 export class StoryReviewsService {
@@ -57,23 +58,23 @@ export class StoryReviewsService {
     });
   }
 
-  async getReviewsOverview(storyId: number) {
+  async getReviewsOverview(storyId: number): Promise<StoryReviewOverview> {
     const reviews = await this.prisma.storyReview.findMany({
       where: { storyId: parseInt(storyId as any, 10) },
     });
 
-    const totalReviews = reviews.length;
-    if (!totalReviews) {
+    const numberOfReviews = reviews.length;
+    if (!numberOfReviews) {
       return {
-        averageRating: 0,
-        totalReviews: 0,
-        ratingDistribution: {},
-        outstandingReview: null,
+        rating: 0,
+        numberOfReviews: 0,
+        histogram: null,
+        outStanding: null,
       };
     }
 
     const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
-    const averageRating = totalRating / totalReviews;
+    const averageRating = totalRating / numberOfReviews;
 
     const ratingDistribution = reviews.reduce((acc, review) => {
       acc[review.rating] = acc[review.rating] ? acc[review.rating] + 1 : 1;
@@ -88,10 +89,19 @@ export class StoryReviewsService {
     }, reviews[0]);
 
     return {
-      averageRating,
-      totalReviews,
-      ratingDistribution,
-      outstandingReview,
+      rating: averageRating,
+      numberOfReviews,
+      histogram: Object.entries(ratingDistribution).map(([rating, count]) => ({
+        rating: parseInt(rating, 10),
+        count,
+      })),
+      outStanding: {
+        ...outstandingReview,
+        // @ts-expect-error this always exists
+        user: await this.prisma.user.findUnique({
+          where: { id: outstandingReview.userId },
+        }),
+      },
     };
   }
 }
