@@ -18,6 +18,9 @@ export class StoryReviewsService {
   findOne(id: number) {
     return this.prisma.storyReview.findUnique({
       where: { id },
+      include: {
+        user: true,
+      },
     });
   }
 
