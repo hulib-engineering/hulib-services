@@ -7,6 +7,7 @@ import { Story } from '@stories/domain/story';
 import { StoryRepository } from '@stories/infrastructure/persistence/story.repository';
 import { StoryMapper } from '@stories/infrastructure/persistence/relational/mappers/story.mapper';
 import { IPaginationOptions } from '@utils/types/pagination-options';
+import { SortStoryDto } from '@stories/dto/find-all-stories.dto';
 
 @Injectable()
 export class StoriesRelationalRepository implements StoryRepository {
@@ -25,12 +26,33 @@ export class StoriesRelationalRepository implements StoryRepository {
 
   async findAllWithPagination({
     paginationOptions,
+    sortOptions,
   }: {
     paginationOptions: IPaginationOptions;
+    sortOptions?: SortStoryDto[] | null;
   }): Promise<Story[]> {
+    // const where = filterOptions?.humanBook
+    //   ? {
+    //       ...filterOptions,
+    //       humanBookId: filterOptions.humanBook,
+    //     }
+    //   : filterOptions?.topics
+    //     ? {
+    //         ...filterOptions,
+    //         topics: In(filterOptions.topics.split(',').map(Number)),
+    //       }
+    //     : undefined;
+
     const entities = await this.storiesRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
+      order: sortOptions?.reduce(
+        (accumulator, sort) => ({
+          ...accumulator,
+          [sort.orderBy]: sort.order,
+        }),
+        {},
+      ),
     });
 
     return entities.map((entity) => StoryMapper.toDomain(entity));

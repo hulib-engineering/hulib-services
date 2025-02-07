@@ -23,7 +23,6 @@ import {
 } from '@utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
-import { UsersService } from '@users/users.service';
 import { DEFAULT_LIMIT } from '../utils/dto/pagination-input.dto';
 import { DEFAULT_PAGE } from '../utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
@@ -39,7 +38,6 @@ export class StoriesController {
   constructor(
     private readonly storiesService: StoriesService,
     private readonly storyReviewService: StoryReviewsService,
-    private readonly usersService: UsersService,
   ) {}
 
   @Post()
@@ -63,6 +61,7 @@ export class StoriesController {
           page: query?.page ?? DEFAULT_PAGE,
           limit: query?.limit ?? DEFAULT_LIMIT,
         },
+        sortOptions: query?.sort,
       }),
       {
         page: query?.page ?? DEFAULT_PAGE,
