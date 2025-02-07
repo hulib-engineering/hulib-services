@@ -55,6 +55,9 @@ export class StoryReviewsService {
       where,
       skip,
       take: paginationOptions.limit,
+      include: {
+        user: true,
+      },
     });
   }
 
