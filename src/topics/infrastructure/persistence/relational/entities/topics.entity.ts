@@ -10,6 +10,7 @@ import {
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 
 @Entity({
   name: 'topics',
@@ -36,4 +37,10 @@ export class TopicsEntity extends EntityRelationalHelper {
     name: 'humanBook_sharing_topic',
   })
   users: UserEntity[];
+
+  @ManyToMany(() => StoryEntity)
+  @JoinTable({
+    name: 'story_topic',
+  })
+  stories?: StoryEntity[];
 }
