@@ -55,17 +55,24 @@ export class StoriesController {
   async findAll(
     @Query() query: FindAllStoriesDto,
   ): Promise<InfinityPaginationResponseDto<Story>> {
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      filters: filterOptions,
+      sort: sortOptions,
+    } = query || {};
     return infinityPagination(
       await this.storiesService.findAllWithPagination({
         paginationOptions: {
-          page: query?.page ?? DEFAULT_PAGE,
-          limit: query?.limit ?? DEFAULT_LIMIT,
+          page,
+          limit,
         },
-        sortOptions: query?.sort,
+        filterOptions,
+        sortOptions,
       }),
       {
-        page: query?.page ?? DEFAULT_PAGE,
-        limit: query?.limit ?? DEFAULT_LIMIT,
+        page,
+        limit,
       },
     );
   }

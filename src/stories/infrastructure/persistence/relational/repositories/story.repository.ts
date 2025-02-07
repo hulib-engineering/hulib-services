@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 import { NullableType } from '@utils/types/nullable.type';
 import { Story } from '@stories/domain/story';
 import { StoryRepository } from '@stories/infrastructure/persistence/story.repository';
 import { StoryMapper } from '@stories/infrastructure/persistence/relational/mappers/story.mapper';
 import { IPaginationOptions } from '@utils/types/pagination-options';
-import { SortStoryDto } from '@stories/dto/find-all-stories.dto';
+import {
+  FilterStoryDto,
+  SortStoryDto,
+} from '@stories/dto/find-all-stories.dto';
 
 @Injectable()
 export class StoriesRelationalRepository implements StoryRepository {
@@ -26,26 +29,29 @@ export class StoriesRelationalRepository implements StoryRepository {
 
   async findAllWithPagination({
     paginationOptions,
+    filterOptions,
     sortOptions,
   }: {
     paginationOptions: IPaginationOptions;
+    filterOptions?: FilterStoryDto | null;
     sortOptions?: SortStoryDto[] | null;
   }): Promise<Story[]> {
-    // const where = filterOptions?.humanBook
-    //   ? {
-    //       ...filterOptions,
-    //       humanBookId: filterOptions.humanBook,
-    //     }
-    //   : filterOptions?.topics
-    //     ? {
-    //         ...filterOptions,
-    //         topics: In(filterOptions.topics.split(',').map(Number)),
-    //       }
-    //     : undefined;
+    const where: FindOptionsWhere<StoryEntity> = {};
+
+    if (filterOptions?.humanBook) {
+      where.humanBook = { id: Number(filterOptions?.humanBook?.id) };
+    }
+
+    if (filterOptions?.topics?.length) {
+      where.topics = filterOptions.topics.map((topic) => ({
+        id: topic.id,
+      }));
+    }
 
     const entities = await this.storiesRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
+      where,
       order: sortOptions?.reduce(
         (accumulator, sort) => ({
           ...accumulator,

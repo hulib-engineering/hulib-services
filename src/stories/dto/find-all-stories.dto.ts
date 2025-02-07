@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsNumber,
   IsOptional,
   IsString,
@@ -7,7 +8,9 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { plainToInstance, Transform, Type } from 'class-transformer';
-import { Story } from '../domain/story';
+import { Story } from '@stories/domain/story';
+import { UserDto } from '@users/dto/user.dto';
+import { TopicDto } from '@topics/dto/topic.dto';
 
 export class SortStoryDto {
   @ApiProperty()
@@ -18,6 +21,24 @@ export class SortStoryDto {
   @ApiProperty()
   @IsString()
   order: string;
+}
+
+export class FilterStoryDto {
+  @ApiPropertyOptional({
+    type: UserDto,
+    example: { id: '8686' },
+  })
+  @ValidateNested({ each: true })
+  @Type(() => UserDto)
+  humanBook: UserDto | null;
+
+  @ApiPropertyOptional({
+    type: () => [TopicDto],
+    example: [{ id: 1 }, { id: 2 }],
+  })
+  @ValidateNested({ each: true })
+  @IsArray()
+  topics?: TopicDto[] | null;
 }
 
 export class FindAllStoriesDto {
@@ -34,22 +55,6 @@ export class FindAllStoriesDto {
   @Max(50)
   limit?: number;
 
-  // @ApiPropertyOptional()
-  // @IsOptional()
-  // topicIds?: string[];
-
-  // @ApiPropertyOptional()
-  // @IsOptional()
-  // filter?: {
-  //   humanBook?: number;
-  //   topics?: string;
-  // };
-
-  // @ApiPropertyOptional()
-  // @IsOptional()
-  // @IsString()
-  // sortBy?: string;
-
   @ApiPropertyOptional({ type: String })
   @IsOptional()
   @Transform(({ value }) => {
@@ -58,4 +63,13 @@ export class FindAllStoriesDto {
   @ValidateNested({ each: true })
   @Type(() => SortStoryDto)
   sort?: SortStoryDto[] | null;
+
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @Transform(({ value }) =>
+    value ? plainToInstance(FilterStoryDto, JSON.parse(value)) : undefined,
+  )
+  @ValidateNested({ each: true })
+  @Type(() => FilterStoryDto)
+  filters?: FilterStoryDto | null;
 }

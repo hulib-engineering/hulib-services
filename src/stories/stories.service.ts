@@ -9,7 +9,7 @@ import { StoryRepository } from './infrastructure/persistence/story.repository';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { Story } from './domain/story';
 import { UsersService } from '@users/users.service';
-import { SortStoryDto } from './dto/find-all-stories.dto';
+import { FilterStoryDto, SortStoryDto } from './dto/find-all-stories.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 
 @Injectable()
@@ -39,9 +39,11 @@ export class StoriesService {
 
   findAllWithPagination({
     paginationOptions,
+    filterOptions,
     sortOptions,
   }: {
     paginationOptions: IPaginationOptions;
+    filterOptions?: FilterStoryDto | null;
     sortOptions?: SortStoryDto[] | null;
   }) {
     return this.storiesRepository.findAllWithPagination({
@@ -49,6 +51,7 @@ export class StoriesService {
         page: paginationOptions.page,
         limit: paginationOptions.limit,
       },
+      filterOptions,
       sortOptions,
     });
   }
