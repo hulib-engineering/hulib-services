@@ -23,7 +23,9 @@ jobs:
       # </database-relational-block>
       - name: Run unit tests
         run: npm run test
-        continue-on-error: true
+
+      - name: Run build
+        run: npm run build
 
       - name: Upload prod.log to artifacts for debugging
         uses: actions/upload-artifact@v4
