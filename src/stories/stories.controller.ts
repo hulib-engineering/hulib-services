@@ -5,6 +5,7 @@ import {
   Body,
   Patch,
   Param,
+  // Delete,
   Query,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
@@ -71,8 +72,13 @@ export class StoriesController {
         sortOptions,
       }),
       {
+
+//         page: query?.page ?? DEFAULT_PAGE,
+//         limit: query?.limit ?? DEFAULT_LIMIT,
+
         page,
         limit,
+
       },
     );
   }

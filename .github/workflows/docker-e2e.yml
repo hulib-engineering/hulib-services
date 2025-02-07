@@ -24,7 +24,7 @@ jobs:
       - name: Run unit tests
         run: npm run test
         continue-on-error: true
-        
+
       - name: Upload prod.log to artifacts for debugging
         uses: actions/upload-artifact@v4
         with:

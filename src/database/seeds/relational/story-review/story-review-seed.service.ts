@@ -35,6 +35,7 @@ export class StoryReviewSeedService {
           }),
         ),
       );
+      console.log(reviews);
     }
   }
 
