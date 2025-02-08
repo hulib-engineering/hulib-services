@@ -94,7 +94,7 @@ export class StoriesService {
   async searchStories(query: SearchStoriesDto) {
     const { keyword = '', page = DEFAULT_PAGE, limit = DEFAULT_LIMIT } = query;
 
-    const keywordTrimmed = keyword?.trim().toLowerCase().replace(/\s+/g, ' ');
+    const keywordTrimmed = keyword?.trim().replace('+', ' ');
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
 
