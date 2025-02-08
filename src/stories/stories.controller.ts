@@ -23,7 +23,10 @@ import {
   InfinityPaginationResponseDto,
 } from '@utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '@utils/infinity-pagination';
-import { FindAllStoriesDto } from './dto/find-all-stories.dto';
+import {
+  FindAllStoriesDto,
+  SearchStoriesDto,
+} from './dto/find-all-stories.dto';
 import { DEFAULT_LIMIT } from '../utils/dto/pagination-input.dto';
 import { DEFAULT_PAGE } from '../utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
@@ -171,5 +174,20 @@ export class StoriesController {
   })
   getReviewsOverview(@Param('id') id: Story['id']) {
     return this.storyReviewService.getReviewsOverview(id);
+  }
+
+  // search stories
+  @Get('search/by')
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(Story),
+  })
+  searchStories(@Query() query: SearchStoriesDto) {
+    const { keyword, page, limit } = query;
+
+    return this.storiesService.searchStories({
+      keyword,
+      page,
+      limit,
+    });
   }
 }
