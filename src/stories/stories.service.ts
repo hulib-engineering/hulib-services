@@ -113,6 +113,12 @@ export class StoriesService {
           contains: keywordTrimmed,
         },
       },
+      include: {
+        humanBook: true,
+      },
+      omit: {
+        humanBookId: true,
+      },
       orderBy: {
         createdAt: 'desc',
       },
