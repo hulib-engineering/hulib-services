@@ -84,7 +84,7 @@ export class StoriesController {
   @Get(':id')
   @ApiParam({
     name: 'id',
-    type: String,
+    type: Number,
     required: true,
   })
   @ApiOkResponse({
