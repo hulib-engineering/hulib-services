@@ -66,7 +66,7 @@ export class FindAllStoriesDto extends FilterStoryDto {
   })
   @ValidateNested({ each: true })
   @Type(() => SortStoryDto)
-  sort?: SortStoryDto[] | null;
+  sort?: SortStoryDto | null;
 
   // @ApiPropertyOptional({ type: String })
   // @IsOptional()

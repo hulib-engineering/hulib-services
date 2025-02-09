@@ -61,9 +61,6 @@ export class StoriesController {
       limit = DEFAULT_LIMIT,
       sort: sortOptions,
     } = query || {};
-
-    console.log('query@@@', query);
-
     return infinityPagination(
       await this.storiesService.findAllWithPagination({
         paginationOptions: {
@@ -74,7 +71,7 @@ export class StoriesController {
           humanBookId: query.humanBookId,
           topicIds: query.topicIds,
         },
-        sortOptions,
+        sortOptions: sortOptions ? [sortOptions] : [],
       }),
       {
         page,
