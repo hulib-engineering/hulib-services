@@ -20,7 +20,10 @@ export class StorySeedService {
           humanBookId: 1,
           coverId: '1',
           topics: {
-            connect: topics.map((topic) => ({ id: topic.id })),
+            create: topics.map((topic) => ({
+              topicId: topic.id,
+              storyId: 1
+            })),
           },
           createdAt: new Date(),
           updatedAt: new Date(),
