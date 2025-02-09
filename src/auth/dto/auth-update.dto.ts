@@ -1,5 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  MinLength,
+} from 'class-validator';
 import { FileDto } from '@files/dto/file.dto';
 import { Transform, Type } from 'class-transformer';
 import { lowerCaseTransformer } from '@utils/transformers/lower-case.transformer';
@@ -55,13 +62,24 @@ export class AuthUpdateDto {
 
   @ApiPropertyOptional({ example: '11234567890' })
   @IsOptional()
+  @IsPhoneNumber()
   parentPhoneNumber?: string;
 
   @ApiPropertyOptional({ example: '11234567891' })
   @IsOptional()
+  @IsPhoneNumber()
   phoneNumber?: string;
 
-  @ApiPropertyOptional({ example: '1970-01-01' })
+  @ApiPropertyOptional({
+    example: '1970-01-01',
+    description: 'Birthday in ISO 8601 format (YYYY-MM-DD)',
+  })
   @IsOptional()
+  @IsDateString(
+    {},
+    {
+      message: 'Birthday must be a valid date in YYYY-MM-DD format',
+    },
+  )
   birthday?: string | null;
 }
