@@ -40,12 +40,12 @@ export class TopicsEntity extends EntityRelationalHelper {
 
   @ManyToMany(() => StoryEntity)
   @JoinTable({
-    name: '_StoryTopics',
+    name: 'storyTopic',
     joinColumn: {
-      name: 'A',
+      name: 'storyId',
     },
     inverseJoinColumn: {
-      name: 'B',
+      name: 'topicId',
     },
   })
   stories?: StoryEntity[];
