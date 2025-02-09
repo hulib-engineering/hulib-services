@@ -9,13 +9,8 @@ import { StoryRepository } from './infrastructure/persistence/story.repository';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { Story } from './domain/story';
 import { UsersService } from '@users/users.service';
-import {
-  FilterStoryDto,
-  SearchStoriesDto,
-  SortStoryDto,
-} from './dto/find-all-stories.dto';
+import { FilterStoryDto, SortStoryDto } from './dto/find-all-stories.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
-import { DEFAULT_LIMIT, DEFAULT_PAGE } from '../utils/dto/pagination-input.dto';
 
 @Injectable()
 export class StoriesService {
@@ -88,50 +83,5 @@ export class StoriesService {
     }
 
     return story;
-  }
-
-  // prisma search stories
-  async searchStories(query: SearchStoriesDto) {
-    const { keyword = '', page = DEFAULT_PAGE, limit = DEFAULT_LIMIT } = query;
-
-    const keywordTrimmed = keyword?.trim().replace('+', ' ');
-    const skip = (Number(page) - 1) * Number(limit);
-    const take = Number(limit);
-
-    // get total count of stories
-    const totalCount = await this.prisma.story.count({
-      where: {
-        title: {
-          contains: keywordTrimmed,
-        },
-      },
-    });
-
-    const stories = await this.prisma.story.findMany({
-      where: {
-        title: {
-          contains: keywordTrimmed,
-        },
-      },
-      include: {
-        humanBook: true,
-      },
-      omit: {
-        humanBookId: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      skip,
-      take,
-    });
-
-    return {
-      data: stories,
-      totalCount,
-      totalPages: Math.ceil(totalCount / Number(limit)),
-      hasNextPage: Number(page) < Math.ceil(totalCount / Number(limit)),
-      hasPreviousPage: Number(page) > 1,
-    };
   }
 }

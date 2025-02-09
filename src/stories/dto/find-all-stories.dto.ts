@@ -73,20 +73,3 @@ export class FindAllStoriesDto {
   @Type(() => FilterStoryDto)
   filters?: FilterStoryDto | null;
 }
-
-export class SearchStoriesDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  keyword?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  page?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  limit?: string;
-}
