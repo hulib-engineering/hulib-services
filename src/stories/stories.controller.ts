@@ -59,22 +59,24 @@ export class StoriesController {
     const {
       page = DEFAULT_PAGE,
       limit = DEFAULT_LIMIT,
-      filters: filterOptions,
       sort: sortOptions,
     } = query || {};
+
+    console.log('query@@@', query);
+
     return infinityPagination(
       await this.storiesService.findAllWithPagination({
         paginationOptions: {
           page,
           limit,
         },
-        filterOptions,
+        filterOptions: {
+          humanBookId: query.humanBookId,
+          topicIds: query.topicIds,
+        },
         sortOptions,
       }),
       {
-        //         page: query?.page ?? DEFAULT_PAGE,
-        //         limit: query?.limit ?? DEFAULT_LIMIT,
-
         page,
         limit,
       },

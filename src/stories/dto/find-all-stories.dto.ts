@@ -26,6 +26,7 @@ export class FilterStoryDto {
     type: String,
     example: '1',
   })
+  @IsOptional()
   humanBookId?: string | null;
 
   @ApiPropertyOptional({
@@ -34,11 +35,12 @@ export class FilterStoryDto {
   })
   @Transform(({ value }) => value.split(',').map(Number))
   @IsArray()
+  @IsOptional()
   @IsNumber({}, { each: true })
-  topicIds?: number[];
+  topicIds?: number[] | null;
 }
 
-export class FindAllStoriesDto {
+export class FindAllStoriesDto extends FilterStoryDto {
   @ApiPropertyOptional()
   @Transform(({ value }) => (value ? Number(value) : 1))
   @IsNumber()
@@ -55,15 +57,20 @@ export class FindAllStoriesDto {
   @ApiPropertyOptional({ type: String })
   @IsOptional()
   @Transform(({ value }) => {
-    return value ? plainToInstance(SortStoryDto, JSON.parse(value)) : undefined;
+    return value
+      ? plainToInstance(
+          SortStoryDto,
+          typeof value === 'string' ? JSON.parse(value) : value,
+        )
+      : undefined;
   })
   @ValidateNested({ each: true })
   @Type(() => SortStoryDto)
   sort?: SortStoryDto[] | null;
 
-  @ApiPropertyOptional({ type: String })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => FilterStoryDto)
-  filters?: FilterStoryDto | null;
+  // @ApiPropertyOptional({ type: String })
+  // @IsOptional()
+  // @ValidateNested({ each: true })
+  // @Type(() => FilterStoryDto)
+  // filters?: FilterStoryDto | null;
 }
