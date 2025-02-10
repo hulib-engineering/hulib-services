@@ -37,7 +37,6 @@ export class StoriesRelationalRepository implements StoryRepository {
     sortOptions?: SortStoryDto[] | null;
   }): Promise<Story[]> {
     const where: FindOptionsWhere<StoryEntity> = {};
-
     if (filterOptions?.humanBookId) {
       where.humanBook = { id: Number(filterOptions?.humanBookId) };
     }
@@ -59,9 +58,13 @@ export class StoriesRelationalRepository implements StoryRepository {
         }),
         {},
       ),
+      relations: {
+        topics: true,
+      },
     });
 
-    return entities.map((entity) => StoryMapper.toDomain(entity));
+    const stories = entities.map((entity) => StoryMapper.toDomain(entity));
+    return stories;
   }
 
   async findById(id: Story['id']): Promise<NullableType<Story>> {

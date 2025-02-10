@@ -59,7 +59,6 @@ export class StoriesController {
     const {
       page = DEFAULT_PAGE,
       limit = DEFAULT_LIMIT,
-      filters: filterOptions,
       sort: sortOptions,
     } = query || {};
     return infinityPagination(
@@ -68,13 +67,13 @@ export class StoriesController {
           page,
           limit,
         },
-        filterOptions,
-        sortOptions,
+        filterOptions: {
+          humanBookId: query.humanBookId,
+          topicIds: query.topicIds,
+        },
+        sortOptions: sortOptions ? [sortOptions] : [],
       }),
       {
-        //         page: query?.page ?? DEFAULT_PAGE,
-        //         limit: query?.limit ?? DEFAULT_LIMIT,
-
         page,
         limit,
       },
