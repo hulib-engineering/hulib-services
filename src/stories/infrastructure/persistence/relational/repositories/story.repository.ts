@@ -59,6 +59,7 @@ export class StoriesRelationalRepository implements StoryRepository {
         }),
         {},
       ),
+      relations: ['topics', 'humanBook.humanBook_sharing_topic'], // add tags here
     });
 
     return entities.map((entity) => StoryMapper.toDomain(entity));

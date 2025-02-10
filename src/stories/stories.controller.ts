@@ -72,13 +72,11 @@ export class StoriesController {
         sortOptions,
       }),
       {
-
-//         page: query?.page ?? DEFAULT_PAGE,
-//         limit: query?.limit ?? DEFAULT_LIMIT,
+        //         page: query?.page ?? DEFAULT_PAGE,
+        //         limit: query?.limit ?? DEFAULT_LIMIT,
 
         page,
         limit,
-
       },
     );
   }
