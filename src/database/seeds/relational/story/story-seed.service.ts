@@ -22,7 +22,7 @@ export class StorySeedService {
           topics: {
             create: topics.map((topic) => ({
               topicId: topic.id,
-              storyId: 1
+              storyId: 1,
             })),
           },
           createdAt: new Date(),

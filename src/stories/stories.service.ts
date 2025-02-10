@@ -58,7 +58,7 @@ export class StoriesService {
 
   findOne(id: Story['id']) {
     return this.prisma.story.findUnique({
-      where: { id },
+      where: { id: Number(id) },
     });
   }
 
