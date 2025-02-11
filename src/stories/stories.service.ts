@@ -37,7 +37,7 @@ export class StoriesService {
     return this.storiesRepository.create({ ...createStoriesDto, humanBook });
   }
 
-  findAllWithPagination({
+  async findAllWithPagination({
     paginationOptions,
     filterOptions,
     sortOptions,
@@ -46,7 +46,7 @@ export class StoriesService {
     filterOptions?: FilterStoryDto | null;
     sortOptions?: SortStoryDto[] | null;
   }) {
-    return this.storiesRepository.findAllWithPagination({
+    const stories = await this.storiesRepository.findAllWithPagination({
       paginationOptions: {
         page: paginationOptions.page,
         limit: paginationOptions.limit,
@@ -54,11 +54,20 @@ export class StoriesService {
       filterOptions,
       sortOptions,
     });
+
+    const storiesWithTopicsCount = stories.map((story) => {
+      return {
+        ...story,
+        topicsCount: story.humanBook.topics?.length,
+      };
+    });
+
+    return Promise.all(storiesWithTopicsCount);
   }
 
   findOne(id: Story['id']) {
     return this.prisma.story.findUnique({
-      where: { id },
+      where: { id: Number(id) },
     });
   }
 
@@ -70,7 +79,7 @@ export class StoriesService {
     return this.storiesRepository.remove(id);
   }
 
-  async findDetailedStory(id: number): Promise<Story> {
+  async findDetailedStory(id: number) {
     const story = await this.storiesRepository.findById(id);
 
     if (!story) {
@@ -82,6 +91,6 @@ export class StoriesService {
       });
     }
 
-    return story;
+    return { story: story, topicsLength: story.topics?.length ?? 0 };
   }
 }

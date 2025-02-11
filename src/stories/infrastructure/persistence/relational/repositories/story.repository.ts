@@ -38,13 +38,13 @@ export class StoriesRelationalRepository implements StoryRepository {
   }): Promise<Story[]> {
     const where: FindOptionsWhere<StoryEntity> = {};
 
-    if (filterOptions?.humanBookId) {
-      where.humanBook = { id: Number(filterOptions?.humanBookId) };
+    if (filterOptions?.humanBook) {
+      where.humanBook = { id: Number(filterOptions?.humanBook?.id) };
     }
 
-    if (filterOptions?.topicIds?.length) {
-      where.topics = filterOptions.topicIds.map((topicId) => ({
-        id: topicId,
+    if (filterOptions?.topics?.length) {
+      where.topics = filterOptions.topics.map((topic) => ({
+        id: topic.id,
       }));
     }
 
@@ -59,6 +59,7 @@ export class StoriesRelationalRepository implements StoryRepository {
         }),
         {},
       ),
+      relations: ['topics', 'humanBook.humanBook_sharing_topic'], // add tags here
     });
 
     return entities.map((entity) => StoryMapper.toDomain(entity));

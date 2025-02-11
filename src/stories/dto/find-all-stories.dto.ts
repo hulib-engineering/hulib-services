@@ -9,6 +9,8 @@ import {
 } from 'class-validator';
 import { plainToInstance, Transform, Type } from 'class-transformer';
 import { Story } from '@stories/domain/story';
+import { UserDto } from '@users/dto/user.dto';
+import { TopicDto } from '@topics/dto/topic.dto';
 
 export class SortStoryDto {
   @ApiProperty()
@@ -18,24 +20,25 @@ export class SortStoryDto {
 
   @ApiProperty()
   @IsString()
-  order: 'ASC' | 'DESC';
+  order: string;
 }
 
 export class FilterStoryDto {
   @ApiPropertyOptional({
-    type: String,
-    example: '1',
+    type: UserDto,
+    example: { id: '8686' },
   })
-  humanBookId?: string | null;
+  @ValidateNested({ each: true })
+  @Type(() => UserDto)
+  humanBook: UserDto | null;
 
   @ApiPropertyOptional({
-    example: [1, 2],
-    type: [Number],
+    type: () => [TopicDto],
+    example: [{ id: 1 }, { id: 2 }],
   })
-  @Transform(({ value }) => value.split(',').map(Number))
+  @ValidateNested({ each: true })
   @IsArray()
-  @IsNumber({}, { each: true })
-  topicIds?: number[];
+  topics?: TopicDto[] | null;
 }
 
 export class FindAllStoriesDto {
@@ -63,6 +66,9 @@ export class FindAllStoriesDto {
 
   @ApiPropertyOptional({ type: String })
   @IsOptional()
+  @Transform(({ value }) =>
+    value ? plainToInstance(FilterStoryDto, JSON.parse(value)) : undefined,
+  )
   @ValidateNested({ each: true })
   @Type(() => FilterStoryDto)
   filters?: FilterStoryDto | null;

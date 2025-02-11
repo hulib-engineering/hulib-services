@@ -3,7 +3,6 @@ import { PrismaService } from '@prisma-client/prisma-client.service';
 import { CreateStoryReviewDto } from './dto/create-story-review.dto';
 import { UpdateStoryReviewDto } from './dto/update-story-review.dto';
 import { IPaginationOptions } from '../utils/types/pagination-options';
-import { StoryReviewOverview } from './entities/story-review-overview';
 
 @Injectable()
 export class StoryReviewsService {
@@ -18,9 +17,6 @@ export class StoryReviewsService {
   findOne(id: number) {
     return this.prisma.storyReview.findUnique({
       where: { id },
-      include: {
-        user: true,
-      },
     });
   }
 
@@ -58,29 +54,26 @@ export class StoryReviewsService {
       where,
       skip,
       take: paginationOptions.limit,
-      include: {
-        user: true,
-      },
     });
   }
 
-  async getReviewsOverview(storyId: number): Promise<StoryReviewOverview> {
+  async getReviewsOverview(storyId: number) {
     const reviews = await this.prisma.storyReview.findMany({
       where: { storyId: parseInt(storyId as any, 10) },
     });
 
-    const numberOfReviews = reviews.length;
-    if (!numberOfReviews) {
+    const totalReviews = reviews.length;
+    if (!totalReviews) {
       return {
-        rating: 0,
-        numberOfReviews: 0,
-        histogram: null,
-        outStanding: null,
+        averageRating: 0,
+        totalReviews: 0,
+        ratingDistribution: {},
+        outstandingReview: null,
       };
     }
 
     const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
-    const averageRating = totalRating / numberOfReviews;
+    const averageRating = totalRating / totalReviews;
 
     const ratingDistribution = reviews.reduce((acc, review) => {
       acc[review.rating] = acc[review.rating] ? acc[review.rating] + 1 : 1;
@@ -95,19 +88,10 @@ export class StoryReviewsService {
     }, reviews[0]);
 
     return {
-      rating: averageRating,
-      numberOfReviews,
-      histogram: Object.entries(ratingDistribution).map(([rating, count]) => ({
-        rating: parseInt(rating, 10),
-        count,
-      })),
-      outStanding: {
-        ...outstandingReview,
-        // @ts-expect-error this always exists
-        user: await this.prisma.user.findUnique({
-          where: { id: outstandingReview.userId },
-        }),
-      },
+      averageRating,
+      totalReviews,
+      ratingDistribution,
+      outstandingReview,
     };
   }
 }

@@ -21,5 +21,5 @@ export class StoryReviewOverview {
   histogram?: StoryReviewHistogram[] | null;
 
   @ApiProperty()
-  outStanding: StoryReview | null;
+  outStanding: StoryReview;
 }
