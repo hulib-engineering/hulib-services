@@ -11,11 +11,12 @@ import { Story } from './domain/story';
 import { UsersService } from '@users/users.service';
 import { FilterStoryDto, SortStoryDto } from './dto/find-all-stories.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
-
+import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 @Injectable()
 export class StoriesService {
   constructor(
     private readonly storiesRepository: StoryRepository,
+    private readonly storyReviewService: StoryReviewsService,
     private usersService: UsersService,
     private prisma: PrismaService,
   ) {}
@@ -56,16 +57,19 @@ export class StoriesService {
     });
   }
 
-  findOne(id: Story['id']) {
-    return this.prisma.story.findUnique({
+  async findOne(id: Story['id']) {
+    const result = await this.prisma.story.findUnique({
       where: { id: Number(id) },
       include: {
         topics: true,
         humanBook: true,
         cover: true,
-        storyReview: true,
       },
     });
+
+    const storyReview = await this.storyReviewService.getReviewsOverview(id);
+
+    return { ...result, storyReview };
   }
 
   update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {
