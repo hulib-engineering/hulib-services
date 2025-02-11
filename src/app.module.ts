@@ -29,6 +29,7 @@ import { StoriesModule } from './stories/stories.module';
 import { FavStoriesModule } from './fav-stories/fav-stories.module';
 import { StoryReviewsModule } from './story-reviews/story-reviews.module';
 import { PrismaModule } from './prisma-client/prisma-client.module';
+import { SearchModule } from './search/search.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -91,6 +92,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     BooksModule,
     StoryReviewsModule,
     PrismaModule,
+    SearchModule,
   ],
 })
 export class AppModule {}
