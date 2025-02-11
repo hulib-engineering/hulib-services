@@ -61,7 +61,11 @@ export class StoriesService {
     const result = await this.prisma.story.findUnique({
       where: { id: Number(id) },
       include: {
-        topics: true,
+        topics: {
+          include: {
+            topic: true,
+          },
+        },
         humanBook: true,
         cover: true,
       },
@@ -69,7 +73,11 @@ export class StoriesService {
 
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
 
-    return { ...result, storyReview };
+    return {
+      ...result,
+      storyReview,
+      topics: result?.topics.map((nestedTopic) => nestedTopic.topic),
+    };
   }
 
   update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {
