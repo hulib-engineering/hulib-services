@@ -38,7 +38,7 @@ export class StoriesService {
     return this.storiesRepository.create({ ...createStoriesDto, humanBook });
   }
 
-  findAllWithPagination({
+  async findAllWithPagination({
     paginationOptions,
     filterOptions,
     sortOptions,
@@ -47,7 +47,7 @@ export class StoriesService {
     filterOptions?: FilterStoryDto | null;
     sortOptions?: SortStoryDto[] | null;
   }) {
-    return this.storiesRepository.findAllWithPagination({
+    const stories = await this.storiesRepository.findAllWithPagination({
       paginationOptions: {
         page: paginationOptions.page,
         limit: paginationOptions.limit,
@@ -55,6 +55,15 @@ export class StoriesService {
       filterOptions,
       sortOptions,
     });
+
+    const storiesWithReview = stories.map((story) => {
+      return {
+        ...story,
+        storyCount: story.humanBook.topics?.length,
+      };
+    });
+
+    return storiesWithReview;
   }
 
   async findOne(id: Story['id']) {
@@ -88,7 +97,7 @@ export class StoriesService {
     return this.storiesRepository.remove(id);
   }
 
-  async findDetailedStory(id: number): Promise<Story> {
+  async findDetailedStory(id: number) {
     const story = await this.storiesRepository.findById(id);
 
     if (!story) {
@@ -100,6 +109,6 @@ export class StoriesService {
       });
     }
 
-    return story;
+    return { story: story, storyCount: story.topics?.length ?? 0 };
   }
 }

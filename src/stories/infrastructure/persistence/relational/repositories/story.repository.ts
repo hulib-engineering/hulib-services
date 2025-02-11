@@ -60,6 +60,7 @@ export class StoriesRelationalRepository implements StoryRepository {
       ),
       relations: {
         topics: true,
+        humanBook: true,
       },
     });
 
