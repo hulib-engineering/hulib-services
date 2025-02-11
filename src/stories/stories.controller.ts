@@ -119,18 +119,18 @@ export class StoriesController {
   //   return this.storiesService.remove(id);
   // }
 
-  // @Get(':id/details')
-  // @ApiParam({
-  //   name: 'id',
-  //   type: String,
-  //   required: true,
-  // })
-  // @ApiOkResponse({
-  //   type: Story,
-  // })
-  // async getStoryDetails(@Param('id') id: number) {
-  //   return this.storiesService.findDetailedStory(id);
-  // }
+  @Get(':id/details')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Story,
+  })
+  async getStoryDetails(@Param('id') id: number) {
+    return this.storiesService.findDetailedStory(id);
+  }
 
   // @Get(':id/human-book')
   // @ApiParam({
