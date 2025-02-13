@@ -39,12 +39,12 @@ export class Story {
   })
   storyReview?: StoryReviewOverview | null;
 
-  @ApiProperty({
-    type: Boolean,
-    example: true,
-    description: 'Whether the story is favorited by the current user',
-  })
-  isFavorited?: boolean | null;
+  // @ApiProperty({
+  //   type: Boolean,
+  //   example: true,
+  //   description: 'Whether the story is favorited by the current user',
+  // })
+  // isFavorited?: boolean | null;
 
   @ApiProperty({
     type: () => [Topic],

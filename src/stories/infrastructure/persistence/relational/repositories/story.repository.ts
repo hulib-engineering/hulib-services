@@ -58,12 +58,18 @@ export class StoriesRelationalRepository implements StoryRepository {
         }),
         {},
       ),
-      relations: {
-        topics: true,
-      },
+      relations: ['humanBook', 'topics', 'humanBook.topics'],
+      // relations: {
+      //   topics: true,
+      // },
     });
 
     const stories = entities.map((entity) => StoryMapper.toDomain(entity));
+
+    // add field countTopics to story
+    stories.forEach((story) => {
+      return { ...story, countTopics: story.humanBook.topics?.length } as any;
+    });
     return stories;
   }
 
