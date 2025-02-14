@@ -171,9 +171,20 @@ export class UserEntity extends EntityRelationalHelper {
   @ManyToMany(() => TopicsEntity)
   @JoinTable({
     name: 'humanBook_sharing_topic',
+    joinColumn: {
+      name: 'userId',
+    },
+    inverseJoinColumn: {
+      name: 'topicsId',
+    },
   })
   topics?: TopicsEntity[];
 
+  @ApiProperty()
+  @Expose()
+  get countTopics(): number {
+    return this.topics?.length || 0;
+  }
   @ApiProperty()
   @CreateDateColumn()
   createdAt: Date;

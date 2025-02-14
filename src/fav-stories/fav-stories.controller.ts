@@ -1,15 +1,15 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Post, Body, Get, Query } from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Story } from '../stories/domain/story';
 import { SaveFavStoryDto } from './dto/save-fav-story.dto';
-
-@ApiTags('Fav Stories')
+import { FavStoriesService } from './fav-stories.service';
+@ApiTags('Fav_Stories')
 @Controller({
-  path: 'fav-stories',
+  path: 'fav_stories',
   version: '1',
 })
 export class FavStoriesController {
-  constructor() {}
+  constructor(private readonly FavStoriesService: FavStoriesService) {}
 
   @Post()
   @ApiCreatedResponse({
@@ -17,5 +17,14 @@ export class FavStoriesController {
   })
   create(@Body() saveFavStoryDto: SaveFavStoryDto) {
     return saveFavStoryDto;
+  }
+
+  @Get()
+  @ApiOkResponse({
+    description: 'List of favorite stories',
+    type: [Story],
+  })
+  async getFavoriteStories(@Query('userId') userId: number) {
+    return this.FavStoriesService.getFavoriteStories(userId);
   }
 }
