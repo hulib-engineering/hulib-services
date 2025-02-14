@@ -2,12 +2,11 @@
 name: Release
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
-    branches:
-      - main
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
 
 jobs:
   release:
@@ -24,7 +23,7 @@ jobs:
       pull-requests: write # to be able to comment on released pull requests
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Use Node.js ${{ matrix.node-version }}
@@ -33,6 +32,28 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
       - run: HUSKY=0 npm ci
+
+      - name: 'Healthcheck database'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_HOST: ep-lively-recipe-a11mpbm9.ap-southeast-1.aws.neon.tech
+          DATABASE_PORT: 5432
+          DATABASE_USER: hulibdb_owner
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        run: |
+          pg_isready -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER
+
+      - name: 'Executing remote ssh and deploy script'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: vodacluc
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          port: 22
+          script: |
+            chmod +x deploy.sh
+            ./deploy.sh
 
       - name: Release
         env:
