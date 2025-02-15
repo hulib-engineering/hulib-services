@@ -8,7 +8,7 @@ echo "Pulling latest code from repository..."
 git pull || { echo "Failed pull"; exit 1; }
 
 echo "Starting the application containers..."
-sudo docker-compose -f docker-compose.prod.yaml up -d --build || { echo "Failed to start containers"; exit 1; }
+docker-compose -f docker-compose.prod.yaml up -d --build || { echo "Failed to start containers"; exit 1; }
 
 # Hoàn thành deploy
 echo "Deployment completed successfully at $(date)"
