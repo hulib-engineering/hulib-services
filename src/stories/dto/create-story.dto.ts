@@ -17,10 +17,12 @@ import { Type } from 'class-transformer';
 export class CreateStoryDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   abstract: string;
 
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   title: string;
 
   @ApiPropertyOptional({ type: () => FileDto })

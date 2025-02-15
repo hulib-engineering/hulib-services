@@ -1,4 +1,5 @@
-name: NestJS Production API CI
+
+name: Release
 
 on:
   push:
@@ -6,13 +7,31 @@ on:
   pull_request:
     branches: [main]
 
+
 jobs:
-  build:
+  release:
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    name: Create a new release
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write # to be able to publish a GitHub release
+      issues: write # to be able to comment on released issues
+      pull-requests: write # to be able to comment on released pull requests
+
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@v4'
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: HUSKY=0 npm ci
 
       - name: 'Healthcheck database'
         env:
@@ -35,3 +54,8 @@ jobs:
           script: |
             chmod +x deploy.sh
             ./deploy.sh
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
