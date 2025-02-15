@@ -18,11 +18,11 @@ CREATE TABLE "gender" (
 );
 
 -- CreateTable
-CREATE TABLE "humanBook_sharing_topic" (
+CREATE TABLE "humanBookTopic" (
     "userId" INTEGER NOT NULL,
-    "topicsId" INTEGER NOT NULL,
+    "topicId" INTEGER NOT NULL,
 
-    CONSTRAINT "humanBook_sharing_topic_pkey" PRIMARY KEY ("userId","topicsId")
+    CONSTRAINT "humanBookTopic_pkey" PRIMARY KEY ("userId","topicId")
 );
 
 -- CreateTable
@@ -116,11 +116,46 @@ CREATE TABLE "user" (
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
 );
 
--- AddForeignKey
-ALTER TABLE "humanBook_sharing_topic" ADD CONSTRAINT "fk_topics" FOREIGN KEY ("topicsId") REFERENCES "topics"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+-- CreateTable
+CREATE TABLE "story" (
+    "id" SERIAL NOT NULL,
+    "title" VARCHAR NOT NULL,
+    "abstract" VARCHAR,
+    "coverId" UUID,
+    "humanBookId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "story_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "storyTopic" (
+    "storyId" INTEGER NOT NULL,
+    "topicId" INTEGER NOT NULL,
+
+    CONSTRAINT "storyTopic_pkey" PRIMARY KEY ("storyId","topicId")
+);
+
+-- CreateTable
+CREATE TABLE "storyReview" (
+    "id" SERIAL NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "title" VARCHAR NOT NULL,
+    "comment" VARCHAR NOT NULL,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "userId" INTEGER NOT NULL,
+    "storyId" INTEGER NOT NULL,
+
+    CONSTRAINT "storyReview_pkey" PRIMARY KEY ("id")
+);
 
 -- AddForeignKey
-ALTER TABLE "humanBook_sharing_topic" ADD CONSTRAINT "fk_user" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "humanBookTopic" ADD CONSTRAINT "fk_topics" FOREIGN KEY ("topicId") REFERENCES "topics"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "humanBookTopic" ADD CONSTRAINT "fk_user" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "humanBooks" ADD CONSTRAINT "fk_human_books_user" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -136,4 +171,22 @@ ALTER TABLE "user" ADD CONSTRAINT "user_roleId_fkey" FOREIGN KEY ("roleId") REFE
 
 -- AddForeignKey
 ALTER TABLE "user" ADD CONSTRAINT "user_statusId_fkey" FOREIGN KEY ("statusId") REFERENCES "status"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "story" ADD CONSTRAINT "story_coverId_fkey" FOREIGN KEY ("coverId") REFERENCES "file"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "story" ADD CONSTRAINT "story_humanBookId_fkey" FOREIGN KEY ("humanBookId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "storyTopic" ADD CONSTRAINT "storyTopic_storyId_fkey" FOREIGN KEY ("storyId") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "storyTopic" ADD CONSTRAINT "storyTopic_topicId_fkey" FOREIGN KEY ("topicId") REFERENCES "topics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "storyReview" ADD CONSTRAINT "storyReview_storyId_fkey" FOREIGN KEY ("storyId") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "storyReview" ADD CONSTRAINT "fk_story_review_user" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 

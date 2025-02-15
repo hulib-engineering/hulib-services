@@ -170,7 +170,7 @@ export class UserEntity extends EntityRelationalHelper {
 
   @ManyToMany(() => TopicsEntity)
   @JoinTable({
-    name: 'humanBook_sharing_topic',
+    name: 'humanBookTopic',
   })
   topics?: TopicsEntity[];
 

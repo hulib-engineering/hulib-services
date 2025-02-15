@@ -22,13 +22,13 @@ model gender {
   user user[]
 }
 
-model humanBook_sharing_topic {
+model humanBookTopic {
   userId   Int
-  topicsId Int
-  topics   topics @relation(fields: [topicsId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_topics")
-  user     user   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user")
+  topicId Int
+  topic   topics @relation(fields: [topicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_topics")
+  user    user   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user")
 
-  @@id([userId, topicsId])
+  @@id([userId, topicId])
 }
 
 model humanBooks {
@@ -76,7 +76,7 @@ model topics {
   name                    String                    @db.VarChar
   createdAt               DateTime                  @default(now()) @db.Timestamp(6)
   updatedAt               DateTime                  @default(now()) @db.Timestamp(6)
-  humanBook_sharing_topic humanBook_sharing_topic[]
+  humanBookTopic          humanBookTopic[]
   stories                 storyTopic[]
 }
 
@@ -104,7 +104,7 @@ model user {
   education               String?                   @db.VarChar
   educationStart          DateTime?                 @db.Date
   educationEnd            DateTime?                 @db.Date
-  humanBook_sharing_topic humanBook_sharing_topic[]
+  humanBookTopic          humanBookTopic[]
   humanBooks              humanBooks[]
   storyReview             storyReview[]
   stories                 story[]
