@@ -34,7 +34,7 @@ export class TopicsEntity extends EntityRelationalHelper {
 
   @ManyToMany(() => UserEntity)
   @JoinTable({
-    name: 'humanBook_sharing_topic',
+    name: 'humanBookTopic',
   })
   users: UserEntity[];
 
