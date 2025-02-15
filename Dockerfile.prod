@@ -12,4 +12,4 @@ COPY . /usr/src/app
 RUN npx prisma generate
 RUN npm run build
 
-CMD ["dotenvx", "run", "--", "npm", "run", "start:prod"]
+CMD ["dotenvx", "run", "--strict", "--", "npm", "run", "start:prod"]
