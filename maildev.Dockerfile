@@ -7,4 +7,4 @@ RUN curl -sfS https://dotenvx.sh/install.sh | sh
 
 RUN npm i -g maildev@2.0.5
 
-CMD ["dotenvx", "run", "--", "maildev"]
+CMD ["dotenvx", "run", "-f", ".env.production", "--", "maildev"]
