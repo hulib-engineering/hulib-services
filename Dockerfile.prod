@@ -6,10 +6,10 @@ RUN curl -sfS https://dotenvx.sh/install.sh | sh
 WORKDIR /usr/src/app
 COPY package.json .
 COPY package-lock.json .
-COPY prisma .
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 COPY . /usr/src/app
+RUN npx prisma generate
 RUN npm run build
 
 CMD ["dotenvx", "run", "--", "npm", "run", "start:prod"]
