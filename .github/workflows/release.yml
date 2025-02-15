@@ -37,7 +37,7 @@ jobs:
       - name: 'Executing remote ssh and deploy script'
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.HOST }}
+          host: ${{ secrets.SSH_HOST }}
           username: hulib-engineering
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
