@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: maildev.Dockerfile
+    environment:
+      - DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}
     ports:
       - ${MAIL_CLIENT_PORT}:1080
     expose:
@@ -15,5 +17,10 @@ services:
       dockerfile: Dockerfile.prod
     ports:
       - ${APP_PORT}:${APP_PORT}
-    env_file:
-      - .env # Chỉ định file .env
+    environment:
+      - DOTENV_PRIVATE_KEY_PRODUCTION=${DOTENV_PRIVATE_KEY_PRODUCTION}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${APP_PORT}/api/healthcheck"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3

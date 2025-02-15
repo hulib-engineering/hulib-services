@@ -3,3 +3,5 @@
 /dist
 /files
 /docker-volumes
+
+.env.keys

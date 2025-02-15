@@ -16,6 +16,7 @@ jobs:
 
     name: Create a new release
     runs-on: ubuntu-latest
+    environment: production
 
     permissions:
       contents: write # to be able to publish a GitHub release
@@ -33,27 +34,21 @@ jobs:
           cache: "npm"
       - run: HUSKY=0 npm ci
 
-      - name: 'Healthcheck database'
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DATABASE_HOST: ep-lively-recipe-a11mpbm9.ap-southeast-1.aws.neon.tech
-          DATABASE_PORT: 5432
-          DATABASE_USER: hulibdb_owner
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-        run: |
-          pg_isready -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER
-
       - name: 'Executing remote ssh and deploy script'
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          DOTENV_FILE: ${{ secrets.DOTENV_FILE }}
+          DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
         with:
-          host: ${{ secrets.HOST }}
-          username: vodacluc
+          host: ${{ secrets.SSH_HOST }}
+          username: hulib-engineering
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
           port: 22
+          envs: DOTENV_FILE,DOTENV_PRIVATE_KEY_PRODUCTION
           script: |
-            chmod +x deploy.sh
-            ./deploy.sh
+            curl -sfS https://dotenvx.sh | sudo sh
+            cd hulib-services
+            dotenvx run --strict --env-file=${DOTENV_FILE} -- ./deploy.sh
 
       - name: Release
         env:

@@ -36,10 +36,12 @@ export class TopicsEntity extends EntityRelationalHelper {
   @JoinTable({
     name: 'humanBookTopic',
     joinColumn: {
-      name: 'userId',
+      name: 'topicId',
+      referencedColumnName: 'id',
     },
     inverseJoinColumn: {
-      name: 'topicId',
+      name: 'userId',
+      referencedColumnName: 'id',
     },
   })
   users: UserEntity[];
