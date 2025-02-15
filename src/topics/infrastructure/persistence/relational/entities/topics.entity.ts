@@ -35,6 +35,12 @@ export class TopicsEntity extends EntityRelationalHelper {
   @ManyToMany(() => UserEntity)
   @JoinTable({
     name: 'humanBookTopic',
+    joinColumn: {
+      name: 'userId',
+    },
+    inverseJoinColumn: {
+      name: 'topicId',
+    },
   })
   users: UserEntity[];
 

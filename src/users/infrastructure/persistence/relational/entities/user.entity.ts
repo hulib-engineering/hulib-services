@@ -175,6 +175,11 @@ export class UserEntity extends EntityRelationalHelper {
   topics?: TopicsEntity[];
 
   @ApiProperty()
+  @Expose()
+  get countTopics(): number {
+    return this.topics?.length || 0;
+  }
+  @ApiProperty()
   @CreateDateColumn()
   createdAt: Date;
 
