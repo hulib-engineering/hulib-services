@@ -37,8 +37,7 @@ lerna-debug.log*
 .data
 /files
 .env
-.env.staging
-.env.prod
 
 /ormconfig.json
 /docker-volumes
+.env.keys
