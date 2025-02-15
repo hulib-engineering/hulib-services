@@ -38,18 +38,17 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           DOTENV_FILE: ${{ secrets.DOTENV_FILE }}
-          DOTENV_PRIVATE_KEY_STAGING: ${{ secrets.DOTENV_PRIVATE_KEY_STAGING }}
-          DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
+          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: hulib-engineering
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          envs: DOTENV_FILE,DOTENV_PRIVATE_KEY_STAGING,DOTENV_PRIVATE_KEY_PRODUCTION
+          envs: DOTENV_FILE,DOTENV_PRIVATE_KEY
           script: |
             curl -sfS https://dotenvx.sh | sudo sh
             cd hulib-services
-            dotenvx run --strict --env-file=${DOTENV_FILE} -- ./deploy.sh
+            DOTENV_PRIVATE_KEY=${DOTENV_PRIVATE_KEY} dotenvx run --strict --env-file=${DOTENV_FILE} -- ./deploy.sh
 
       - name: Release
         env:

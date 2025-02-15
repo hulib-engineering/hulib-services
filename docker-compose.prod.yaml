@@ -15,5 +15,3 @@ services:
       dockerfile: Dockerfile.prod
     ports:
       - ${APP_PORT}:${APP_PORT}
-    env_file:
-      - .env # Chỉ định file .env
