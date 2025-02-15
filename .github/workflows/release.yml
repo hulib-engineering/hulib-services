@@ -44,7 +44,7 @@ jobs:
           username: hulib-engineering
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          envs: DOTENV_FILE,DOTENV_PRIVATE_KEY
+          envs: DOTENV_FILE,DOTENV_PRIVATE_KEY_PRODUCTION
           script: |
             curl -sfS https://dotenvx.sh | sudo sh
             cd hulib-services
