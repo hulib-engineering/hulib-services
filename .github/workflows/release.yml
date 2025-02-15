@@ -45,7 +45,7 @@ jobs:
           port: 22
           envs: DOTENV_PRIVATE_KEY_PRODUCTION
           script: |
-            sudo curl -sfS https://dotenvx.sh | sh
+            curl -sfS https://dotenvx.sh | sudo sh
             cd hulib-services
             chmod +x deploy.sh
             dotenvx run -- ./deploy.sh
