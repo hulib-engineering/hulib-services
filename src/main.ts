@@ -1,4 +1,4 @@
-import './instrument.ts';
+import './instrument';
 import 'dotenv/config';
 import {
   ClassSerializerInterceptor,
