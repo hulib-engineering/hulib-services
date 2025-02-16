@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { UsersModule } from './users/users.module';
 import { FilesModule } from './files/files.module';
 import { AuthModule } from './auth/auth.module';
@@ -31,6 +32,7 @@ import { StoryReviewsModule } from './story-reviews/story-reviews.module';
 import { PrismaModule } from './prisma-client/prisma-client.module';
 import { SearchModule } from './search/search.module';
 import { HealthcheckModule } from './healthcheck/healthcheck.module';
+import { APP_FILTER } from '@nestjs/core';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -41,6 +43,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     HealthcheckModule,
     StoriesModule,
     FavStoriesModule,
@@ -95,6 +98,12 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     StoryReviewsModule,
     PrismaModule,
     SearchModule,
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
   ],
 })
 export class AppModule {}
