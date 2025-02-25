@@ -24,6 +24,7 @@ import { Exclude, Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { GenderEntity } from '@genders/infrastructure/persistence/relational/entities/gender.entity';
 import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
+import { IsPhoneNumber } from 'class-validator';
 
 @Entity({
   name: 'user',
@@ -139,6 +140,7 @@ export class UserEntity extends EntityRelationalHelper {
     example: '11234567890',
   })
   @Column({ type: String, nullable: true })
+  @IsPhoneNumber()
   parentPhoneNumber?: string | null;
 
   @ApiProperty({
@@ -146,6 +148,7 @@ export class UserEntity extends EntityRelationalHelper {
     example: '11234567891',
   })
   @Column({ type: String, nullable: true })
+  @IsPhoneNumber()
   phoneNumber?: string | null;
 
   @ApiProperty()

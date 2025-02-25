@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 
 @Injectable()
@@ -14,7 +18,12 @@ export class FavStoriesService {
     });
 
     if (!favorites.length) {
-      throw new NotFoundException('No favorite stories found for this user');
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          email: 'No favorite stories found for this user',
+        },
+      });
     }
 
     return favorites.map((favorite) => favorite.story);
