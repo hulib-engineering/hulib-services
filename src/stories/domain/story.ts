@@ -3,6 +3,7 @@ import { User } from '@users/domain/user';
 import { FileType } from '@files/domain/file';
 import { StoryReviewOverview } from '@story-reviews/entities/story-review-overview';
 import { Topic } from '@topics/domain/topics';
+import { PublishStatus } from '@stories/status.enum';
 
 const idType = Number;
 
@@ -43,6 +44,12 @@ export class Story {
     type: () => [Topic],
   })
   topics?: Topic[] | null;
+
+  @ApiProperty({
+    type: String,
+    example: PublishStatus[1],
+  })
+  publishStatus: string;
 
   @ApiProperty()
   createdAt: Date;
