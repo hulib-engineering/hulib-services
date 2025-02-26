@@ -42,7 +42,8 @@
       "@social/*": ["src/social/*"],
       "@tags/*": ["src/tags/*"],
       "@prisma-client/*": ["src/prisma-client/*"],
-      "@test/*": ["test/*"]
+      "@test/*": ["test/*"],
+      "@casl/*": ["src/casl/*"]
     }
   }
 }

@@ -39,6 +39,9 @@ import { RolesGuard } from '@roles/roles.guard';
 import { infinityPagination } from '@utils/infinity-pagination';
 import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 import { UpgradeDto } from './dto/upgrade.dto';
+import { CaslGuard } from '@casl/guards/casl.guard';
+import { CheckAbilities } from '@casl/decorators/casl.decorator';
+import { Action } from '@casl/ability.factory';
 
 @ApiBearerAuth()
 @Roles(RoleEnum.admin)
@@ -73,7 +76,8 @@ export class UsersController {
   })
   @Get()
   @Roles(RoleEnum.admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @CheckAbilities((ability) => ability.can(Action.Read, 'User'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard, CaslGuard)
   @HttpCode(HttpStatus.OK)
   async findAll(
     @Query() query: QueryUserDto,
