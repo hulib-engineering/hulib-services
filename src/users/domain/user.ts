@@ -132,6 +132,12 @@ export class User {
   })
   topics?: Topics[];
 
+  @ApiProperty({
+    type: Number,
+    example: 4,
+  })
+  countTopics?: number;
+
   @ApiProperty()
   createdAt: Date;
 

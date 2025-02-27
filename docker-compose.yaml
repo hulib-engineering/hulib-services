@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16.4-alpine
+    image: postgres:17.3-alpine
     ports:
       - ${DATABASE_PORT}:5432
     volumes:
@@ -9,8 +9,6 @@ services:
       POSTGRES_USER: ${DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
-    env_file:
-      - .env
 
   maildev:
     build:
@@ -19,37 +17,6 @@ services:
     ports:
       - ${MAIL_CLIENT_PORT}:1080
       - ${MAIL_PORT}:1025
-
-  pgadmin:
-    profiles:
-      - admin
-      - all
-    image: dpage/pgadmin4
-    depends_on:
-      - postgres
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-your-email@example.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-P@s5word}
-      PGADMIN_CONFIG_SERVER_MODE: 'True'
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-      - ${DATA_FOLDER}/pgadmin/servers.json:/pgadmin4/servers.json
-    ports:
-      - '5433:80'
-    restart: always
-
-  # Uncomment to use adminer
-  #  adminer:
-  #    image: adminer
-  #    restart: always
-  #    ports:
-  #      - 8080:8080
-
-  # Uncomment to use redis
-  # redis:
-  #   image: redis:7-alpine
-  #   ports:
-  #     - 6379:6379
 
   api:
     build:

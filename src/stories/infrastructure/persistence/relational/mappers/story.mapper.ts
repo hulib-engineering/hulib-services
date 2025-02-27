@@ -2,6 +2,7 @@ import { UserMapper } from '@users/infrastructure/persistence/relational/mappers
 import { Story } from '@stories/domain/story';
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 import { TopicsMapper } from '@topics/infrastructure/persistence/relational/mappers/topics.mapper';
+import { PublishStatus } from '@stories/status.enum';
 
 export class StoryMapper {
   static toDomain(raw: StoryEntity): Story {
@@ -20,6 +21,7 @@ export class StoryMapper {
     }
     domainEntity.topics = raw.topics;
     // domainEntity.rating = raw.rating;
+    domainEntity.publishStatus = PublishStatus[raw.publishStatus];
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -39,6 +41,8 @@ export class StoryMapper {
       );
     }
     // persistenceEntity.rating = domainEntity.rating;
+    persistenceEntity.publishStatus =
+      PublishStatus[domainEntity.publishStatus as keyof typeof PublishStatus];
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 

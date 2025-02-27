@@ -50,6 +50,7 @@ export class UserMapper {
     domainEntity.educationStart = raw.educationStart;
     domainEntity.educationEnd = raw.educationEnd;
     domainEntity.topics = raw.topics;
+    domainEntity.countTopics = raw.countTopics;
     return domainEntity;
   }
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 import { NullableType } from '@utils/types/nullable.type';
 import { Story } from '@stories/domain/story';
@@ -11,12 +11,15 @@ import {
   FilterStoryDto,
   SortStoryDto,
 } from '@stories/dto/find-all-stories.dto';
+import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
 
 @Injectable()
 export class StoriesRelationalRepository implements StoryRepository {
   constructor(
     @InjectRepository(StoryEntity)
     private readonly storiesRepository: Repository<StoryEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   async create(data: Story): Promise<Story> {
@@ -58,12 +61,36 @@ export class StoriesRelationalRepository implements StoryRepository {
         }),
         {},
       ),
+      // relations: ['humanBook', 'topics', 'humanBook.topics'],
+      relations: {
+        topics: true,
+      },
+    });
+
+    const humanbookSearch = await this.userRepository.find({
+      where: {
+        id: In(
+          entities
+            .map((entity) => entity.humanBook?.id)
+            .filter((id): id is number => id !== undefined),
+        ),
+      },
       relations: {
         topics: true,
       },
     });
 
     const stories = entities.map((entity) => StoryMapper.toDomain(entity));
+
+    // add field countTopics to story
+    stories.forEach((story) => {
+      const countTopics = humanbookSearch.reduce(
+        (acc, user) => acc + (user.topics?.length || 0),
+        0,
+      );
+      story.humanBook.countTopics = countTopics;
+    });
+
     return stories;
   }
 
