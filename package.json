@@ -44,6 +44,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "3.637.0",
     "@aws-sdk/s3-request-presigner": "3.637.0",
+    "@casl/ability": "^6.7.3",
     "@dotenvx/dotenvx": "^1.36.0",
     "@nestjs/common": "10.4.1",
     "@nestjs/config": "3.2.3",
@@ -167,7 +168,8 @@
       "^@social/(.*)$": "<rootDir>/social/$1",
       "^@tags/(.*)$": "<rootDir>/tags/$1",
       "^@prisma-client/(.*)$": "<rootDir>/prisma-client/$1",
-      "^@test/(.*)$": "../test/$1"
+      "^@test/(.*)$": "../test/$1",
+      "^@casl/(.*)$": "<rootDir>/casl/$1"
     }
   },
   "engines": {
