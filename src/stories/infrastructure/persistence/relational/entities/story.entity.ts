@@ -16,6 +16,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { FileEntity } from '@files/infrastructure/persistence/relational/entities/file.entity';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
+import { PublishStatus } from '@stories/status.enum';
 
 @Entity({
   name: 'story',
@@ -66,6 +67,13 @@ export class StoryEntity extends EntityRelationalHelper {
     },
   })
   topics?: TopicsEntity[];
+
+  @ApiProperty({
+    type: Number,
+    example: PublishStatus.draft,
+  })
+  @Column({ type: Number, default: PublishStatus.draft })
+  publishStatus: PublishStatus;
 
   // @ApiProperty({
   //   type: Number,

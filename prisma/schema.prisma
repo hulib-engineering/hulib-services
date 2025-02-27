@@ -115,6 +115,7 @@ model story {
   abstract    String?       @db.VarChar
   coverId     String?       @db.Uuid
   humanBookId Int
+  publishStatus Int @default(1)
   createdAt   DateTime      @default(now()) @db.Timestamp(6)
   updatedAt   DateTime      @default(now()) @db.Timestamp(6)
   cover       file?         @relation(fields: [coverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
