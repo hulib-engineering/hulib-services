@@ -15,6 +15,10 @@ export class FilterUserDto {
   @ValidateNested({ each: true })
   @Type(() => RoleDto)
   roles?: RoleDto[] | null;
+
+  @ApiPropertyOptional({ type: Number, isArray: true })
+  @IsOptional()
+  topicsOfInterest?: number[];
 }
 
 export class SortUserDto {

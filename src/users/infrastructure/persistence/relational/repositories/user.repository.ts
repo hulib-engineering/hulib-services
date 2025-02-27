@@ -42,6 +42,12 @@ export class UsersRelationalRepository implements UserRepository {
       }));
     }
 
+    if (filterOptions?.topicsOfInterest?.length) {
+      where.topics = filterOptions.topicsOfInterest.map((topicId) => ({
+        id: topicId,
+      }));
+    }
+
     const entities = await this.usersRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
