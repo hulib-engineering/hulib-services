@@ -1,0 +1,62 @@
+import { Schedules } from './domain/schedules';
+
+export const mockSchedules: Schedules[] = [
+  {
+    id: 1,
+    humanBook: {
+      id: 1,
+      email: 'example@gmail.com',
+      fullName: 'Jane Doe',
+      provider: 'exampleProvider',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    startedAt: new Date('2024-03-01T09:00:00Z'),
+    startTime: '09:00',
+    endedAt: new Date('2024-03-01T09:30:00Z'),
+    endTime: '09:30',
+    isBooked: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  },
+  {
+    id: 2,
+    humanBook: {
+      id: 1,
+      email: 'example@gmail.com',
+      fullName: 'Jane Doe',
+      provider: 'exampleProvider',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+
+    startedAt: new Date('2024-03-02T14:00:00Z'),
+    startTime: '14:00',
+    endedAt: new Date('2024-03-02T16:00:00Z'),
+    endTime: '16:00',
+    isBooked: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  },
+  {
+    id: 3,
+    humanBook: {
+      id: 1,
+      email: 'example@gmail.com',
+      fullName: 'Jane Doe',
+      provider: 'exampleProvider',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    startedAt: new Date('2024-03-03T10:00:00Z'),
+    startTime: '10:00',
+    endedAt: new Date('2024-03-03T11:00:00Z'),
+    endTime: '11:00',
+    isBooked: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  },
+];
