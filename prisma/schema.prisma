@@ -111,15 +111,16 @@ model user {
 }
 
 model story {
-  id            Int             @id @default(autoincrement())
-  title         String          @db.VarChar
-  abstract      String?         @db.VarChar
-  coverId       String?         @db.Uuid
-  humanBookId   Int
-  createdAt     DateTime        @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime        @default(now()) @db.Timestamp(6)
-  cover         file?           @relation(fields: [coverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  humanBook     user            @relation(fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id          Int           @id @default(autoincrement())
+  title       String        @db.VarChar
+  abstract    String?       @db.VarChar
+  coverId     String?       @db.Uuid
+  humanBookId Int
+  publishStatus Int @default(1)
+  createdAt   DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime      @default(now()) @db.Timestamp(6)
+  cover       file?         @relation(fields: [coverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  humanBook   user          @relation(fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   storyFavorite storyFavorite[]
   storyReview   storyReview[]
   topics        storyTopic[]
