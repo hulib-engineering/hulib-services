@@ -10,4 +10,8 @@ export class SchedulesRelationalRepository implements SchedulesRepository {
     @InjectRepository(SchedulesEntity)
     private readonly storiesRepository: Repository<SchedulesEntity>,
   ) {}
+
+  async findMany(): Promise<any> {
+    return this.storiesRepository.find();
+  }
 }

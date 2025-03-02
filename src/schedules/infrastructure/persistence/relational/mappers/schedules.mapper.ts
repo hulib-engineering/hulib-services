@@ -24,9 +24,6 @@ export class SchedulesMapper {
     return domainModel;
   }
 
-  /**
-   * Chuyển đổi từ Domain Model sang Entity
-   */
   static toPersistence(domain: Schedules): SchedulesEntity {
     const entity = new SchedulesEntity();
     entity.id = domain.id;
