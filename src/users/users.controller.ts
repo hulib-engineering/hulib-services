@@ -13,6 +13,7 @@ import {
   SerializeOptions,
   Request,
   Put,
+  Req,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -77,16 +78,27 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   async findAll(
     @Query() query: QueryUserDto,
+    @Request() request,
   ): Promise<InfinityPaginationResponseDto<User>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
       limit = 50;
     }
+    const userId = request?.user?.id;
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const topicsOfInterest = user.topics?.map((topic) => topic.id);
 
     return infinityPagination(
       await this.usersService.findManyWithPagination({
-        filterOptions: query?.filters,
+        filterOptions: {
+          ...query?.filters,
+          topicsOfInterest,
+        },
         sortOptions: query?.sort,
         paginationOptions: {
           page,
