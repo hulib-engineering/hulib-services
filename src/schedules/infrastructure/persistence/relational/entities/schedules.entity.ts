@@ -56,6 +56,9 @@ export class SchedulesEntity extends EntityRelationalHelper {
   updatedAt: Date;
 
   @ApiProperty()
-  @DeleteDateColumn()
-  deletedAt: Date;
+  @DeleteDateColumn({
+    nullable: true,
+    default: null,
+  })
+  deletedAt: Date | null;
 }
