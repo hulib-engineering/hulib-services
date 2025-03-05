@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -54,7 +55,7 @@ export class SchedulesEntity extends EntityRelationalHelper {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // @ApiProperty()
-  // @DeleteDateColumn()
-  // deletedAt: Date;
+  @ApiProperty()
+  @DeleteDateColumn()
+  deletedAt: Date;
 }

@@ -14,6 +14,7 @@ export class SchedulesMapper {
     domainModel.isBooked = entity.isBooked;
     domainModel.createdAt = entity.createdAt;
     domainModel.updatedAt = entity.updatedAt;
+    domainModel.deletedAt = entity.deletedAt;
 
     if (entity.humanBook) {
       domainModel.humanBook = UserMapper.toDomain(
@@ -34,6 +35,7 @@ export class SchedulesMapper {
     entity.isBooked = domain.isBooked ?? false;
     entity.createdAt = domain.createdAt;
     entity.updatedAt = domain.updatedAt;
+    entity.deletedAt = domain.deletedAt ?? new Date();
 
     if (domain.humanBook) {
       entity.humanBook = UserMapper.toPersistence(domain.humanBook);
