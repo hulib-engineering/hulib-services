@@ -13,6 +13,7 @@ import {
   SerializeOptions,
   Request,
   Put,
+  Req,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -39,6 +40,9 @@ import { RolesGuard } from '@roles/roles.guard';
 import { infinityPagination } from '@utils/infinity-pagination';
 import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 import { UpgradeDto } from './dto/upgrade.dto';
+import { CaslGuard } from '@casl/guards/casl.guard';
+import { CheckAbilities } from '@casl/decorators/casl.decorator';
+import { Action } from '@casl/ability.factory';
 
 @ApiBearerAuth()
 @Roles(RoleEnum.admin)
@@ -73,20 +77,32 @@ export class UsersController {
   })
   @Get()
   @Roles(RoleEnum.admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @CheckAbilities((ability) => ability.can(Action.Read, 'User'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard, CaslGuard)
   @HttpCode(HttpStatus.OK)
   async findAll(
     @Query() query: QueryUserDto,
+    @Request() request,
   ): Promise<InfinityPaginationResponseDto<User>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
       limit = 50;
     }
+    const userId = request?.user?.id;
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const topicsOfInterest = user.topics?.map((topic) => topic.id);
 
     return infinityPagination(
       await this.usersService.findManyWithPagination({
-        filterOptions: query?.filters,
+        filterOptions: {
+          ...query?.filters,
+          topicsOfInterest,
+        },
         sortOptions: query?.sort,
         paginationOptions: {
           page,

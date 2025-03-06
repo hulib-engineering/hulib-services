@@ -34,6 +34,7 @@ import { SearchModule } from './search/search.module';
 import { HealthcheckModule } from './healthcheck/healthcheck.module';
 import { APP_FILTER } from '@nestjs/core';
 import { SchedulesModule } from './schedules/schedules.module';
+import { CaslModule } from './casl/casl.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -100,6 +101,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     PrismaModule,
     SearchModule,
     SchedulesModule,
+    CaslModule,
   ],
   providers: [
     {
