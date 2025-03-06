@@ -1,4 +1,5 @@
 import {
+  IsIn,
   IsNotEmpty,
   IsOptional,
   // decorators here
@@ -13,14 +14,17 @@ import {
 import { FileDto } from '@files/dto/file.dto';
 import { UserDto } from '@users/dto/user.dto';
 import { Type } from 'class-transformer';
+import { PublishStatus } from '@stories/status.enum';
 
 export class CreateStoryDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   abstract: string;
 
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   title: string;
 
   @ApiPropertyOptional({ type: () => FileDto })
@@ -31,5 +35,13 @@ export class CreateStoryDto {
   @IsNotEmpty()
   @Type(() => UserDto)
   humanBook: UserDto;
+
+  @ApiPropertyOptional({
+    type: String,
+    example: PublishStatus[1],
+  })
+  @IsOptional()
+  @IsIn(Object.keys(PublishStatus).filter((key) => isNaN(Number(key))))
+  publishStatus: string;
   // Don't forget to use the class-validator decorators in the DTO properties.
 }

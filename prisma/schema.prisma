@@ -102,6 +102,7 @@ model user {
   humanBooks              humanBooks[]
   storyReview             storyReview[]
   stories                 story[]
+  storyFavorite           storyFavorite[]
   gender                  gender?                   @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file                    file?                     @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   role                    role?                     @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -114,10 +115,12 @@ model story {
   abstract    String?       @db.VarChar
   coverId     String?       @db.Uuid
   humanBookId Int
+  publishStatus Int @default(1)
   createdAt   DateTime      @default(now()) @db.Timestamp(6)
   updatedAt   DateTime      @default(now()) @db.Timestamp(6)
   cover       file?         @relation(fields: [coverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   humanBook   user          @relation(fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  storyFavorite storyFavorite[]
   storyReview storyReview[]
   topics      storyTopic[]
 }
@@ -142,3 +145,15 @@ model storyReview {
   story     story     @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user      user      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_story_review_user")
 }
+
+model storyFavorite {
+  userId    Int
+  storyId   Int
+  createdAt   DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime      @default(now()) @db.Timestamp(6)
+
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  story     story    @relation(fields: [storyId], references: [id],onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([userId, storyId]) 
+} 
