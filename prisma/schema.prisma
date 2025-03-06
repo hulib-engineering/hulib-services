@@ -1,18 +1,18 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
   extensions = [uuidOssp(map: "uuid-ossp")]
 }
 
 model file {
-  id   String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  path String @db.VarChar
-  user user[]
+  id      String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  path    String  @db.VarChar
+  user    user[]
   stories story[]
 }
 
@@ -23,7 +23,7 @@ model gender {
 }
 
 model humanBookTopic {
-  userId   Int
+  userId  Int
   topicId Int
   topic   topics @relation(fields: [topicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_topics")
   user    user   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user")
@@ -66,47 +66,48 @@ model status {
 }
 
 model topics {
-  id                      Int                       @id @default(autoincrement())
-  name                    String                    @db.VarChar
-  createdAt               DateTime                  @default(now()) @db.Timestamp(6)
-  updatedAt               DateTime                  @default(now()) @db.Timestamp(6)
-  humanBookTopic          humanBookTopic[]
-  stories                 storyTopic[]
+  id             Int              @id @default(autoincrement())
+  name           String           @db.VarChar
+  createdAt      DateTime         @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime         @default(now()) @db.Timestamp(6)
+  humanBookTopic humanBookTopic[]
+  stories        storyTopic[]
 }
 
 model user {
-  id                      Int                       @id @default(autoincrement())
-  email                   String?                   @db.VarChar
-  password                String?                   @db.VarChar
-  provider                String                    @default("email") @db.VarChar
-  socialId                String?                   @db.VarChar
-  fullName                String?                   @db.VarChar
-  birthday                String?                   @db.VarChar
-  createdAt               DateTime                  @default(now()) @db.Time(6)
-  updatedAt               DateTime                  @default(now()) @db.Time(6)
-  deletedAt               DateTime?                 @db.Time(6)
-  genderId                Int?
-  roleId                  Int?
-  statusId                Int?
-  approval                String?                   @db.VarChar
-  photoId                 String?                   @db.Uuid
-  address                 String?                   @db.VarChar
-  parentPhoneNumber       String?                   @db.VarChar
-  phoneNumber             String?                   @db.VarChar
-  bio                     String?                   @db.VarChar
-  videoUrl                String?                   @db.VarChar
-  education               String?                   @db.VarChar
-  educationStart          DateTime?                 @db.Date
-  educationEnd            DateTime?                 @db.Date
-  humanBookTopic          humanBookTopic[]
-  humanBooks              humanBooks[]
-  storyReview             storyReview[]
-  stories                 story[]
-  storyFavorite           storyFavorite[]
-  gender                  gender?                   @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  file                    file?                     @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  role                    role?                     @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  status                  status?                   @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                Int              @id @default(autoincrement())
+  email             String?          @db.VarChar
+  password          String?          @db.VarChar
+  provider          String           @default("email") @db.VarChar
+  socialId          String?          @db.VarChar
+  fullName          String?          @db.VarChar
+  birthday          String?          @db.VarChar
+  createdAt         DateTime         @default(now()) @db.Time(6)
+  updatedAt         DateTime         @default(now()) @db.Time(6)
+  deletedAt         DateTime?        @db.Time(6)
+  genderId          Int?
+  roleId            Int?
+  statusId          Int?
+  approval          String?          @db.VarChar
+  photoId           String?          @db.Uuid
+  address           String?          @db.VarChar
+  parentPhoneNumber String?          @db.VarChar
+  phoneNumber       String?          @db.VarChar
+  bio               String?          @db.VarChar
+  videoUrl          String?          @db.VarChar
+  education         String?          @db.VarChar
+  educationStart    DateTime?        @db.Date
+  educationEnd      DateTime?        @db.Date
+  humanBookTopic    humanBookTopic[]
+  humanBooks        humanBooks[]
+  storyReview       storyReview[]
+  stories           story[]
+  storyFavorite     storyFavorite[]
+  schedules         schedules[]
+  gender            gender?          @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  file              file?            @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  role              role?            @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status            status?          @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model story {
@@ -121,8 +122,8 @@ model story {
   cover       file?         @relation(fields: [coverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   humanBook   user          @relation(fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   storyFavorite storyFavorite[]
-  storyReview storyReview[]
-  topics      storyTopic[]
+  storyReview   storyReview[]
+  topics        storyTopic[]
 }
 
 model storyTopic {
@@ -130,30 +131,47 @@ model storyTopic {
   topicId Int
   story   story  @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   topic   topics @relation(fields: [topicId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
   @@id([storyId, topicId])
 }
 
 model storyReview {
   id        Int      @id @default(autoincrement())
   rating    Int
-  title     String    @db.VarChar
-  comment   String    @db.VarChar
+  title     String   @db.VarChar
+  comment   String   @db.VarChar
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
   userId    Int
   storyId   Int
-  story     story     @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user      user      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_story_review_user")
+  story     story    @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_story_review_user")
 }
 
 model storyFavorite {
   userId    Int
   storyId   Int
-  createdAt   DateTime      @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime      @default(now()) @db.Timestamp(6)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
 
-  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  story     story    @relation(fields: [storyId], references: [id],onDelete: Cascade, onUpdate: Cascade)
+  user  user  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  story story @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  @@id([userId, storyId]) 
-} 
+  @@id([userId, storyId])
+}
+
+model schedules {
+  schedulesId Int  @id @default(autoincrement())
+  humanBookId Int
+  humanBook   user @relation(fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  startedAt DateTime @default(now()) @db.Timestamp(6)
+  startTime DateTime @db.Time(6)
+  endedAt   DateTime @db.Timestamp(6)
+  endTime   DateTime @db.Time(6)
+  isBooked  Boolean
+
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  deletedAt DateTime?
+}
