@@ -15,7 +15,9 @@ export enum ReadingSessionStatus {
   PENDING = 'PENDING',
 }
 
-@Entity()
+@Entity({
+  name: 'readingSession',
+})
 @Index('idx_session_status', ['sessionStatus'])
 @Index('idx_session_host_status_time', ['hostId', 'sessionStatus', 'startTime'])
 export class ReadingSession {

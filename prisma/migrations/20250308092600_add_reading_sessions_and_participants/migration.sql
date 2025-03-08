@@ -1,40 +1,28 @@
-/*
-  Warnings:
-
-  - You are about to drop the `ReadingSession` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `ReadingSessionParticipant` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropForeignKey
-ALTER TABLE "ReadingSessionParticipant" DROP CONSTRAINT "ReadingSessionParticipant_readingSessionId_fkey";
-
--- DropTable
-DROP TABLE "ReadingSession";
-
--- DropTable
-DROP TABLE "ReadingSessionParticipant";
+-- CreateEnum
+CREATE TYPE "ReadingSessionStatus" AS ENUM ('CONFIRMED', 'CANCELLED', 'PENDING');
 
 -- CreateTable
 CREATE TABLE "readingSession" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
     "title" TEXT NOT NULL,
     "description" TEXT,
     "sessionStatus" "ReadingSessionStatus" NOT NULL DEFAULT 'PENDING',
     "startTime" TIMESTAMP(3) NOT NULL,
     "endTime" TIMESTAMP(3) NOT NULL,
     "hostId" INTEGER NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "readingSession_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "readingSessionParticipant" (
-    "id" TEXT NOT NULL,
-    "readingSessionId" TEXT NOT NULL,
+    "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+    "readingSessionId" UUID NOT NULL,
     "participantId" INTEGER NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "readingSessionParticipant_pkey" PRIMARY KEY ("id")
 );

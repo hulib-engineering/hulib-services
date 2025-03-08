@@ -9,7 +9,9 @@ import {
 } from 'typeorm';
 import { ReadingSession } from './reading-session.entity';
 
-@Entity()
+@Entity({
+  name: 'readingSessionParticipant',
+})
 @Unique(['readingSessionId', 'participantId'])
 @Index(['readingSessionId'])
 @Index(['participantId'])
