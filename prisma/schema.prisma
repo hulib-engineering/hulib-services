@@ -186,30 +186,33 @@ model schedules {
 } 
 
 model ReadingSession {
-  id          String   @id @default(uuid())
-  title       String
-  sessionStatus ReadingSessionStatus @default(CONFIRMED)
-  startTime   DateTime
-  endTime     DateTime
-  host        User     @relation(fields: [hostId], references: [id])
-  hostId      String
-  participants ReadingSessionParticipant[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String                      @id @default(uuid())
+  title            String
+  description      String?
+  sessionStatus    ReadingSessionStatus        @default(PENDING)
+  startTime        DateTime
+  endTime          DateTime
+  hostId           Int
+  participants     ReadingSessionParticipant[]
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
 }
 
 model ReadingSessionParticipant {
   id               String         @id @default(uuid())
-  readingSession   ReadingSession @relation(fields: [readingSessionId], references: [id])
   readingSessionId String
-  user             User           @relation(fields: [userId], references: [id])
-  userId           String
+  participantId    Int
   createdAt        DateTime       @default(now())
+
+  readingSession   ReadingSession @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
+
+  @@unique([readingSessionId, participantId])
 }
 
 enum ReadingSessionStatus {
-  PENDING
   CONFIRMED
+  CANCELLED
+  PENDING
 }
 
 model timeSlot {
