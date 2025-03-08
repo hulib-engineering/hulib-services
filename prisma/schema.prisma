@@ -185,7 +185,7 @@ model schedules {
 }
 
 model readingSession {
-  id               String                      @id @default(uuid())
+  id               String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   title            String
   description      String?
   sessionStatus    ReadingSessionStatus        @default(PENDING)
@@ -193,8 +193,8 @@ model readingSession {
   endTime          DateTime
   hostId           Int
   participants     readingSessionParticipant[]
-  createdAt        DateTime                    @default(now())
-  updatedAt        DateTime                    @updatedAt
+  createdAt        DateTime @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime @default(now()) @db.Timestamp(6)
 
   @@index([sessionStatus], name: "idx_session_status")
   @@index([startTime], name: "idx_start_time")
@@ -202,10 +202,11 @@ model readingSession {
 }
 
 model readingSessionParticipant {
-  id               String         @id @default(uuid())
-  readingSessionId String
+  id               String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  readingSessionId String         @db.Uuid
   participantId    Int
-  createdAt        DateTime       @default(now())
+  createdAt        DateTime @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime @default(now()) @db.Timestamp(6)
 
   readingSession   readingSession @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
 
