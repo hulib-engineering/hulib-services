@@ -182,10 +182,9 @@ model schedules {
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
-  @@id([userId, storyId]) 
-} 
+}
 
-model ReadingSession {
+model readingSession {
   id               String                      @id @default(uuid())
   title            String
   description      String?
@@ -193,20 +192,24 @@ model ReadingSession {
   startTime        DateTime
   endTime          DateTime
   hostId           Int
-  participants     ReadingSessionParticipant[]
+  participants     readingSessionParticipant[]
   createdAt        DateTime                    @default(now())
   updatedAt        DateTime                    @updatedAt
+
+  @@index([sessionStatus], name: "idx_session_status")
+  @@index([startTime], name: "idx_start_time")
+  @@index([hostId, sessionStatus, startTime], name: "idx_host_status_time")
 }
 
-model ReadingSessionParticipant {
+model readingSessionParticipant {
   id               String         @id @default(uuid())
   readingSessionId String
   participantId    Int
   createdAt        DateTime       @default(now())
 
-  readingSession   ReadingSession @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
+  readingSession   readingSession @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
 
-  @@unique([readingSessionId, participantId])
+  @@unique([readingSessionId, participantId], name: "unique_session_participant")
 }
 
 enum ReadingSessionStatus {
