@@ -12,7 +12,7 @@ import {
 import { ReadingSessionsService } from './reading-sessions.service';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
-import { CreateReadingSessionParticipantDto } from './dto/reading-session-participant/create-reading-session-participant.dto';
+import { CreateReadingSessionParticipantsDto } from './dto/reading-session-participant/create-reading-session-participants.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CaslGuard } from '@casl/guards/casl.guard';
@@ -35,10 +35,7 @@ export class ReadingSessionsController {
   @CheckAbilities((ability) => ability.can(Action.Create, 'ReadingSession'))
   createSession(@Request() request, @Body() dto: CreateReadingSessionDto) {
     const hostId = request?.user?.id;
-    return this.readingSessionsService.createSession({
-      ...dto,
-      hostId,
-    });
+    return this.readingSessionsService.createSession(dto, hostId);
   }
 
   @Get()
@@ -79,20 +76,26 @@ export class ReadingSessionsController {
   @CheckAbilities((ability) =>
     ability.can(Action.Create, 'ReadingSessionParticipant'),
   )
-  addParticipant(
+  addParticipants(
     @Request() request,
-    @Body() dto: CreateReadingSessionParticipantDto,
+    @Body() dto: CreateReadingSessionParticipantsDto,
   ) {
     const hostId = request.user.id;
-    return this.readingSessionsService.addParticipant(dto, hostId);
+    return this.readingSessionsService.addParticipants(dto, hostId);
   }
 
-  @Get('participants')
+  @Get(':readingSessionId/participants')
   @CheckAbilities((ability) =>
     ability.can(Action.Read, 'ReadingSessionParticipant'),
   )
-  findAllParticipants(@Request() request) {
+  findAllParticipants(
+    @Request() request,
+    @Param('readingSessionId') readingSessionId: string,
+  ) {
     const hostId = request.user.id;
-    return this.readingSessionsService.findAllParticipants(hostId);
+    return this.readingSessionsService.findAllParticipants(
+      readingSessionId,
+      hostId,
+    );
   }
 }

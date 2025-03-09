@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsDate, IsInt } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
 import { ReadingSessionStatus } from '../../entities/reading-session.entity';
 
 export class CreateReadingSessionDto {
@@ -12,12 +12,9 @@ export class CreateReadingSessionDto {
   @IsEnum(ReadingSessionStatus)
   sessionStatus: ReadingSessionStatus;
 
-  @IsDate()
+  @IsDateString()
   startTime: Date;
 
-  @IsDate()
+  @IsDateString()
   endTime: Date;
-
-  @IsInt()
-  hostId: number;
 }
