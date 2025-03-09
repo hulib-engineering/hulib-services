@@ -14,6 +14,11 @@ export class Schedules {
   humanBook: User;
 
   @ApiProperty({
+    type: () => User,
+  })
+  userLiber: User;
+
+  @ApiProperty({
     type: Date,
     example: '2025-02-28T12:00:00Z',
   })
