@@ -5,6 +5,11 @@ export class ScheduleService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.schedules.findMany();
+    return this.prisma.schedules.findMany({
+      include: {
+        humanBook: true,
+        userLiber: true,
+      },
+    });
   }
 }
