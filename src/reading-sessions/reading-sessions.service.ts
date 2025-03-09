@@ -6,6 +6,7 @@ import { ReadingSessionParticipant } from './entities/reading-session-participan
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { CreateReadingSessionParticipantDto } from './dto/reading-session-participant/create-reading-session-participant.dto';
+import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -21,13 +22,28 @@ export class ReadingSessionsService {
     return await this.readingSessionRepo.save(session);
   }
 
-  async findAllSessions(): Promise<ReadingSession[]> {
-    return await this.readingSessionRepo.find({ relations: ['participants'] });
+  async findAllSessions(
+    queryDto: FindAllReadingSessionsQueryDto,
+  ): Promise<ReadingSession[]> {
+    const { hostId } = queryDto;
+    const query = this.readingSessionRepo
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.participants', 'participant');
+
+    if (hostId) {
+      query.where('session.hostId = :hostId', { hostId });
+    }
+
+    const sessions = await query.getMany();
+    return sessions;
   }
 
-  async findOneSession(id: string): Promise<ReadingSession> {
+  async findOneSession(id: string, hostId: number): Promise<ReadingSession> {
     const session = await this.readingSessionRepo.findOne({
-      where: { id },
+      where: {
+        id,
+        hostId,
+      },
       relations: ['participants'],
     });
     if (!session) throw new NotFoundException('Reading session not found');
@@ -36,24 +52,39 @@ export class ReadingSessionsService {
 
   async updateSession(
     id: string,
+    hostId: number,
     dto: UpdateReadingSessionDto,
   ): Promise<ReadingSession> {
+    const session = await this.findOneSession(id, hostId);
+    if (!session) throw new NotFoundException('Reading session not found');
+
     await this.readingSessionRepo.update(id, dto);
-    return this.findOneSession(id);
+    return this.findOneSession(id, hostId);
   }
 
-  async deleteSession(id: string): Promise<void> {
+  async deleteSession(id: string, hostId: number): Promise<void> {
+    const session = await this.findOneSession(id, hostId);
+    if (!session) throw new NotFoundException('Reading session not found');
     await this.readingSessionRepo.delete(id);
   }
 
   async addParticipant(
     dto: CreateReadingSessionParticipantDto,
+    hostId: number,
   ): Promise<ReadingSessionParticipant> {
+    const session = await this.findOneSession(dto.readingSessionId, hostId);
+    if (!session) throw new NotFoundException('Reading session not found');
     const participant = this.participantRepo.create(dto);
     return await this.participantRepo.save(participant);
   }
 
-  async findAllParticipants(): Promise<ReadingSessionParticipant[]> {
-    return await this.participantRepo.find();
+  async findAllParticipants(
+    hostId: number,
+  ): Promise<ReadingSessionParticipant[]> {
+    const sessions = await this.readingSessionRepo.find({
+      where: { hostId },
+      relations: ['participants'],
+    });
+    return sessions.flatMap((session) => session.participants);
   }
 }
