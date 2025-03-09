@@ -17,7 +17,9 @@ export enum Action {
   Delete = 'delete',
 }
 
-type Subjects = InferSubjects<'User' | 'all'>;
+type Subjects = InferSubjects<
+  'User' | 'ReadingSession' | 'ReadingSessionParticipant' | 'all'
+>;
 
 export type AppAbility = PureAbility<[Action, Subjects]>;
 
