@@ -14,6 +14,7 @@ import { TopicSeedModule } from './topic/topic-seed.module';
 import { PrismaModule } from '@prisma-client/prisma-client.module';
 import { StoryReviewSeedModule } from './story-review/story-review-seed.module';
 import { StorySeedModule } from './story/story-seed.module';
+import { TimeSlotSeedModule } from './time-slot/time-slot-seed.module';
 @Module({
   imports: [
     GenderSeedModule,
@@ -23,6 +24,7 @@ import { StorySeedModule } from './story/story-seed.module';
     TopicSeedModule,
     StorySeedModule,
     StoryReviewSeedModule,
+    TimeSlotSeedModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig, appConfig],

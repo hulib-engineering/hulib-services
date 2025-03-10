@@ -107,6 +107,8 @@ model user {
   schedulesAsHumanBook schedules[] @relation("HumanBookRelation")
   schedulesAsUserLiber schedules[] @relation("UserLiberRelation")
 
+  schedules         schedules[]
+  timeSlots         userTimeSlot[]
   gender            gender?          @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file              file?            @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   role              role?            @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -183,3 +185,23 @@ model schedules {
   deletedAt DateTime?
 }
 
+model timeSlot {
+  id              Int      @id @default(autoincrement())
+  dayOfWeek       Int      // 0 = Sunday, ..., 6 = Saturday
+  startTime       Float    // (6, 6.5, 7, ...)
+  createdAt       DateTime @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime @default(now()) @db.Timestamp(6)
+
+  users           userTimeSlot[]
+  @@unique([dayOfWeek, startTime])
+}
+
+model userTimeSlot {
+  userId          Int
+  timeSlotId      Int
+
+  user            user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  timeSlot        timeSlot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([userId, timeSlotId])
+}
