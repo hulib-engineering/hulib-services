@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  // Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { TimeSlotService } from './time-slots.service';
 import { CreateTimeSlotDto } from './dto/create-time-slot.dto';
 import {
@@ -55,14 +48,4 @@ export class TimeSlotController {
   findOne(@Param('id') id: TimeSlot['id']) {
     return this.timeSlotService.findOne(id);
   }
-
-  // @Delete(':id')
-  // @ApiParam({
-  //   name: 'id',
-  //   type: String,
-  //   required: true,
-  // })
-  // remove(@Param('id') id: TimeSlot['id']) {
-  //   return this.timeSlotService.remove(id);
-  // }
 }
