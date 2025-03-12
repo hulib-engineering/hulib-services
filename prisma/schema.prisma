@@ -107,7 +107,6 @@ model user {
   schedulesAsHumanBook schedules[] @relation("HumanBookRelation")
   schedulesAsUserLiber schedules[] @relation("UserLiberRelation")
 
-  schedules         schedules[]
   timeSlots         userTimeSlot[]
   gender            gender?          @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file              file?            @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
