@@ -27,6 +27,11 @@ export class SchedulesEntity extends EntityRelationalHelper {
   @Type(() => UserDto)
   humanBook: UserDto;
 
+  @ApiProperty({ example: { id: '46' }, type: UserDto })
+  @IsNotEmpty()
+  @Type(() => UserDto)
+  userLiber: UserDto;
+
   @ApiProperty({ type: Date, example: '2024-03-01T09:00:00Z' })
   @Column({ type: 'timestamp', nullable: false })
   startedAt: Date;

@@ -103,7 +103,10 @@ model user {
   storyReview       storyReview[]
   stories           story[]
   storyFavorite     storyFavorite[]
-  schedules         schedules[]
+  
+  schedulesAsHumanBook schedules[] @relation("HumanBookRelation")
+  schedulesAsUserLiber schedules[] @relation("UserLiberRelation")
+
   timeSlots         userTimeSlot[]
   gender            gender?          @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file              file?            @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -163,8 +166,12 @@ model storyFavorite {
 
 model schedules {
   schedulesId Int  @id @default(autoincrement())
+
   humanBookId Int
-  humanBook   user @relation(fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  humanBook   user @relation(name: "HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  userLiberId Int
+  userLiber   user @relation(name: "UserLiberRelation", fields: [userLiberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   startedAt DateTime @default(now()) @db.Timestamp(6)
   startTime DateTime @db.Time(6)
