@@ -5,6 +5,7 @@ import { StatusSeedService } from './status/status-seed.service';
 import { UserSeedService } from './user/user-seed.service';
 import { GenderSeedService } from './gender/gender-seed.service';
 import { TopicSeedService } from './topic/topic-seed.service';
+import { TimeSlotSeedService } from './time-slot/time-slot-seed.service';
 // import { StoryReviewSeedService } from './story-review/story-review-seed.service';
 // import { StorySeedService } from './story/story-seed.service';
 
@@ -19,6 +20,7 @@ const runSeed = async () => {
   await app.get(TopicSeedService).run();
   // await app.get(StorySeedService).run();
   // await app.get(StoryReviewSeedService).run();
+  await app.get(TimeSlotSeedService).run();
 
   await app.close();
 };

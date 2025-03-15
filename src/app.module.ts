@@ -35,6 +35,7 @@ import { HealthcheckModule } from './healthcheck/healthcheck.module';
 import { APP_FILTER } from '@nestjs/core';
 import { SchedulesModule } from './schedules/schedules.module';
 import { CaslModule } from './casl/casl.module';
+import { TimeSlotModule } from './time-slots/time-slots.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -102,6 +103,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     SearchModule,
     SchedulesModule,
     CaslModule,
+    TimeSlotModule,
   ],
   providers: [
     {
