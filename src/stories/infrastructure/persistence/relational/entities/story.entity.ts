@@ -10,6 +10,7 @@ import {
   JoinColumn,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
@@ -17,6 +18,7 @@ import { FileEntity } from '@files/infrastructure/persistence/relational/entitie
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
 import { PublishStatus } from '@stories/status.enum';
+import { ReadingSession } from '../../../../../reading-sessions/entities';
 
 @Entity({
   name: 'story',
@@ -93,4 +95,7 @@ export class StoryEntity extends EntityRelationalHelper {
   // @ApiProperty()
   // @DeleteDateColumn()
   // deletedAt: Date;
+
+  @OneToMany(() => ReadingSession, (readingSession) => readingSession.story)
+  readingSessions: ReadingSession[];
 }

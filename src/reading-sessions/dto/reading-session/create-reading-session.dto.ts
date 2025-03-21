@@ -1,20 +1,22 @@
-import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { ReadingSessionStatus } from '../../entities/reading-session.entity';
+import { IsString, IsNumber, IsOptional, IsUrl } from 'class-validator';
 
 export class CreateReadingSessionDto {
-  @IsString()
-  title: string;
+  @IsNumber()
+  humanBookId: number;
+
+  @IsNumber()
+  readerId: number;
+
+  @IsNumber()
+  storyId: number;
+
+  @IsNumber()
+  authorScheduleId: number;
+
+  @IsUrl()
+  sessionUrl: string;
 
   @IsOptional()
   @IsString()
-  description?: string;
-
-  @IsEnum(ReadingSessionStatus)
-  sessionStatus: ReadingSessionStatus;
-
-  @IsDateString()
-  startTime: Date;
-
-  @IsDateString()
-  endTime: Date;
+  note?: string;
 }

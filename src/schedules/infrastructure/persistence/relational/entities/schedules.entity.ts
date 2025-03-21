@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -11,6 +12,7 @@ import { EntityRelationalHelper } from '../../../../../utils/relational-entity-h
 import { IsNotEmpty } from 'class-validator';
 import { UserDto } from '../../../../../users/dto/user.dto';
 import { Type } from 'class-transformer';
+import { ReadingSession } from '../../../../../reading-sessions/entities';
 
 @Entity({
   name: 'schedules',
@@ -66,4 +68,10 @@ export class SchedulesEntity extends EntityRelationalHelper {
     default: null,
   })
   deletedAt: Date | null;
+
+  @OneToMany(
+    () => ReadingSession,
+    (readingSession) => readingSession.authorSchedule,
+  )
+  readingSessions: ReadingSession[];
 }

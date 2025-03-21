@@ -1,67 +1,106 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { faker } from '@faker-js/faker';
 import {
   ReadingSession,
   ReadingSessionStatus,
-} from '@reading-sessions/entities/reading-session.entity';
-import { ReadingSessionParticipant } from '@reading-sessions/entities/reading-session-participant.entity';
-import { faker } from '@faker-js/faker';
+} from '../../../../reading-sessions/entities/reading-session.entity';
+import { Feedback } from '../../../../reading-sessions/entities/feedback.entity';
+import { Message } from '../../../../reading-sessions/entities/message.entity';
+import { User } from '../../../../users/domain/user';
+import { SchedulesEntity } from '../../../../schedules/infrastructure/persistence/relational/entities/schedules.entity';
+import { Story } from '../../../../stories/domain/story';
 
 @Injectable()
 export class ReadingSessionSeedService {
   constructor(
     @InjectRepository(ReadingSession)
     private readonly readingSessionRepository: Repository<ReadingSession>,
-
-    @InjectRepository(ReadingSessionParticipant)
-    private readonly readingSessionParticipantRepository: Repository<ReadingSessionParticipant>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Story)
+    private readonly storyRepository: Repository<Story>,
+    @InjectRepository(SchedulesEntity)
+    private readonly scheduleRepository: Repository<SchedulesEntity>,
+    @InjectRepository(Feedback)
+    private readonly feedbackRepository: Repository<Feedback>,
+    @InjectRepository(Message)
+    private readonly messageRepository: Repository<Message>,
   ) {}
 
   async run() {
     console.log('🌱 Seeding Reading Sessions...');
+
+    // Get existing data for relationships
+    const users = await this.userRepository.find();
+    const stories = await this.storyRepository.find();
+    const schedules = await this.scheduleRepository.find();
+
     const sessions: ReadingSession[] = [];
-    for (let i = 0; i < 10; i++) {
+
+    // Create reading sessions
+    for (let i = 0; i < 20; i++) {
       const session = new ReadingSession();
-      session.title = faker.lorem.words(3);
-      session.description = faker.lorem.sentence();
+
+      const humanBook = faker.helpers.arrayElement(users);
+      const reader = faker.helpers.arrayElement(
+        users.filter((u) => u.id !== humanBook.id),
+      );
+      const story = faker.helpers.arrayElement(stories);
+      const schedule = faker.helpers.arrayElement(schedules);
+
+      session.humanBookId = Number(humanBook.id);
+      session.readerId = Number(reader.id);
+      session.storyId = story.id;
+      session.authorScheduleId = schedule.id;
+      session.sessionUrl = faker.internet.url();
+      session.note = faker.lorem.paragraph();
+      session.review = faker.lorem.paragraph();
+      session.recordingUrl = faker.internet.url();
       session.sessionStatus = faker.helpers.arrayElement([
-        ReadingSessionStatus.CONFIRMED,
-        ReadingSessionStatus.CANCELLED,
-        ReadingSessionStatus.PENDING,
+        ReadingSessionStatus.FINISHED,
+        ReadingSessionStatus.UNINITIALIZED,
+        ReadingSessionStatus.CANCELED,
       ]);
-      session.startTime = faker.date.future();
-      session.endTime = faker.date.future();
-      session.hostId = faker.number.int({ min: 1, max: 10 });
 
       sessions.push(session);
     }
 
-    await this.readingSessionRepository.save(sessions);
+    const savedSessions = await this.readingSessionRepository.save(sessions);
     console.log(`✅ Inserted ${sessions.length} reading sessions`);
 
-    console.log('🌱 Seeding Reading Session Participants...');
-    const participants: ReadingSessionParticipant[] = [];
+    console.log('🌱 Seeding Feedbacks...');
+    const feedbacks: Feedback[] = [];
 
-    for (const session of sessions) {
-      const numParticipants = faker.number.int({ min: 2, max: 5 });
+    // Create feedbacks for sessions
+    for (const session of savedSessions) {
+      const feedback = new Feedback();
+      feedback.readingSessionId = session.id;
+      feedback.rating = faker.number.float({ min: 1, max: 5 });
+      feedback.content = faker.lorem.paragraph();
+      feedbacks.push(feedback);
+    }
 
-      for (let j = 0; j < numParticipants; j++) {
-        const participant = new ReadingSessionParticipant();
-        participant.readingSession = session;
-        participant.participantId = faker.number.int({ min: 1, max: 2000 });
+    await this.feedbackRepository.save(feedbacks);
+    console.log(`✅ Inserted ${feedbacks.length} feedbacks`);
 
-        participants.push(participant);
+    console.log('🌱 Seeding Messages...');
+    const messages: Message[] = [];
+
+    // Create messages for sessions
+    for (const session of savedSessions) {
+      for (let i = 0; i < faker.number.int({ min: 1, max: 5 }); i++) {
+        const message = new Message();
+        message.readingSessionId = session.id;
+        message.humanBookId = session.humanBookId;
+        message.readerId = session.readerId;
+        message.content = faker.lorem.sentence();
+        messages.push(message);
       }
     }
 
-    if (participants.length > 0) {
-      await this.readingSessionParticipantRepository.save(participants);
-      console.log(
-        `✅ Inserted ${participants.length} reading session participants`,
-      );
-    } else {
-      console.log('⚠️ No participants were inserted');
-    }
+    await this.messageRepository.save(messages);
+    console.log(`✅ Inserted ${messages.length} messages`);
   }
 }

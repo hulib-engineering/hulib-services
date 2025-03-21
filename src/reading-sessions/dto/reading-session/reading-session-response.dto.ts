@@ -1,39 +1,67 @@
 import {
-  IsUUID,
   IsString,
+  IsNumber,
   IsOptional,
+  IsUrl,
   IsEnum,
   IsDate,
-  IsInt,
 } from 'class-validator';
-import { ReadingSessionStatus } from '../../entities/reading-session.entity';
+import { ReadingSessionStatus } from '../../entities';
+import { FeedbackResponseDto } from './feedback-response.dto';
+import { Type } from 'class-transformer';
+import { MessageResponseDto } from './message-response.dto';
 
 export class ReadingSessionResponseDto {
-  @IsUUID()
-  id: string;
+  @IsNumber()
+  id: number;
 
+  @IsNumber()
+  humanBookId: number;
+
+  @IsNumber()
+  readerId: number;
+
+  @IsNumber()
+  storyId: number;
+
+  @IsNumber()
+  authorScheduleId: number;
+
+  @IsUrl()
   @IsString()
-  title: string;
+  sessionUrl: string;
 
   @IsOptional()
   @IsString()
-  description?: string;
+  note?: string;
+
+  @IsOptional()
+  @IsString()
+  review?: string;
+
+  @IsOptional()
+  @IsUrl()
+  @IsString()
+  recordingUrl?: string;
 
   @IsEnum(ReadingSessionStatus)
   sessionStatus: ReadingSessionStatus;
-
-  @IsDate()
-  startTime: Date;
-
-  @IsDate()
-  endTime: Date;
-
-  @IsInt()
-  hostId: number;
 
   @IsDate()
   createdAt: Date;
 
   @IsDate()
   updatedAt: Date;
+
+  @IsOptional()
+  @IsDate()
+  deletedAt?: Date;
+
+  @IsOptional()
+  @Type(() => FeedbackResponseDto)
+  feedbacks?: FeedbackResponseDto[];
+
+  @IsOptional()
+  @Type(() => MessageResponseDto)
+  messages?: MessageResponseDto[];
 }

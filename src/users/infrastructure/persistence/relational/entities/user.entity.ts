@@ -12,6 +12,7 @@ import {
   OneToOne,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { RoleEntity } from '@roles/infrastructure/persistence/relational/entities/role.entity';
 import { StatusEntity } from '@statuses/infrastructure/persistence/relational/entities/status.entity';
@@ -25,6 +26,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { GenderEntity } from '@genders/infrastructure/persistence/relational/entities/gender.entity';
 import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
 import { IsPhoneNumber } from 'class-validator';
+import {
+  Message,
+  ReadingSession,
+} from '../../../../../reading-sessions/entities';
 
 @Entity({
   name: 'user',
@@ -201,4 +206,16 @@ export class UserEntity extends EntityRelationalHelper {
   @ApiProperty()
   @DeleteDateColumn({ nullable: true })
   deletedAt: Date | null;
+
+  @OneToMany(() => ReadingSession, (readingSession) => readingSession.humanBook)
+  readingSessionsAsHumanBook: ReadingSession[];
+
+  @OneToMany(() => ReadingSession, (readingSession) => readingSession.reader)
+  readingSessionsAsReader: ReadingSession[];
+
+  @OneToMany(() => Message, (message) => message.humanBook)
+  messagesAsHumanBook: Message[];
+
+  @OneToMany(() => Message, (message) => message.reader)
+  messagesAsReader: Message[];
 }

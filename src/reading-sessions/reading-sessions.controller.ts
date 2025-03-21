@@ -6,18 +6,27 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
   Request,
+  ParseIntPipe,
 } from '@nestjs/common';
-import { ReadingSessionsService } from './reading-sessions.service';
-import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
-import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
-import { CreateReadingSessionParticipantsDto } from './dto/reading-session-participant/create-reading-session-participants.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CaslGuard } from '@casl/guards/casl.guard';
 import { CheckAbilities } from '@casl/decorators/casl.decorator';
 import { Action } from '@casl/ability.factory';
+import { ReadingSessionsService } from './reading-sessions.service';
+import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
+import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
+import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
+import { ReadingSessionResponseDto } from './dto/reading-session/reading-session-response.dto';
+import { ReadingSessionStatus } from './entities/reading-session.entity';
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()
@@ -32,70 +41,62 @@ export class ReadingSessionsController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new reading session' })
+  @ApiResponse({ type: ReadingSessionResponseDto })
   @CheckAbilities((ability) => ability.can(Action.Create, 'ReadingSession'))
-  createSession(@Request() request, @Body() dto: CreateReadingSessionDto) {
-    const hostId = request?.user?.id;
-    return this.readingSessionsService.createSession(dto, hostId);
+  async createSession(
+    @Request() request,
+    @Body() dto: CreateReadingSessionDto,
+  ): Promise<ReadingSessionResponseDto> {
+    return this.readingSessionsService.createSession(dto);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Find all reading sessions' })
+  @ApiResponse({ type: [ReadingSessionResponseDto] })
   @CheckAbilities((ability) => ability.can(Action.Read, 'ReadingSession'))
-  findAllSessions(@Request() request) {
-    const hostId = request?.user?.id;
-    return this.readingSessionsService.findAllSessions({
-      hostId,
-    });
+  async findAllSessions(
+    @Query() queryDto: FindAllReadingSessionsQueryDto,
+  ): Promise<ReadingSessionResponseDto[]> {
+    return this.readingSessionsService.findAllSessions(queryDto);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Find one reading session' })
+  @ApiResponse({ type: ReadingSessionResponseDto })
   @CheckAbilities((ability) => ability.can(Action.Read, 'ReadingSession'))
-  findOneSession(@Request() request, @Param('id') id: string) {
-    const hostId = request?.user?.id;
-    return this.readingSessionsService.findOneSession(id, hostId);
+  async findOneSession(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ReadingSessionResponseDto> {
+    return this.readingSessionsService.findOneSession(id);
   }
 
   @Put(':id')
+  @ApiOperation({ summary: 'Update a reading session' })
+  @ApiResponse({ type: ReadingSessionResponseDto })
   @CheckAbilities((ability) => ability.can(Action.Update, 'ReadingSession'))
-  updateSession(
-    @Request() request,
-    @Param('id') id: string,
+  async updateSession(
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateReadingSessionDto,
-  ) {
-    const hostId = request?.user?.id;
-    return this.readingSessionsService.updateSession(id, hostId, dto);
+  ): Promise<ReadingSessionResponseDto> {
+    return this.readingSessionsService.updateSession(id, dto);
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a reading session' })
   @CheckAbilities((ability) => ability.can(Action.Delete, 'ReadingSession'))
-  deleteSession(@Request() request, @Param('id') id: string) {
-    const hostId = request?.user?.id;
-    return this.readingSessionsService.deleteSession(id, hostId);
+  async deleteSession(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this.readingSessionsService.deleteSession(id);
   }
 
-  @Post('participants')
-  @CheckAbilities((ability) =>
-    ability.can(Action.Create, 'ReadingSessionParticipant'),
-  )
-  addParticipants(
-    @Request() request,
-    @Body() dto: CreateReadingSessionParticipantsDto,
-  ) {
-    const hostId = request.user.id;
-    return this.readingSessionsService.addParticipants(dto, hostId);
-  }
-
-  @Get(':readingSessionId/participants')
-  @CheckAbilities((ability) =>
-    ability.can(Action.Read, 'ReadingSessionParticipant'),
-  )
-  findAllParticipants(
-    @Request() request,
-    @Param('readingSessionId') readingSessionId: string,
-  ) {
-    const hostId = request.user.id;
-    return this.readingSessionsService.findAllParticipants(
-      readingSessionId,
-      hostId,
-    );
+  @Put(':id/status')
+  @ApiOperation({ summary: 'Update reading session status' })
+  @ApiResponse({ type: ReadingSessionResponseDto })
+  @CheckAbilities((ability) => ability.can(Action.Update, 'ReadingSession'))
+  async updateSessionStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('status') status: ReadingSessionStatus,
+  ): Promise<ReadingSessionResponseDto> {
+    return this.readingSessionsService.updateSessionStatus(id, status);
   }
 }

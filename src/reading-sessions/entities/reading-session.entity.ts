@@ -2,61 +2,99 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  OneToMany,
+  ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  JoinColumn,
+  OneToMany,
 } from 'typeorm';
-import { ReadingSessionParticipant } from './reading-session-participant.entity';
+
+import { SchedulesEntity } from '../../schedules/infrastructure/persistence/relational/entities/schedules.entity';
+import { UserEntity } from '../../users/infrastructure/persistence/relational/entities/user.entity';
+import { StoryEntity } from '../../stories/infrastructure/persistence/relational/entities/story.entity';
+import { Feedback } from './feedback.entity';
+import { Message } from './message.entity';
 
 export enum ReadingSessionStatus {
-  CONFIRMED = 'CONFIRMED',
-  CANCELLED = 'CANCELLED',
-  PENDING = 'PENDING',
+  FINISHED = 'finished',
+  UNINITIALIZED = 'unInitialized',
+  CANCELED = 'canceled',
 }
 
 @Entity({
   name: 'readingSession',
 })
 @Index('idx_session_status', ['sessionStatus'])
-@Index('idx_session_host_status_time', ['hostId', 'sessionStatus', 'startTime'])
 export class ReadingSession {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @ManyToOne(() => UserEntity, (user) => user.readingSessionsAsHumanBook, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'humanBookId' })
+  humanBook: UserEntity;
 
   @Column()
-  title: string;
+  humanBookId: number;
 
-  @Column({ nullable: true })
-  description?: string;
+  @ManyToOne(() => UserEntity, (user) => user.readingSessionsAsReader, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'readerId' })
+  reader: UserEntity;
+
+  @Column()
+  readerId: number;
+
+  @ManyToOne(() => StoryEntity, (story) => story.readingSessions, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'storyId' })
+  story: StoryEntity;
+
+  @Column()
+  storyId: number;
+
+  @ManyToOne(() => SchedulesEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'authorScheduleId' })
+  authorSchedule: SchedulesEntity;
+
+  @Column()
+  authorScheduleId: number;
+
+  @Column({ type: 'varchar', length: 4000, nullable: true })
+  note?: string;
+
+  @Column({ type: 'varchar', length: 4000, nullable: true })
+  review?: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  sessionUrl: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  recordingUrl?: string;
 
   @Column({
     type: 'enum',
     enum: ReadingSessionStatus,
-    default: ReadingSessionStatus.PENDING,
+    default: ReadingSessionStatus.UNINITIALIZED,
   })
   sessionStatus: ReadingSessionStatus;
 
-  @Column({ type: 'timestamp' })
-  startTime: Date;
-
-  @Column({ type: 'timestamp' })
-  endTime: Date;
-
-  @Column()
-  @Index()
-  hostId: number;
-
-  @OneToMany(
-    () => ReadingSessionParticipant,
-    (participant) => participant.readingSession,
-    { cascade: true },
-  )
-  participants: ReadingSessionParticipant[];
-
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt?: Date;
+
+  @OneToMany(() => Feedback, (feedback) => feedback.readingSession)
+  feedbacks: Feedback[];
+
+  @OneToMany(() => Message, (message) => message.readingSession)
+  messages: Message[];
 }

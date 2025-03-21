@@ -3,12 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ReadingSessionSeedService } from './reading-session-seed.service';
 import { ReadingSession } from '@reading-sessions/entities/reading-session.entity';
-import { ReadingSessionParticipant } from '@reading-sessions/entities/reading-session-participant.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([ReadingSession, ReadingSessionParticipant]),
-  ],
+  imports: [TypeOrmModule.forFeature([ReadingSession])],
   providers: [ReadingSessionSeedService],
   exports: [ReadingSessionSeedService],
 })

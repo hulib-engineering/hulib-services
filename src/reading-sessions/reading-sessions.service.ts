@@ -1,100 +1,142 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ReadingSession } from './entities/reading-session.entity';
-import { ReadingSessionParticipant } from './entities/reading-session-participant.entity';
+import {
+  ReadingSession,
+  ReadingSessionStatus,
+} from './entities/reading-session.entity';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
-import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
-import { CreateReadingSessionParticipantsDto } from './dto/reading-session-participant/create-reading-session-participants.dto';
 import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
+import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 
 @Injectable()
 export class ReadingSessionsService {
   constructor(
     @InjectRepository(ReadingSession)
     private readonly readingSessionRepo: Repository<ReadingSession>,
-    @InjectRepository(ReadingSessionParticipant)
-    private readonly participantRepo: Repository<ReadingSessionParticipant>,
   ) {}
 
-  async createSession(
-    dto: CreateReadingSessionDto,
-    hostId: number,
-  ): Promise<ReadingSession> {
+  async createSession(dto: CreateReadingSessionDto): Promise<ReadingSession> {
     const session = this.readingSessionRepo.create({
-      ...dto,
-      hostId,
+      humanBookId: dto.humanBookId,
+      readerId: dto.readerId,
+      storyId: dto.storyId,
+      authorScheduleId: dto.authorScheduleId,
+      sessionUrl: dto.sessionUrl,
+      note: dto.note,
+      sessionStatus: ReadingSessionStatus.UNINITIALIZED,
     });
+
     return await this.readingSessionRepo.save(session);
   }
 
   async findAllSessions(
     queryDto: FindAllReadingSessionsQueryDto,
   ): Promise<ReadingSession[]> {
-    const { hostId } = queryDto;
     const query = this.readingSessionRepo
       .createQueryBuilder('session')
-      .leftJoinAndSelect('session.participants', 'participant');
+      .leftJoinAndSelect('session.humanBook', 'humanBook')
+      .leftJoinAndSelect('session.reader', 'reader')
+      .leftJoinAndSelect('session.story', 'story')
+      .leftJoinAndSelect('session.authorSchedule', 'schedule')
+      .leftJoinAndSelect('session.feedbacks', 'feedback')
+      .leftJoinAndSelect('session.messages', 'message');
 
-    if (hostId) {
-      query.where('session.hostId = :hostId', { hostId });
+    if (queryDto.humanBookId) {
+      query.andWhere('session.humanBookId = :humanBookId', {
+        humanBookId: queryDto.humanBookId,
+      });
     }
 
-    const sessions = await query.getMany();
-    return sessions;
+    if (queryDto.readerId) {
+      query.andWhere('session.readerId = :readerId', {
+        readerId: queryDto.readerId,
+      });
+    }
+
+    if (queryDto.sessionStatus) {
+      query.andWhere('session.sessionStatus = :status', {
+        status: queryDto.sessionStatus,
+      });
+    }
+
+    return await query.getMany();
   }
 
-  async findOneSession(id: string, hostId: number): Promise<ReadingSession> {
+  async findOneSession(id: number): Promise<ReadingSession> {
     const session = await this.readingSessionRepo.findOne({
-      where: {
-        id,
-        hostId,
-      },
-      relations: ['participants'],
+      where: { id },
+      relations: [
+        'humanBook',
+        'reader',
+        'story',
+        'authorSchedule',
+        'feedbacks',
+        'messages',
+      ],
     });
-    if (!session) throw new NotFoundException('Reading session not found');
+
+    if (!session) {
+      throw new NotFoundException(`Reading session #${id} not found`);
+    }
+
     return session;
   }
 
   async updateSession(
-    id: string,
-    hostId: number,
+    id: number,
     dto: UpdateReadingSessionDto,
   ): Promise<ReadingSession> {
-    const session = await this.findOneSession(id, hostId);
-    if (!session) throw new NotFoundException('Reading session not found');
+    const session = await this.findOneSession(id);
 
-    await this.readingSessionRepo.update(id, dto);
-    return this.findOneSession(id, hostId);
+    Object.assign(session, {
+      ...dto,
+      updatedAt: new Date(),
+    });
+
+    return await this.readingSessionRepo.save(session);
   }
 
-  async deleteSession(id: string, hostId: number): Promise<void> {
-    const session = await this.findOneSession(id, hostId);
-    if (!session) throw new NotFoundException('Reading session not found');
-    await this.readingSessionRepo.delete(id);
+  async deleteSession(id: number): Promise<void> {
+    const session = await this.findOneSession(id);
+
+    session.deletedAt = new Date();
+    await this.readingSessionRepo.save(session);
   }
 
-  async addParticipants(
-    dto: CreateReadingSessionParticipantsDto,
-    hostId: number,
-  ): Promise<ReadingSessionParticipant[]> {
-    const session = await this.findOneSession(dto.readingSessionId, hostId);
-    if (!session) throw new NotFoundException('Reading session not found');
-    const participants = dto.participantIds.map((participantId) =>
-      this.participantRepo.create({
-        participantId,
-        readingSessionId: dto.readingSessionId,
-      }),
-    );
-    return await this.participantRepo.save(participants);
+  async updateSessionStatus(
+    id: number,
+    status: ReadingSessionStatus,
+  ): Promise<ReadingSession> {
+    const session = await this.findOneSession(id);
+
+    session.sessionStatus = status;
+    session.updatedAt = new Date();
+
+    return await this.readingSessionRepo.save(session);
   }
 
-  async findAllParticipants(
-    readingSessionId: string,
-    hostId: number,
-  ): Promise<ReadingSessionParticipant[]> {
-    const session = await this.findOneSession(readingSessionId, hostId);
-    if (!session) throw new NotFoundException('Reading session not found');
-    return session.participants;
+  async addFeedback(
+    id: number,
+    feedback: { rating: number; content?: string },
+  ): Promise<ReadingSession> {
+    const session = await this.findOneSession(id);
+
+    // Assuming feedback is handled by a separate service
+    // This is just to show the relationship
+
+    return session;
+  }
+
+  async addMessage(
+    id: number,
+    message: { content: string; senderId: number },
+  ): Promise<ReadingSession> {
+    const session = await this.findOneSession(id);
+
+    // Assuming message is handled by a separate service
+    // This is just to show the relationship
+
+    return session;
   }
 }
