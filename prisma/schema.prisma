@@ -112,6 +112,11 @@ model user {
   file              file?            @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   role              role?            @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   status            status?          @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  readingSessionHumanBook readingSession[] @relation("HumanBookRelation")
+  readingSessionReader    readingSession[] @relation("ReaderRelation")
+  messagesAsHumanBook message[]            @relation("HumanBookRelation")
+  messagesAsReader message[]               @relation("ReaderRelation")
 }
 
 model story {
@@ -128,6 +133,8 @@ model story {
   storyFavorite storyFavorite[]
   storyReview   storyReview[]
   topics        storyTopic[]
+
+  readingSession readingSession[]
 }
 
 model storyTopic {
@@ -182,41 +189,8 @@ model schedules {
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
-}
 
-model readingSession {
-  id               String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  title            String
-  description      String?
-  sessionStatus    ReadingSessionStatus        @default(PENDING)
-  startTime        DateTime
-  endTime          DateTime
-  hostId           Int
-  participants     readingSessionParticipant[]
-  createdAt        DateTime @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime @default(now()) @db.Timestamp(6)
-
-  @@index([sessionStatus], name: "idx_session_status")
-  @@index([startTime], name: "idx_start_time")
-  @@index([hostId, sessionStatus, startTime], name: "idx_host_status_time")
-}
-
-model readingSessionParticipant {
-  id               String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  readingSessionId String         @db.Uuid
-  participantId    Int
-  createdAt        DateTime @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime @default(now()) @db.Timestamp(6)
-
-  readingSession   readingSession @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
-
-  @@unique([readingSessionId, participantId], name: "unique_session_participant")
-}
-
-enum ReadingSessionStatus {
-  CONFIRMED
-  CANCELLED
-  PENDING
+  readingSessions readingSession[]
 }
 
 model timeSlot {
@@ -238,4 +212,70 @@ model userTimeSlot {
   timeSlot        timeSlot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@id([userId, timeSlotId])
+}
+
+enum ReadingSessionStatus {
+  finished
+  unInitialized
+  canceled
+}
+
+model readingSession {
+  id               Int                     @id @default(autoincrement())
+  
+  humanBookId      Int                  
+  humanBook        user                    @relation(name: "HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade)  
+
+  readerId         Int                  
+  reader           user                    @relation(name: "ReaderRelation", fields: [readerId], references: [id], onDelete: Cascade)
+
+  storyId          Int
+  story            story                   @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  
+  authorScheduleId Int                  
+  authorSchedule   schedules               @relation(fields: [authorScheduleId], references: [schedulesId], onDelete: Cascade)
+
+  note             String?                 @db.VarChar(4000) // Mentee requests for session (if yes)
+  review           String?                 @db.VarChar(4000) // Mentor review for mentee
+  sessionUrl       String                  @db.VarChar(255)  // Meeting URL
+  recordingUrl     String?                 @db.VarChar(255)  // Meeting recording URL
+  sessionStatus    ReadingSessionStatus    @default(unInitialized)
+  createdAt        DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime                @default(now()) @db.Timestamp(6)
+  deletedAt        DateTime?
+
+  feedbacks        feedback[]              @relation("ReadingSessionFeedback")
+  messages         message[]               @relation("ReadingSessionMessage")
+}
+
+
+model feedback {
+  id               Int                     @id @default(autoincrement())
+
+  readingSessionId Int                   
+  readingSession   readingSession          @relation(name: "ReadingSessionFeedback", fields: [readingSessionId], references: [id], onDelete: Cascade)
+
+  rating           Float
+  content          String?                 @db.VarChar(4000)
+  createdAt        DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime                @default(now()) @db.Timestamp(6)
+  deletedAt        DateTime?
+}
+
+model message {
+  id               Int                     @id @default(autoincrement())
+
+  readingSessionId Int
+  readingSession   readingSession          @relation(name: "ReadingSessionMessage", fields: [readingSessionId], references: [id], onDelete: Cascade)
+
+  humanBookId      Int                  
+  humanBook        user                    @relation(name: "HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade)  
+
+  readerId         Int                  
+  reader           user                    @relation(name: "ReaderRelation", fields: [readerId], references: [id], onDelete: Cascade)
+
+  content          String                  @db.VarChar(4000)
+  createdAt        DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime                @default(now()) @db.Timestamp(6)
+  deletedAt        DateTime?
 }

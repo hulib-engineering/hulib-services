@@ -35,11 +35,8 @@ import { HealthcheckModule } from './healthcheck/healthcheck.module';
 import { APP_FILTER } from '@nestjs/core';
 import { SchedulesModule } from './schedules/schedules.module';
 import { CaslModule } from './casl/casl.module';
-<<<<<<< HEAD
 import { TimeSlotModule } from './time-slots/time-slots.module';
-=======
 import { ReadingSessionsModule } from './reading-sessions/reading-sessions.module';
->>>>>>> cc66dc8 (chore: add crud for reading sessions)
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
