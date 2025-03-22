@@ -17,10 +17,6 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { CaslGuard } from '@casl/guards/casl.guard';
-import { CheckAbilities } from '@casl/decorators/casl.decorator';
-import { Action } from '@casl/ability.factory';
 import { ReadingSessionsService } from './reading-sessions.service';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
@@ -30,7 +26,6 @@ import { ReadingSessionStatus } from './infrastructure/persistence/relational/en
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'), CaslGuard)
 @Controller({
   path: 'reading-sessions',
   version: '1',
@@ -43,7 +38,6 @@ export class ReadingSessionsController {
   @Post()
   @ApiOperation({ summary: 'Create a new reading session' })
   @ApiResponse({ type: ReadingSessionResponseDto })
-  @CheckAbilities((ability) => ability.can(Action.Create, 'ReadingSession'))
   async createSession(
     @Request() request,
     @Body() dto: CreateReadingSessionDto,
@@ -54,7 +48,6 @@ export class ReadingSessionsController {
   @Get()
   @ApiOperation({ summary: 'Find all reading sessions' })
   @ApiResponse({ type: [ReadingSessionResponseDto] })
-  @CheckAbilities((ability) => ability.can(Action.Read, 'ReadingSession'))
   async findAllSessions(
     @Query() queryDto: FindAllReadingSessionsQueryDto,
   ): Promise<ReadingSessionResponseDto[]> {
@@ -64,7 +57,6 @@ export class ReadingSessionsController {
   @Get(':id')
   @ApiOperation({ summary: 'Find one reading session' })
   @ApiResponse({ type: ReadingSessionResponseDto })
-  @CheckAbilities((ability) => ability.can(Action.Read, 'ReadingSession'))
   async findOneSession(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ReadingSessionResponseDto> {
@@ -74,7 +66,6 @@ export class ReadingSessionsController {
   @Put(':id')
   @ApiOperation({ summary: 'Update a reading session' })
   @ApiResponse({ type: ReadingSessionResponseDto })
-  @CheckAbilities((ability) => ability.can(Action.Update, 'ReadingSession'))
   async updateSession(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateReadingSessionDto,
@@ -84,7 +75,6 @@ export class ReadingSessionsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a reading session' })
-  @CheckAbilities((ability) => ability.can(Action.Delete, 'ReadingSession'))
   async deleteSession(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.readingSessionsService.deleteSession(id);
   }
@@ -92,7 +82,6 @@ export class ReadingSessionsController {
   @Put(':id/status')
   @ApiOperation({ summary: 'Update reading session status' })
   @ApiResponse({ type: ReadingSessionResponseDto })
-  @CheckAbilities((ability) => ability.can(Action.Update, 'ReadingSession'))
   async updateSessionStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body('status') status: ReadingSessionStatus,

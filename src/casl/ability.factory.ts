@@ -41,14 +41,10 @@ export class CaslAbilityFactory {
         can(Action.Read, 'ReadingSession');
         can(Action.Update, 'ReadingSession');
         can(Action.Delete, 'ReadingSession');
-        can(Action.Create, 'ReadingSessionParticipant');
-        can(Action.Read, 'ReadingSessionParticipant');
       },
       [RoleEnum.reader]: () => {
         can(Action.Read, 'User');
         can(Action.Read, 'ReadingSession');
-        can(Action.Create, 'ReadingSessionParticipant');
-        can(Action.Read, 'ReadingSessionParticipant');
       },
       [RoleEnum.guest]: () => {
         can(Action.Read, 'User');
