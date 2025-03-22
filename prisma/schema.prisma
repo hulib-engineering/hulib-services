@@ -172,7 +172,7 @@ model storyFavorite {
 }
 
 model schedules {
-  schedulesId Int  @id @default(autoincrement())
+  id Int  @id @default(autoincrement())
 
   humanBookId Int
   humanBook   user @relation(name: "HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -233,7 +233,7 @@ model readingSession {
   story            story                   @relation(fields: [storyId], references: [id], onDelete: Cascade)
   
   authorScheduleId Int                  
-  authorSchedule   schedules               @relation(fields: [authorScheduleId], references: [schedulesId], onDelete: Cascade)
+  authorSchedule   schedules               @relation(fields: [authorScheduleId], references: [id], onDelete: Cascade)
 
   note             String?                 @db.VarChar(4000) // Mentee requests for session (if yes)
   review           String?                 @db.VarChar(4000) // Mentor review for mentee
