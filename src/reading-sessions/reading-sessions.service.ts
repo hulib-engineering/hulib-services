@@ -36,8 +36,8 @@ export class ReadingSessionsService {
     return await this.readingSessionRepository.findManyWithPagination({
       filterOptions: queryDto,
       paginationOptions: {
-        page: 1,
-        limit: 10,
+        page: Math.floor(queryDto.offset / queryDto.limit) + 1,
+        limit: queryDto.limit,
       },
     });
   }

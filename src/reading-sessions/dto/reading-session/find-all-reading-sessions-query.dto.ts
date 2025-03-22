@@ -1,16 +1,20 @@
-import { IsNumber, IsOptional, IsEnum } from 'class-validator';
+import { IsNumber, IsOptional, IsEnum, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ReadingSessionStatus } from '../../infrastructure/persistence/relational/entities/reading-session.entity';
 
 export class FindAllReadingSessionsQueryDto {
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   humanBookId?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   readerId?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   storyId?: number;
 
@@ -19,10 +23,14 @@ export class FindAllReadingSessionsQueryDto {
   sessionStatus?: ReadingSessionStatus;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
-  limit?: number;
+  @Min(1)
+  limit: number = 10;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
-  offset?: number;
+  @Min(0)
+  offset: number = 0;
 }
