@@ -21,7 +21,7 @@ const runSeed = async () => {
   // await app.get(TopicSeedService).run();
   // await app.get(StorySeedService).run();
   // await app.get(StoryReviewSeedService).run();
-  await app.get(TimeSlotSeedService).run();
+  // await app.get(TimeSlotSeedService).run();
   await app.get(ReadingSessionSeedService).run();
 
   await app.close();

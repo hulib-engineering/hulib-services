@@ -1,5 +1,5 @@
 import { IsNumber, IsOptional, IsEnum } from 'class-validator';
-import { ReadingSessionStatus } from '../../entities/reading-session.entity';
+import { ReadingSessionStatus } from '../../infrastructure/persistence/relational/entities/reading-session.entity';
 
 export class FindAllReadingSessionsQueryDto {
   @IsOptional()

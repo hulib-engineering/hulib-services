@@ -18,14 +18,14 @@ import { TimeSlotSeedModule } from './time-slot/time-slot-seed.module';
 import { ReadingSessionSeedModule } from './reading-session/reading-session-seed.module';
 @Module({
   imports: [
-    GenderSeedModule,
-    RoleSeedModule,
-    StatusSeedModule,
-    UserSeedModule,
-    TopicSeedModule,
-    StorySeedModule,
-    StoryReviewSeedModule,
-    TimeSlotSeedModule,
+    // GenderSeedModule,
+    // RoleSeedModule,
+    // StatusSeedModule,
+    // UserSeedModule,
+    // TopicSeedModule,
+    // StorySeedModule,
+    // StoryReviewSeedModule,
+    // TimeSlotSeedModule,
     ReadingSessionSeedModule,
     ConfigModule.forRoot({
       isGlobal: true,

@@ -6,7 +6,7 @@ import {
   IsEnum,
   IsDate,
 } from 'class-validator';
-import { ReadingSessionStatus } from '../../entities';
+import { ReadingSessionStatus } from '../../infrastructure/persistence/relational/entities';
 import { FeedbackResponseDto } from './feedback-response.dto';
 import { Type } from 'class-transformer';
 import { MessageResponseDto } from './message-response.dto';

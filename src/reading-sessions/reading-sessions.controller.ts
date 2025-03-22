@@ -26,7 +26,7 @@ import { CreateReadingSessionDto } from './dto/reading-session/create-reading-se
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { ReadingSessionResponseDto } from './dto/reading-session/reading-session-response.dto';
-import { ReadingSessionStatus } from './entities/reading-session.entity';
+import { ReadingSessionStatus } from './infrastructure/persistence/relational/entities/reading-session.entity';
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()

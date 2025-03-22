@@ -27,9 +27,9 @@ import { GenderEntity } from '@genders/infrastructure/persistence/relational/ent
 import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
 import { IsPhoneNumber } from 'class-validator';
 import {
-  Message,
-  ReadingSession,
-} from '../../../../../reading-sessions/entities';
+  MessageEntity,
+  ReadingSessionEntity,
+} from '@reading-sessions/infrastructure/persistence/relational/entities';
 
 @Entity({
   name: 'user',
@@ -207,15 +207,21 @@ export class UserEntity extends EntityRelationalHelper {
   @DeleteDateColumn({ nullable: true })
   deletedAt: Date | null;
 
-  @OneToMany(() => ReadingSession, (readingSession) => readingSession.humanBook)
-  readingSessionsAsHumanBook: ReadingSession[];
+  @OneToMany(
+    () => ReadingSessionEntity,
+    (readingSession) => readingSession.humanBook,
+  )
+  readingSessionsAsHumanBook: ReadingSessionEntity[];
 
-  @OneToMany(() => ReadingSession, (readingSession) => readingSession.reader)
-  readingSessionsAsReader: ReadingSession[];
+  @OneToMany(
+    () => ReadingSessionEntity,
+    (readingSession) => readingSession.reader,
+  )
+  readingSessionsAsReader: ReadingSessionEntity[];
 
-  @OneToMany(() => Message, (message) => message.humanBook)
-  messagesAsHumanBook: Message[];
+  @OneToMany(() => MessageEntity, (message) => message.humanBook)
+  messagesAsHumanBook: MessageEntity[];
 
-  @OneToMany(() => Message, (message) => message.reader)
-  messagesAsReader: Message[];
+  @OneToMany(() => MessageEntity, (message) => message.reader)
+  messagesAsReader: MessageEntity[];
 }

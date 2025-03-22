@@ -18,7 +18,7 @@ import { FileEntity } from '@files/infrastructure/persistence/relational/entitie
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
 import { PublishStatus } from '@stories/status.enum';
-import { ReadingSession } from '../../../../../reading-sessions/entities';
+import { ReadingSessionEntity } from '@reading-sessions/infrastructure/persistence/relational/entities';
 
 @Entity({
   name: 'story',
@@ -96,6 +96,9 @@ export class StoryEntity extends EntityRelationalHelper {
   // @DeleteDateColumn()
   // deletedAt: Date;
 
-  @OneToMany(() => ReadingSession, (readingSession) => readingSession.story)
-  readingSessions: ReadingSession[];
+  @OneToMany(
+    () => ReadingSessionEntity,
+    (readingSession) => readingSession.story,
+  )
+  readingSessions: ReadingSessionEntity[];
 }

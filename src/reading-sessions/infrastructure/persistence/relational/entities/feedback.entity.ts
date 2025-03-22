@@ -7,18 +7,18 @@ import {
   UpdateDateColumn,
   JoinColumn,
 } from 'typeorm';
-import { ReadingSession } from '../../reading-sessions/entities/reading-session.entity';
+import { ReadingSessionEntity } from './reading-session.entity';
 
 @Entity({
   name: 'feedback',
 })
-export class Feedback {
+export class FeedbackEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => ReadingSession, (session) => session.feedbacks)
+  @ManyToOne(() => ReadingSessionEntity, (session) => session.feedbacks)
   @JoinColumn({ name: 'readingSessionId' })
-  readingSession: ReadingSession;
+  readingSession: ReadingSessionEntity;
 
   @Column()
   readingSessionId: number;

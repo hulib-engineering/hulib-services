@@ -2,31 +2,44 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { faker } from '@faker-js/faker';
+
+// Domain Models
 import {
   ReadingSession,
   ReadingSessionStatus,
-} from '../../../../reading-sessions/entities/reading-session.entity';
-import { Feedback } from '../../../../reading-sessions/entities/feedback.entity';
-import { Message } from '../../../../reading-sessions/entities/message.entity';
-import { User } from '../../../../users/domain/user';
-import { SchedulesEntity } from '../../../../schedules/infrastructure/persistence/relational/entities/schedules.entity';
-import { Story } from '../../../../stories/domain/story';
+} from '@reading-sessions/domain/reading-session';
+import { Feedback } from '@reading-sessions/domain/feedback';
+import { Message } from '@reading-sessions/domain/message';
 
+// Entities
+import { ReadingSessionEntity } from '@reading-sessions/infrastructure/persistence/relational/entities/reading-session.entity';
+import { FeedbackEntity } from '@reading-sessions/infrastructure/persistence/relational/entities/feedback.entity';
+import { MessageEntity } from '@reading-sessions/infrastructure/persistence/relational/entities/message.entity';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
+import { SchedulesEntity } from '@schedules/infrastructure/persistence/relational/entities/schedules.entity';
+
+// Mappers
+import { ReadingSessionMapper } from '@reading-sessions/infrastructure/persistence/relational/mappers/reading-sessions.mapper';
+import { FeedbackMapper } from '@reading-sessions/infrastructure/persistence/relational/mappers/feedbacks.mapper';
+import { MessageMapper } from '@reading-sessions/infrastructure/persistence/relational/mappers/messages.mapper';
+
+// Mappers
 @Injectable()
 export class ReadingSessionSeedService {
   constructor(
-    @InjectRepository(ReadingSession)
-    private readonly readingSessionRepository: Repository<ReadingSession>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Story)
-    private readonly storyRepository: Repository<Story>,
+    @InjectRepository(ReadingSessionEntity)
+    private readonly readingSessionRepository: Repository<ReadingSessionEntity>,
+    @InjectRepository(FeedbackEntity)
+    private readonly feedbackRepository: Repository<FeedbackEntity>,
+    @InjectRepository(MessageEntity)
+    private readonly messageRepository: Repository<MessageEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(StoryEntity)
+    private readonly storyRepository: Repository<StoryEntity>,
     @InjectRepository(SchedulesEntity)
     private readonly scheduleRepository: Repository<SchedulesEntity>,
-    @InjectRepository(Feedback)
-    private readonly feedbackRepository: Repository<Feedback>,
-    @InjectRepository(Message)
-    private readonly messageRepository: Repository<Message>,
   ) {}
 
   async run() {
@@ -37,12 +50,16 @@ export class ReadingSessionSeedService {
     const stories = await this.storyRepository.find();
     const schedules = await this.scheduleRepository.find();
 
-    const sessions: ReadingSession[] = [];
+    if (!users.length || !stories.length || !schedules.length) {
+      console.log(
+        '❌ Required seed data missing. Please seed users, stories, and schedules first.',
+      );
+      return;
+    }
 
     // Create reading sessions
+    const sessions: ReadingSession[] = [];
     for (let i = 0; i < 20; i++) {
-      const session = new ReadingSession();
-
       const humanBook = faker.helpers.arrayElement(users);
       const reader = faker.helpers.arrayElement(
         users.filter((u) => u.id !== humanBook.id),
@@ -50,57 +67,75 @@ export class ReadingSessionSeedService {
       const story = faker.helpers.arrayElement(stories);
       const schedule = faker.helpers.arrayElement(schedules);
 
+      const session = new ReadingSession();
       session.humanBookId = Number(humanBook.id);
       session.readerId = Number(reader.id);
-      session.storyId = story.id;
-      session.authorScheduleId = schedule.id;
+      session.storyId = Number(story.id);
+      session.authorScheduleId = Number(schedule.id);
       session.sessionUrl = faker.internet.url();
       session.note = faker.lorem.paragraph();
       session.review = faker.lorem.paragraph();
       session.recordingUrl = faker.internet.url();
-      session.sessionStatus = faker.helpers.arrayElement([
-        ReadingSessionStatus.FINISHED,
-        ReadingSessionStatus.UNINITIALIZED,
-        ReadingSessionStatus.CANCELED,
-      ]);
+      session.sessionStatus = faker.helpers.arrayElement(
+        Object.values(ReadingSessionStatus),
+      );
+      session.createdAt = faker.date.past();
+      session.updatedAt = faker.date.recent();
 
       sessions.push(session);
     }
 
-    const savedSessions = await this.readingSessionRepository.save(sessions);
-    console.log(`✅ Inserted ${sessions.length} reading sessions`);
+    const savedSessions = await this.readingSessionRepository.save(
+      sessions.map((session) => ReadingSessionMapper.toPersistence(session)),
+    );
 
+    console.log(`✅ Created ${savedSessions.length} reading sessions`);
+
+    // Create feedbacks
     console.log('🌱 Seeding Feedbacks...');
     const feedbacks: Feedback[] = [];
 
-    // Create feedbacks for sessions
     for (const session of savedSessions) {
       const feedback = new Feedback();
       feedback.readingSessionId = session.id;
       feedback.rating = faker.number.float({ min: 1, max: 5 });
       feedback.content = faker.lorem.paragraph();
+      feedback.createdAt = faker.date.past();
+      feedback.updatedAt = faker.date.recent();
+
       feedbacks.push(feedback);
     }
 
-    await this.feedbackRepository.save(feedbacks);
-    console.log(`✅ Inserted ${feedbacks.length} feedbacks`);
+    await this.feedbackRepository.save(
+      feedbacks.map((feedback) => FeedbackMapper.toPersistence(feedback)),
+    );
 
+    console.log(`✅ Created ${feedbacks.length} feedbacks`);
+
+    // Create messages
     console.log('🌱 Seeding Messages...');
     const messages: Message[] = [];
 
-    // Create messages for sessions
     for (const session of savedSessions) {
-      for (let i = 0; i < faker.number.int({ min: 1, max: 5 }); i++) {
+      const messageCount = faker.number.int({ min: 3, max: 10 });
+
+      for (let i = 0; i < messageCount; i++) {
         const message = new Message();
         message.readingSessionId = session.id;
         message.humanBookId = session.humanBookId;
         message.readerId = session.readerId;
         message.content = faker.lorem.sentence();
+        message.createdAt = faker.date.past();
+        message.updatedAt = faker.date.recent();
+
         messages.push(message);
       }
     }
 
-    await this.messageRepository.save(messages);
-    console.log(`✅ Inserted ${messages.length} messages`);
+    await this.messageRepository.save(
+      messages.map((message) => MessageMapper.toPersistence(message)),
+    );
+
+    console.log(`✅ Created ${messages.length} messages`);
   }
 }

@@ -12,7 +12,7 @@ import { EntityRelationalHelper } from '../../../../../utils/relational-entity-h
 import { IsNotEmpty } from 'class-validator';
 import { UserDto } from '../../../../../users/dto/user.dto';
 import { Type } from 'class-transformer';
-import { ReadingSession } from '../../../../../reading-sessions/entities';
+import { ReadingSessionEntity } from '@reading-sessions/infrastructure/persistence/relational/entities';
 
 @Entity({
   name: 'schedules',
@@ -70,8 +70,8 @@ export class SchedulesEntity extends EntityRelationalHelper {
   deletedAt: Date | null;
 
   @OneToMany(
-    () => ReadingSession,
+    () => ReadingSessionEntity,
     (readingSession) => readingSession.authorSchedule,
   )
-  readingSessions: ReadingSession[];
+  readingSessions: ReadingSessionEntity[];
 }

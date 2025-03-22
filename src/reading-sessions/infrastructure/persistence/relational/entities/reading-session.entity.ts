@@ -10,11 +10,11 @@ import {
   OneToMany,
 } from 'typeorm';
 
-import { SchedulesEntity } from '../../schedules/infrastructure/persistence/relational/entities/schedules.entity';
-import { UserEntity } from '../../users/infrastructure/persistence/relational/entities/user.entity';
-import { StoryEntity } from '../../stories/infrastructure/persistence/relational/entities/story.entity';
-import { Feedback } from './feedback.entity';
-import { Message } from './message.entity';
+import { SchedulesEntity } from '@schedules/infrastructure/persistence/relational/entities/schedules.entity';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
+import { FeedbackEntity } from './feedback.entity';
+import { MessageEntity } from './message.entity';
 
 export enum ReadingSessionStatus {
   FINISHED = 'finished',
@@ -26,7 +26,7 @@ export enum ReadingSessionStatus {
   name: 'readingSession',
 })
 @Index('idx_session_status', ['sessionStatus'])
-export class ReadingSession {
+export class ReadingSessionEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -92,9 +92,9 @@ export class ReadingSession {
   @Column({ type: 'timestamp', nullable: true })
   deletedAt?: Date;
 
-  @OneToMany(() => Feedback, (feedback) => feedback.readingSession)
-  feedbacks: Feedback[];
+  @OneToMany(() => FeedbackEntity, (feedback) => feedback.readingSession)
+  feedbacks: FeedbackEntity[];
 
-  @OneToMany(() => Message, (message) => message.readingSession)
-  messages: Message[];
+  @OneToMany(() => MessageEntity, (message) => message.readingSession)
+  messages: MessageEntity[];
 }

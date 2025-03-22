@@ -5,20 +5,20 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { UserEntity } from '../../users/infrastructure/persistence/relational/entities/user.entity';
-import { ReadingSession } from './reading-session.entity';
+import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { ReadingSessionEntity } from './reading-session.entity';
 
 @Entity({ name: 'message' })
-export class Message {
+export class MessageEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   readingSessionId: number;
 
-  @ManyToOne(() => ReadingSession, (session) => session.messages)
+  @ManyToOne(() => ReadingSessionEntity, (session) => session.messages)
   @JoinColumn({ name: 'readingSessionId' })
-  readingSession: ReadingSession;
+  readingSession: ReadingSessionEntity;
 
   @Column()
   humanBookId: number;
