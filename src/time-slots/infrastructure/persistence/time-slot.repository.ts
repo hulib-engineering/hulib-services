@@ -17,4 +17,9 @@ export abstract class TimeSlotRepository {
   ): Promise<NullableType<TimeSlot>>;
 
   abstract remove(id: TimeSlot['id']): Promise<void>;
+
+  abstract update(
+    id: TimeSlot['id'],
+    data: Omit<TimeSlot, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<TimeSlot>;
 }

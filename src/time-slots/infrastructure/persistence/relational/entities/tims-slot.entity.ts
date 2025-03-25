@@ -27,9 +27,9 @@ export class TimeSlotEntity extends EntityRelationalHelper {
 
   @ApiProperty({
     type: Number,
-    example: 6,
+    example: 6.5,
   })
-  @Column({ type: Number })
+  @Column('float')
   startTime: number;
 
   @ApiProperty()

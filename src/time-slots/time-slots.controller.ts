@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
 import { TimeSlotService } from './time-slots.service';
 import { CreateTimeSlotDto } from './dto/create-time-slot.dto';
 import {
@@ -47,5 +47,22 @@ export class TimeSlotController {
   })
   findOne(@Param('id') id: TimeSlot['id']) {
     return this.timeSlotService.findOne(id);
+  }
+
+  // Use put instead of patch
+  @Put('/:id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @ApiCreatedResponse({
+    type: TimeSlot,
+  })
+  update(
+    @Param('id') id: TimeSlot['id'],
+    @Body() updateTimeSlotDto: CreateTimeSlotDto,
+  ) {
+    return this.timeSlotService.update(id, updateTimeSlotDto);
   }
 }

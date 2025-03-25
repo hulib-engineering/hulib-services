@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Double } from 'typeorm';
 
 const idType = Number;
 
@@ -16,7 +17,7 @@ export class TimeSlot {
 
   @ApiProperty({
     type: Number,
-    example: 6,
+    example: 6.5,
   })
   startTime: number;
 

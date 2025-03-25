@@ -52,4 +52,15 @@ export class TimeSlotRelationalRepository implements TimeSlotRepository {
   async remove(id: TimeSlot['id']): Promise<void> {
     await this.timeSlotRepository.delete(id);
   }
+
+  async update(id: TimeSlot['id'], data: TimeSlot): Promise<TimeSlot> {
+    const entity = await this.timeSlotRepository.findOne({ where: { id } });
+    if (!entity) {
+      throw new Error(`TimeSlot with id ${id} not found`);
+    }
+    entity.dayOfWeek = data.dayOfWeek;
+    entity.startTime = data.startTime;
+    await this.timeSlotRepository.save(entity);
+    return TimeSlotMapper.toDomain(entity);
+  }
 }

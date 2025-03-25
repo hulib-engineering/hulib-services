@@ -22,6 +22,12 @@ export class TimeSlotService {
         `Time slot with dayOfWeek ${createStoriesDto.dayOfWeek} and startTime ${createStoriesDto.startTime} already exists`,
       );
     }
+
+    if ((createStoriesDto.startTime * 60) % 30 !== 0) {
+      throw new ConflictException(
+        `Time slot with startTime ${createStoriesDto.startTime} must be a multiple of 30 minutes`,
+      );
+    }
     return this.timeSlotRepository.create({ ...createStoriesDto });
   }
 
@@ -39,5 +45,15 @@ export class TimeSlotService {
 
   remove(id: TimeSlot['id']) {
     return this.timeSlotRepository.remove(id);
+  }
+
+  async update(id: TimeSlot['id'], updateTimeSlotDto: CreateTimeSlotDto) {
+    const existingTimeSlot = await this.timeSlotRepository.findById(id);
+
+    if (!existingTimeSlot) {
+      throw new NotFoundException(`Time slot with id ${id} not found`);
+    }
+
+    return this.timeSlotRepository.update(id, updateTimeSlotDto);
   }
 }

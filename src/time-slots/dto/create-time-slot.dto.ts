@@ -1,13 +1,10 @@
+import { IsNotEmpty, IsNumber } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import {
-  // decorators here
-  IsNotEmpty,
-  IsNumber,
+  registerDecorator,
+  ValidationArguments,
+  ValidationOptions,
 } from 'class-validator';
-
-import {
-  // decorators here
-  ApiProperty,
-} from '@nestjs/swagger';
 
 export class CreateTimeSlotDto {
   @ApiProperty({
@@ -20,7 +17,7 @@ export class CreateTimeSlotDto {
 
   @ApiProperty({
     type: Number,
-    example: 6,
+    example: 6.5,
   })
   @IsNumber()
   @IsNotEmpty()
