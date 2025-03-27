@@ -15,16 +15,18 @@ import { PrismaModule } from '@prisma-client/prisma-client.module';
 import { StoryReviewSeedModule } from './story-review/story-review-seed.module';
 import { StorySeedModule } from './story/story-seed.module';
 import { TimeSlotSeedModule } from './time-slot/time-slot-seed.module';
+import { ReadingSessionSeedModule } from './reading-session/reading-session-seed.module';
 @Module({
   imports: [
-    GenderSeedModule,
-    RoleSeedModule,
-    StatusSeedModule,
-    UserSeedModule,
-    TopicSeedModule,
-    StorySeedModule,
-    StoryReviewSeedModule,
-    TimeSlotSeedModule,
+    // GenderSeedModule,
+    // RoleSeedModule,
+    // StatusSeedModule,
+    // UserSeedModule,
+    // TopicSeedModule,
+    // StorySeedModule,
+    // StoryReviewSeedModule,
+    // TimeSlotSeedModule,
+    ReadingSessionSeedModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig, appConfig],
