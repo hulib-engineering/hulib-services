@@ -17,4 +17,10 @@ export abstract class TimeSlotRepository {
   ): Promise<NullableType<TimeSlot>>;
 
   abstract remove(id: TimeSlot['id']): Promise<void>;
+
+  abstract update(data: TimeSlot): Promise<TimeSlot>;
+
+  abstract findByDayOfWeek(
+    dayOfWeek: TimeSlot['dayOfWeek'],
+  ): Promise<TimeSlot[]>;
 }

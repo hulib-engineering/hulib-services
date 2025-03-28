@@ -26,11 +26,11 @@ export class TimeSlotEntity extends EntityRelationalHelper {
   dayOfWeek: number;
 
   @ApiProperty({
-    type: Number,
-    example: 6,
+    type: String,
+    example: '06:00',
   })
-  @Column({ type: Number })
-  startTime: number;
+  @Column({ type: String })
+  startTime: String;
 
   @ApiProperty()
   @CreateDateColumn()

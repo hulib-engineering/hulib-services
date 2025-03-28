@@ -195,12 +195,12 @@ model schedules {
 
 model timeSlot {
   id              Int      @id @default(autoincrement())
-  dayOfWeek       Int      // 0 = Sunday, ..., 6 = Saturday
-  startTime       Float    // (6, 6.5, 7, ...)
+  dayOfWeek       Int      
+  startTime       String   @db.VarChar 
   createdAt       DateTime @default(now()) @db.Timestamp(6)
   updatedAt       DateTime @default(now()) @db.Timestamp(6)
 
-  users           userTimeSlot[]
+  users           userTimeSlot[] 
   @@unique([dayOfWeek, startTime])
 }
 
@@ -211,8 +211,10 @@ model userTimeSlot {
   user            user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   timeSlot        timeSlot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  @@id([userId, timeSlotId])
+  @@id([userId, timeSlotId]) 
 }
+
+
 
 enum ReadingSessionStatus {
   finished

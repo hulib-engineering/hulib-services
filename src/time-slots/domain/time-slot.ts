@@ -15,10 +15,10 @@ export class TimeSlot {
   dayOfWeek: number;
 
   @ApiProperty({
-    type: Number,
-    example: 6,
+    type: String,
+    example: '06:00',
   })
-  startTime: number;
+  startTime: String;
 
   @ApiProperty()
   createdAt: Date;

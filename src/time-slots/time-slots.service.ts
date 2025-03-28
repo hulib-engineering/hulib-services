@@ -40,4 +40,24 @@ export class TimeSlotService {
   remove(id: TimeSlot['id']) {
     return this.timeSlotRepository.remove(id);
   }
+
+  async update(id: TimeSlot['id'], updateTimeSlotDto: CreateTimeSlotDto) {
+    const timeSlot = await this.findOne(id);
+    return this.timeSlotRepository.update({
+      ...timeSlot,
+      ...updateTimeSlotDto,
+    });
+  }
+
+  findByDayOfWeek(dayOfWeek: TimeSlot['dayOfWeek']) {
+    const timeSlot = this.timeSlotRepository.findByDayOfWeek(dayOfWeek);
+
+    if (!timeSlot) {
+      throw new NotFoundException(
+        `Time slot with dayOfWeek ${dayOfWeek} not found`,
+      );
+    }
+
+    return timeSlot;
+  }
 }
