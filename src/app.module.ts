@@ -33,6 +33,10 @@ import { PrismaModule } from './prisma-client/prisma-client.module';
 import { SearchModule } from './search/search.module';
 import { HealthcheckModule } from './healthcheck/healthcheck.module';
 import { APP_FILTER } from '@nestjs/core';
+import { SchedulesModule } from './schedules/schedules.module';
+import { CaslModule } from './casl/casl.module';
+import { TimeSlotModule } from './time-slots/time-slots.module';
+import { ReadingSessionsModule } from './reading-sessions/reading-sessions.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -98,6 +102,10 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     StoryReviewsModule,
     PrismaModule,
     SearchModule,
+    SchedulesModule,
+    CaslModule,
+    TimeSlotModule,
+    ReadingSessionsModule,
   ],
   providers: [
     {
