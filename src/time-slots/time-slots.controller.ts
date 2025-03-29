@@ -4,12 +4,13 @@ import { CreateTimeSlotDto } from './dto/create-time-slot.dto';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { TimeSlot } from './domain/time-slot';
 
-@ApiTags('time-slots')
+@ApiTags('Time slots')
 // @ApiBearerAuth()
 // @UseGuards(AuthGuard('jwt'))
 @Controller({
@@ -20,6 +21,7 @@ export class TimeSlotController {
   constructor(private readonly timeSlotService: TimeSlotService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new time slot' })
   @ApiCreatedResponse({
     type: TimeSlot,
   })
@@ -28,6 +30,7 @@ export class TimeSlotController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get all time slots' })
   @ApiOkResponse({
     type: TimeSlot,
     isArray: true,
@@ -37,6 +40,7 @@ export class TimeSlotController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get a specific time slot' })
   @ApiParam({
     name: 'id',
     type: Number,
@@ -50,6 +54,7 @@ export class TimeSlotController {
   }
 
   @Put(':id')
+  @ApiOperation({ summary: 'Update a specific time slot' })
   @ApiParam({
     name: 'id',
     type: Number,
@@ -66,6 +71,7 @@ export class TimeSlotController {
   }
 
   @Get('day-of-week/:dayOfWeek')
+  @ApiOperation({ summary: 'Get time slots by day of week' })
   @ApiParam({
     name: 'dayOfWeek',
     type: Number,

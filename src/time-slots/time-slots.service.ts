@@ -43,6 +43,21 @@ export class TimeSlotService {
 
   async update(id: TimeSlot['id'], updateTimeSlotDto: CreateTimeSlotDto) {
     const timeSlot = await this.findOne(id);
+
+    if (!timeSlot) {
+      throw new NotFoundException(`Time slot with id ${id} not found`);
+    }
+
+    const existingTimeSlot = await this.timeSlotRepository.findByTime(
+      updateTimeSlotDto.dayOfWeek,
+      updateTimeSlotDto.startTime,
+    );
+    if (existingTimeSlot && existingTimeSlot.id !== id) {
+      throw new ConflictException(
+        `Time slot with dayOfWeek ${updateTimeSlotDto.dayOfWeek} and startTime ${updateTimeSlotDto.startTime} already exists`,
+      );
+    }
+
     return this.timeSlotRepository.update({
       ...timeSlot,
       ...updateTimeSlotDto,
