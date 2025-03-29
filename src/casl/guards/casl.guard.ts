@@ -28,7 +28,7 @@ export class CaslGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    if (!user) {
+    if (!user || !user.id) {
       throw new ForbiddenException('User not authenticated');
     }
 

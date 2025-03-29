@@ -107,11 +107,16 @@ model user {
   schedulesAsHumanBook schedules[] @relation("HumanBookRelation")
   schedulesAsUserLiber schedules[] @relation("UserLiberRelation")
 
-  timeSlots         userTimeSlot[]
+  timeSlots         timeSlots[]
   gender            gender?          @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file              file?            @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   role              role?            @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   status            status?          @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  readingSessionHumanBook readingSession[] @relation("HumanBookRelation")
+  readingSessionReader    readingSession[] @relation("ReaderRelation")
+  messagesAsHumanBook message[]            @relation("HumanBookRelation")
+  messagesAsReader message[]               @relation("ReaderRelation")
 }
 
 model story {
@@ -128,6 +133,8 @@ model story {
   storyFavorite storyFavorite[]
   storyReview   storyReview[]
   topics        storyTopic[]
+
+  readingSession readingSession[]
 }
 
 model storyTopic {
@@ -165,7 +172,7 @@ model storyFavorite {
 }
 
 model schedules {
-  schedulesId Int  @id @default(autoincrement())
+  id Int  @id @default(autoincrement())
 
   humanBookId Int
   humanBook   user @relation(name: "HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -182,25 +189,87 @@ model schedules {
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
+
+  readingSessions readingSession[]
 }
 
-model timeSlot {
+model timeSlots {
   id              Int      @id @default(autoincrement())
-  dayOfWeek       Int      // 0 = Sunday, ..., 6 = Saturday
-  startTime       Float    // (6, 6.5, 7, ...)
+  dayOfWeek       Int      
+  startTime       String   @db.VarChar 
   createdAt       DateTime @default(now()) @db.Timestamp(6)
   updatedAt       DateTime @default(now()) @db.Timestamp(6)
+  userId          Int
+  user            user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  users           userTimeSlot[]
   @@unique([dayOfWeek, startTime])
 }
+enum ReadingSessionStatus {
+  finished
+  unInitialized
+  canceled
+}
+model readingSession {
+  id               Int                     @id @default(autoincrement())
+  
+  humanBookId      Int                  
+  humanBook        user                    @relation(name: "HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade)  
 
-model userTimeSlot {
-  userId          Int
-  timeSlotId      Int
+  readerId         Int                  
+  reader           user                    @relation(name: "ReaderRelation", fields: [readerId], references: [id], onDelete: Cascade)
 
-  user            user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  timeSlot        timeSlot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  storyId          Int
+  story            story                   @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
-  @@id([userId, timeSlotId])
+  startedAt        DateTime                @default(now()) @db.Timestamp(6)
+  startTime        DateTime                @default(now()) @db.Timestamp(6)
+  endedAt          DateTime                @default(now()) @db.Timestamp(6)
+  endTime          DateTime                @default(now()) @db.Timestamp(6)
+  
+  authorScheduleId Int                  
+  authorSchedule   schedules               @relation(fields: [authorScheduleId], references: [id], onDelete: Cascade)
+
+  note             String?                 @db.VarChar(4000) // Mentee requests for session (if yes)
+  review           String?                 @db.VarChar(4000) // Mentor review for mentee
+  sessionUrl       String                  @db.VarChar(255)  // Meeting URL
+  recordingUrl     String?                 @db.VarChar(255)  // Meeting recording URL
+  sessionStatus    ReadingSessionStatus    @default(unInitialized)
+  createdAt        DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime                @default(now()) @db.Timestamp(6)
+  deletedAt        DateTime?
+
+  feedbacks        feedback[]              @relation("ReadingSessionFeedback")
+  messages         message[]               @relation("ReadingSessionMessage")
+}
+
+
+model feedback {
+  id               Int                     @id @default(autoincrement())
+
+  readingSessionId Int                   
+  readingSession   readingSession          @relation(name: "ReadingSessionFeedback", fields: [readingSessionId], references: [id], onDelete: Cascade)
+
+  rating           Float
+  content          String?                 @db.VarChar(4000)
+  createdAt        DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime                @default(now()) @db.Timestamp(6)
+  deletedAt        DateTime?
+}
+
+model message {
+  id               Int                     @id @default(autoincrement())
+
+  readingSessionId Int
+  readingSession   readingSession          @relation(name: "ReadingSessionMessage", fields: [readingSessionId], references: [id], onDelete: Cascade)
+
+  humanBookId      Int                  
+  humanBook        user                    @relation(name: "HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade)  
+
+  readerId         Int                  
+  reader           user                    @relation(name: "ReaderRelation", fields: [readerId], references: [id], onDelete: Cascade)
+
+  content          String                  @db.VarChar(4000)
+  createdAt        DateTime                @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime                @default(now()) @db.Timestamp(6)
+  deletedAt        DateTime?
 }

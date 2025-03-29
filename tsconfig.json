@@ -43,7 +43,10 @@
       "@tags/*": ["src/tags/*"],
       "@prisma-client/*": ["src/prisma-client/*"],
       "@test/*": ["test/*"],
-      "@casl/*": ["src/casl/*"]
+      "@casl/*": ["src/casl/*"],
+      "@time-slots/*": ["src/time-slots/*"],
+      "@schedules/*": ["src/schedules/*"],
+      "@reading-sessions/*": ["src/reading-sessions/*"]
     }
   }
 }

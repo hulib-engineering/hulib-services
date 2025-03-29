@@ -9,7 +9,7 @@ import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Entity({
-  name: 'timeSlot',
+  name: 'timeSlots',
 })
 export class TimeSlotEntity extends EntityRelationalHelper {
   @ApiProperty({
@@ -26,11 +26,11 @@ export class TimeSlotEntity extends EntityRelationalHelper {
   dayOfWeek: number;
 
   @ApiProperty({
-    type: Number,
-    example: 6,
+    type: String,
+    example: '06:00',
   })
-  @Column({ type: Number })
-  startTime: number;
+  @Column({ type: String })
+  startTime: string;
 
   @ApiProperty()
   @CreateDateColumn()

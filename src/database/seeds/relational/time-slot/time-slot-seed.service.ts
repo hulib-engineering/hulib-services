@@ -1,24 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TimeSlotEntity } from '../../../../time-slots/infrastructure/persistence/relational/entities/tims-slot.entity';
+import { PrismaService } from '../../../../prisma-client/prisma-client.service';
 
 @Injectable()
 export class TimeSlotSeedService {
-  constructor(
-    @InjectRepository(TimeSlotEntity)
-    private repository: Repository<TimeSlotEntity>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async run() {
-    const count = await this.repository.count();
-
-    if (!count) {
+    const count = await this.prisma.timeSlots.count();
+    if (count === 0) {
+      const user = await this.prisma.user.findFirst();
       for (let i = 0; i < 7; i++) {
         for (let j = 6; j < 24; j += 0.5) {
-          await this.repository.save({
-            dayOfWeek: i,
-            startTime: j,
+          const hours = Math.floor(j);
+          const minutes = (j % 1) * 60;
+
+          const timeString = `${String(hours).padStart(2, '0')}:${String(Math.round(minutes)).padStart(2, '0')}:00`;
+
+          await this.prisma.timeSlots.create({
+            data: {
+              userId: user?.id ?? 0,
+              dayOfWeek: i,
+              startTime: timeString,
+            },
           });
         }
       }
