@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TimeSlotEntity } from '../../../../time-slots/infrastructure/persistence/relational/entities/tims-slot.entity';
+import { TimeSlotEntity } from '@time-slots/infrastructure/persistence/relational/entities/tims-slot.entity';
 
 @Injectable()
 export class TimeSlotSeedService {

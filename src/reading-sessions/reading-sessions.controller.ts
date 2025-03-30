@@ -7,8 +7,6 @@ import {
   Param,
   Body,
   Query,
-  UseGuards,
-  Request,
   ParseIntPipe,
 } from '@nestjs/common';
 import {
@@ -16,6 +14,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
 import { ReadingSessionsService } from './reading-sessions.service';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
@@ -23,6 +22,7 @@ import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-se
 import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { ReadingSessionResponseDto } from './dto/reading-session/reading-session-response.dto';
 import { ReadingSessionStatus } from './infrastructure/persistence/relational/entities/reading-session.entity';
+import { ReadingSession } from '@reading-sessions/domain';
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()
@@ -37,11 +37,10 @@ export class ReadingSessionsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new reading session' })
-  @ApiResponse({ type: ReadingSessionResponseDto })
-  async createSession(
-    @Request() request,
-    @Body() dto: CreateReadingSessionDto,
-  ): Promise<ReadingSessionResponseDto> {
+  @ApiCreatedResponse({
+    type: ReadingSession,
+  })
+  async create(@Body() dto: CreateReadingSessionDto) {
     return this.readingSessionsService.createSession(dto);
   }
 

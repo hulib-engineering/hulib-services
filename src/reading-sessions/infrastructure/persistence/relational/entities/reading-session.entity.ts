@@ -10,7 +10,6 @@ import {
   OneToMany,
 } from 'typeorm';
 
-import { SchedulesEntity } from '@schedules/infrastructure/persistence/relational/entities/schedules.entity';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 import { FeedbackEntity } from './feedback.entity';
@@ -20,6 +19,7 @@ export enum ReadingSessionStatus {
   FINISHED = 'finished',
   UNINITIALIZED = 'unInitialized',
   CANCELED = 'canceled',
+  PENDING = 'pending',
 }
 
 @Entity({
@@ -57,13 +57,6 @@ export class ReadingSessionEntity {
   @Column()
   storyId: number;
 
-  @ManyToOne(() => SchedulesEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'authorScheduleId' })
-  authorSchedule: SchedulesEntity;
-
-  @Column()
-  authorScheduleId: number;
-
   @Column({ type: 'varchar', length: 4000, nullable: true })
   note?: string;
 
@@ -79,9 +72,21 @@ export class ReadingSessionEntity {
   @Column({
     type: 'enum',
     enum: ReadingSessionStatus,
-    default: ReadingSessionStatus.UNINITIALIZED,
+    default: ReadingSessionStatus.PENDING,
   })
   sessionStatus: ReadingSessionStatus;
+
+  @Column({ type: 'varchar', length: 255 })
+  startTime: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  endTime: string;
+
+  @CreateDateColumn({ type: 'timestamp' })
+  startedAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamp' })
+  endedAt: Date;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

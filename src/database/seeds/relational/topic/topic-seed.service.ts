@@ -16,7 +16,6 @@ export class TopicSeedService {
     if (!countTopics) {
       await this.repository.save(
         this.repository.create({
-          id: 1,
           name: 'Topic 1',
         }),
       );

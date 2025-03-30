@@ -8,7 +8,7 @@ export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
 
   @Get()
-  async findAll() {
+  findAll() {
     return this.scheduleService.findAll();
   }
 }

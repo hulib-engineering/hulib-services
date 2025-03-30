@@ -36,7 +36,6 @@ export class FeedbackRepository {
   }
 
   async findManyWithPagination({
-    filterOptions,
     paginationOptions,
   }: {
     filterOptions?: any;

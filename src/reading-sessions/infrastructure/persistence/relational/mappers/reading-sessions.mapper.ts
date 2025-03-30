@@ -5,7 +5,6 @@ import { UserMapper } from '@users/infrastructure/persistence/relational/mappers
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 
 import { StoryMapper } from '@stories/infrastructure/persistence/relational/mappers/story.mapper';
-import { SchedulesMapper } from '@schedules/infrastructure/persistence/relational/mappers/schedules.mapper';
 import { FeedbackMapper } from './feedbacks.mapper';
 import { MessageMapper } from './messages.mapper';
 
@@ -16,12 +15,15 @@ export class ReadingSessionMapper {
     domain.humanBookId = entity.humanBookId;
     domain.readerId = entity.readerId;
     domain.storyId = entity.storyId;
-    domain.authorScheduleId = entity.authorScheduleId;
     domain.sessionUrl = entity.sessionUrl;
     domain.note = entity.note;
     domain.review = entity.review;
     domain.recordingUrl = entity.recordingUrl;
     domain.sessionStatus = entity.sessionStatus;
+    entity.startTime = domain.startTime;
+    entity.endTime = domain.endTime;
+    domain.startedAt = entity.startedAt;
+    domain.endedAt = entity.endedAt;
     domain.createdAt = entity.createdAt;
     domain.updatedAt = entity.updatedAt;
     domain.deletedAt = entity.deletedAt;
@@ -34,9 +36,6 @@ export class ReadingSessionMapper {
     }
     if (entity.story) {
       domain.story = StoryMapper.toDomain(entity.story);
-    }
-    if (entity.authorSchedule) {
-      domain.authorSchedule = SchedulesMapper.toDomain(entity.authorSchedule);
     }
     if (entity.feedbacks) {
       domain.feedbacks = entity.feedbacks.map((feedback) =>
@@ -58,12 +57,15 @@ export class ReadingSessionMapper {
     entity.humanBookId = domain.humanBookId;
     entity.readerId = domain.readerId;
     entity.storyId = domain.storyId;
-    entity.authorScheduleId = domain.authorScheduleId;
     entity.sessionUrl = domain.sessionUrl;
     entity.note = domain.note;
     entity.review = domain.review;
     entity.recordingUrl = domain.recordingUrl;
     entity.sessionStatus = domain.sessionStatus;
+    entity.startTime = domain.startTime;
+    entity.endTime = domain.endTime;
+    entity.startedAt = domain.startedAt;
+    entity.endedAt = domain.endedAt;
     entity.createdAt = domain.createdAt;
     entity.updatedAt = domain.updatedAt;
     entity.deletedAt = domain.deletedAt;

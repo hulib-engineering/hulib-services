@@ -22,14 +22,7 @@ export class ReadingSessionRepository {
   async findById(id: number): Promise<ReadingSession | null> {
     const entity = await this.repository.findOne({
       where: { id },
-      relations: [
-        'humanBook',
-        'reader',
-        'story',
-        'authorSchedule',
-        'feedbacks',
-        'messages',
-      ],
+      relations: ['humanBook', 'reader', 'story', 'feedbacks', 'messages'],
     });
     return entity ? ReadingSessionMapper.toDomain(entity) : null;
   }

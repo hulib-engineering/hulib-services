@@ -18,7 +18,7 @@ export class TimeSlot {
     type: String,
     example: '06:00',
   })
-  startTime: String;
+  startTime: string;
 
   @ApiProperty()
   createdAt: Date;

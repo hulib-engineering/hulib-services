@@ -14,7 +14,8 @@ function IsValidStartTime(validationOptions?: ValidationOptions) {
       propertyName: propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        validate(value: any, _args: ValidationArguments) {
           const regex = /^([0-9]{2}):([0-9]{2})$/;
           if (!regex.test(value)) {
             return false;
