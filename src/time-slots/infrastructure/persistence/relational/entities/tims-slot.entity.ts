@@ -30,7 +30,7 @@ export class TimeSlotEntity extends EntityRelationalHelper {
     example: '06:00',
   })
   @Column({ type: String })
-  startTime: String;
+  startTime: string;
 
   @ApiProperty()
   @CreateDateColumn()

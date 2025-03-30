@@ -15,10 +15,8 @@ export class StorySeedService {
     if (!storyCount) {
       await this.prisma.story.create({
         data: {
-          id: 1,
           title: 'Story 1',
-          humanBookId: 1,
-          coverId: '1',
+          humanBookId: 2,
           topics: {
             create: topics.map((topic) => ({
               topicId: topic.id,

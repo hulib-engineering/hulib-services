@@ -24,9 +24,6 @@ export class ReadingSessionResponseDto {
   @IsNumber()
   storyId: number;
 
-  @IsNumber()
-  authorScheduleId: number;
-
   @IsUrl()
   @IsString()
   sessionUrl: string;
@@ -46,6 +43,18 @@ export class ReadingSessionResponseDto {
 
   @IsEnum(ReadingSessionStatus)
   sessionStatus: ReadingSessionStatus;
+
+  @IsString()
+  startTime: string;
+
+  @IsString()
+  endTime: string;
+
+  @IsDate()
+  startedAt: Date;
+
+  @IsDate()
+  endedAt: Date;
 
   @IsDate()
   createdAt: Date;

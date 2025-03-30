@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { faker } from '@faker-js/faker';
 
 // Domain Models
@@ -17,7 +17,6 @@ import { FeedbackEntity } from '@reading-sessions/infrastructure/persistence/rel
 import { MessageEntity } from '@reading-sessions/infrastructure/persistence/relational/entities/message.entity';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
-import { SchedulesEntity } from '@schedules/infrastructure/persistence/relational/entities/schedules.entity';
 
 // Mappers
 import { ReadingSessionMapper } from '@reading-sessions/infrastructure/persistence/relational/mappers/reading-sessions.mapper';
@@ -38,8 +37,6 @@ export class ReadingSessionSeedService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(StoryEntity)
     private readonly storyRepository: Repository<StoryEntity>,
-    @InjectRepository(SchedulesEntity)
-    private readonly scheduleRepository: Repository<SchedulesEntity>,
   ) {}
 
   async run() {
@@ -48,11 +45,10 @@ export class ReadingSessionSeedService {
     // Get existing data for relationships
     const users = await this.userRepository.find();
     const stories = await this.storyRepository.find();
-    const schedules = await this.scheduleRepository.find();
 
-    if (!users.length || !stories.length || !schedules.length) {
+    if (!users.length || !stories.length) {
       console.log(
-        '❌ Required seed data missing. Please seed users, stories, and schedules first.',
+        '❌ Required seed data missing. Please seed users and stories first.',
       );
       return;
     }
@@ -65,13 +61,11 @@ export class ReadingSessionSeedService {
         users.filter((u) => u.id !== humanBook.id),
       );
       const story = faker.helpers.arrayElement(stories);
-      const schedule = faker.helpers.arrayElement(schedules);
 
       const session = new ReadingSession();
       session.humanBookId = Number(humanBook.id);
       session.readerId = Number(reader.id);
       session.storyId = Number(story.id);
-      session.authorScheduleId = Number(schedule.id);
       session.sessionUrl = faker.internet.url();
       session.note = faker.lorem.paragraph();
       session.review = faker.lorem.paragraph();
@@ -79,6 +73,10 @@ export class ReadingSessionSeedService {
       session.sessionStatus = faker.helpers.arrayElement(
         Object.values(ReadingSessionStatus),
       );
+      session.startTime = faker.date.future().toLocaleTimeString();
+      session.endTime = faker.date.future().toLocaleTimeString();
+      session.startedAt = faker.date.future();
+      session.endedAt = faker.date.future();
       session.createdAt = faker.date.past();
       session.updatedAt = faker.date.recent();
 

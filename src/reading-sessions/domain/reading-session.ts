@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../users/domain/user';
 import { Story } from '../../stories/domain/story';
-import { Schedules } from '../../schedules/domain/schedules';
 import { Feedback } from './feedback';
 import { Message } from './message';
 
@@ -9,6 +8,7 @@ export enum ReadingSessionStatus {
   FINISHED = 'finished',
   UNINITIALIZED = 'unInitialized',
   CANCELED = 'canceled',
+  PENDING = 'pending',
 }
 
 export class ReadingSession {
@@ -52,17 +52,6 @@ export class ReadingSession {
   story: Story;
 
   @ApiProperty({
-    type: Number,
-    example: 1,
-  })
-  authorScheduleId: number;
-
-  @ApiProperty({
-    type: () => Schedules,
-  })
-  authorSchedule: Schedules;
-
-  @ApiProperty({
     type: String,
     example: 'https://meet.google.com/abc-defg-hij',
   })
@@ -91,9 +80,31 @@ export class ReadingSession {
 
   @ApiProperty({
     enum: ReadingSessionStatus,
-    example: ReadingSessionStatus.UNINITIALIZED,
+    example: ReadingSessionStatus.PENDING,
   })
   sessionStatus: ReadingSessionStatus;
+
+  @ApiProperty({
+    type: String,
+    example: '12:00',
+  })
+  startTime: string;
+
+  @ApiProperty({
+    type: String,
+    example: '12:30',
+  })
+  endTime: string;
+
+  @ApiProperty({
+    type: Date,
+  })
+  startedAt: Date;
+
+  @ApiProperty({
+    type: Date,
+  })
+  endedAt: Date;
 
   @ApiProperty({
     type: Date,

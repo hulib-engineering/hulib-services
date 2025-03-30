@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  // Delete,
   Query,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';

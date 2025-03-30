@@ -22,10 +22,14 @@ export class ReadingSessionsService {
     session.humanBookId = dto.humanBookId;
     session.readerId = dto.readerId;
     session.storyId = dto.storyId;
-    session.authorScheduleId = dto.authorScheduleId;
-    session.sessionUrl = dto.sessionUrl;
+    // Will be replaced by webRTC link
+    session.sessionUrl = '';
     session.note = dto.note;
     session.sessionStatus = ReadingSessionStatus.UNINITIALIZED;
+    session.startedAt = new Date(dto.startedAt);
+    session.endedAt = new Date(dto.endedAt);
+    session.startTime = dto.startTime;
+    session.endTime = dto.endTime;
 
     return await this.readingSessionRepository.create(session);
   }
@@ -77,7 +81,7 @@ export class ReadingSessionsService {
     id: number,
     feedbackDto: { rating: number; content?: string },
   ): Promise<ReadingSession> {
-    const session = await this.findOneSession(id);
+    // const session = await this.findOneSession(id);
 
     const feedback = new Feedback();
     feedback.readingSessionId = id;
