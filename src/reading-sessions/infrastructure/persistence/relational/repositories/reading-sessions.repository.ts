@@ -52,7 +52,7 @@ export class ReadingSessionRepository {
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
       where: where,
-      relations: ['humanBook', 'reader', 'story', 'authorSchedule'],
+      relations: ['humanBook', 'reader', 'story'],
     });
 
     return entities.map((entity) => ReadingSessionMapper.toDomain(entity));
