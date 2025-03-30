@@ -30,6 +30,7 @@ import {
   MessageEntity,
   ReadingSessionEntity,
 } from '@reading-sessions/infrastructure/persistence/relational/entities';
+import { TimeSlotEntity } from '../../../../../time-slots/infrastructure/persistence/relational/entities/tims-slot.entity';
 
 @Entity({
   name: 'user',
@@ -224,4 +225,7 @@ export class UserEntity extends EntityRelationalHelper {
 
   @OneToMany(() => MessageEntity, (message) => message.reader)
   messagesAsReader: MessageEntity[];
+
+  @OneToMany(() => TimeSlotEntity, (timeSlot) => timeSlot.user)
+  timeSlots: TimeSlotEntity[];
 }

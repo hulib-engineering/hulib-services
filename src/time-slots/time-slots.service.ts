@@ -3,30 +3,60 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { User } from '@users/domain/user';
 
-import { CreateTimeSlotDto } from './dto/create-time-slot.dto';
+import {
+  CreateTimeSlotDto,
+  CreateTimeSlotsDto,
+} from './dto/create-time-slot.dto';
 import { TimeSlotRepository } from './infrastructure/persistence/time-slot.repository';
 import { TimeSlot } from './domain/time-slot';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class TimeSlotService {
-  constructor(private readonly timeSlotRepository: TimeSlotRepository) {}
+  constructor(
+    private readonly timeSlotRepository: TimeSlotRepository,
+    private readonly userService: UsersService,
+  ) {}
 
-  async create(createStoriesDto: CreateTimeSlotDto) {
-    const existingTimeSlot = await this.timeSlotRepository.findByTime(
-      createStoriesDto.dayOfWeek,
-      createStoriesDto.startTime,
-    );
-    if (existingTimeSlot) {
-      throw new ConflictException(
-        `Time slot with dayOfWeek ${createStoriesDto.dayOfWeek} and startTime ${createStoriesDto.startTime} already exists`,
-      );
+  async create(createTimeSlotDto: CreateTimeSlotDto, userId: number) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
     }
-    return this.timeSlotRepository.create({ ...createStoriesDto });
+
+    const timeSlot = new TimeSlot(createTimeSlotDto);
+    timeSlot.userId = userId;
+
+    return this.timeSlotRepository.create(timeSlot, user);
+  }
+
+  async createMany(createTimeSlotsDto: CreateTimeSlotsDto, userId: number) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+    const timeSlots = createTimeSlotsDto.timeSlots.map((createTimeSlotDto) => {
+      const timeSlot = new TimeSlot(createTimeSlotDto);
+      timeSlot.userId = userId;
+      return timeSlot;
+    });
+
+    return this.timeSlotRepository.createMany(timeSlots, user);
   }
 
   findAll() {
     return this.timeSlotRepository.findAll();
+  }
+
+  async findByHuber(userId: User['id']): Promise<TimeSlot[]> {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    return this.timeSlotRepository.findByUser(userId);
   }
 
   async findOne(id: TimeSlot['id']) {

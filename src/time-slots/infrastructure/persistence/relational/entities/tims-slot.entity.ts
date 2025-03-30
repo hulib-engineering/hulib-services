@@ -4,9 +4,12 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   Column,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
 
 @Entity({
   name: 'timeSlots',
@@ -24,6 +27,18 @@ export class TimeSlotEntity extends EntityRelationalHelper {
   })
   @Column({ type: Number })
   dayOfWeek: number;
+
+  @ApiProperty({
+    type: Number,
+  })
+  @Column({ type: Number })
+  userId: number;
+
+  @ManyToOne(() => UserEntity, (user) => user.timeSlots, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'userId' })
+  user: UserEntity;
 
   @ApiProperty({
     type: String,
