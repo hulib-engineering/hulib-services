@@ -31,21 +31,23 @@ export class TimeSlotRelationalRepository implements TimeSlotRepository {
 
   async createMany(data: TimeSlot[], user: User): Promise<TimeSlot[]> {
     return await this.prisma.$transaction(async (tx) => {
-      await tx.timeSlots.deleteMany({
+      await tx.timeSlot.deleteMany({
         where: {
-          userId: Number(user.id),
+          huberId: Number(user.id),
         },
       });
 
-      await tx.timeSlots.createMany({
+      await tx.timeSlot.createMany({
         data: data.map((timeSlot) => ({
-          ...timeSlot,
+          dayOfWeek: timeSlot.dayOfWeek,
+          startTime: timeSlot.startTime,
+          huberId: Number(user.id),
         })),
       });
 
-      const timeSlotEntities = await tx.timeSlots.findMany({
+      const timeSlotEntities = await tx.timeSlot.findMany({
         where: {
-          userId: Number(user.id),
+          huberId: Number(user.id),
         },
       });
 
