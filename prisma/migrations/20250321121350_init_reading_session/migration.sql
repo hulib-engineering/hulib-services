@@ -1,4 +1,4 @@
-CREATE TYPE "ReadingSessionStatus" AS ENUM ('finished', 'unInitialized', 'canceled');
+CREATE TYPE "ReadingSessionStatus" AS ENUM ('finished', 'unInitialized', 'canceled', 'pending', 'rejected', 'approved');
 
 CREATE TABLE "readingSession" (
     "id" SERIAL NOT NULL,

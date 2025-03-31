@@ -186,6 +186,9 @@ enum ReadingSessionStatus {
   finished
   unInitialized
   canceled
+  pending
+  rejected
+  approved
 }
 
 model readingSession {
