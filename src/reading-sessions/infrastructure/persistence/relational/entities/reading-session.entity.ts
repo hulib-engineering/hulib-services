@@ -20,6 +20,8 @@ export enum ReadingSessionStatus {
   UNINITIALIZED = 'unInitialized',
   CANCELED = 'canceled',
   PENDING = 'pending',
+  REJECTED = 'rejected',
+  APPROVED = 'approved',
 }
 
 @Entity({
