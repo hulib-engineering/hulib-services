@@ -63,7 +63,7 @@ export class ReadingSessionsController {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update a reading session' })
+  @ApiOperation({ summary: 'Update a reading session status' })
   @ApiResponse({ type: ReadingSessionResponseDto })
   async updateSession(
     @Param('id', ParseIntPipe) id: number,
@@ -76,15 +76,5 @@ export class ReadingSessionsController {
   @ApiOperation({ summary: 'Delete a reading session' })
   async deleteSession(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.readingSessionsService.deleteSession(id);
-  }
-
-  @Put(':id/status')
-  @ApiOperation({ summary: 'Update reading session status' })
-  @ApiResponse({ type: ReadingSessionResponseDto })
-  async updateSessionStatus(
-    @Param('id', ParseIntPipe) id: number,
-    @Body('status') status: ReadingSessionStatus,
-  ): Promise<ReadingSessionResponseDto> {
-    return this.readingSessionsService.updateSessionStatus(id, status);
   }
 }
