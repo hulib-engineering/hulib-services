@@ -8,6 +8,7 @@ import {
   Body,
   Query,
   ParseIntPipe,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -62,7 +63,7 @@ export class ReadingSessionsController {
     return this.readingSessionsService.findOneSession(id);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @ApiOperation({ summary: 'Update a reading session status' })
   @ApiResponse({ type: ReadingSessionResponseDto })
   async updateSession(

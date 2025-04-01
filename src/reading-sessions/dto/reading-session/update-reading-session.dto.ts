@@ -8,8 +8,9 @@ export class UpdateReadingSessionDto extends PartialType(
   CreateReadingSessionDto,
 ) {
   @ApiProperty({
-    type: String,
-    example: 'FINISHED',
+    enum: ReadingSessionStatus,
+    example: ReadingSessionStatus.finished,
+    description: 'The status of the reading session',
   })
   @IsOptional()
   @IsEnum(ReadingSessionStatus)
