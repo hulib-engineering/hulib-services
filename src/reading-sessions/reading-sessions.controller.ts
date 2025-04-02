@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Delete,
   Param,
   Body,
@@ -21,9 +20,12 @@ import { ReadingSessionsService } from './reading-sessions.service';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
-import { ReadingSessionResponseDto } from './dto/reading-session/reading-session-response.dto';
-import { ReadingSessionStatus } from './infrastructure/persistence/relational/entities/reading-session.entity';
+import {
+  ReadingSessionResponseDto,
+  ReadingSessionResponseDtoWithRelations,
+} from './dto/reading-session/reading-session-response.dto';
 import { ReadingSession } from '@reading-sessions/domain';
+import { omit } from 'lodash';
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()
@@ -59,8 +61,19 @@ export class ReadingSessionsController {
   @ApiResponse({ type: ReadingSessionResponseDto })
   async findOneSession(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<ReadingSessionResponseDto> {
-    return this.readingSessionsService.findOneSession(id);
+  ): Promise<ReadingSessionResponseDtoWithRelations> {
+    const readingSession = await this.readingSessionsService.findOneSession(id);
+    return omit(readingSession, [
+      'humanBookId',
+      'readerId',
+      'storyId',
+      'humanBook.gender.__entity',
+      'humanBook.role.__entity',
+      'humanBook.status.__entity',
+      'reader.gender.__entity',
+      'reader.role.__entity',
+      'reader.status.__entity',
+    ]) as ReadingSessionResponseDtoWithRelations;
   }
 
   @Patch(':id')
