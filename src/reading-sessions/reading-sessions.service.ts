@@ -8,6 +8,7 @@ import { MessageRepository } from './infrastructure/persistence/relational/repos
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
 import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
+import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -38,7 +39,30 @@ export class ReadingSessionsService {
       throw new Error('Started at must be before ended at');
     }
 
+    await this.validateSessionOverlap(session);
+
     return await this.readingSessionRepository.create(session);
+  }
+
+  private async validateSessionOverlap(session: ReadingSession): Promise<void> {
+    const existingSessions = await this.readingSessionRepository.find({
+      where: [
+        {
+          humanBookId: session.humanBookId,
+          startTime: LessThanOrEqual(session.startTime),
+          endTime: MoreThanOrEqual(session.endTime),
+        },
+        {
+          humanBookId: session.humanBookId,
+          startTime: LessThanOrEqual(session.startTime),
+          endTime: MoreThanOrEqual(session.endTime),
+        },
+      ],
+    });
+
+    if (existingSessions.length > 0) {
+      throw new Error('Session overlap');
+    }
   }
 
   async findAllSessions(
