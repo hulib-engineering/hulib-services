@@ -11,7 +11,7 @@ import {
 } from './dto/create-time-slot.dto';
 import { TimeSlotRepository } from './infrastructure/persistence/time-slot.repository';
 import { TimeSlot } from './domain/time-slot';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '@users/users.service';
 
 @Injectable()
 export class TimeSlotService {
