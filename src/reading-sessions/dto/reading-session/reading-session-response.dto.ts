@@ -74,3 +74,16 @@ export class ReadingSessionResponseDto {
   @Type(() => MessageResponseDto)
   messages?: MessageResponseDto[];
 }
+
+export type ReadingSessionResponseDtoWithRelations = Omit<
+  ReadingSessionResponseDto,
+  | 'humanBookId'
+  | 'readerId'
+  | 'storyId'
+  | 'humanBook.gender.__entity'
+  | 'humanBook.role.__entity'
+  | 'humanBook.status.__entity'
+  | 'reader.gender.__entity'
+  | 'reader.role.__entity'
+  | 'reader.status.__entity'
+>;
