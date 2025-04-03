@@ -27,7 +27,7 @@ export class TimeSlotService {
     }
 
     const timeSlot = new TimeSlot(createTimeSlotDto);
-    timeSlot.userId = userId;
+    timeSlot.huberId = userId;
 
     return this.timeSlotRepository.create(timeSlot, user);
   }
@@ -39,7 +39,7 @@ export class TimeSlotService {
     }
     const timeSlots = createTimeSlotsDto.timeSlots.map((createTimeSlotDto) => {
       const timeSlot = new TimeSlot(createTimeSlotDto);
-      timeSlot.userId = userId;
+      timeSlot.huberId = userId;
       return timeSlot;
     });
 

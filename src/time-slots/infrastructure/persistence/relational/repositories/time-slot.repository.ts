@@ -8,7 +8,7 @@ import { TimeSlotRepository } from '../../time-slot.repository';
 import { TimeSlot } from '../../../../domain/time-slot';
 import { TimeSlotEntity } from '../entities/tims-slot.entity';
 import { TimeSlotMapper } from '../mappers/time-slot.mapper';
-import { User } from '../../../../../users/domain/user';
+import { User } from '@users/domain/user';
 
 @Injectable()
 export class TimeSlotRelationalRepository implements TimeSlotRepository {
@@ -21,7 +21,7 @@ export class TimeSlotRelationalRepository implements TimeSlotRepository {
   async create(data: TimeSlot, user: User): Promise<TimeSlot> {
     const persistenceModel = TimeSlotMapper.toPersistence({
       ...data,
-      user,
+      huber: user,
     });
     const newEntity = await this.timeSlotRepository.save(
       this.timeSlotRepository.create(persistenceModel),
@@ -30,7 +30,7 @@ export class TimeSlotRelationalRepository implements TimeSlotRepository {
   }
 
   async createMany(data: TimeSlot[], user: User): Promise<TimeSlot[]> {
-    return await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       await tx.timeSlot.deleteMany({
         where: {
           huberId: Number(user.id),
@@ -51,19 +51,15 @@ export class TimeSlotRelationalRepository implements TimeSlotRepository {
         },
       });
 
-      const domains = timeSlotEntities.map((timeSlot) => {
+      return timeSlotEntities.map((timeSlot) => {
         return TimeSlotMapper.toDomain(timeSlot);
       });
-
-      return domains;
     });
   }
 
   async findAll(): Promise<TimeSlot[]> {
     const entities = await this.timeSlotRepository.find();
-    const domains = entities.map((entity) => TimeSlotMapper.toDomain(entity));
-
-    return domains;
+    return entities.map((entity) => TimeSlotMapper.toDomain(entity));
   }
 
   async findById(id: TimeSlot['id']): Promise<NullableType<TimeSlot>> {
@@ -76,13 +72,12 @@ export class TimeSlotRelationalRepository implements TimeSlotRepository {
 
   async findByUser(userId: User['id']): Promise<TimeSlot[]> {
     const entities = await this.timeSlotRepository.find({
-      where: { userId: Number(userId) },
+      where: { huberId: Number(userId) },
       relations: {
-        user: true,
+        huber: true,
       },
     });
-    const domains = entities.map((entity) => TimeSlotMapper.toDomain(entity));
-    return domains;
+    return entities.map((entity) => TimeSlotMapper.toDomain(entity));
   }
 
   async findByTime(
@@ -111,8 +106,6 @@ export class TimeSlotRelationalRepository implements TimeSlotRepository {
     const entities = await this.timeSlotRepository.find({
       where: { dayOfWeek },
     });
-    const stories = entities.map((entity) => TimeSlotMapper.toDomain(entity));
-
-    return stories;
+    return entities.map((entity) => TimeSlotMapper.toDomain(entity));
   }
 }

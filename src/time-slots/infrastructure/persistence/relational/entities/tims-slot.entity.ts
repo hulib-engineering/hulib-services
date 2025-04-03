@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 
 @Entity({
   name: 'timeSlot',
@@ -32,13 +32,13 @@ export class TimeSlotEntity extends EntityRelationalHelper {
     type: Number,
   })
   @Column({ type: Number })
-  userId: number;
+  huberId: number;
 
   @ManyToOne(() => UserEntity, (user) => user.timeSlots, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'userId' })
-  user: UserEntity;
+  @JoinColumn({ name: 'huberId' })
+  huber: UserEntity;
 
   @ApiProperty({
     type: String,

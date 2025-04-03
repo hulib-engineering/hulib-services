@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '../../users/domain/user';
+import { User } from '@users/domain/user';
 import { CreateTimeSlotDto } from '../dto/create-time-slot.dto';
 
 const idType = Number;
@@ -25,12 +25,12 @@ export class TimeSlot {
   @ApiProperty({
     type: Number,
   })
-  userId: number;
+  huberId: number;
 
   @ApiProperty({
     type: () => User,
   })
-  user: User;
+  huber: User;
 
   @ApiProperty()
   createdAt: Date;

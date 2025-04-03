@@ -226,6 +226,6 @@ export class UserEntity extends EntityRelationalHelper {
   @OneToMany(() => MessageEntity, (message) => message.reader)
   messagesAsReader: MessageEntity[];
 
-  @OneToMany(() => TimeSlotEntity, (timeSlot) => timeSlot.user)
+  @OneToMany(() => TimeSlotEntity, (timeSlot) => timeSlot.huber)
   timeSlots: TimeSlotEntity[];
 }
