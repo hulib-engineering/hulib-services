@@ -1,10 +1,11 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   registerDecorator,
   ValidationArguments,
   ValidationOptions,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 function IsValidStartTime(validationOptions?: ValidationOptions) {
   return function (object: any, propertyName: string) {
@@ -55,4 +56,24 @@ export class CreateTimeSlotDto {
     message: 'startTime must be a valid time in the format HH:00 or HH:30.',
   })
   startTime: string;
+}
+
+export class CreateTimeSlotsDto {
+  @ApiProperty({
+    type: [CreateTimeSlotDto],
+    description: 'List of timeSlots',
+    example: [
+      { dayOfWeek: 0, startTime: '07:00' },
+      { dayOfWeek: 2, startTime: '08:00' },
+      { dayOfWeek: 4, startTime: '09:00' },
+    ],
+  })
+  @IsArray({ message: 'TimeSlots must be an array' })
+  @IsNotEmpty({ message: 'TimeSlots is required' })
+  @ValidateNested({
+    each: true,
+    message: 'Each timeSlot must be an object of CreateTimeSlotDto',
+  })
+  @Type(() => CreateTimeSlotDto)
+  timeSlots: CreateTimeSlotDto[];
 }
