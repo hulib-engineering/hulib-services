@@ -186,6 +186,9 @@ enum ReadingSessionStatus {
   finished
   unInitialized
   canceled
+  pending
+  rejected
+  approved
 }
 
 model readingSession {
@@ -207,9 +210,9 @@ model readingSession {
   sessionStatus ReadingSessionStatus @default(unInitialized)
 
   startedAt DateTime @default(now()) @db.Timestamp(6)
-  startTime DateTime @db.Time(6)
+  startTime String   @db.VarChar(40)
   endedAt   DateTime @db.Timestamp(6)
-  endTime   DateTime @db.Time(6)
+  endTime   String   @db.VarChar(40)
 
   createdAt DateTime  @default(now()) @db.Timestamp(6)
   updatedAt DateTime  @default(now()) @db.Timestamp(6)

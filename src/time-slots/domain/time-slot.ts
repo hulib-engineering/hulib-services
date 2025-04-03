@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { User } from '@users/domain/user';
+import { CreateTimeSlotDto } from '../dto/create-time-slot.dto';
 
 const idType = Number;
 
@@ -20,9 +22,24 @@ export class TimeSlot {
   })
   startTime: string;
 
+  @ApiProperty({
+    type: Number,
+  })
+  huberId: number;
+
+  @ApiProperty({
+    type: () => User,
+  })
+  huber: User;
+
   @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()
   updatedAt: Date;
+
+  constructor(createTimeSlotDto?: CreateTimeSlotDto) {
+    this.startTime = createTimeSlotDto?.startTime ?? '';
+    this.dayOfWeek = createTimeSlotDto?.dayOfWeek ?? 0;
+  }
 }

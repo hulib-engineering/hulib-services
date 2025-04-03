@@ -22,6 +22,7 @@ export class TimeSlotSeedService {
           const timeString = `${String(hours).padStart(2, '0')}:${String(Math.round(minutes)).padStart(2, '0')}:00`;
 
           await this.repository.save({
+            huberId: 2,
             dayOfWeek: i,
             startTime: timeString,
           });

@@ -15,6 +15,7 @@ import { PrismaModule } from '@prisma-client/prisma-client.module';
 // import { StoryReviewSeedModule } from './story-review/story-review-seed.module';
 import { StorySeedModule } from './story/story-seed.module';
 import { ReadingSessionSeedModule } from './reading-session/reading-session-seed.module';
+import { TimeSlotSeedModule } from '@database/seeds/relational/time-slot/time-slot-seed.module';
 @Module({
   imports: [
     GenderSeedModule,
@@ -24,7 +25,7 @@ import { ReadingSessionSeedModule } from './reading-session/reading-session-seed
     // TopicSeedModule,
     StorySeedModule,
     // StoryReviewSeedModule,
-    // TimeSlotSeedModule,
+    TimeSlotSeedModule,
     ReadingSessionSeedModule,
     ConfigModule.forRoot({
       isGlobal: true,

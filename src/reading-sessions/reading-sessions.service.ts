@@ -31,6 +31,13 @@ export class ReadingSessionsService {
     session.startTime = dto.startTime;
     session.endTime = dto.endTime;
 
+    if (session.startTime > session.endTime) {
+      throw new Error('Start time must be before end time');
+    }
+    if (session.startedAt > session.endedAt) {
+      throw new Error('Started at must be before ended at');
+    }
+
     return await this.readingSessionRepository.create(session);
   }
 
