@@ -64,7 +64,10 @@ export class ReadingSessionsController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a reading session status' })
+  @ApiOperation({
+    summary:
+      'Update a reading session status (finished | unInitialized | canceled | pending | rejected | approved)',
+  })
   @ApiResponse({ type: ReadingSessionResponseDto })
   async updateSession(
     @Param('id', ParseIntPipe) id: number,
