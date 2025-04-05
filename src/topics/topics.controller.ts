@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { TopicsService } from './topics.service';
 import {
   ApiCreatedResponse,
@@ -7,7 +17,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { Topic, Topics } from './domain/topics';
+import { Topics } from './domain/topics';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
@@ -15,6 +25,8 @@ import {
 import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllTopicsDto } from './dto/find-all-topics.dto';
 import { CreateTopicsDto } from './dto/create-topics.dto';
+import { TopicDto } from './dto/topic.dto';
+import { UpdateTopicsDto } from './dto/update-topics.dto';
 
 @ApiTags('Topics')
 @Controller({
@@ -27,7 +39,7 @@ export class TopicsController {
   @Post()
   @ApiOperation({ summary: 'Create a new topic' })
   @ApiCreatedResponse({
-    type: Topic,
+    type: TopicDto,
   })
   async create(@Body() dto: CreateTopicsDto) {
     return this.topicsService.create(dto);
@@ -67,32 +79,33 @@ export class TopicsController {
     required: true,
   })
   @ApiOkResponse({
-    type: Topics,
+    type: TopicDto,
   })
   async findOne(@Param('id') id: number): Promise<Topics | null> {
     return await this.topicsService.findOne(id);
   }
 
-  // @Patch(':id')
-  // @ApiParam({
-  //   name: 'id',
-  //   type: Number,
-  //   required: true,
-  // })
-  // @ApiOkResponse({
-  //   type: Topics,
-  // })
-  // update(@Param('id') id: number, @Body() updateTopicsDto: UpdateTopicsDto) {
-  //   return this.topicsService.update(id, updateTopicsDto);
-  // }
+  @Patch(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: TopicDto,
+  })
+  update(@Param('id') id: number, @Body() updateTopicsDto: UpdateTopicsDto) {
+    return this.topicsService.update(id, updateTopicsDto);
+  }
 
-  // @Delete(':id')
-  // @ApiParam({
-  //   name: 'id',
-  //   type: Number,
-  //   required: true,
-  // })
-  // remove(@Param('id') id: number) {
-  //   return this.topicsService.remove(id);
-  // }
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a topic' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  async deleteTopic(@Param('id', ParseIntPipe) id: number) {
+    return this.topicsService.remove(id);
+  }
 }
