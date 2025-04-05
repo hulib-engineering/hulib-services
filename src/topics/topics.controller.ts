@@ -1,13 +1,20 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { TopicsService } from './topics.service';
-import { ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
-import { Topics } from './domain/topics';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Topic, Topics } from './domain/topics';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
 } from '@utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllTopicsDto } from './dto/find-all-topics.dto';
+import { CreateTopicsDto } from './dto/create-topics.dto';
 
 @ApiTags('Topics')
 @Controller({
@@ -17,13 +24,14 @@ import { FindAllTopicsDto } from './dto/find-all-topics.dto';
 export class TopicsController {
   constructor(private readonly topicsService: TopicsService) {}
 
-  // @Post()
-  // @ApiCreatedResponse({
-  //   type: Topics,
-  // })
-  // create(@Body() createTopicsDto: CreateTopicsDto) {
-  //   return this.topicsService.create(createTopicsDto);
-  // }
+  @Post()
+  @ApiOperation({ summary: 'Create a new topic' })
+  @ApiCreatedResponse({
+    type: Topic,
+  })
+  async create(@Body() dto: CreateTopicsDto) {
+    return this.topicsService.create(dto);
+  }
 
   @Get()
   @ApiOkResponse({
