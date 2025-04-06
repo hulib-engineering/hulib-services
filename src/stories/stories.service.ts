@@ -35,7 +35,29 @@ export class StoriesService {
       });
     }
 
-    return this.storiesRepository.create({ ...createStoriesDto, humanBook });
+    // Check if all topics exist
+    const topics = await this.prisma.topics.findMany({
+      where: {
+        id: {
+          in: createStoriesDto.topics.map((topic) => topic.id),
+        },
+      },
+    });
+
+    if (topics.length !== createStoriesDto.topics.length) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          topics: 'Some topics not found',
+        },
+      });
+    }
+
+    return this.storiesRepository.create({
+      ...createStoriesDto,
+      humanBook,
+      topics,
+    });
   }
 
   findAllWithPagination({

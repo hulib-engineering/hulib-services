@@ -4,6 +4,7 @@ import {
   IsOptional,
   // decorators here
   IsString,
+  ValidateNested,
 } from 'class-validator';
 
 import {
@@ -15,6 +16,7 @@ import { FileDto } from '@files/dto/file.dto';
 import { UserDto } from '@users/dto/user.dto';
 import { Type } from 'class-transformer';
 import { PublishStatus } from '@stories/status.enum';
+import { TopicDto } from '../../topics/dto/topic.dto';
 
 export class CreateStoryDto {
   @ApiProperty()
@@ -44,4 +46,9 @@ export class CreateStoryDto {
   @IsIn(Object.keys(PublishStatus).filter((key) => isNaN(Number(key))))
   publishStatus: string;
   // Don't forget to use the class-validator decorators in the DTO properties.
+
+  @ApiProperty({ type: [TopicDto] })
+  @ValidateNested({ each: true })
+  @Type(() => TopicDto)
+  topics: TopicDto[];
 }

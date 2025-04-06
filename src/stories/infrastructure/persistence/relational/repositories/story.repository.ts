@@ -24,9 +24,37 @@ export class StoriesRelationalRepository implements StoryRepository {
 
   async create(data: Story): Promise<Story> {
     const persistenceModel = StoryMapper.toPersistence(data);
-    const newEntity = await this.storiesRepository.save(
-      this.storiesRepository.create(persistenceModel),
-    );
+
+    const newEntity = await this.storiesRepository
+      .createQueryBuilder()
+      .insert()
+      .into(StoryEntity)
+      .values(persistenceModel)
+      .execute()
+      .then(async (result) => {
+        const story = await this.storiesRepository.findOne({
+          where: { id: result.identifiers[0].id },
+          relations: ['topics', 'humanBook'],
+        });
+
+        if (!story) {
+          throw new Error('Story not found');
+        }
+
+        if (data.topics?.length) {
+          await this.storiesRepository
+            .createQueryBuilder()
+            .relation(StoryEntity, 'topics')
+            .of(story)
+            .add(data.topics.map((topic) => topic.id));
+        }
+
+        return this.storiesRepository.findOneOrFail({
+          where: { id: story.id },
+          relations: ['topics', 'humanBook'],
+        });
+      });
+
     return StoryMapper.toDomain(newEntity);
   }
 
