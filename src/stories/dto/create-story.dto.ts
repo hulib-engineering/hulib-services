@@ -1,6 +1,8 @@
 import {
+  IsArray,
   IsIn,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   // decorators here
   IsString,
@@ -16,7 +18,17 @@ import { FileDto } from '@files/dto/file.dto';
 import { UserDto } from '@users/dto/user.dto';
 import { Type } from 'class-transformer';
 import { PublishStatus } from '@stories/status.enum';
-import { TopicDto } from '../../topics/dto/topic.dto';
+
+export class TopicDto {
+  @ApiProperty({
+    example: 1,
+    description: 'Topic ID',
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  @Type(() => Number)
+  id: number;
+}
 
 export class CreateStoryDto {
   @ApiProperty()
@@ -47,7 +59,12 @@ export class CreateStoryDto {
   publishStatus: string;
   // Don't forget to use the class-validator decorators in the DTO properties.
 
-  @ApiProperty({ type: [TopicDto] })
+  @ApiProperty({
+    type: [TopicDto],
+    example: [{ id: 1 }, { id: 2 }],
+    description: 'Array of topics',
+  })
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TopicDto)
   topics: TopicDto[];
