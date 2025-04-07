@@ -37,6 +37,8 @@ import { SchedulesModule } from './schedules/schedules.module';
 import { CaslModule } from './casl/casl.module';
 import { TimeSlotModule } from './time-slots/time-slots.module';
 import { ReadingSessionsModule } from './reading-sessions/reading-sessions.module';
+import { EventService } from './event/event.service';
+import { RedPandaBrokerService } from './event/redpanda.service';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -112,6 +114,8 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,
     },
+    EventService,
+    RedPandaBrokerService,
   ],
 })
 export class AppModule {}
