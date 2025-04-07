@@ -26,6 +26,7 @@ import {
 } from './dto/reading-session/reading-session-response.dto';
 import { ReadingSession } from '@reading-sessions/domain';
 import { omit } from 'lodash';
+import { EventService } from '../event/event.service';
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()
@@ -36,6 +37,7 @@ import { omit } from 'lodash';
 export class ReadingSessionsController {
   constructor(
     private readonly readingSessionsService: ReadingSessionsService,
+    private readonly eventService: EventService,
   ) {}
 
   @Post()
@@ -44,6 +46,15 @@ export class ReadingSessionsController {
     type: ReadingSession,
   })
   async create(@Body() dto: CreateReadingSessionDto) {
+    await this.eventService.trackEvent('reading_session_created', {
+      name: 'reading_session_created',
+      userId: `${dto.readerId}`,
+      timestamp: Date.now(),
+      metadata: {
+        ...dto,
+      },
+    });
+
     return this.readingSessionsService.createSession(dto);
   }
 

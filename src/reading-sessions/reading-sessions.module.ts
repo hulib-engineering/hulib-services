@@ -25,6 +25,8 @@ import { SchedulesEntity } from '../schedules/infrastructure/persistence/relatio
 import { ReadingSessionMapper } from './infrastructure/persistence/relational/mappers/reading-sessions.mapper';
 import { FeedbackMapper } from './infrastructure/persistence/relational/mappers/feedbacks.mapper';
 import { MessageMapper } from './infrastructure/persistence/relational/mappers/messages.mapper';
+import { EventService } from '../event/event.service';
+import { RedPandaBrokerService } from '../event/redpanda.service';
 
 @Module({
   imports: [
@@ -47,6 +49,8 @@ import { MessageMapper } from './infrastructure/persistence/relational/mappers/m
     ReadingSessionMapper,
     FeedbackMapper,
     MessageMapper,
+    EventService,
+    RedPandaBrokerService,
   ],
   exports: [
     ReadingSessionsService,
