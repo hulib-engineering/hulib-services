@@ -28,9 +28,12 @@ export class FilesLocalService {
 
     return {
       file: await this.fileRepository.create({
-        path: `/${this.configService.get('app.apiPrefix', {
-          infer: true,
-        })}/v1/${file.path}`,
+        path: `${this.configService.get('app.backendDomain', { infer: true })}/${this.configService.get(
+          'app.apiPrefix',
+          {
+            infer: true,
+          },
+        )}/v1/${file.path}`,
       }),
     };
   }
