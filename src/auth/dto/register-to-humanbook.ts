@@ -13,6 +13,7 @@ export class RegisterToHumanBookDto {
 
   @ApiProperty()
   @IsString()
+  @IsOptional()
   education: string;
 
   @ApiProperty({
@@ -20,6 +21,7 @@ export class RegisterToHumanBookDto {
     example: [{ id: 1 }, { id: 2 }],
   })
   @IsArray()
+  @IsOptional()
   topics: TopicDto[];
 
   @ApiProperty({
@@ -28,6 +30,7 @@ export class RegisterToHumanBookDto {
     description: 'ISO 8601',
   })
   @IsString()
+  @IsOptional()
   educationStart: string;
 
   @ApiProperty({
