@@ -44,7 +44,7 @@ import { CheckAbilities } from '@casl/decorators/casl.decorator';
 import { Action } from '@casl/ability.factory';
 
 @ApiBearerAuth()
-@Roles(RoleEnum.admin)
+// @Roles(RoleEnum.admin)
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiTags('Users')
 @Controller({
@@ -61,7 +61,7 @@ export class UsersController {
     groups: ['admin'],
   })
   @Post()
-  @Roles(RoleEnum.admin)
+  // @Roles(RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createProfileDto: CreateUserDto): Promise<User> {
@@ -75,7 +75,7 @@ export class UsersController {
     groups: ['admin'],
   })
   @Get()
-  @Roles(RoleEnum.admin)
+  // @Roles(RoleEnum.admin)
   @CheckAbilities((ability) => ability.can(Action.Read, 'User'))
   @UseGuards(AuthGuard('jwt'), RolesGuard, CaslGuard)
   @HttpCode(HttpStatus.OK)
@@ -119,7 +119,7 @@ export class UsersController {
     groups: ['admin'],
   })
   @Get(':id')
-  @Roles(RoleEnum.admin)
+  // @Roles(RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.OK)
   @ApiParam({
@@ -138,7 +138,7 @@ export class UsersController {
     groups: ['admin'],
   })
   @Patch(':id')
-  @Roles(RoleEnum.admin)
+  // @Roles(RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.OK)
   @ApiParam({
@@ -154,7 +154,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles(RoleEnum.admin)
+  // @Roles(RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
