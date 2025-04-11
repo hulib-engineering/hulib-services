@@ -663,7 +663,9 @@ export class AuthService {
     //   });
     // }
 
-    const educationStart = new Date(createHumanBooksDto.educationStart);
+    const educationStart = createHumanBooksDto.educationStart
+      ? new Date(createHumanBooksDto.educationStart)
+      : null;
     const educationEnd = createHumanBooksDto.educationEnd
       ? new Date(createHumanBooksDto.educationEnd)
       : null;
@@ -674,6 +676,7 @@ export class AuthService {
       educationStart,
       educationEnd,
       approval: Approval.pending,
+      topics: createHumanBooksDto.topics ?? undefined,
     });
   }
 

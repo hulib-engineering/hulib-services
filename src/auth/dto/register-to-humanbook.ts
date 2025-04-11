@@ -14,7 +14,7 @@ export class RegisterToHumanBookDto {
   @ApiProperty()
   @IsString()
   @IsOptional()
-  education: string;
+  education: string | null;
 
   @ApiProperty({
     type: () => [TopicDto],
@@ -22,7 +22,7 @@ export class RegisterToHumanBookDto {
   })
   @IsArray()
   @IsOptional()
-  topics: TopicDto[];
+  topics: TopicDto[] | null;
 
   @ApiProperty({
     type: String,
@@ -31,7 +31,7 @@ export class RegisterToHumanBookDto {
   })
   @IsString()
   @IsOptional()
-  educationStart: string;
+  educationStart: string | null;
 
   @ApiProperty({
     type: String,
@@ -40,5 +40,5 @@ export class RegisterToHumanBookDto {
   })
   @IsOptional()
   @IsString()
-  educationEnd?: string;
+  educationEnd?: string | null;
 }
