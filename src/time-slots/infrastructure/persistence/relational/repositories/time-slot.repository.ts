@@ -44,6 +44,7 @@ export class TimeSlotRelationalRepository implements TimeSlotRepository {
           huberId: Number(user.id),
         })),
       });
+      console.log('user in createMany', user);
 
       const timeSlotEntities = await tx.timeSlot.findMany({
         where: {

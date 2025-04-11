@@ -676,7 +676,7 @@ export class AuthService {
       educationStart,
       educationEnd,
       approval: Approval.pending,
-      topics: createHumanBooksDto.topics ?? undefined,
+      topics: createHumanBooksDto.topics ?? [],
     });
   }
 

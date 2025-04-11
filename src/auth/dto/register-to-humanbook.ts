@@ -22,7 +22,7 @@ export class RegisterToHumanBookDto {
   })
   @IsArray()
   @IsOptional()
-  topics: TopicDto[] | null;
+  topics: TopicDto[] | [];
 
   @ApiProperty({
     type: String,

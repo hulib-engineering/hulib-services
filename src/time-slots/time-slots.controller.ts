@@ -42,6 +42,7 @@ export class TimeSlotController {
     @Body() createTimeSlotsDto: CreateTimeSlotsDto,
     @Request() request: any,
   ) {
+    console.log('user in request', request.user);
     return this.timeSlotService.createMany(createTimeSlotsDto, request.user.id);
   }
 
