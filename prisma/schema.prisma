@@ -178,8 +178,6 @@ model timeSlot {
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
   huber     user?    @relation(fields: [huberId], references: [id])
-
-  @@unique([dayOfWeek, startTime])
 }
 
 enum ReadingSessionStatus {
