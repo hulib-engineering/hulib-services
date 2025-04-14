@@ -6,10 +6,14 @@ import { StoryEntity } from './entities/story.entity';
 import { UsersRelationalRepository } from '../../../../users/infrastructure/persistence/relational/repositories/user.repository';
 import { UserRepository } from '../../../../users/infrastructure/persistence/user.repository';
 import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { TopicsRepository } from '../../../../topics/infrastructure/persistence/topics.repository';
+import { TopicsRelationalRepository } from '../../../../topics/infrastructure/persistence/relational/repositories/topics.repository';
+import { TopicsEntity } from '../../../../topics/infrastructure/persistence/relational/entities/topics.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([StoryEntity]),
     TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([TopicsEntity]),
   ],
 
   providers: [
@@ -21,7 +25,11 @@ import { UserEntity } from '../../../../users/infrastructure/persistence/relatio
       provide: UserRepository,
       useClass: UsersRelationalRepository,
     },
+    {
+      provide: TopicsRepository,
+      useClass: TopicsRelationalRepository,
+    },
   ],
-  exports: [StoryRepository],
+  exports: [StoryRepository, UserRepository, TopicsRepository],
 })
 export class RelationalStoriesPersistenceModule {}

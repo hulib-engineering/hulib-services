@@ -15,6 +15,7 @@ import { FileDto } from '@files/dto/file.dto';
 import { UserDto } from '@users/dto/user.dto';
 import { Type } from 'class-transformer';
 import { PublishStatus } from '@stories/status.enum';
+import { Topic } from '../../topics/domain/topics';
 
 export class CreateStoryDto {
   @ApiProperty()
@@ -35,6 +36,10 @@ export class CreateStoryDto {
   @IsNotEmpty()
   @Type(() => UserDto)
   humanBook: UserDto;
+
+  @ApiProperty({ example: [{ id: '1' }, { id: '2' }], type: () => [Topic] })
+  @IsOptional()
+  topics?: Topic[] | [];
 
   @ApiPropertyOptional({
     type: String,

@@ -12,11 +12,13 @@ import { UsersService } from '@users/users.service';
 import { FilterStoryDto, SortStoryDto } from './dto/find-all-stories.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
+import { TopicsRepository } from '../topics/infrastructure/persistence/topics.repository';
 @Injectable()
 export class StoriesService {
   constructor(
     private readonly storiesRepository: StoryRepository,
     private readonly storyReviewService: StoryReviewsService,
+    private readonly topicsRepository: TopicsRepository,
     private usersService: UsersService,
     private prisma: PrismaService,
   ) {}
@@ -35,7 +37,19 @@ export class StoriesService {
       });
     }
 
-    return this.storiesRepository.create({ ...createStoriesDto, humanBook });
+    const { topics } = createStoriesDto;
+    let topicsEntities: any[] = [];
+    if (topics && topics.length > 0) {
+      topicsEntities = await this.topicsRepository.findByIds(
+        topics.map((t) => t.id),
+      );
+    }
+
+    return this.storiesRepository.create({
+      ...createStoriesDto,
+      humanBook,
+      topics: topicsEntities,
+    });
   }
 
   findAllWithPagination({
