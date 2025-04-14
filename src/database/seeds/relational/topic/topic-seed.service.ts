@@ -1,24 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
+import { faker } from '@faker-js/faker';
+import { PrismaService } from '@prisma-client/prisma-client.service';
 
 @Injectable()
 export class TopicSeedService {
-  constructor(
-    @InjectRepository(TopicsEntity)
-    private repository: Repository<TopicsEntity>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async run() {
-    const countTopics = await this.repository.count();
+    const countTopics = await this.prisma.topics.count();
 
     if (!countTopics) {
-      await this.repository.save(
-        this.repository.create({
-          name: 'Topic 1',
+      const savedTopics = await Promise.all(
+        [...Array(10)].map(async () => {
+          await this.prisma.topics.create({
+            data: {
+              name: faker.book.genre(),
+            },
+          });
         }),
       );
+
+      console.log(`✅ Created ${savedTopics.length} hubers`);
     }
   }
 }
