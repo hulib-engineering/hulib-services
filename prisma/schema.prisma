@@ -31,6 +31,15 @@ model humanBookTopic {
   @@id([userId, topicId])
 }
 
+model liberTopicOfInterest {
+  userId  Int
+  topicId Int
+  topic   topics @relation(fields: [topicId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_topics")
+  user    user   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user")
+
+  @@id([userId, topicId])
+}
+
 model humanBooks {
   id             Int       @id @default(autoincrement())
   userId         Int
@@ -66,39 +75,41 @@ model status {
 }
 
 model topics {
-  id             Int              @id @default(autoincrement())
-  name           String           @db.VarChar
-  createdAt      DateTime         @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime         @default(now()) @db.Timestamp(6)
-  humanBookTopic humanBookTopic[]
-  stories        storyTopic[]
+  id        Int                    @id @default(autoincrement())
+  name      String                 @db.VarChar
+  createdAt DateTime               @default(now()) @db.Timestamp(6)
+  updatedAt DateTime               @default(now()) @db.Timestamp(6)
+  hubers    humanBookTopic[]
+  libers    liberTopicOfInterest[]
+  stories   storyTopic[]
 }
 
 model user {
-  id                Int              @id @default(autoincrement())
-  email             String?          @db.VarChar
-  password          String?          @db.VarChar
-  provider          String           @default("email") @db.VarChar
-  socialId          String?          @db.VarChar
-  fullName          String?          @db.VarChar
-  birthday          String?          @db.VarChar
-  createdAt         DateTime         @default(now()) @db.Time(6)
-  updatedAt         DateTime         @default(now()) @db.Time(6)
-  deletedAt         DateTime?        @db.Time(6)
+  id                Int                    @id @default(autoincrement())
+  email             String?                @db.VarChar
+  password          String?                @db.VarChar
+  provider          String                 @default("email") @db.VarChar
+  socialId          String?                @db.VarChar
+  fullName          String?                @db.VarChar
+  birthday          String?                @db.VarChar
+  createdAt         DateTime               @default(now()) @db.Time(6)
+  updatedAt         DateTime               @default(now()) @db.Time(6)
+  deletedAt         DateTime?              @db.Time(6)
   genderId          Int?
   roleId            Int?
   statusId          Int?
-  approval          String?          @db.VarChar
-  photoId           String?          @db.Uuid
-  address           String?          @db.VarChar
-  parentPhoneNumber String?          @db.VarChar
-  phoneNumber       String?          @db.VarChar
-  bio               String?          @db.VarChar
-  videoUrl          String?          @db.VarChar
-  education         String?          @db.VarChar
-  educationStart    DateTime?        @db.Date
-  educationEnd      DateTime?        @db.Date
+  approval          String?                @db.VarChar
+  photoId           String?                @db.Uuid
+  address           String?                @db.VarChar
+  parentPhoneNumber String?                @db.VarChar
+  phoneNumber       String?                @db.VarChar
+  bio               String?                @db.VarChar
+  videoUrl          String?                @db.VarChar
+  education         String?                @db.VarChar
+  educationStart    DateTime?              @db.Date
+  educationEnd      DateTime?              @db.Date
   humanBookTopic    humanBookTopic[]
+  topicsOfInterest  liberTopicOfInterest[]
   humanBooks        humanBooks[]
   storyReview       storyReview[]
   stories           story[]
@@ -182,11 +193,11 @@ model timeSlot {
 
 enum ReadingSessionStatus {
   finished
-  unInitialized
   canceled
   pending
   rejected
   approved
+  unInitialized
 }
 
 model readingSession {
@@ -205,7 +216,7 @@ model readingSession {
   review        String?              @db.VarChar(4000) // Mentor review for mentee
   sessionUrl    String               @db.VarChar(255) // Meeting URL
   recordingUrl  String?              @db.VarChar(255) // Meeting recording URL
-  sessionStatus ReadingSessionStatus @default(unInitialized)
+  sessionStatus ReadingSessionStatus @default(pending)
 
   startedAt DateTime @default(now()) @db.Timestamp(6)
   startTime String   @db.VarChar(40)

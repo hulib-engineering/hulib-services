@@ -23,8 +23,6 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { Roles } from '@roles/roles.decorator';
-import { RoleEnum } from '@roles/roles.enum';
 import { AuthGuard } from '@nestjs/passport';
 
 import {

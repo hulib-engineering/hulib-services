@@ -95,7 +95,7 @@ export class StoriesService {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          story: 'notFoundStory',
+          story: 'storyNotFound',
         },
       });
     }

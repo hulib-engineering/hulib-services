@@ -10,7 +10,7 @@ import { StatusSeedModule } from './status/status-seed.module';
 import { UserSeedModule } from './user/user-seed.module';
 import databaseConfig from '@database/config/database.config';
 import appConfig from '@config/app.config';
-// import { TopicSeedModule } from './topic/topic-seed.module';
+import { TopicSeedModule } from './topic/topic-seed.module';
 import { PrismaModule } from '@prisma-client/prisma-client.module';
 // import { StoryReviewSeedModule } from './story-review/story-review-seed.module';
 import { StorySeedModule } from './story/story-seed.module';
@@ -22,7 +22,7 @@ import { TimeSlotSeedModule } from '@database/seeds/relational/time-slot/time-sl
     RoleSeedModule,
     StatusSeedModule,
     UserSeedModule,
-    // TopicSeedModule,
+    TopicSeedModule,
     StorySeedModule,
     // StoryReviewSeedModule,
     TimeSlotSeedModule,
