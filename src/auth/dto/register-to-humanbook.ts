@@ -11,7 +11,11 @@ export class RegisterToHumanBookDto {
   @IsString()
   videoUrl: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    example: 'HCMUT',
+    description: 'Education',
+  })
   @IsString()
   @IsOptional()
   education: string | null;

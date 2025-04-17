@@ -35,6 +35,7 @@ import { User } from '@users/domain/user';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { Approval } from '@users/approval.enum';
 import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
+import { TopicsService } from '@topics/topics.service';
 
 @Injectable()
 export class AuthService {
@@ -44,6 +45,7 @@ export class AuthService {
     private sessionService: SessionService,
     private mailService: MailService,
     private configService: ConfigService<AllConfigType>,
+    private topicsService: TopicsService,
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
@@ -651,6 +653,9 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException();
     }
+    createHumanBooksDto.topics?.forEach(async (topic) => {
+      await this.topicsService.findOne(topic.id);
+    });
 
     // TODO: check if user has already a human book
     // const humanBook = await this.humanBooksService.findByUserId(userId);
@@ -669,6 +674,9 @@ export class AuthService {
     const educationEnd = createHumanBooksDto.educationEnd
       ? new Date(createHumanBooksDto.educationEnd)
       : null;
+    const role = {
+      id: RoleEnum.humanBook,
+    };
 
     return await this.usersService.update(userId, {
       ...user,
@@ -677,6 +685,7 @@ export class AuthService {
       educationEnd,
       approval: Approval.pending,
       topics: createHumanBooksDto.topics ?? undefined,
+      role: role,
     });
   }
 
