@@ -14,12 +14,12 @@ ALTER TABLE "huberSharingTopic" DROP CONSTRAINT "fk_user";
 DROP TABLE "huberSharingTopic";
 
 -- CreateTable
-CREATE TABLE "humanBookTopic" (
-    "userId" INTEGER NOT NULL,
-    "topicId" INTEGER NOT NULL,
+-- CREATE TABLE "humanBookTopic" (
+--     "userId" INTEGER NOT NULL,
+--     "topicId" INTEGER NOT NULL,
 
-    CONSTRAINT "humanBookTopic_pkey" PRIMARY KEY ("userId","topicId")
-);
+--     CONSTRAINT "humanBookTopic_pkey" PRIMARY KEY ("userId","topicId")
+-- );
 
 -- AddForeignKey
 ALTER TABLE "humanBookTopic" ADD CONSTRAINT "fk_topics" FOREIGN KEY ("topicId") REFERENCES "topics"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
