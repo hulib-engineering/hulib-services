@@ -12,6 +12,13 @@ export class MailerService {
   private google: OAuth2Client;
 
   constructor(private readonly configService: ConfigService<AllConfigType>) {
+    const isLocalDev =
+      this.configService.get('app.nodeEnv', { infer: true }) === 'local';
+
+    if (isLocalDev) {
+      this.google = {} as unknown as OAuth2Client;
+      return;
+    }
     this.google = new OAuth2Client(
       configService.get('google.clientId', { infer: true }),
       configService.get('google.clientSecret', { infer: true }),

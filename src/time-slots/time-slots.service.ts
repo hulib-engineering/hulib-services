@@ -11,7 +11,8 @@ import {
 } from './dto/create-time-slot.dto';
 import { TimeSlotRepository } from './infrastructure/persistence/time-slot.repository';
 import { TimeSlot } from './domain/time-slot';
-import { UsersService } from '../users/users.service';
+import { UsersService } from '@users/users.service';
+import { RoleEnum } from '../roles/roles.enum';
 
 @Injectable()
 export class TimeSlotService {
@@ -46,13 +47,17 @@ export class TimeSlotService {
     return this.timeSlotRepository.createMany(timeSlots, user);
   }
 
-  findAll() {
-    return this.timeSlotRepository.findAll();
+  async findAll(userId: User['id']): Promise<TimeSlot[]> {
+    const user = await this.userService.findById(userId);
+    if (!user || user.role?.id != RoleEnum.humanBook) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+    return this.timeSlotRepository.findByUser(userId);
   }
 
   async findByHuber(userId: User['id']): Promise<TimeSlot[]> {
     const user = await this.userService.findById(userId);
-    if (!user) {
+    if (!user || user.role?.id != RoleEnum.humanBook) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
 

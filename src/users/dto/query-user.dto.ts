@@ -19,6 +19,14 @@ export class FilterUserDto {
   @ApiPropertyOptional({ type: Number, isArray: true })
   @IsOptional()
   topicsOfInterest?: number[];
+
+  @ApiPropertyOptional({ type: Number })
+  @IsOptional()
+  sharingTopics?: number[];
+
+  @ApiPropertyOptional({ type: Number, isArray: true })
+  @IsOptional()
+  userTopicsOfInterest?: number[];
 }
 
 export class SortUserDto {

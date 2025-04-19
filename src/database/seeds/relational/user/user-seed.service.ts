@@ -7,6 +7,7 @@ import { RoleEnum } from '@roles/roles.enum';
 import { StatusEnum } from '@statuses/statuses.enum';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { GenderEnum } from '@genders/genders.enum';
+import { faker } from '@faker-js/faker';
 
 @Injectable()
 export class UserSeedService {
@@ -76,6 +77,50 @@ export class UserSeedService {
           },
         }),
       );
+    }
+
+    const countHuber = await this.repository.count({
+      where: {
+        role: {
+          id: RoleEnum.humanBook,
+        },
+      },
+    });
+
+    if (!countHuber) {
+      const salt = await bcrypt.genSalt();
+      const password = await bcrypt.hash('secret', salt);
+
+      const savedHubers = await Promise.all(
+        [...Array(5)].map(async () => {
+          await this.repository.save(
+            this.repository.create({
+              fullName: faker.person.fullName(),
+              email: faker.internet.email(),
+              address: faker.location.streetAddress(),
+              parentPhoneNumber: faker.phone.number(),
+              phoneNumber: faker.phone.number(),
+              bio: faker.lorem.paragraph(),
+              videoUrl: faker.internet.url(),
+              password,
+              gender: {
+                id: GenderEnum.other,
+                name: 'Other',
+              },
+              role: {
+                id: RoleEnum.humanBook,
+                name: 'Human Book',
+              },
+              status: {
+                id: StatusEnum.active,
+                name: 'Active',
+              },
+            }),
+          );
+        }),
+      );
+
+      console.log(`✅ Created ${savedHubers.length} hubers`);
     }
   }
 }

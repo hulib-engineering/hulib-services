@@ -25,6 +25,8 @@ import { SchedulesEntity } from '../schedules/infrastructure/persistence/relatio
 import { ReadingSessionMapper } from './infrastructure/persistence/relational/mappers/reading-sessions.mapper';
 import { FeedbackMapper } from './infrastructure/persistence/relational/mappers/feedbacks.mapper';
 import { MessageMapper } from './infrastructure/persistence/relational/mappers/messages.mapper';
+import { UsersModule } from '@users/users.module';
+import { StoriesModule } from '@stories/stories.module';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { MessageMapper } from './infrastructure/persistence/relational/mappers/m
       SchedulesEntity,
     ]),
     CaslModule,
+    UsersModule,
+    StoriesModule,
   ],
   controllers: [ReadingSessionsController],
   providers: [

@@ -11,16 +11,22 @@ export class RegisterToHumanBookDto {
   @IsString()
   videoUrl: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    example: 'HCMUT',
+    description: 'Education',
+  })
   @IsString()
-  education: string;
+  @IsOptional()
+  education: string | null;
 
   @ApiProperty({
     type: () => [TopicDto],
     example: [{ id: 1 }, { id: 2 }],
   })
   @IsArray()
-  topics: TopicDto[];
+  @IsOptional()
+  topics: TopicDto[] | null;
 
   @ApiProperty({
     type: String,
@@ -28,7 +34,8 @@ export class RegisterToHumanBookDto {
     description: 'ISO 8601',
   })
   @IsString()
-  educationStart: string;
+  @IsOptional()
+  educationStart: string | null;
 
   @ApiProperty({
     type: String,
@@ -37,5 +44,5 @@ export class RegisterToHumanBookDto {
   })
   @IsOptional()
   @IsString()
-  educationEnd?: string;
+  educationEnd?: string | null;
 }

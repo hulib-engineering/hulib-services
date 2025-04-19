@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { ReadingSession, ReadingSessionStatus } from './domain/reading-session';
 import { Feedback } from './domain/feedback';
 import { Message } from './domain/message';
@@ -8,6 +8,8 @@ import { MessageRepository } from './infrastructure/persistence/relational/repos
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
 import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
+import { UsersService } from '@users/users.service';
+import { StoriesService } from '@stories/stories.service';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -15,9 +17,38 @@ export class ReadingSessionsService {
     private readonly readingSessionRepository: ReadingSessionRepository,
     private readonly feedbackRepository: FeedbackRepository,
     private readonly messageRepository: MessageRepository,
+    private readonly usersService: UsersService,
+    private readonly storiesService: StoriesService,
   ) {}
 
   async createSession(dto: CreateReadingSessionDto): Promise<ReadingSession> {
+    const huber = await this.usersService.findById(dto.humanBookId);
+
+    if (!huber) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: `huberNotFound`,
+      });
+    }
+
+    const liber = await this.usersService.findById(dto.readerId);
+
+    if (!liber) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: `liberNotFound`,
+      });
+    }
+
+    const story = await this.storiesService.findDetailedStory(dto.storyId);
+
+    if (!story) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        error: `storyNotFound`,
+      });
+    }
+
     const session = new ReadingSession();
     session.humanBookId = dto.humanBookId;
     session.readerId = dto.readerId;
@@ -25,7 +56,7 @@ export class ReadingSessionsService {
     // Will be replaced by webRTC link
     session.sessionUrl = '';
     session.note = dto.note;
-    session.sessionStatus = ReadingSessionStatus.UNINITIALIZED;
+    session.sessionStatus = ReadingSessionStatus.PENDING;
     session.startedAt = new Date(dto.startedAt);
     session.endedAt = new Date(dto.endedAt);
     session.startTime = dto.startTime;
@@ -38,7 +69,7 @@ export class ReadingSessionsService {
       throw new Error('Started at must be before ended at');
     }
 
-    return await this.readingSessionRepository.create(session);
+    return this.readingSessionRepository.create(session);
   }
 
   async findAllSessions(

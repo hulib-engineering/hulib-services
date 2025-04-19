@@ -37,6 +37,7 @@ import { SchedulesModule } from './schedules/schedules.module';
 import { CaslModule } from './casl/casl.module';
 import { TimeSlotModule } from './time-slots/time-slots.module';
 import { ReadingSessionsModule } from './reading-sessions/reading-sessions.module';
+import { HubersModule } from './hubers/hubers.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -106,6 +107,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     CaslModule,
     TimeSlotModule,
     ReadingSessionsModule,
+    HubersModule,
   ],
   providers: [
     {

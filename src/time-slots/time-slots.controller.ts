@@ -46,13 +46,15 @@ export class TimeSlotController {
   }
 
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all time slots' })
   @ApiOkResponse({
     type: TimeSlot,
     isArray: true,
   })
-  async findAll(): Promise<TimeSlot[]> {
-    return this.timeSlotService.findAll();
+  async findAll(@Request() request: any): Promise<TimeSlot[]> {
+    return this.timeSlotService.findAll(request.user.id);
   }
 
   @Get('huber/:id')
