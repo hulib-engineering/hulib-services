@@ -1,6 +1,7 @@
-import { DeepPartial } from '../../../utils/types/deep-partial.type';
-import { NullableType } from '../../../utils/types/nullable.type';
-import { IPaginationOptions } from '../../../utils/types/pagination-options';
+import { DeepPartial } from '@utils/types/deep-partial.type';
+import { NullableType } from '@utils/types/nullable.type';
+import { IPaginationOptions } from '@utils/types/pagination-options';
+
 import { Huber } from '../../domain/huber';
 
 export abstract class HuberRepository {

@@ -22,7 +22,7 @@ export class FilterUserDto {
 
   @ApiPropertyOptional({ type: Number })
   @IsOptional()
-  sharingTopic?: number;
+  sharingTopics?: number[];
 
   @ApiPropertyOptional({ type: Number, isArray: true })
   @IsOptional()

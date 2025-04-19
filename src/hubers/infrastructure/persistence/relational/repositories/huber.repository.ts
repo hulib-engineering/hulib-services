@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HuberEntity } from '../entities/huber.entity';
-import { NullableType } from '../../../../../utils/types/nullable.type';
+import { NullableType } from '@utils/types/nullable.type';
 import { Huber } from '../../../../domain/huber';
 import { HuberRepository } from '../../huber.repository';
 import { HuberMapper } from '../mappers/huber.mapper';
-import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+import { IPaginationOptions } from '@utils/types/pagination-options';
 
 @Injectable()
 export class HuberRelationalRepository implements HuberRepository {
