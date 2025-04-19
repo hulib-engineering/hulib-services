@@ -24,13 +24,23 @@ export class HubersService {
       this.prisma.user.findMany({
         where: {
           roleId: RoleEnum.humanBook,
-          humanBookTopic: {
-            some: {
-              topicId: filterOptions?.sharingTopic
-                ? { equals: filterOptions?.sharingTopic }
-                : { in: filterOptions?.userTopicsOfInterest ?? [] },
-            },
-          },
+          humanBookTopic:
+            (filterOptions?.sharingTopics &&
+              filterOptions?.sharingTopics.length &&
+              filterOptions?.sharingTopics.length > 0) ||
+            (filterOptions?.userTopicsOfInterest &&
+              filterOptions?.userTopicsOfInterest.length &&
+              filterOptions?.userTopicsOfInterest.length > 0)
+              ? {
+                  some: {
+                    topicId:
+                      filterOptions?.sharingTopics &&
+                      filterOptions?.sharingTopics?.length > 0
+                        ? { in: filterOptions?.sharingTopics }
+                        : { in: filterOptions?.userTopicsOfInterest },
+                  },
+                }
+              : undefined,
         },
         orderBy:
           sortOptions &&
@@ -47,9 +57,9 @@ export class HubersService {
         where: {
           roleId: RoleEnum.humanBook,
           humanBookTopic: {
-            some: {
-              topicId: filterOptions?.sharingTopic
-                ? { equals: filterOptions?.sharingTopic }
+            every: {
+              topicId: filterOptions?.sharingTopics
+                ? { in: filterOptions?.sharingTopics }
                 : { in: filterOptions?.userTopicsOfInterest ?? [] },
             },
           },

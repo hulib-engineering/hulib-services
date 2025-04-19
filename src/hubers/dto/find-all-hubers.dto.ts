@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsArray, IsNumber, IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class FindAllHubersDto {
@@ -16,8 +16,14 @@ export class FindAllHubersDto {
   limit?: number;
 
   @ApiPropertyOptional()
-  @Transform(({ value }) => Number(value))
-  @IsNumber()
+  @IsArray()
+  @Transform(({ value }) =>
+    value
+      ? Array.isArray(value)
+        ? value.map((each: any) => Number(each))
+        : [Number(value)]
+      : [],
+  )
   @IsOptional()
-  topicId?: number;
+  topicIds?: number[];
 }
