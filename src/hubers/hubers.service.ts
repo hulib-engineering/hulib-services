@@ -56,13 +56,23 @@ export class HubersService {
       this.prisma.user.count({
         where: {
           roleId: RoleEnum.humanBook,
-          humanBookTopic: {
-            every: {
-              topicId: filterOptions?.sharingTopics
-                ? { in: filterOptions?.sharingTopics }
-                : { in: filterOptions?.userTopicsOfInterest ?? [] },
-            },
-          },
+          humanBookTopic:
+            (filterOptions?.sharingTopics &&
+              filterOptions?.sharingTopics.length &&
+              filterOptions?.sharingTopics.length > 0) ||
+            (filterOptions?.userTopicsOfInterest &&
+              filterOptions?.userTopicsOfInterest.length &&
+              filterOptions?.userTopicsOfInterest.length > 0)
+              ? {
+                  some: {
+                    topicId:
+                      filterOptions?.sharingTopics &&
+                      filterOptions?.sharingTopics?.length > 0
+                        ? { in: filterOptions?.sharingTopics }
+                        : { in: filterOptions?.userTopicsOfInterest },
+                  },
+                }
+              : undefined,
         },
       }),
     ]);
