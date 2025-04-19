@@ -1,6 +1,7 @@
-import { IsNumber, IsOptional, IsEnum, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsNumber, IsOptional, IsEnum, Min, IsBoolean } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 import { ReadingSessionStatus } from '../../infrastructure/persistence/relational/entities/reading-session.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class FindAllReadingSessionsQueryDto {
   @IsOptional()
@@ -21,6 +22,16 @@ export class FindAllReadingSessionsQueryDto {
   @IsOptional()
   @IsEnum(ReadingSessionStatus)
   sessionStatus?: ReadingSessionStatus;
+
+  @ApiProperty({
+    required: false,
+    description: 'Get upcoming reading sessions',
+    default: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  @IsBoolean()
+  upcoming?: boolean;
 
   @IsOptional()
   @Type(() => Number)

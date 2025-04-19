@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { Repository, FindOptionsWhere, MoreThan } from 'typeorm';
 import { ReadingSessionEntity } from '../entities/reading-session.entity';
 import { ReadingSession } from '../../../../domain/reading-session';
 import { ReadingSessionMapper } from '../mappers/reading-sessions.mapper';
 import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+import { FindAllReadingSessionsQueryDto } from '../../../../dto/reading-session/find-all-reading-sessions-query.dto';
 
 @Injectable()
 export class ReadingSessionRepository {
@@ -31,7 +32,7 @@ export class ReadingSessionRepository {
     filterOptions,
     paginationOptions,
   }: {
-    filterOptions?: any;
+    filterOptions?: FindAllReadingSessionsQueryDto;
     paginationOptions: IPaginationOptions;
   }): Promise<ReadingSession[]> {
     const where: FindOptionsWhere<ReadingSessionEntity> = {};
@@ -46,6 +47,10 @@ export class ReadingSessionRepository {
 
     if (filterOptions?.sessionStatus) {
       where.sessionStatus = filterOptions.sessionStatus;
+    }
+
+    if (filterOptions?.upcoming) {
+      where.startedAt = MoreThan(new Date());
     }
 
     const entities = await this.repository.find({
