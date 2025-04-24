@@ -26,6 +26,44 @@ export class UsersRelationalRepository implements UserRepository {
     return UserMapper.toDomain(newEntity);
   }
 
+  // async findManyWithPagination({
+  //   filterOptions,
+  //   sortOptions,
+  //   paginationOptions,
+  // }: {
+  //   filterOptions?: FilterUserDto | null;
+  //   sortOptions?: SortUserDto[] | null;
+  //   paginationOptions: IPaginationOptions;
+  // }): Promise<User[]> {
+  //   const where: FindOptionsWhere<UserEntity> = {};
+  //   if (filterOptions?.roles?.length) {
+  //     where.role = filterOptions.roles.map((role) => ({
+  //       id: role.id,
+  //     }));
+  //   }
+
+  //   if (filterOptions?.topicsOfInterest?.length) {
+  //     where.topics = filterOptions.topicsOfInterest.map((topicId) => ({
+  //       id: topicId,
+  //     }));
+  //   }
+
+  //   const entities = await this.usersRepository.find({
+  //     skip: (paginationOptions.page - 1) * paginationOptions.limit,
+  //     take: paginationOptions.limit,
+  //     where: where,
+  //     order: sortOptions?.reduce(
+  //       (accumulator, sort) => ({
+  //         ...accumulator,
+  //         [sort.orderBy]: sort.order,
+  //       }),
+  //       {},
+  //     ),
+  //   });
+
+  //   return entities.map((user) => UserMapper.toDomain(user));
+  // }
+
   async findManyWithPagination({
     filterOptions,
     sortOptions,
@@ -36,18 +74,22 @@ export class UsersRelationalRepository implements UserRepository {
     paginationOptions: IPaginationOptions;
   }): Promise<User[]> {
     const where: FindOptionsWhere<UserEntity> = {};
+
+    // Kiểm tra và áp dụng điều kiện lọc theo role.id
     if (filterOptions?.roles?.length) {
       where.role = filterOptions.roles.map((role) => ({
-        id: role.id,
+        id: role.id, // Lọc theo role.id cụ thể
       }));
     }
 
+    // Lọc theo các topic mà người dùng quan tâm
     if (filterOptions?.topicsOfInterest?.length) {
       where.topics = filterOptions.topicsOfInterest.map((topicId) => ({
         id: topicId,
       }));
     }
 
+    // Truy vấn cơ sở dữ liệu
     const entities = await this.usersRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
@@ -61,6 +103,7 @@ export class UsersRelationalRepository implements UserRepository {
       ),
     });
 
+    // Chuyển đổi dữ liệu thành domain model (User)
     return entities.map((user) => UserMapper.toDomain(user));
   }
 
