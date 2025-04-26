@@ -49,6 +49,12 @@ export class HubersService {
           })),
         include: {
           humanBookTopic: true,
+          file: {
+            select: {
+              id: true,
+              path: true,
+            },
+          },
         },
         skip: (paginationOptions.page - 1) * paginationOptions.limit,
         take: paginationOptions.limit,
