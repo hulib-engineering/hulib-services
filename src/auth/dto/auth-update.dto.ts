@@ -16,10 +16,6 @@ import { GenderDto } from '@genders/dto/gender.dto';
 import { RoleDto } from '../../roles/dto/role.dto';
 
 export class AuthUpdateDto {
-  // @ApiPropertyOptional({ type: () => FileDto })
-  // @IsOptional()
-  // photo?: FileDto | null;
-
   @ApiPropertyOptional({ example: 'new.email@example.com' })
   @IsOptional()
   @IsNotEmpty()
