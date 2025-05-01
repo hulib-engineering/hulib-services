@@ -9,6 +9,7 @@ import { FindAllHubersDto } from './dto/find-all-hubers.dto';
 import { User } from '@users/domain/user';
 import { pagination } from '@utils/types/pagination';
 import { UsersService } from '@users/users.service';
+import { omit } from 'lodash';
 
 @ApiTags('Hubers')
 @ApiBearerAuth()
@@ -51,6 +52,8 @@ export class HubersController {
       },
     });
 
-    return pagination(data, count, { page, limit });
+    const sanitizedData = data.map((user) => omit(user, ['password']));
+
+    return pagination(sanitizedData, count, { page, limit });
   }
 }
