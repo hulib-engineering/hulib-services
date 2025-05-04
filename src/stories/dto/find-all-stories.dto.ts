@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
@@ -9,6 +10,7 @@ import {
 } from 'class-validator';
 import { plainToInstance, Transform, Type } from 'class-transformer';
 import { Story } from '@stories/domain/story';
+import { PublishStatus } from '../status.enum';
 
 export class SortStoryDto {
   @ApiProperty()
@@ -38,6 +40,10 @@ export class FilterStoryDto {
   @IsOptional()
   @IsNumber({}, { each: true })
   topicIds?: number[] | null;
+
+  @IsOptional()
+  @IsEnum(PublishStatus)
+  publishStatus?: PublishStatus;
 }
 
 export class FindAllStoriesDto extends FilterStoryDto {
