@@ -26,6 +26,7 @@ import { FindAllStoriesDto } from './dto/find-all-stories.dto';
 import { DEFAULT_LIMIT } from '../utils/dto/pagination-input.dto';
 import { DEFAULT_PAGE } from '../utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
+import { PublishStatus } from './status.enum';
 
 @ApiTags('Stories')
 // @ApiBearerAuth()
@@ -69,6 +70,7 @@ export class StoriesController {
         filterOptions: {
           humanBookId: query.humanBookId,
           topicIds: query.topicIds,
+          publishStatus: query.publishStatus || PublishStatus.published,
         },
         sortOptions: sortOptions ? [sortOptions] : [],
       }),
