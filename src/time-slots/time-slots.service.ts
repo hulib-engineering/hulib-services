@@ -23,8 +23,8 @@ export class TimeSlotService {
 
   async create(createTimeSlotDto: CreateTimeSlotDto, userId: number) {
     const user = await this.userService.findById(userId);
-    if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
+    if (!user || user.role?.id != RoleEnum.humanBook) {
+      throw new NotFoundException(`Huber with id ${userId} not found`);
     }
 
     const timeSlot = new TimeSlot(createTimeSlotDto);
@@ -35,8 +35,8 @@ export class TimeSlotService {
 
   async createMany(createTimeSlotsDto: CreateTimeSlotsDto, userId: number) {
     const user = await this.userService.findById(userId);
-    if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
+    if (!user || user.role?.id != RoleEnum.humanBook) {
+      throw new NotFoundException(`Huber with id ${userId} not found`);
     }
     const timeSlots = createTimeSlotsDto.timeSlots.map((createTimeSlotDto) => {
       const timeSlot = new TimeSlot(createTimeSlotDto);
