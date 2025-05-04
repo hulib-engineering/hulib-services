@@ -23,7 +23,6 @@ export class FileType {
   })
   @Transform(
     ({ value }) => {
-      console.log('File path', value);
       if ((fileConfig() as FileConfig).driver === FileDriver.LOCAL) {
         return (appConfig() as AppConfig).backendDomain + value;
       } else if (
