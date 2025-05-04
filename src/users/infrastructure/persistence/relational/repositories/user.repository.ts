@@ -36,18 +36,22 @@ export class UsersRelationalRepository implements UserRepository {
     paginationOptions: IPaginationOptions;
   }): Promise<User[]> {
     const where: FindOptionsWhere<UserEntity> = {};
+
+    // Kiểm tra và áp dụng điều kiện lọc theo role.id
     if (filterOptions?.roles?.length) {
       where.role = filterOptions.roles.map((role) => ({
-        id: role.id,
+        id: role.id, // Lọc theo role.id cụ thể
       }));
     }
 
+    // Lọc theo các topic mà người dùng quan tâm
     if (filterOptions?.topicsOfInterest?.length) {
       where.topics = filterOptions.topicsOfInterest.map((topicId) => ({
         id: topicId,
       }));
     }
 
+    // Truy vấn cơ sở dữ liệu
     const entities = await this.usersRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
@@ -60,7 +64,6 @@ export class UsersRelationalRepository implements UserRepository {
         {},
       ),
     });
-
     return entities.map((user) => UserMapper.toDomain(user));
   }
 

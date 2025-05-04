@@ -67,7 +67,7 @@ export class StoriesRelationalRepository implements StoryRepository {
       },
     });
 
-    const humanbookSearch = await this.userRepository.find({
+    const huber = await this.userRepository.find({
       where: {
         id: In(
           entities
@@ -84,7 +84,7 @@ export class StoriesRelationalRepository implements StoryRepository {
 
     // add field countTopics to story
     stories.forEach((story) => {
-      const countTopics = humanbookSearch.reduce(
+      const countTopics = huber.reduce(
         (acc, user) => acc + (user.topics?.length || 0),
         0,
       );

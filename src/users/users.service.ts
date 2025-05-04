@@ -281,7 +281,6 @@ export class UsersService {
   }
 
   async upgrade(id: User['id'], action: string): Promise<void> {
-    console.log(action);
     if (action === Action.accept) {
       await this.usersRepository.update(id, {
         role: {

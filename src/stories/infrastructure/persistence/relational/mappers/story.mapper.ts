@@ -3,6 +3,7 @@ import { Story } from '@stories/domain/story';
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 import { TopicsMapper } from '@topics/infrastructure/persistence/relational/mappers/topics.mapper';
 import { PublishStatus } from '@stories/status.enum';
+import { FileMapper } from '@files/infrastructure/persistence/relational/mappers/file.mapper';
 
 export class StoryMapper {
   static toDomain(raw: StoryEntity): Story {
@@ -10,6 +11,11 @@ export class StoryMapper {
     domainEntity.abstract = raw.abstract;
     domainEntity.title = raw.title;
     domainEntity.id = raw.id;
+
+    if (raw.cover) {
+      domainEntity.cover = FileMapper.toDomain(raw.cover);
+    }
+
     if (raw.humanBook) {
       domainEntity.humanBook = UserMapper.toDomain(raw.humanBook);
     }
