@@ -16,8 +16,11 @@ import { PrismaModule } from '@prisma-client/prisma-client.module';
 import { StorySeedModule } from './story/story-seed.module';
 import { ReadingSessionSeedModule } from './reading-session/reading-session-seed.module';
 import { TimeSlotSeedModule } from '@database/seeds/relational/time-slot/time-slot-seed.module';
+import { storyFavouritesSeedModule } from './story-favourites/story-favourites-seed.module';
+
 @Module({
   imports: [
+    storyFavouritesSeedModule,
     GenderSeedModule,
     RoleSeedModule,
     StatusSeedModule,
