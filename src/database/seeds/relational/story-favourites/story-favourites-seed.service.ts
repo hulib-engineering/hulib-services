@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { storyFavouritesEntity } from '../../../../story-favourites/infrastructure/persistence/relational/entities/story-favourites.entity';
+import { storyFavouritesEntity } from '@fav-stories/infrastructure/persistence/relational/entities/fav-stories.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()

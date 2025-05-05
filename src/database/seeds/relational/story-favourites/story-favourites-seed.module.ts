@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { storyFavouritesEntity } from '../../../../story-favourites/infrastructure/persistence/relational/entities/story-favourites.entity';
+import { storyFavouritesEntity } from '@fav-stories/infrastructure/persistence/relational/entities/fav-stories.entity';
 import { storyFavouritesSeedService } from './story-favourites-seed.service';
 
 @Module({
