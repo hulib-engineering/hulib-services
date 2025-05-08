@@ -57,7 +57,7 @@ export class HubersController {
       return omit(
         {
           ...rest,
-          cover: file,
+          photo: file,
         },
         ['password'],
       );
