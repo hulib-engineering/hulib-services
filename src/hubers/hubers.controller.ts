@@ -52,7 +52,16 @@ export class HubersController {
       },
     });
 
-    const sanitizedData = data.map((user) => omit(user, ['password']));
+    const sanitizedData = data.map((user) => {
+      const { file, ...rest } = user;
+      return omit(
+        {
+          ...rest,
+          photo: file,
+        },
+        ['password'],
+      );
+    });
 
     return pagination(sanitizedData, count, { page, limit });
   }
