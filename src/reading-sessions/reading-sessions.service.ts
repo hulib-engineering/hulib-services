@@ -75,12 +75,21 @@ export class ReadingSessionsService {
   async findAllSessions(
     queryDto: FindAllReadingSessionsQueryDto,
   ): Promise<ReadingSession[]> {
-    return await this.readingSessionRepository.findManyWithPagination({
-      filterOptions: queryDto,
-      paginationOptions: {
+    let paginationOptions: { page: number; limit: number } | undefined =
+      undefined;
+    if (
+      typeof queryDto.limit === 'number' &&
+      typeof queryDto.offset === 'number'
+    ) {
+      paginationOptions = {
         page: Math.floor(queryDto.offset / queryDto.limit) + 1,
         limit: queryDto.limit,
-      },
+      };
+    }
+
+    return await this.readingSessionRepository.findManyWithPagination({
+      filterOptions: queryDto,
+      paginationOptions,
     });
   }
 
