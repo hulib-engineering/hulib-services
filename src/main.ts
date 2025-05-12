@@ -5,6 +5,8 @@ import {
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -15,6 +17,11 @@ import { AllConfigType } from './config/config.type';
 import { ResolvePromisesInterceptor } from './utils/serializer.interceptor';
 
 async function bootstrap() {
+  const filesDir = path.join(__dirname, '..', 'files');
+  if (!fs.existsSync(filesDir)) {
+    fs.mkdirSync(filesDir);
+  }
+
   const app = await NestFactory.create(AppModule, {
     cors: {
       origin: [
