@@ -1,4 +1,11 @@
-import { IsNumber, IsOptional, IsEnum, Min, IsBoolean } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  Min,
+  IsBoolean,
+  IsDateString,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ReadingSessionStatus } from '../../infrastructure/persistence/relational/entities/reading-session.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -32,6 +39,24 @@ export class FindAllReadingSessionsQueryDto {
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
   upcoming?: boolean;
+
+  @ApiProperty({
+    required: false,
+    description: 'startedAt date (must be a valid ISO 8601 date string)',
+    default: new Date(new Date().getTime() - 1000 * 60 * 60 * 24).toISOString(),
+  })
+  @IsOptional()
+  @IsDateString({ strict: true })
+  startedAt?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'endedAt date (must be a valid ISO 8601 date string)',
+    default: new Date(new Date().getTime() + 1000 * 60 * 60 * 24).toISOString(),
+  })
+  @IsOptional()
+  @IsDateString({ strict: true })
+  endedAt?: string;
 
   @IsOptional()
   @Type(() => Number)

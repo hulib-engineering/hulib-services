@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, MoreThan } from 'typeorm';
+import { Repository, FindOptionsWhere, MoreThan, Between } from 'typeorm';
 import { ReadingSessionEntity } from '../entities/reading-session.entity';
 import { ReadingSession } from '../../../../domain/reading-session';
 import { ReadingSessionMapper } from '../mappers/reading-sessions.mapper';
@@ -52,6 +52,15 @@ export class ReadingSessionRepository {
     if (filterOptions?.upcoming) {
       where.startedAt = MoreThan(new Date());
     }
+
+    where.startedAt = Between(
+      filterOptions?.startedAt
+        ? new Date(filterOptions.startedAt)
+        : new Date(0),
+      filterOptions?.endedAt
+        ? new Date(filterOptions.endedAt)
+        : new Date(new Date().getTime() + 1000 * 60 * 60 * 24),
+    );
 
     const entities = await this.repository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
