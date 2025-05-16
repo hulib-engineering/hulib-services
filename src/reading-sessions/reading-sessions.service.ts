@@ -1,4 +1,9 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { ReadingSession, ReadingSessionStatus } from './domain/reading-session';
 import { Feedback } from './domain/feedback';
 import { Message } from './domain/message';
@@ -10,7 +15,7 @@ import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-r
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
-import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { LessThan, MoreThan } from 'typeorm';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -77,22 +82,22 @@ export class ReadingSessionsService {
 
   private async validateSessionOverlap(session: ReadingSession): Promise<void> {
     const existingSessions = await this.readingSessionRepository.find({
-      where: [
-        {
-          humanBookId: session.humanBookId,
-          startTime: LessThanOrEqual(session.startTime),
-          endTime: MoreThanOrEqual(session.endTime),
-        },
-        {
-          humanBookId: session.humanBookId,
-          startTime: LessThanOrEqual(session.startTime),
-          endTime: MoreThanOrEqual(session.endTime),
-        },
-      ],
+      where: {
+        humanBookId: session.humanBookId,
+        startTime: LessThan(session.endTime),
+        endTime: MoreThan(session.startTime),
+      },
     });
 
     if (existingSessions.length > 0) {
-      throw new Error('Session overlap');
+      throw new UnprocessableEntityException({
+        status: 422,
+        message:
+          'Khung giờ bạn chọn đã bị trùng với một phiên đọc khác. Vui lòng chọn thời gian khác.',
+        errors: {
+          overlap: 'Session time overlaps with another session.',
+        },
+      });
     }
   }
 
