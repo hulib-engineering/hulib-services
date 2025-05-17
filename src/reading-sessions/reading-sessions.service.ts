@@ -15,7 +15,7 @@ import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-r
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
-import { LessThan, MoreThan } from 'typeorm';
+import { Between } from 'typeorm';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -81,21 +81,30 @@ export class ReadingSessionsService {
   }
 
   private async validateSessionOverlap(session: ReadingSession): Promise<void> {
+    // Lấy các session cùng ngày với session mới
     const existingSessions = await this.readingSessionRepository.find({
       where: {
         humanBookId: session.humanBookId,
-        startTime: LessThan(session.endTime),
-        endTime: MoreThan(session.startTime),
+        startedAt: Between(session.startedAt, session.endedAt),
       },
     });
 
-    if (existingSessions.length > 0) {
+    // Kiểm tra overlap về giờ trong ngày
+    const overlap = existingSessions.some((existing) => {
+      return (
+        existing.startTime < session.endTime &&
+        existing.endTime > session.startTime
+      );
+    });
+
+    if (overlap) {
       throw new UnprocessableEntityException({
         status: 422,
         message:
-          'Khung giờ bạn chọn đã bị trùng với một phiên đọc khác. Vui lòng chọn thời gian khác.',
+          'Khung giờ bạn chọn đã bị trùng với một phiên đọc khác trong ngày này. Vui lòng chọn thời gian khác.',
         errors: {
-          overlap: 'Session time overlaps with another session.',
+          sessionOverlap:
+            'Session time overlaps with another session on the same day.',
         },
       });
     }
