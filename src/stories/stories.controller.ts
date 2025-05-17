@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -110,15 +111,15 @@ export class StoriesController {
     return this.storiesService.update(id, updateStoriesDto);
   }
 
-  // @Delete(':id')
-  // @ApiParam({
-  //   name: 'id',
-  //   type: String,
-  //   required: true,
-  // })
-  // remove(@Param('id') id: Story['id']) {
-  //   return this.storiesService.remove(id);
-  // }
+  @Delete(':id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  remove(@Param('id') id: Story['id']) {
+    return this.storiesService.remove(id);
+  }
 
   // @Get(':id/details')
   // @ApiParam({
