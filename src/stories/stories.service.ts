@@ -13,6 +13,7 @@ import { FilterStoryDto, SortStoryDto } from './dto/find-all-stories.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { TopicsRepository } from '../topics/infrastructure/persistence/topics.repository';
+import { PublishStatus } from './status.enum';
 @Injectable()
 export class StoriesService {
   constructor(
@@ -99,7 +100,9 @@ export class StoriesService {
   }
 
   remove(id: Story['id']) {
-    return this.storiesRepository.remove(id);
+    return this.storiesRepository.update(id, {
+      publishStatus: PublishStatus[PublishStatus.deleted] as string,
+    });
   }
 
   async findDetailedStory(id: number): Promise<Story> {

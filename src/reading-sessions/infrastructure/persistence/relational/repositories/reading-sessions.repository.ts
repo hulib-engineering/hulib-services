@@ -28,12 +28,31 @@ export class ReadingSessionRepository {
     return entity ? ReadingSessionMapper.toDomain(entity) : null;
   }
 
+  async find(options: {
+    where:
+      | FindOptionsWhere<ReadingSessionEntity>
+      | FindOptionsWhere<ReadingSessionEntity>[];
+    relations?: string[];
+    order?: { [P in keyof ReadingSessionEntity]?: 'ASC' | 'DESC' };
+    skip?: number;
+    take?: number;
+  }): Promise<ReadingSession[]> {
+    const entities = await this.repository.find({
+      where: options.where,
+      relations: options.relations || [],
+      order: options.order || {},
+      skip: options.skip,
+      take: options.take,
+    });
+    return entities.map((entity) => ReadingSessionMapper.toDomain(entity));
+  }
+
   async findManyWithPagination({
     filterOptions,
     paginationOptions,
   }: {
     filterOptions?: FindAllReadingSessionsQueryDto;
-    paginationOptions: IPaginationOptions;
+    paginationOptions?: IPaginationOptions;
   }): Promise<ReadingSession[]> {
     const where: FindOptionsWhere<ReadingSessionEntity> = {};
 
@@ -62,12 +81,17 @@ export class ReadingSessionRepository {
         : new Date(new Date().getTime() + 1000 * 60 * 60 * 24),
     );
 
-    const entities = await this.repository.find({
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-      where: where,
+    const findOptions: any = {
+      where,
       relations: ['humanBook', 'reader', 'story'],
-    });
+    };
+
+    if (paginationOptions) {
+      findOptions.skip = (paginationOptions.page - 1) * paginationOptions.limit;
+      findOptions.take = paginationOptions.limit;
+    }
+
+    const entities = await this.repository.find(findOptions);
 
     return entities.map((entity) => ReadingSessionMapper.toDomain(entity));
   }

@@ -1,4 +1,9 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { ReadingSession, ReadingSessionStatus } from './domain/reading-session';
 import { Feedback } from './domain/feedback';
 import { Message } from './domain/message';
@@ -10,6 +15,7 @@ import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-r
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
+import { Between } from 'typeorm';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -69,18 +75,59 @@ export class ReadingSessionsService {
       throw new Error('Started at must be before ended at');
     }
 
+    await this.validateSessionOverlap(session);
+
     return this.readingSessionRepository.create(session);
+  }
+
+  private async validateSessionOverlap(session: ReadingSession): Promise<void> {
+    // Lấy các session cùng ngày với session mới
+    const existingSessions = await this.readingSessionRepository.find({
+      where: {
+        humanBookId: session.humanBookId,
+        startedAt: Between(session.startedAt, session.endedAt),
+      },
+    });
+
+    // Kiểm tra overlap về giờ trong ngày
+    const overlap = existingSessions.some((existing) => {
+      return (
+        existing.startTime < session.endTime &&
+        existing.endTime > session.startTime
+      );
+    });
+
+    if (overlap) {
+      throw new UnprocessableEntityException({
+        status: 422,
+        message:
+          'Khung giờ bạn chọn đã bị trùng với một phiên đọc khác trong ngày này. Vui lòng chọn thời gian khác.',
+        errors: {
+          sessionOverlap:
+            'Session time overlaps with another session on the same day.',
+        },
+      });
+    }
   }
 
   async findAllSessions(
     queryDto: FindAllReadingSessionsQueryDto,
   ): Promise<ReadingSession[]> {
-    return await this.readingSessionRepository.findManyWithPagination({
-      filterOptions: queryDto,
-      paginationOptions: {
+    let paginationOptions: { page: number; limit: number } | undefined =
+      undefined;
+    if (
+      typeof queryDto.limit === 'number' &&
+      typeof queryDto.offset === 'number'
+    ) {
+      paginationOptions = {
         page: Math.floor(queryDto.offset / queryDto.limit) + 1,
         limit: queryDto.limit,
-      },
+      };
+    }
+
+    return await this.readingSessionRepository.findManyWithPagination({
+      filterOptions: queryDto,
+      paginationOptions,
     });
   }
 
