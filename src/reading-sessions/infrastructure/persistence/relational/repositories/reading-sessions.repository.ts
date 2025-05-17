@@ -33,7 +33,7 @@ export class ReadingSessionRepository {
     paginationOptions,
   }: {
     filterOptions?: FindAllReadingSessionsQueryDto;
-    paginationOptions: IPaginationOptions;
+    paginationOptions?: IPaginationOptions;
   }): Promise<ReadingSession[]> {
     const where: FindOptionsWhere<ReadingSessionEntity> = {};
 
@@ -53,12 +53,17 @@ export class ReadingSessionRepository {
       where.startedAt = MoreThan(new Date());
     }
 
-    const entities = await this.repository.find({
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-      where: where,
+    const findOptions: any = {
+      where,
       relations: ['humanBook', 'reader', 'story'],
-    });
+    };
+
+    if (paginationOptions) {
+      findOptions.skip = (paginationOptions.page - 1) * paginationOptions.limit;
+      findOptions.take = paginationOptions.limit;
+    }
+
+    const entities = await this.repository.find(findOptions);
 
     return entities.map((entity) => ReadingSessionMapper.toDomain(entity));
   }
