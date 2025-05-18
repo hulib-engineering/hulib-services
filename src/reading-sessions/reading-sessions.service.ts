@@ -120,17 +120,14 @@ export class ReadingSessionsService {
   ): Promise<ReadingSession[]> {
     let paginationOptions: { page: number; limit: number } | undefined =
       undefined;
-    if (
-      typeof queryDto.limit === 'number' &&
-      typeof queryDto.offset === 'number'
-    ) {
+    if (queryDto.limit && queryDto.offset) {
       paginationOptions = {
         page: Math.floor(queryDto.offset / queryDto.limit) + 1,
         limit: queryDto.limit,
       };
     }
 
-    return await this.readingSessionRepository.findManyWithPagination({
+    return this.readingSessionRepository.findManyWithPagination({
       filterOptions: queryDto,
       paginationOptions,
     });

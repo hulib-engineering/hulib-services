@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, MoreThan, Between } from 'typeorm';
 import { ReadingSessionEntity } from '../entities/reading-session.entity';
-import { ReadingSession } from '../../../../domain/reading-session';
+import { ReadingSession } from '@reading-sessions/domain';
 import { ReadingSessionMapper } from '../mappers/reading-sessions.mapper';
-import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+import { IPaginationOptions } from '@utils/types/pagination-options';
 import { FindAllReadingSessionsQueryDto } from '../../../../dto/reading-session/find-all-reading-sessions-query.dto';
 
 @Injectable()
@@ -82,7 +82,10 @@ export class ReadingSessionRepository {
     );
 
     const findOptions: any = {
-      where,
+      where: [
+        { ...where, humanBookId: filterOptions?.userId },
+        { ...where, readerId: filterOptions?.userId },
+      ],
       relations: ['humanBook', 'reader', 'story'],
     };
 
