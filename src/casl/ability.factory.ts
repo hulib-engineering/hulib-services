@@ -32,6 +32,28 @@ export class CaslAbilityFactory {
 
     const roleId = user.role?.id;
 
+    if (roleId === RoleEnum.admin) {
+      can(Action.Manage, 'all');
+    } else if (roleId === RoleEnum.humanBook) {
+      can(Action.Read, 'User');
+      can(Action.Update, 'User');
+      can(Action.Create, 'ReadingSession');
+      can(
+        [Action.Read, Action.Update],
+        'ReadingSession',
+        ({ readerId, humanBookId }) =>
+          readerId === user.id || humanBookId === user.id,
+      );
+    } else if (roleId === RoleEnum.reader) {
+      can(Action.Read, 'User');
+      can(Action.Create, 'ReadingSession');
+      can(
+        [Action.Read, Action.Update],
+        'ReadingSession',
+        ({ readerId }: { readerId: string | number }) => readerId === user.id,
+      );
+    }
+
     const permissions = {
       [RoleEnum.admin]: () => can(Action.Manage, 'all'),
       [RoleEnum.humanBook]: () => {

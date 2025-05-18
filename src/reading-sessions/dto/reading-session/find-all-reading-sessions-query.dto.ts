@@ -24,6 +24,11 @@ export class FindAllReadingSessionsQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
+  userId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
   storyId?: number;
 
   @IsOptional()
