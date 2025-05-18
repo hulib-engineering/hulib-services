@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, MoreThan } from 'typeorm';
+import { Repository, FindOptionsWhere, MoreThan, Between } from 'typeorm';
 import { ReadingSessionEntity } from '../entities/reading-session.entity';
-import { ReadingSession } from '../../../../domain/reading-session';
+import { ReadingSession } from '@reading-sessions/domain';
 import { ReadingSessionMapper } from '../mappers/reading-sessions.mapper';
-import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+import { IPaginationOptions } from '@utils/types/pagination-options';
 import { FindAllReadingSessionsQueryDto } from '../../../../dto/reading-session/find-all-reading-sessions-query.dto';
 
 @Injectable()
@@ -28,12 +28,31 @@ export class ReadingSessionRepository {
     return entity ? ReadingSessionMapper.toDomain(entity) : null;
   }
 
+  async find(options: {
+    where:
+      | FindOptionsWhere<ReadingSessionEntity>
+      | FindOptionsWhere<ReadingSessionEntity>[];
+    relations?: string[];
+    order?: { [P in keyof ReadingSessionEntity]?: 'ASC' | 'DESC' };
+    skip?: number;
+    take?: number;
+  }): Promise<ReadingSession[]> {
+    const entities = await this.repository.find({
+      where: options.where,
+      relations: options.relations || [],
+      order: options.order || {},
+      skip: options.skip,
+      take: options.take,
+    });
+    return entities.map((entity) => ReadingSessionMapper.toDomain(entity));
+  }
+
   async findManyWithPagination({
     filterOptions,
     paginationOptions,
   }: {
     filterOptions?: FindAllReadingSessionsQueryDto;
-    paginationOptions: IPaginationOptions;
+    paginationOptions?: IPaginationOptions;
   }): Promise<ReadingSession[]> {
     const where: FindOptionsWhere<ReadingSessionEntity> = {};
 
@@ -53,12 +72,29 @@ export class ReadingSessionRepository {
       where.startedAt = MoreThan(new Date());
     }
 
-    const entities = await this.repository.find({
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-      where: where,
+    where.startedAt = Between(
+      filterOptions?.startedAt
+        ? new Date(filterOptions.startedAt)
+        : new Date(0),
+      filterOptions?.endedAt
+        ? new Date(filterOptions.endedAt)
+        : new Date(new Date().getTime() + 1000 * 60 * 60 * 24),
+    );
+
+    const findOptions: any = {
+      where: [
+        { ...where, humanBookId: filterOptions?.userId },
+        { ...where, readerId: filterOptions?.userId },
+      ],
       relations: ['humanBook', 'reader', 'story'],
-    });
+    };
+
+    if (paginationOptions) {
+      findOptions.skip = (paginationOptions.page - 1) * paginationOptions.limit;
+      findOptions.take = paginationOptions.limit;
+    }
+
+    const entities = await this.repository.find(findOptions);
 
     return entities.map((entity) => ReadingSessionMapper.toDomain(entity));
   }

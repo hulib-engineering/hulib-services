@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -26,6 +27,7 @@ import { FindAllStoriesDto } from './dto/find-all-stories.dto';
 import { DEFAULT_LIMIT } from '../utils/dto/pagination-input.dto';
 import { DEFAULT_PAGE } from '../utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
+import { PublishStatus } from './status.enum';
 
 @ApiTags('Stories')
 // @ApiBearerAuth()
@@ -69,6 +71,7 @@ export class StoriesController {
         filterOptions: {
           humanBookId: query.humanBookId,
           topicIds: query.topicIds,
+          publishStatus: query.publishStatus || PublishStatus.published,
         },
         sortOptions: sortOptions ? [sortOptions] : [],
       }),
@@ -108,15 +111,15 @@ export class StoriesController {
     return this.storiesService.update(id, updateStoriesDto);
   }
 
-  // @Delete(':id')
-  // @ApiParam({
-  //   name: 'id',
-  //   type: String,
-  //   required: true,
-  // })
-  // remove(@Param('id') id: Story['id']) {
-  //   return this.storiesService.remove(id);
-  // }
+  @Delete(':id')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  remove(@Param('id') id: Story['id']) {
+    return this.storiesService.remove(id);
+  }
 
   // @Get(':id/details')
   // @ApiParam({

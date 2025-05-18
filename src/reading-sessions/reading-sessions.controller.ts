@@ -5,9 +5,12 @@ import {
   Delete,
   Param,
   Body,
+  Request,
   Query,
   ParseIntPipe,
   Patch,
+  UseGuards,
+  SerializeOptions,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -26,6 +29,13 @@ import {
 } from './dto/reading-session/reading-session-response.dto';
 import { ReadingSession } from '@reading-sessions/domain';
 import { omit } from 'lodash';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '@roles/roles.guard';
+import { RoleEnum } from '@roles/roles.enum';
+import { Roles } from '@roles/roles.decorator';
+import { CheckAbilities } from '@casl/decorators/casl.decorator';
+import { Action } from '@casl/ability.factory';
+import { CaslGuard } from '@casl/guards/casl.guard';
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()
@@ -48,14 +58,27 @@ export class ReadingSessionsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Find all reading sessions' })
+  @Roles(RoleEnum.reader, RoleEnum.humanBook, RoleEnum.admin)
+  @CheckAbilities((ability) => ability.can(Action.Read, 'ReadingSession'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard, CaslGuard)
+  @ApiOperation({ summary: 'Query many reading sessions' })
   @ApiResponse({ type: [ReadingSessionResponseDto] })
   async findAllSessions(
     @Query() queryDto: FindAllReadingSessionsQueryDto,
+    @Request() request,
   ): Promise<ReadingSessionResponseDto[]> {
-    return this.readingSessionsService.findAllSessions(queryDto);
+    return this.readingSessionsService.findAllSessions({
+      ...queryDto,
+      userId: request.user.id,
+    });
   }
 
+  @SerializeOptions({
+    excludePrefixes: ['__'],
+  })
+  @Get('me')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Find all reading sessions of current user' })
   @Get(':id')
   @ApiOperation({ summary: 'Find one reading session' })
   @ApiResponse({ type: ReadingSessionResponseDto })
@@ -67,12 +90,6 @@ export class ReadingSessionsController {
       'humanBookId',
       'readerId',
       'storyId',
-      'humanBook.gender.__entity',
-      'humanBook.role.__entity',
-      'humanBook.status.__entity',
-      'reader.gender.__entity',
-      'reader.role.__entity',
-      'reader.status.__entity',
     ]) as ReadingSessionResponseDtoWithRelations;
   }
 

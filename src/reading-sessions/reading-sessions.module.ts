@@ -27,6 +27,7 @@ import { FeedbackMapper } from './infrastructure/persistence/relational/mappers/
 import { MessageMapper } from './infrastructure/persistence/relational/mappers/messages.mapper';
 import { UsersModule } from '@users/users.module';
 import { StoriesModule } from '@stories/stories.module';
+import { WebRtcModule } from '../web-rtc/web-rtc.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { StoriesModule } from '@stories/stories.module';
     CaslModule,
     UsersModule,
     StoriesModule,
+    WebRtcModule,
   ],
   controllers: [ReadingSessionsController],
   providers: [

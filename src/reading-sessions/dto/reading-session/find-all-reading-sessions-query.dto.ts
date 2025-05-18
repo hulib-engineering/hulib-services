@@ -1,7 +1,15 @@
-import { IsNumber, IsOptional, IsEnum, Min, IsBoolean } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
-import { ReadingSessionStatus } from '../../infrastructure/persistence/relational/entities/reading-session.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  Min,
+  IsBoolean,
+  IsDateString,
+} from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+
+import { ReadingSessionStatus } from '@reading-sessions/infrastructure/persistence/relational/entities';
 
 export class FindAllReadingSessionsQueryDto {
   @IsOptional()
@@ -17,8 +25,18 @@ export class FindAllReadingSessionsQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
+  userId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
   storyId?: number;
 
+  @ApiProperty({
+    required: false,
+    description: 'Filter reading sessions by their statuses',
+    default: ReadingSessionStatus.APPROVED,
+  })
   @IsOptional()
   @IsEnum(ReadingSessionStatus)
   sessionStatus?: ReadingSessionStatus;
@@ -33,15 +51,33 @@ export class FindAllReadingSessionsQueryDto {
   @IsBoolean()
   upcoming?: boolean;
 
+  @ApiProperty({
+    required: false,
+    description: 'startedAt date (must be a valid ISO 8601 date string)',
+    default: new Date(new Date().getTime() - 1000 * 60 * 60 * 24).toISOString(),
+  })
+  @IsOptional()
+  @IsDateString({ strict: true })
+  startedAt?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'endedAt date (must be a valid ISO 8601 date string)',
+    default: new Date(new Date().getTime() + 1000 * 60 * 60 * 24).toISOString(),
+  })
+  @IsOptional()
+  @IsDateString({ strict: true })
+  endedAt?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  limit: number = 10;
+  limit: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  offset: number = 0;
+  offset: number;
 }
