@@ -16,6 +16,9 @@ import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-se
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
 import { Between } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { AllConfigType } from '@config/config.type';
+import { WebRtcService } from '../web-rtc/web-rtc.service';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -25,6 +28,8 @@ export class ReadingSessionsService {
     private readonly messageRepository: MessageRepository,
     private readonly usersService: UsersService,
     private readonly storiesService: StoriesService,
+    private readonly webRtcService: WebRtcService,
+    private readonly configService: ConfigService<AllConfigType>,
   ) {}
 
   async createSession(dto: CreateReadingSessionDto): Promise<ReadingSession> {
@@ -144,8 +149,12 @@ export class ReadingSessionsService {
     dto: UpdateReadingSessionDto,
   ): Promise<ReadingSession> {
     const session = await this.findOneSession(id);
+    if (dto.sessionStatus === 'approved') {
+      const registeredMeeting = await this.webRtcService.generateToken(session);
+      session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=${registeredMeeting.channelName}&token=${registeredMeeting.token}`;
+    }
     Object.assign(session, dto);
-    return await this.readingSessionRepository.update(id, session);
+    return this.readingSessionRepository.update(id, session);
   }
 
   async deleteSession(id: number): Promise<void> {
