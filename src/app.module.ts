@@ -10,6 +10,7 @@ import mailConfig from './mail/config/mail.config';
 import fileConfig from './files/config/file.config';
 import facebookConfig from './auth-facebook/config/facebook.config';
 import googleConfig from './auth-google/config/google.config';
+import webRtcConfig from './web-rtc/config/web-rtc.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -63,6 +64,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
         fileConfig,
         facebookConfig,
         googleConfig,
+        webRtcConfig,
       ],
       envFilePath: ['.env'],
     }),

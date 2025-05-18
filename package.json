@@ -60,6 +60,7 @@
     "@sentry/profiling-node": "^9.1.0",
     "@types/multer-s3": "3.0.3",
     "@vonage/server-sdk": "^3.19.2",
+    "agora-token": "^2.0.4",
     "bcryptjs": "2.4.3",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",

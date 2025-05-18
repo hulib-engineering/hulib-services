@@ -1,4 +1,4 @@
-import { IsInt, IsString } from 'class-validator';
+import { IsInt } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
