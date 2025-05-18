@@ -8,6 +8,8 @@ import {
   Query,
   ParseIntPipe,
   Patch,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -26,6 +28,7 @@ import {
 } from './dto/reading-session/reading-session-response.dto';
 import { ReadingSession } from '@reading-sessions/domain';
 import { omit } from 'lodash';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()
@@ -48,12 +51,18 @@ export class ReadingSessionsController {
   }
 
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Find all reading sessions' })
   @ApiResponse({ type: [ReadingSessionResponseDto] })
   async findAllSessions(
     @Query() queryDto: FindAllReadingSessionsQueryDto,
+    @Request() request: any,
   ): Promise<ReadingSessionResponseDto[]> {
-    return this.readingSessionsService.findAllSessions(queryDto);
+    return this.readingSessionsService.findAllSessions(
+      queryDto,
+      request.user.id,
+    );
   }
 
   @Get(':id')

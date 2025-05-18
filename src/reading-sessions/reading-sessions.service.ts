@@ -16,6 +16,7 @@ import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-se
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
 import { Between } from 'typeorm';
+import { User } from '../users/domain/user';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -112,7 +113,12 @@ export class ReadingSessionsService {
 
   async findAllSessions(
     queryDto: FindAllReadingSessionsQueryDto,
+    userId: User['id'],
   ): Promise<ReadingSession[]> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
     let paginationOptions: { page: number; limit: number } | undefined =
       undefined;
     if (
@@ -125,10 +131,13 @@ export class ReadingSessionsService {
       };
     }
 
-    return await this.readingSessionRepository.findManyWithPagination({
-      filterOptions: queryDto,
-      paginationOptions,
-    });
+    return await this.readingSessionRepository.findManyWithPagination(
+      {
+        filterOptions: queryDto,
+        paginationOptions,
+      },
+      user,
+    );
   }
 
   async findOneSession(id: number): Promise<ReadingSession> {
