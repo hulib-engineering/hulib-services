@@ -12,9 +12,9 @@ import {
   ReadingSessionEntity,
   ReadingSessionStatus,
 } from '../entities/reading-session.entity';
-import { ReadingSession } from '../../../../domain/reading-session';
+import { ReadingSession } from '@reading-sessions/domain';
 import { ReadingSessionMapper } from '../mappers/reading-sessions.mapper';
-import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
+import { IPaginationOptions } from '@utils/types/pagination-options';
 import { FindAllReadingSessionsQueryDto } from '../../../../dto/reading-session/find-all-reading-sessions-query.dto';
 import { User } from '../../../../../users/domain/user';
 import { RoleEnum } from '../../../../../roles/roles.enum';
@@ -104,7 +104,10 @@ export class ReadingSessionRepository {
       where.startedAt = LessThanOrEqual(new Date(filterOptions.endedAt));
     }
     const findOptions: any = {
-      where,
+      where: [
+        { ...where, humanBookId: filterOptions?.userId },
+        { ...where, readerId: filterOptions?.userId },
+      ],
       relations: ['humanBook', 'reader', 'story'],
     };
     if (filterOptions?.upcoming) {
