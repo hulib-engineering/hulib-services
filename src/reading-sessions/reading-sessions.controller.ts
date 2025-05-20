@@ -67,10 +67,10 @@ export class ReadingSessionsController {
     @Query() queryDto: FindAllReadingSessionsQueryDto,
     @Request() request,
   ): Promise<ReadingSessionResponseDto[]> {
-    return this.readingSessionsService.findAllSessions({
-      ...queryDto,
-      userId: request.user.id,
-    });
+    return this.readingSessionsService.findAllSessions(
+      queryDto,
+      request.user.id,
+    );
   }
 
   @SerializeOptions({
