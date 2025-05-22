@@ -214,8 +214,8 @@ model readingSession {
 
   note          String?              @db.VarChar(4000) // Mentee requests for session (if yes)
   review        String?              @db.VarChar(4000) // Mentor review for mentee
-  sessionUrl    String               @db.VarChar(255) // Meeting URL
-  recordingUrl  String?              @db.VarChar(255) // Meeting recording URL
+  sessionUrl    String               @db.VarChar(500) // Meeting URL
+  recordingUrl  String?              @db.VarChar(500) // Meeting recording URL
   sessionStatus ReadingSessionStatus @default(pending)
 
   startedAt DateTime @default(now()) @db.Timestamp(6)
