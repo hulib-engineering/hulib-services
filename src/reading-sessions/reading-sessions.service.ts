@@ -15,7 +15,7 @@ import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-r
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
-import { Between } from 'typeorm';
+import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@config/config.type';
 import { WebRtcService } from '../web-rtc/web-rtc.service';
@@ -90,7 +90,8 @@ export class ReadingSessionsService {
     const existingSessions = await this.readingSessionRepository.find({
       where: {
         humanBookId: session.humanBookId,
-        startedAt: Between(session.startedAt, session.endedAt),
+        startedAt: LessThanOrEqual(session.endedAt),
+        endedAt: MoreThanOrEqual(session.startedAt),
       },
     });
 
