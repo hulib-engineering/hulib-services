@@ -97,8 +97,8 @@ export class ReadingSessionsService {
     // Kiểm tra overlap về giờ trong ngày
     const overlap = existingSessions.some((existing) => {
       return (
-        existing.startTime < session.endTime &&
-        existing.endTime > session.startTime
+        existing.startTime <= session.endTime &&
+        existing.endTime >= session.startTime
       );
     });
 
