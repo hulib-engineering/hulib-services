@@ -14,12 +14,12 @@ import { FeedbackRepository } from './infrastructure/persistence/relational/repo
 import { MessageRepository } from './infrastructure/persistence/relational/repositories/messages.repository';
 
 // Entities
-import { ReadingSessionEntity } from './infrastructure/persistence/relational/entities/reading-session.entity';
+import { ReadingSessionEntity } from '@reading-sessions/infrastructure/persistence/relational/entities';
 import { FeedbackEntity } from './infrastructure/persistence/relational/entities/feedback.entity';
 import { MessageEntity } from './infrastructure/persistence/relational/entities/message.entity';
-import { UserEntity } from '../users/infrastructure/persistence/relational/entities/user.entity';
-import { StoryEntity } from '../stories/infrastructure/persistence/relational/entities/story.entity';
-import { SchedulesEntity } from '../schedules/infrastructure/persistence/relational/entities/schedules.entity';
+import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
+import { SchedulesEntity } from '@schedules/infrastructure/persistence/relational/entities/schedules.entity';
 
 // Mappers
 import { ReadingSessionMapper } from './infrastructure/persistence/relational/mappers/reading-sessions.mapper';
@@ -28,6 +28,7 @@ import { MessageMapper } from './infrastructure/persistence/relational/mappers/m
 import { UsersModule } from '@users/users.module';
 import { StoriesModule } from '@stories/stories.module';
 import { WebRtcModule } from '../web-rtc/web-rtc.module';
+import { StoryReviewsModule } from '@story-reviews/story-reviews.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { WebRtcModule } from '../web-rtc/web-rtc.module';
     CaslModule,
     UsersModule,
     StoriesModule,
+    StoryReviewsModule,
     WebRtcModule,
   ],
   controllers: [ReadingSessionsController],

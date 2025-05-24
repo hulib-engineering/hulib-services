@@ -15,10 +15,11 @@ import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-r
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
-import { Between } from 'typeorm';
+import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@config/config.type';
 import { WebRtcService } from '../web-rtc/web-rtc.service';
+import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -28,6 +29,7 @@ export class ReadingSessionsService {
     private readonly messageRepository: MessageRepository,
     private readonly usersService: UsersService,
     private readonly storiesService: StoriesService,
+    private readonly storyReviewsService: StoryReviewsService,
     private readonly webRtcService: WebRtcService,
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
@@ -90,15 +92,16 @@ export class ReadingSessionsService {
     const existingSessions = await this.readingSessionRepository.find({
       where: {
         humanBookId: session.humanBookId,
-        startedAt: Between(session.startedAt, session.endedAt),
+        startedAt: LessThanOrEqual(session.endedAt),
+        endedAt: MoreThanOrEqual(session.startedAt),
       },
     });
 
     // Kiểm tra overlap về giờ trong ngày
     const overlap = existingSessions.some((existing) => {
       return (
-        existing.startTime < session.endTime &&
-        existing.endTime > session.startTime
+        existing.startTime <= session.endTime &&
+        existing.endTime >= session.startTime
       );
     });
 
@@ -147,8 +150,26 @@ export class ReadingSessionsService {
   ): Promise<ReadingSession> {
     const session = await this.findOneSession(id);
     if (dto.sessionStatus === 'approved') {
-      const registeredMeeting = await this.webRtcService.generateToken(session);
+      const registeredMeeting = this.webRtcService.generateToken(session);
       session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=${registeredMeeting.channelName}&token=${registeredMeeting.token}`;
+    }
+    if (dto.sessionStatus === 'finished') {
+      if (!!dto.sessionFeedback) {
+        await this.storyReviewsService.create({
+          ...dto.sessionFeedback,
+          title: '',
+          comment: dto.sessionFeedback.content ?? '',
+          userId: session.readerId,
+          storyId: session.storyId,
+        });
+      }
+      if (!!dto.huberFeedback) {
+        await this.usersService.addFeedback(
+          session.readerId,
+          session.humanBookId,
+          dto.huberFeedback,
+        );
+      }
     }
     Object.assign(session, dto);
     return this.readingSessionRepository.update(id, session);

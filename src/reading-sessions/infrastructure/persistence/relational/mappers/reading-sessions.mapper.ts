@@ -20,8 +20,8 @@ export class ReadingSessionMapper {
     domain.review = entity.review;
     domain.recordingUrl = entity.recordingUrl;
     domain.sessionStatus = entity.sessionStatus;
-    entity.startTime = domain.startTime;
-    entity.endTime = domain.endTime;
+    domain.startTime = entity.startTime;
+    domain.endTime = entity.endTime;
     domain.startedAt = entity.startedAt;
     domain.endedAt = entity.endedAt;
     domain.createdAt = entity.createdAt;
