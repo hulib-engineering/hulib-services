@@ -155,18 +155,20 @@ export class ReadingSessionsService {
     }
     if (dto.sessionStatus === 'finished') {
       if (!!dto.sessionFeedback) {
-        await this.usersService.addFeedback(
-          session.readerId,
-          session.humanBookId,
-          dto.sessionFeedback,
-        );
-      }
-      if (!!dto.storyReview) {
         await this.storyReviewsService.create({
-          ...dto.storyReview,
+          ...dto.sessionFeedback,
+          title: '',
+          comment: dto.sessionFeedback.content ?? '',
           userId: session.readerId,
           storyId: session.storyId,
         });
+      }
+      if (!!dto.huberFeedback) {
+        await this.usersService.addFeedback(
+          session.readerId,
+          session.humanBookId,
+          dto.huberFeedback,
+        );
       }
     }
     Object.assign(session, dto);
