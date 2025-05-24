@@ -64,18 +64,23 @@
 -- );
 
 -- CreateTable
-CREATE TABLE "feedback" (
-    "id" SERIAL NOT NULL,
-    "feedbackById" INTEGER,
-    "feedbackToId" INTEGER,
-    "rating" DOUBLE PRECISION NOT NULL,
-    "content" VARCHAR(4000),
-    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deletedAt" TIMESTAMP(3),
+-- CREATE TABLE "feedback" (
+--     "id" SERIAL NOT NULL,
+--     "feedbackById" INTEGER,
+--     "feedbackToId" INTEGER,
+--     "rating" DOUBLE PRECISION NOT NULL,
+--     "content" VARCHAR(4000),
+--     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     "deletedAt" TIMESTAMP(3),
+--
+--     CONSTRAINT "feedback_pkey" PRIMARY KEY ("id")
+-- );
 
-    CONSTRAINT "feedback_pkey" PRIMARY KEY ("id")
-);
+-- AlterTable
+ALTER TABLE "feedback" ADD COLUMN "feedbackById" INTEGER;
+ALTER TABLE "feedback" ADD COLUMN "feedbackToId" INTEGER;
+ALTER TABLE "feedback" DROP COLUMN "readingSessionId";
 
 -- CreateTable
 -- CREATE TABLE "message" (
