@@ -127,6 +127,8 @@ model user {
   messagesAsReader    message[] @relation("ReaderRelation")
 
   readingSession readingSession[] @relation(name: "ReaderRelation")
+  feedbackBys    feedback[]       @relation(name: "UserFeedbackBy")
+  feedbackTos    feedback[]       @relation(name: "UserFeedbackTo")
 }
 
 model story {
@@ -214,7 +216,7 @@ model readingSession {
 
   note          String?              @db.VarChar(4000) // Mentee requests for session (if yes)
   review        String?              @db.VarChar(4000) // Mentor review for mentee
-  sessionUrl    String               @db.VarChar(500) // Meeting URL
+  sessionUrl    String               @db.VarChar(1000) // Meeting URL
   recordingUrl  String?              @db.VarChar(500) // Meeting recording URL
   sessionStatus ReadingSessionStatus @default(pending)
 
@@ -227,21 +229,27 @@ model readingSession {
   updatedAt DateTime  @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
 
-  feedbacks feedback[] @relation("ReadingSessionFeedback")
-  messages  message[]  @relation("ReadingSessionMessage")
+  // feedbacks feedback[] @relation("ReadingSessionFeedback")
+  messages message[] @relation("ReadingSessionMessage")
+  // feedback  feedback[]
 }
 
 model feedback {
   id Int @id @default(autoincrement())
 
-  readingSessionId Int
-  readingSession   readingSession @relation(name: "ReadingSessionFeedback", fields: [readingSessionId], references: [id], onDelete: Cascade)
+  feedbackById Int?
+  feedbackBy   user? @relation(name: "UserFeedbackBy", fields: [feedbackById], references: [id], onDelete: Cascade)
+
+  feedbackToId Int?
+  feedbackTo   user? @relation(name: "UserFeedbackTo", fields: [feedbackToId], references: [id], onDelete: Cascade)
 
   rating    Float
   content   String?   @db.VarChar(4000)
   createdAt DateTime  @default(now()) @db.Timestamp(6)
   updatedAt DateTime  @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
+  // readingSession   readingSession? @relation(fields: [readingSessionId], references: [id])
+  // readingSessionId Int?
 }
 
 model message {
