@@ -7,61 +7,61 @@
 
 */
 -- CreateEnum
-CREATE TYPE "ReadingSessionStatus" AS ENUM ('finished', 'canceled', 'pending', 'rejected', 'approved', 'unInitialized');
+-- CREATE TYPE "ReadingSessionStatus" AS ENUM ('finished', 'canceled', 'pending', 'rejected', 'approved', 'unInitialized');
 
 -- DropForeignKey
-ALTER TABLE "schedules" DROP CONSTRAINT "schedules_humanBookId_fkey";
+-- ALTER TABLE "schedules" DROP CONSTRAINT "schedules_humanBookId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "schedules" DROP CONSTRAINT "schedules_userLiberId_fkey";
+-- ALTER TABLE "schedules" DROP CONSTRAINT "schedules_userLiberId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "userTimeSlot" DROP CONSTRAINT "userTimeSlot_timeSlotId_fkey";
+-- ALTER TABLE "userTimeSlot" DROP CONSTRAINT "userTimeSlot_timeSlotId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "userTimeSlot" DROP CONSTRAINT "userTimeSlot_userId_fkey";
+-- ALTER TABLE "userTimeSlot" DROP CONSTRAINT "userTimeSlot_userId_fkey";
 
 -- DropIndex
-DROP INDEX "timeSlot_dayOfWeek_startTime_key";
+-- DROP INDEX "timeSlot_dayOfWeek_startTime_key";
 
 -- AlterTable
-ALTER TABLE "timeSlot" ADD COLUMN     "huberId" INTEGER NOT NULL;
+-- ALTER TABLE "timeSlot" ADD COLUMN     "huberId" INTEGER NOT NULL;
 
 -- DropTable
-DROP TABLE "schedules";
+-- DROP TABLE "schedules";
 
 -- DropTable
-DROP TABLE "userTimeSlot";
+-- DROP TABLE "userTimeSlot";
 
 -- CreateTable
-CREATE TABLE "liberTopicOfInterest" (
-    "userId" INTEGER NOT NULL,
-    "topicId" INTEGER NOT NULL,
-
-    CONSTRAINT "liberTopicOfInterest_pkey" PRIMARY KEY ("userId","topicId")
-);
+-- CREATE TABLE "liberTopicOfInterest" (
+--     "userId" INTEGER NOT NULL,
+--     "topicId" INTEGER NOT NULL,
+--
+--     CONSTRAINT "liberTopicOfInterest_pkey" PRIMARY KEY ("userId","topicId")
+-- );
 
 -- CreateTable
-CREATE TABLE "readingSession" (
-    "id" SERIAL NOT NULL,
-    "humanBookId" INTEGER NOT NULL,
-    "readerId" INTEGER NOT NULL,
-    "storyId" INTEGER NOT NULL,
-    "note" VARCHAR(4000),
-    "review" VARCHAR(4000),
-    "sessionUrl" VARCHAR(1000) NOT NULL,
-    "recordingUrl" VARCHAR(500),
-    "sessionStatus" "ReadingSessionStatus" NOT NULL DEFAULT 'pending',
-    "startedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "startTime" VARCHAR(40) NOT NULL,
-    "endedAt" TIMESTAMP(6) NOT NULL,
-    "endTime" VARCHAR(40) NOT NULL,
-    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deletedAt" TIMESTAMP(3),
-
-    CONSTRAINT "readingSession_pkey" PRIMARY KEY ("id")
-);
+-- CREATE TABLE "readingSession" (
+--     "id" SERIAL NOT NULL,
+--     "humanBookId" INTEGER NOT NULL,
+--     "readerId" INTEGER NOT NULL,
+--     "storyId" INTEGER NOT NULL,
+--     "note" VARCHAR(4000),
+--     "review" VARCHAR(4000),
+--     "sessionUrl" VARCHAR(1000) NOT NULL,
+--     "recordingUrl" VARCHAR(500),
+--     "sessionStatus" "ReadingSessionStatus" NOT NULL DEFAULT 'pending',
+--     "startedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     "startTime" VARCHAR(40) NOT NULL,
+--     "endedAt" TIMESTAMP(6) NOT NULL,
+--     "endTime" VARCHAR(40) NOT NULL,
+--     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     "deletedAt" TIMESTAMP(3),
+--
+--     CONSTRAINT "readingSession_pkey" PRIMARY KEY ("id")
+-- );
 
 -- CreateTable
 CREATE TABLE "feedback" (
@@ -78,36 +78,36 @@ CREATE TABLE "feedback" (
 );
 
 -- CreateTable
-CREATE TABLE "message" (
-    "id" SERIAL NOT NULL,
-    "readingSessionId" INTEGER NOT NULL,
-    "humanBookId" INTEGER NOT NULL,
-    "readerId" INTEGER NOT NULL,
-    "content" VARCHAR(4000) NOT NULL,
-    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deletedAt" TIMESTAMP(3),
-
-    CONSTRAINT "message_pkey" PRIMARY KEY ("id")
-);
-
--- AddForeignKey
-ALTER TABLE "liberTopicOfInterest" ADD CONSTRAINT "fk_topics" FOREIGN KEY ("topicId") REFERENCES "topics"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+-- CREATE TABLE "message" (
+--     "id" SERIAL NOT NULL,
+--     "readingSessionId" INTEGER NOT NULL,
+--     "humanBookId" INTEGER NOT NULL,
+--     "readerId" INTEGER NOT NULL,
+--     "content" VARCHAR(4000) NOT NULL,
+--     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     "deletedAt" TIMESTAMP(3),
+--
+--     CONSTRAINT "message_pkey" PRIMARY KEY ("id")
+-- );
 
 -- AddForeignKey
-ALTER TABLE "liberTopicOfInterest" ADD CONSTRAINT "fk_user" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+-- ALTER TABLE "liberTopicOfInterest" ADD CONSTRAINT "fk_topics" FOREIGN KEY ("topicId") REFERENCES "topics"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "timeSlot" ADD CONSTRAINT "timeSlot_huberId_fkey" FOREIGN KEY ("huberId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- ALTER TABLE "liberTopicOfInterest" ADD CONSTRAINT "fk_user" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "readingSession" ADD CONSTRAINT "readingSession_humanBookId_fkey" FOREIGN KEY ("humanBookId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- ALTER TABLE "timeSlot" ADD CONSTRAINT "timeSlot_huberId_fkey" FOREIGN KEY ("huberId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "readingSession" ADD CONSTRAINT "readingSession_readerId_fkey" FOREIGN KEY ("readerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- ALTER TABLE "readingSession" ADD CONSTRAINT "readingSession_humanBookId_fkey" FOREIGN KEY ("humanBookId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "readingSession" ADD CONSTRAINT "readingSession_storyId_fkey" FOREIGN KEY ("storyId") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- ALTER TABLE "readingSession" ADD CONSTRAINT "readingSession_readerId_fkey" FOREIGN KEY ("readerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+-- ALTER TABLE "readingSession" ADD CONSTRAINT "readingSession_storyId_fkey" FOREIGN KEY ("storyId") REFERENCES "story"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "feedback" ADD CONSTRAINT "feedback_feedbackById_fkey" FOREIGN KEY ("feedbackById") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -116,10 +116,10 @@ ALTER TABLE "feedback" ADD CONSTRAINT "feedback_feedbackById_fkey" FOREIGN KEY (
 ALTER TABLE "feedback" ADD CONSTRAINT "feedback_feedbackToId_fkey" FOREIGN KEY ("feedbackToId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "message" ADD CONSTRAINT "message_readingSessionId_fkey" FOREIGN KEY ("readingSessionId") REFERENCES "readingSession"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- ALTER TABLE "message" ADD CONSTRAINT "message_readingSessionId_fkey" FOREIGN KEY ("readingSessionId") REFERENCES "readingSession"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "message" ADD CONSTRAINT "message_humanBookId_fkey" FOREIGN KEY ("humanBookId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- ALTER TABLE "message" ADD CONSTRAINT "message_humanBookId_fkey" FOREIGN KEY ("humanBookId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "message" ADD CONSTRAINT "message_readerId_fkey" FOREIGN KEY ("readerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- ALTER TABLE "message" ADD CONSTRAINT "message_readerId_fkey" FOREIGN KEY ("readerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
