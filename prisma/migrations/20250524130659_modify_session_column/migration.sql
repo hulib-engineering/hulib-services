@@ -16,7 +16,7 @@ ALTER TABLE "feedback" DROP CONSTRAINT "feedback_readingSessionId_fkey";
 ALTER TABLE "userTimeSlot" DROP CONSTRAINT "userTimeSlot_userId_fkey";
 
 -- DropIndex
-DROP INDEX "timeSlot_dayOfWeek_startTime_key";
+--DROP INDEX "timeSlot_dayOfWeek_startTime_key";
 
 -- AlterTable
 ALTER TABLE "feedback" DROP COLUMN "readingSessionId",
