@@ -10,7 +10,7 @@
 ALTER TABLE "feedback" DROP CONSTRAINT "feedback_readingSessionId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "userTimeSlot" DROP CONSTRAINT "userTimeSlot_timeSlotId_fkey";
+-- ALTER TABLE "userTimeSlot" DROP CONSTRAINT "userTimeSlot_timeSlotId_fkey";
 
 -- DropForeignKey
 ALTER TABLE "userTimeSlot" DROP CONSTRAINT "userTimeSlot_userId_fkey";
