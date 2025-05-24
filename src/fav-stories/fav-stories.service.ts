@@ -18,12 +18,10 @@ export class FavStoriesService {
     });
 
     if (!favorites.length) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          email: 'No favorite stories found for this user',
-        },
-      });
+      return {
+        message: 'No favorites found',
+        data: [],
+      };
     }
 
     return favorites.map((favorite) => favorite.story);
@@ -62,7 +60,7 @@ export class FavStoriesService {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          photo: 'storyId Or UserId Required',
+          message: 'storyId Or UserId Required',
         },
       });
     }
@@ -73,7 +71,7 @@ export class FavStoriesService {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          photo: 'favorite Already Exists',
+          message: 'favorite Already Exists',
         },
       });
     }
