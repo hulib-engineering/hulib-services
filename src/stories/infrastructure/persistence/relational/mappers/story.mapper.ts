@@ -46,6 +46,11 @@ export class StoryMapper {
         domainEntity.humanBook,
       );
     }
+    if (domainEntity.topics) {
+      persistenceEntity.topics = domainEntity.topics.map((topic) =>
+        TopicsMapper.toPersistence(topic),
+      );
+    }
     // persistenceEntity.rating = domainEntity.rating;
     persistenceEntity.publishStatus =
       PublishStatus[domainEntity.publishStatus as keyof typeof PublishStatus];
