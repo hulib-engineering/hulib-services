@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { storyFavouritesSeedService } from './story-favourites/story-favourites-seed.service';
+// import { storyFavouritesSeedService } from './story-favourites/story-favourites-seed.service';
 import { RoleSeedService } from './role/role-seed.service';
 import { SeedModule } from './seed.module';
 import { StatusSeedService } from './status/status-seed.service';
@@ -25,7 +25,7 @@ const runSeed = async () => {
   // await app.get(StoryReviewSeedService).run();
   await app.get(TimeSlotSeedService).run();
   await app.get(ReadingSessionSeedService).run();
-  await app.get(storyFavouritesSeedService).run();
+  // await app.get(storyFavouritesSeedService).run();
 
   await app.close();
 };

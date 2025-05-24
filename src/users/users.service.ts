@@ -19,11 +19,16 @@ import { DeepPartial } from '@utils/types/deep-partial.type';
 import { GenderEnum } from '@genders/genders.enum';
 import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 import { Action, Approval } from '@users/approval.enum';
+import { CreateFeedbackDto } from '@users/dto/create-feedback.dto';
+import { PrismaService } from '@prisma-client/prisma-client.service';
+import { user as PrismaUser } from '@prisma/client';
+
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async create(createProfileDto: CreateUserDto): Promise<User> {
@@ -300,5 +305,20 @@ export class UsersService {
         },
       });
     }
+  }
+
+  async addFeedback(
+    byId: PrismaUser['id'],
+    toId: PrismaUser['id'],
+    payload: CreateFeedbackDto,
+  ) {
+    return this.prisma.user.update({
+      where: { id: byId },
+      data: {
+        feedbackBys: {
+          create: { ...payload, feedbackTo: { connect: { id: toId } } },
+        },
+      },
+    });
   }
 }
