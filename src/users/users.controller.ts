@@ -113,12 +113,11 @@ export class UsersController {
   @ApiOkResponse({
     type: User,
   })
-  @SerializeOptions({
-    groups: ['admin'],
-  })
+  // @SerializeOptions({
+  //   groups: ['admin'],
+  // })
   @Get(':id')
-  // @Roles(RoleEnum.admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @ApiParam({
     name: 'id',

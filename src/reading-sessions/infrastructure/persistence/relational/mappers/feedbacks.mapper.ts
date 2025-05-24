@@ -1,24 +1,24 @@
 import { Feedback } from '@reading-sessions/domain';
 import { FeedbackEntity } from '@reading-sessions/infrastructure/persistence/relational/entities';
 
-import { ReadingSessionMapper } from './reading-sessions.mapper';
+// import { ReadingSessionMapper } from './reading-sessions.mapper';
 
 export class FeedbackMapper {
   static toDomain(entity: FeedbackEntity): Feedback {
     const domain = new Feedback();
     domain.id = entity.id;
-    domain.readingSessionId = entity.readingSessionId;
+    // domain.readingSessionId = entity.readingSessionId;
     domain.rating = entity.rating;
     domain.content = entity.content;
     domain.createdAt = entity.createdAt;
     domain.updatedAt = entity.updatedAt;
     domain.deletedAt = entity.deletedAt;
 
-    if (entity.readingSession) {
-      domain.readingSession = ReadingSessionMapper.toDomain(
-        entity.readingSession,
-      );
-    }
+    // if (entity.readingSession) {
+    //   domain.readingSession = ReadingSessionMapper.toDomain(
+    //     entity.readingSession,
+    //   );
+    // }
 
     return domain;
   }
@@ -26,7 +26,6 @@ export class FeedbackMapper {
   static toPersistence(domain: Feedback): FeedbackEntity {
     const entity = new FeedbackEntity();
     entity.id = domain.id;
-    entity.readingSessionId = domain.readingSessionId;
     entity.rating = domain.rating;
     entity.content = domain.content;
     entity.createdAt = domain.createdAt;

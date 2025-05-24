@@ -19,6 +19,7 @@ import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@config/config.type';
 import { WebRtcService } from '../web-rtc/web-rtc.service';
+import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -28,6 +29,7 @@ export class ReadingSessionsService {
     private readonly messageRepository: MessageRepository,
     private readonly usersService: UsersService,
     private readonly storiesService: StoriesService,
+    private readonly storyReviewsService: StoryReviewsService,
     private readonly webRtcService: WebRtcService,
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
@@ -148,8 +150,24 @@ export class ReadingSessionsService {
   ): Promise<ReadingSession> {
     const session = await this.findOneSession(id);
     if (dto.sessionStatus === 'approved') {
-      const registeredMeeting = await this.webRtcService.generateToken(session);
+      const registeredMeeting = this.webRtcService.generateToken(session);
       session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=${registeredMeeting.channelName}&token=${registeredMeeting.token}`;
+    }
+    if (dto.sessionStatus === 'finished') {
+      if (!!dto.sessionFeedback) {
+        await this.usersService.addFeedback(
+          session.readerId,
+          session.humanBookId,
+          dto.sessionFeedback,
+        );
+      }
+      if (!!dto.storyReview) {
+        await this.storyReviewsService.create({
+          ...dto.storyReview,
+          userId: session.readerId,
+          storyId: session.storyId,
+        });
+      }
     }
     Object.assign(session, dto);
     return this.readingSessionRepository.update(id, session);

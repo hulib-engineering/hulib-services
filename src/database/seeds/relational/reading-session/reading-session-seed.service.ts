@@ -8,7 +8,6 @@ import {
   ReadingSession,
   ReadingSessionStatus,
 } from '@reading-sessions/domain/reading-session';
-import { Feedback } from '@reading-sessions/domain/feedback';
 import { Message } from '@reading-sessions/domain/message';
 
 // Entities
@@ -20,7 +19,6 @@ import { StoryEntity } from '@stories/infrastructure/persistence/relational/enti
 
 // Mappers
 import { ReadingSessionMapper } from '@reading-sessions/infrastructure/persistence/relational/mappers/reading-sessions.mapper';
-import { FeedbackMapper } from '@reading-sessions/infrastructure/persistence/relational/mappers/feedbacks.mapper';
 import { MessageMapper } from '@reading-sessions/infrastructure/persistence/relational/mappers/messages.mapper';
 
 // Mappers
@@ -90,25 +88,24 @@ export class ReadingSessionSeedService {
     console.log(`✅ Created ${savedSessions.length} reading sessions`);
 
     // Create feedbacks
-    console.log('🌱 Seeding Feedbacks...');
-    const feedbacks: Feedback[] = [];
-
-    for (const session of savedSessions) {
-      const feedback = new Feedback();
-      feedback.readingSessionId = session.id;
-      feedback.rating = faker.number.float({ min: 1, max: 5 });
-      feedback.content = faker.lorem.paragraph();
-      feedback.createdAt = faker.date.past();
-      feedback.updatedAt = faker.date.recent();
-
-      feedbacks.push(feedback);
-    }
-
-    await this.feedbackRepository.save(
-      feedbacks.map((feedback) => FeedbackMapper.toPersistence(feedback)),
-    );
-
-    console.log(`✅ Created ${feedbacks.length} feedbacks`);
+    // console.log('🌱 Seeding Feedbacks...');
+    // const feedbacks: Feedback[] = [];
+    //
+    // for (const {} of savedSessions) {
+    //   const feedback = new Feedback();
+    //   feedback.rating = faker.number.float({ min: 1, max: 5 });
+    //   feedback.content = faker.lorem.paragraph();
+    //   feedback.createdAt = faker.date.past();
+    //   feedback.updatedAt = faker.date.recent();
+    //
+    //   feedbacks.push(feedback);
+    // }
+    //
+    // await this.feedbackRepository.save(
+    //   feedbacks.map((feedback) => FeedbackMapper.toPersistence(feedback)),
+    // );
+    //
+    // console.log(`✅ Created ${feedbacks.length} feedbacks`);
 
     // Create messages
     console.log('🌱 Seeding Messages...');
