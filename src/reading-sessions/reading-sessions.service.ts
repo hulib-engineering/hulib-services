@@ -108,8 +108,6 @@ export class ReadingSessionsService {
     if (overlap) {
       throw new UnprocessableEntityException({
         status: 422,
-        message:
-          'Khung giờ bạn chọn đã bị trùng với một phiên đọc khác trong ngày này. Vui lòng chọn thời gian khác.',
         errors: {
           sessionOverlap:
             'Session time overlaps with another session on the same day.',
