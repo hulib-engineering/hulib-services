@@ -49,7 +49,7 @@ export class CaslAbilityFactory {
         ({ readerId, humanBookId }) =>
           readerId === user.id || humanBookId === user.id,
       );
-      can(Action.Read, 'Topic', ['topic.id', 'topic.name']);
+      // can(Action.Read, 'Topic', ['topic.id', 'topic.name']);
     } else if (roleId === RoleEnum.reader) {
       can(Action.Read, 'User');
       can(Action.Create, 'ReadingSession');
@@ -58,7 +58,7 @@ export class CaslAbilityFactory {
         'ReadingSession',
         ({ readerId }: { readerId: string | number }) => readerId === user.id,
       );
-      can(Action.Read, 'Topic', ['topic.id', 'topic.name']);
+      // can(Action.Read, 'Topic', ['topic.id', 'topic.name']);
     }
 
     // const permissions = {
