@@ -14,11 +14,12 @@ export abstract class StoryRepository {
 
   abstract findAllWithPagination({
     paginationOptions,
+    filterOptions,
     sortOptions,
   }: {
     paginationOptions: IPaginationOptions;
-    filterOptions?: FilterStoryDto | null;
-    sortOptions?: SortStoryDto[] | null;
+    filterOptions?: FilterStoryDto;
+    sortOptions?: SortStoryDto[];
   }): Promise<Story[]>;
 
   abstract findById(id: Story['id']): Promise<NullableType<Story>>;
