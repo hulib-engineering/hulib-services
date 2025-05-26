@@ -6,9 +6,8 @@ import {
   IsOptional,
   IsString,
   Max,
-  ValidateNested,
 } from 'class-validator';
-import { plainToInstance, Transform, Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { Story } from '@stories/domain/story';
 import { PublishStatus } from '../status.enum';
 
@@ -31,15 +30,17 @@ export class FilterStoryDto {
   @IsOptional()
   humanBookId?: string | null;
 
-  @ApiPropertyOptional({
-    example: [1, 2],
-    type: [Number],
-  })
-  @Transform(({ value }) => value.split(',').map(Number))
+  @ApiPropertyOptional()
   @IsArray()
+  @Transform(({ value }) =>
+    value
+      ? Array.isArray(value)
+        ? value.map((each) => Number(each))
+        : [Number(value)]
+      : [],
+  )
   @IsOptional()
-  @IsNumber({}, { each: true })
-  topicIds?: number[] | null;
+  topicIds?: number[];
 
   @IsOptional()
   @IsEnum(PublishStatus)
@@ -60,19 +61,19 @@ export class FindAllStoriesDto extends FilterStoryDto {
   @Max(50)
   limit?: number;
 
-  @ApiPropertyOptional({ type: String })
-  @IsOptional()
-  @Transform(({ value }) => {
-    return value
-      ? plainToInstance(
-          SortStoryDto,
-          typeof value === 'string' ? JSON.parse(value) : value,
-        )
-      : undefined;
-  })
-  @ValidateNested({ each: true })
-  @Type(() => SortStoryDto)
-  sort?: SortStoryDto | null;
+  // @ApiPropertyOptional({ type: String })
+  // @IsOptional()
+  // @Transform(({ value }) => {
+  //   return value
+  //     ? plainToInstance(
+  //         SortStoryDto,
+  //         typeof value === 'string' ? JSON.parse(value) : value,
+  //       )
+  //     : undefined;
+  // })
+  // @ValidateNested({ each: true })
+  // @Type(() => SortStoryDto)
+  // sort?: SortStoryDto | null;
 
   // @ApiPropertyOptional({ type: String })
   // @IsOptional()

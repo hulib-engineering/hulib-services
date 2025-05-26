@@ -19,7 +19,12 @@ export enum Action {
 }
 
 type Subjects = InferSubjects<
-  'User' | 'ReadingSession' | 'ReadingSessionParticipant' | 'all'
+  | 'User'
+  | 'ReadingSession'
+  | 'ReadingSessionParticipant'
+  | 'Story'
+  | 'Topic'
+  | 'all'
 >;
 
 export type AppAbility = PureAbility<[Action, Subjects], MatchConditions>;
@@ -44,6 +49,7 @@ export class CaslAbilityFactory {
         ({ readerId, humanBookId }) =>
           readerId === user.id || humanBookId === user.id,
       );
+      can(Action.Read, 'Topic', ['topic.id', 'topic.name']);
     } else if (roleId === RoleEnum.reader) {
       can(Action.Read, 'User');
       can(Action.Create, 'ReadingSession');
@@ -52,6 +58,7 @@ export class CaslAbilityFactory {
         'ReadingSession',
         ({ readerId }: { readerId: string | number }) => readerId === user.id,
       );
+      can(Action.Read, 'Topic', ['topic.id', 'topic.name']);
     }
 
     // const permissions = {
