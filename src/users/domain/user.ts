@@ -19,7 +19,6 @@ export class User {
     type: String,
     example: 'john.doe@example.com',
   })
-  @Expose({ groups: ['me', 'admin'] })
   email: string | null;
 
   @Exclude({ toPlainOnly: true })
@@ -139,8 +138,10 @@ export class User {
   countTopics?: number;
 
   @ApiProperty()
+  @Exclude({ toPlainOnly: true })
   createdAt: Date;
 
   @ApiProperty()
+  @Exclude({ toPlainOnly: true })
   updatedAt: Date;
 }

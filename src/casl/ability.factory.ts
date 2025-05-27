@@ -1,6 +1,7 @@
 import {
   AbilityBuilder,
   ExtractSubjectType,
+  FieldMatcher,
   InferSubjects,
   MatchConditions,
   PureAbility,
@@ -29,6 +30,8 @@ type Subjects = InferSubjects<
 
 export type AppAbility = PureAbility<[Action, Subjects], MatchConditions>;
 const lambdaMatcher = (matchConditions: MatchConditions) => matchConditions;
+const fieldMatcher: FieldMatcher = (fields) => (field) =>
+  fields.includes(field);
 
 @Injectable()
 export class CaslAbilityFactory {
@@ -37,11 +40,19 @@ export class CaslAbilityFactory {
 
     const roleId = user.role?.id;
 
+    can(Action.Update, 'User', (id) => id === user.id);
+
     if (roleId === RoleEnum.admin) {
       can(Action.Manage, 'all');
     } else if (roleId === RoleEnum.humanBook) {
       can(Action.Read, 'User');
-      can(Action.Update, 'User');
+      can(Action.Create, 'ReadingSession');
+      can(
+        [Action.Read, Action.Update],
+        'ReadingSession',
+        ({ readerId, humanBookId }) =>
+          readerId === user.id || humanBookId === user.id,
+      );
       can(Action.Create, 'ReadingSession');
       can(
         [Action.Read, Action.Update],
@@ -93,6 +104,7 @@ export class CaslAbilityFactory {
     return build({
       detectSubjectType: (item) => item as ExtractSubjectType<Subjects>,
       conditionsMatcher: lambdaMatcher,
+      fieldMatcher,
     });
   }
 }
