@@ -28,11 +28,7 @@ export class HubersController {
   @ApiOkResponse({
     type: InfinityPaginationResponse(User),
   })
-  async findAll(
-    @Request() request,
-    @Query()
-    query: FindAllHubersDto,
-  ) {
+  async findAll(@Request() request, @Query() query: FindAllHubersDto) {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     const user = await this.userService.findById(request.user.id);

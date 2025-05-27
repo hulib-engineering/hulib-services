@@ -5,5 +5,6 @@ import { StoryReviewsController } from './story-reviews.controller';
 @Module({
   controllers: [StoryReviewsController],
   providers: [StoryReviewsService],
+  exports: [StoryReviewsService],
 })
 export class StoryReviewsModule {}
