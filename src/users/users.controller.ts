@@ -11,8 +11,6 @@ import {
   HttpStatus,
   HttpCode,
   SerializeOptions,
-  Request,
-  Put,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -35,15 +33,12 @@ import { User } from './domain/user';
 import { UsersService } from './users.service';
 import { RolesGuard } from '@roles/roles.guard';
 import { infinityPagination } from '@utils/infinity-pagination';
-import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 import { UpgradeDto } from './dto/upgrade.dto';
-import { CaslGuard } from '@casl/guards/casl.guard';
-import { CheckAbilities } from '@casl/decorators/casl.decorator';
-import { Action } from '@casl/ability.factory';
+
+import { Roles } from '@roles/roles.decorator';
+import { RoleEnum } from '@roles/roles.enum';
 
 @ApiBearerAuth()
-// @Roles(RoleEnum.admin)
-@UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiTags('Users')
 @Controller({
   path: 'users',
@@ -59,7 +54,7 @@ export class UsersController {
     groups: ['admin'],
   })
   @Post()
-  // @Roles(RoleEnum.admin)
+  @Roles(RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createProfileDto: CreateUserDto): Promise<User> {
@@ -71,40 +66,26 @@ export class UsersController {
   })
   @SerializeOptions({
     groups: ['admin'],
+    excludePrefixes: ['__'],
   })
   @Get()
-  // @Roles(RoleEnum.admin)
-  @CheckAbilities((ability) => ability.can(Action.Read, 'User'))
-  @UseGuards(AuthGuard('jwt'), RolesGuard, CaslGuard)
+  @Roles(RoleEnum.admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.OK)
   async findAll(
     @Query() query: QueryUserDto,
-    @Request() request,
   ): Promise<InfinityPaginationResponseDto<User>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
       limit = 50;
     }
-    const userId = request?.user?.id;
-    const user = await this.usersService.findById(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    const topicsOfInterest = user.topics?.map((topic) => topic.id);
 
     return infinityPagination(
       await this.usersService.findManyWithPagination({
-        filterOptions: {
-          ...query?.filters,
-          topicsOfInterest,
-        },
+        filterOptions: { role: query.role },
         sortOptions: query?.sort,
-        paginationOptions: {
-          page,
-          limit,
-        },
+        paginationOptions: { page, limit },
       }),
       { page, limit },
     );
@@ -113,9 +94,9 @@ export class UsersController {
   @ApiOkResponse({
     type: User,
   })
-  // @SerializeOptions({
-  //   groups: ['admin'],
-  // })
+  @SerializeOptions({
+    groups: ['admin', 'me'],
+  })
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
@@ -135,7 +116,7 @@ export class UsersController {
     groups: ['admin'],
   })
   @Patch(':id')
-  // @Roles(RoleEnum.admin)
+  @Roles(RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.OK)
   @ApiParam({
@@ -151,7 +132,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  // @Roles(RoleEnum.admin)
+  @Roles(RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
@@ -164,35 +145,35 @@ export class UsersController {
   }
 
   // public id
-  @ApiOkResponse({ type: GetAuthorDetailByIdDto })
-  @Get('author/:id')
-  @HttpCode(HttpStatus.OK)
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-  })
-  async getAuthorDetailById(
-    @Param('id') id: User['id'],
-  ): Promise<GetAuthorDetailByIdDto> {
-    return this.usersService.getAuthorDetailById(id);
-  }
+  // @ApiOkResponse({ type: GetAuthorDetailByIdDto })
+  // @Get('author/:id')
+  // @HttpCode(HttpStatus.OK)
+  // @ApiParam({
+  //   name: 'id',
+  //   type: String,
+  //   required: true,
+  // })
+  // async getAuthorDetailById(
+  //   @Param('id') id: User['id'],
+  // ): Promise<GetAuthorDetailByIdDto> {
+  //   return this.usersService.getAuthorDetailById(id);
+  // }
 
-  @ApiOkResponse({
-    type: User,
-  })
-  @Put('update-profile')
-  @UseGuards(AuthGuard('jwt'))
-  @HttpCode(HttpStatus.OK)
-  updateProfile(
-    @Request() request,
-    @Body() updateProfileDto: UpdateUserDto,
-  ): Promise<User | null> {
-    console.log('request.user.id', request.user.id);
-    return this.usersService.update(request.user.id, updateProfileDto);
-  }
+  // @ApiOkResponse({
+  //   type: User,
+  // })
+  // @Put('update-profile')
+  // @UseGuards(AuthGuard('jwt'))
+  // @HttpCode(HttpStatus.OK)
+  // updateProfile(
+  //   @Request() request,
+  //   @Body() updateProfileDto: UpdateUserDto,
+  // ): Promise<User | null> {
+  //   console.log('request.user.id', request.user.id);
+  //   return this.usersService.update(request.user.id, updateProfileDto);
+  // }
 
-  @Patch('upgrade/:id')
+  @Post(':id/upgrade')
   @ApiParam({
     name: 'id',
     type: String,

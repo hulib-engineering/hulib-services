@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { NullableType } from '@utils/types/nullable.type';
-import { FilterUserDto, SortUserDto } from './dto/query-user.dto';
+import { FilterUserDto, QueryUserDto, SortUserDto } from './dto/query-user.dto';
 import { UserRepository } from './infrastructure/persistence/user.repository';
 import { User } from './domain/user';
 import bcrypt from 'bcryptjs';
@@ -17,7 +17,6 @@ import { StatusEnum } from '@statuses/statuses.enum';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { DeepPartial } from '@utils/types/deep-partial.type';
 import { GenderEnum } from '@genders/genders.enum';
-import { GetAuthorDetailByIdDto } from './dto/get-author-detail-by-id.dto';
 import { Action, Approval } from '@users/approval.enum';
 import { CreateFeedbackDto } from '@users/dto/create-feedback.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
@@ -122,7 +121,7 @@ export class UsersService {
     sortOptions,
     paginationOptions,
   }: {
-    filterOptions?: FilterUserDto | null;
+    filterOptions?: (FilterUserDto & Pick<QueryUserDto, 'role'>) | null;
     sortOptions?: SortUserDto[] | null;
     paginationOptions: IPaginationOptions;
   }): Promise<User[]> {
@@ -137,20 +136,20 @@ export class UsersService {
     return this.usersRepository.findById(id);
   }
 
-  async findHumanBookById(id: User['id']): Promise<NullableType<User>> {
-    const humanBook = await this.usersRepository.findHumanBookById(id);
-
-    if (!humanBook) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          user: 'humanBookNotFound',
-        },
-      });
-    }
-
-    return humanBook;
-  }
+  // async findHumanBookById(id: User['id']): Promise<NullableType<User>> {
+  //   const humanBook = await this.usersRepository.findHumanBookById(id);
+  //
+  //   if (!humanBook) {
+  //     throw new UnprocessableEntityException({
+  //       status: HttpStatus.UNPROCESSABLE_ENTITY,
+  //       errors: {
+  //         user: 'humanBookNotFound',
+  //       },
+  //     });
+  //   }
+  //
+  //   return humanBook;
+  // }
 
   findByEmail(email: User['email']): Promise<NullableType<User>> {
     return this.usersRepository.findByEmail(email);
@@ -262,24 +261,24 @@ export class UsersService {
     await this.usersRepository.remove(id);
   }
 
-  async getAuthorDetailById(
-    id: string | number,
-  ): Promise<GetAuthorDetailByIdDto> {
-    const user = await this.usersRepository.findById(id);
-
-    if (!user) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          confirmPassword: 'userNotFound',
-        },
-      });
-    }
-    // ignore password & previousPassword
-    delete user.password;
-    delete user.previousPassword;
-    return user;
-  }
+  // async getAuthorDetailById(
+  //   id: string | number,
+  // ): Promise<GetAuthorDetailByIdDto> {
+  //   const user = await this.usersRepository.findById(id);
+  //
+  //   if (!user) {
+  //     throw new UnprocessableEntityException({
+  //       status: HttpStatus.UNPROCESSABLE_ENTITY,
+  //       errors: {
+  //         confirmPassword: 'userNotFound',
+  //       },
+  //     });
+  //   }
+  //   // ignore password & previousPassword
+  //   delete user.password;
+  //   delete user.previousPassword;
+  //   return user;
+  // }
 
   async updatePassword(userId: string, newPassword: string): Promise<void> {
     await this.usersRepository.update(userId, { password: newPassword });
