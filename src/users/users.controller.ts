@@ -96,6 +96,7 @@ export class UsersController {
   })
   @SerializeOptions({
     groups: ['admin', 'me'],
+    excludePrefixes: ['__'],
   })
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))
@@ -126,7 +127,7 @@ export class UsersController {
   })
   update(
     @Param('id') id: User['id'],
-    @Body() updateProfileDto: UpdateUserDto,
+    @Body() updateProfileDto: Pick<UpdateUserDto, 'status'>,
   ): Promise<User | null> {
     return this.usersService.update(id, updateProfileDto);
   }
