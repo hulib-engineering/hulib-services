@@ -16,6 +16,7 @@ import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-se
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
 import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { User } from '../users/domain/user';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@config/config.type';
 import { WebRtcService } from '../web-rtc/web-rtc.service';
@@ -118,7 +119,12 @@ export class ReadingSessionsService {
 
   async findAllSessions(
     queryDto: FindAllReadingSessionsQueryDto,
+    userId: User['id'],
   ): Promise<ReadingSession[]> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
     let paginationOptions: { page: number; limit: number } | undefined =
       undefined;
     if (queryDto.limit && queryDto.offset) {
@@ -128,10 +134,13 @@ export class ReadingSessionsService {
       };
     }
 
-    return this.readingSessionRepository.findManyWithPagination({
-      filterOptions: queryDto,
-      paginationOptions,
-    });
+    return this.readingSessionRepository.findManyWithPagination(
+      {
+        filterOptions: queryDto,
+        paginationOptions,
+      },
+      user,
+    );
   }
 
   async findOneSession(id: number): Promise<ReadingSession> {
