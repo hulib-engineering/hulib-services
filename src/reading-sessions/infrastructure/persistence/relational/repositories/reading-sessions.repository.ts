@@ -86,11 +86,6 @@ export class ReadingSessionRepository {
     if (filterOptions?.upcoming) {
       where.startedAt = MoreThan(new Date());
       where.sessionStatus = ReadingSessionStatus.APPROVED;
-      if (user.role?.id === RoleEnum.humanBook) {
-        where.humanBookId = user.id as number;
-      } else if (user.role?.id === RoleEnum.reader) {
-        where.readerId = user.id as number;
-      }
     }
 
     if (filterOptions?.startedAt && filterOptions?.endedAt) {
