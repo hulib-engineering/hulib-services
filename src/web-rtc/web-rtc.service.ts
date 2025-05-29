@@ -4,17 +4,24 @@ import { RtcRole, RtcTokenBuilder } from 'agora-token';
 
 import { AllConfigType } from '@config/config.type';
 import { ReadingSession } from '@reading-sessions/domain';
+import { UsersService } from '@users/users.service';
 
 @Injectable()
 export class WebRtcService {
-  constructor(private configService: ConfigService<AllConfigType>) {}
+  constructor(
+    private configService: ConfigService<AllConfigType>,
+    private readonly usersService: UsersService,
+  ) {}
 
-  generateToken(
+  async generateToken(
     sessionData: Pick<
       ReadingSession,
-      'id' | 'humanBookId' | 'readerId' | 'story' | 'endedAt'
+      'id' | 'humanBookId' | 'readerId' | 'story' | 'endedAt' | 'startedAt'
     >,
   ) {
+    const liber = await this.usersService.findById(sessionData.readerId);
+    const huber = await this.usersService.findById(sessionData.readerId);
+
     const appId = this.configService.getOrThrow('agora.appId', { infer: true }); // Replace it with your Agora App ID
     const appCertificate = this.configService.getOrThrow(
       'agora.appCertificate',
@@ -23,14 +30,14 @@ export class WebRtcService {
       },
     ); // Replace it with your Agora Certificate
     const channelName = `${sessionData.story.title}-${sessionData.id}`;
-    // const uid = sessionData.id << 0;
     const role = RtcRole.PUBLISHER;
-    const tokenExpired = 1800;
-    const token = RtcTokenBuilder.buildTokenWithRtm(
+    const tokenExpired =
+      sessionData.startedAt.getTime() - new Date().getTime() + 1800;
+    const token = RtcTokenBuilder.buildTokenWithUserAccount(
       appId,
       appCertificate,
       channelName,
-      0,
+      huber?.email + '-' + liber?.email,
       role,
       tokenExpired,
       tokenExpired,
