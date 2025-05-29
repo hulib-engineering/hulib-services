@@ -67,11 +67,16 @@ export class ReadingSession {
   note?: string;
 
   @ApiProperty({
-    type: String,
-    nullable: true,
-    example: 'Great session with insightful discussions',
+    type: Number,
+    example: 5,
   })
-  review?: string;
+  rating?: number;
+
+  @ApiProperty({
+    type: Number,
+    example: 5,
+  })
+  preRating?: number;
 
   @ApiProperty({
     type: String,

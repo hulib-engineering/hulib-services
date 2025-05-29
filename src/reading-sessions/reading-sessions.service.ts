@@ -156,22 +156,52 @@ export class ReadingSessionsService {
     dto: UpdateReadingSessionDto,
   ): Promise<ReadingSession> {
     const session = await this.findOneSession(id);
+
     if (dto.sessionStatus === 'approved') {
       const registeredMeeting = this.webRtcService.generateToken(session);
       session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=${registeredMeeting.channelName}&token=${registeredMeeting.token}`;
     }
+
+    if (
+      session.sessionStatus === ReadingSessionStatus.APPROVED &&
+      dto.presurvey
+    ) {
+      await this.storyReviewsService.create({
+        rating: 0,
+        preRating: dto.presurvey[1].rating,
+        title: '',
+        comment: '',
+        userId: session.readerId,
+        storyId: session.storyId,
+      });
+      await this.readingSessionRepository.update(id, {
+        preRating: dto.presurvey[2].rating,
+      });
+      await this.usersService.addFeedback(
+        session.readerId,
+        session.humanBookId,
+        {
+          preRating: dto.presurvey[3].rating,
+          rating: 0,
+        },
+      );
+    }
+
     if (dto.sessionStatus === 'finished') {
       if (!!dto.sessionFeedback) {
-        await this.storyReviewsService.create({
+        await this.readingSessionRepository.update(id, {
           ...dto.sessionFeedback,
-          title: '',
-          comment: dto.sessionFeedback.content ?? '',
-          userId: session.readerId,
-          storyId: session.storyId,
+        });
+      }
+      if (!!dto.storyReview) {
+        const { content, ...rest } = dto.storyReview;
+        await this.storyReviewsService.update(session.storyId, {
+          ...rest,
+          comment: content,
         });
       }
       if (!!dto.huberFeedback) {
-        await this.usersService.addFeedback(
+        await this.usersService.editFeedback(
           session.readerId,
           session.humanBookId,
           dto.huberFeedback,

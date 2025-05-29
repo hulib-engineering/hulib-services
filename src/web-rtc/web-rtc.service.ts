@@ -22,7 +22,7 @@ export class WebRtcService {
         infer: true,
       },
     ); // Replace it with your Agora Certificate
-    const channelName = `${sessionData.story.title}-${sessionData.humanBookId}-${sessionData.readerId}`;
+    const channelName = `${sessionData.story.title}-${sessionData.id}`;
     // const uid = sessionData.id << 0;
     const role = RtcRole.PUBLISHER;
     const tokenExpired = 1800;
