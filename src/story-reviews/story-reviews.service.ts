@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+
+import { IPaginationOptions } from '@utils/types/pagination-options';
+
 import { CreateStoryReviewDto } from './dto/create-story-review.dto';
 import { UpdateStoryReviewDto } from './dto/update-story-review.dto';
-import { IPaginationOptions } from '../utils/types/pagination-options';
 import { StoryReviewOverview } from './entities/story-review-overview';
 
 @Injectable()

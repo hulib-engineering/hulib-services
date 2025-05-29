@@ -18,6 +18,7 @@ export class StoryReviewSeedService {
               id,
               title: `Story ${id}`,
               comment: this.getCommentForId(id),
+              preRating: 0,
               rating: 4,
               userId: user?.id ?? 1,
               storyId: 1,

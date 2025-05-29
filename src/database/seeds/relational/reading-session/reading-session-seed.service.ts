@@ -66,7 +66,6 @@ export class ReadingSessionSeedService {
       session.storyId = Number(story.id);
       session.sessionUrl = faker.internet.url();
       session.note = faker.lorem.paragraph();
-      session.review = faker.lorem.paragraph();
       session.recordingUrl = faker.internet.url();
       session.sessionStatus = faker.helpers.arrayElement(
         Object.values(ReadingSessionStatus),

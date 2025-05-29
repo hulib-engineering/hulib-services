@@ -309,7 +309,7 @@ export class UsersService {
   async addFeedback(
     byId: PrismaUser['id'],
     toId: PrismaUser['id'],
-    payload: CreateFeedbackDto,
+    payload: Omit<CreateFeedbackDto, 'createdAt' | 'updatedAt' | 'deletedAt'>,
   ) {
     return this.prisma.user.update({
       where: { id: byId },
@@ -318,6 +318,35 @@ export class UsersService {
           create: { ...payload, feedbackTo: { connect: { id: toId } } },
         },
       },
+    });
+  }
+
+  async getFeedback(byId: PrismaUser['id'], toId: PrismaUser['id']) {
+    return this.prisma.user.findFirst({
+      include: {
+        feedbackBys: {
+          where: {
+            feedbackById: byId,
+          },
+        },
+        feedbackTos: {
+          where: {
+            feedbackToId: toId,
+          },
+        },
+      },
+    });
+  }
+
+  async editFeedback(
+    byId: PrismaUser['id'],
+    toId: PrismaUser['id'],
+    payload: Pick<CreateFeedbackDto, 'rating' | 'content'>,
+  ) {
+    const feedback = await this.getFeedback(byId, toId);
+    return this.prisma.feedback.update({
+      where: { id: feedback?.id || 0 },
+      data: { rating: payload.rating, content: payload.content },
     });
   }
 }
