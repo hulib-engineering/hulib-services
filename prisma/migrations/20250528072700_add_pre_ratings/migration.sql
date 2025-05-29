@@ -7,12 +7,12 @@
 
 */
 -- AlterTable
-ALTER TABLE "feedback" ADD COLUMN     "preRating" INTEGER NOT NULL;
+ALTER TABLE "feedback" ADD COLUMN     "preRating" INTEGER;
 
 -- AlterTable
 ALTER TABLE "readingSession" DROP COLUMN "review",
-ADD COLUMN     "preRating" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "preRating" INTEGER,
 ADD COLUMN     "rating" INTEGER NOT NULL DEFAULT 0;
 
 -- AlterTable
-ALTER TABLE "storyReview" ADD COLUMN     "preRating" INTEGER NOT NULL;
+ALTER TABLE "storyReview" ADD COLUMN     "preRating" INTEGER;
