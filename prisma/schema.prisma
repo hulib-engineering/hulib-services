@@ -163,7 +163,7 @@ model storyReview {
   rating    Int
   title     String   @db.VarChar
   comment   String   @db.VarChar
-  preRating Int
+  preRating Int?
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
   userId    Int
@@ -246,7 +246,7 @@ model feedback {
   feedbackTo   user? @relation(name: "UserFeedbackTo", fields: [feedbackToId], references: [id], onDelete: Cascade)
 
   rating    Float
-  preRating Int
+  preRating Int?
   content   String?   @db.VarChar(4000)
   createdAt DateTime  @default(now()) @db.Timestamp(6)
   updatedAt DateTime  @default(now()) @db.Timestamp(6)
