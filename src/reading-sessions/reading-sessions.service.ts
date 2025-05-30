@@ -192,7 +192,7 @@ export class ReadingSessionsService {
       }
       if (!!dto.storyReview) {
         const { content, ...rest } = dto.storyReview;
-        await this.storyReviewsService.update(session.storyId, {
+        await this.storyReviewsService.updateByStoryId(session.storyId, {
           ...rest,
           comment: content,
         });
