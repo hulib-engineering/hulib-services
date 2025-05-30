@@ -29,19 +29,19 @@ export class WebRtcService {
         infer: true,
       },
     ); // Replace it with your Agora Certificate
-    const channelName = `${sessionData.story.title}-${sessionData.id}`;
+    // const channelName = `${sessionData.story.title}-${sessionData.id}`;
     const role = RtcRole.PUBLISHER;
-    const tokenExpired =
+    const expiredTime =
       sessionData.startedAt.getTime() - new Date().getTime() + 1800;
     const token = RtcTokenBuilder.buildTokenWithUserAccount(
       appId,
       appCertificate,
-      channelName,
+      sessionData.id.toString(),
       huber?.email + '-' + liber?.email,
       role,
-      tokenExpired,
-      tokenExpired,
+      expiredTime,
+      expiredTime,
     );
-    return { token, channelName };
+    return { token };
   }
 }
