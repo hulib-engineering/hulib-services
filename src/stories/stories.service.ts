@@ -8,19 +8,21 @@ import { UpdateStoryDto } from './dto/update-story.dto';
 import { StoryRepository } from './infrastructure/persistence/story.repository';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { Story } from './domain/story';
-import { UsersService } from '@users/users.service';
 import { FilterStoryDto, SortStoryDto } from './dto/find-all-stories.dto';
+import { PublishStatus } from './status.enum';
+
+import { UsersService } from '@users/users.service';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
-import { TopicsRepository } from '../topics/infrastructure/persistence/topics.repository';
-import { PublishStatus } from './status.enum';
+import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repository';
+
 @Injectable()
 export class StoriesService {
   constructor(
     private readonly storiesRepository: StoryRepository,
     private readonly storyReviewService: StoryReviewsService,
     private readonly topicsRepository: TopicsRepository,
-    private usersService: UsersService,
+    private readonly usersService: UsersService,
     private prisma: PrismaService,
   ) {}
 
@@ -59,8 +61,8 @@ export class StoriesService {
     sortOptions,
   }: {
     paginationOptions: IPaginationOptions;
-    filterOptions?: FilterStoryDto | null;
-    sortOptions?: SortStoryDto[] | null;
+    filterOptions?: FilterStoryDto;
+    sortOptions?: SortStoryDto[];
   }) {
     return this.storiesRepository.findAllWithPagination({
       paginationOptions: {

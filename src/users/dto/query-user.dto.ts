@@ -14,7 +14,7 @@ export class FilterUserDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => RoleDto)
-  roles?: RoleDto[] | null;
+  roles?: RoleDto[];
 
   @ApiPropertyOptional({ type: Number, isArray: true })
   @IsOptional()
@@ -55,19 +55,14 @@ export class QueryUserDto {
 
   @ApiPropertyOptional({ type: String })
   @IsOptional()
-  @Transform(({ value }) =>
-    value ? plainToInstance(FilterUserDto, JSON.parse(value)) : undefined,
-  )
-  @ValidateNested()
-  @Type(() => FilterUserDto)
-  filters?: FilterUserDto | null;
-
-  @ApiPropertyOptional({ type: String })
-  @IsOptional()
   @Transform(({ value }) => {
     return value ? plainToInstance(SortUserDto, JSON.parse(value)) : undefined;
   })
   @ValidateNested({ each: true })
   @Type(() => SortUserDto)
   sort?: SortUserDto[] | null;
+
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  role?: string;
 }

@@ -38,9 +38,11 @@ export class StoryMapper {
     const persistenceEntity = new StoryEntity();
     persistenceEntity.abstract = domainEntity.abstract;
     persistenceEntity.title = domainEntity.title;
-    if (domainEntity.id) {
+
+    if (domainEntity.id !== undefined && domainEntity.id !== null) {
       persistenceEntity.id = domainEntity.id;
     }
+
     if (domainEntity.humanBook) {
       persistenceEntity.humanBook = UserMapper.toPersistence(
         domainEntity.humanBook,

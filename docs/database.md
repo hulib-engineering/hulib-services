@@ -156,7 +156,7 @@ npm run seed:run:relational
    import { Injectable } from '@nestjs/common';
    import { InjectRepository } from '@nestjs/typeorm';
    import { Repository } from 'typeorm';
-   import { RoleEntity } from '../../../../roles/infrastructure/persistence/relational/entities/role.entity';
+   import { SurveyQuestionEntity } from '../../../../roles/infrastructure/persistence/relational/entities/role.entity';
    import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
    import { GenderEntity } from '../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
 
@@ -165,8 +165,8 @@ npm run seed:run:relational
      constructor(
        @InjectRepository(UserEntity)
        private repositoryUser: Repository<UserEntity>,
-       @InjectRepository(RoleEntity)
-       private repositoryRole: Repository<RoleEntity>,
+       @InjectRepository(SurveyQuestionEntity)
+       private repositoryRole: Repository<SurveyQuestionEntity>,
        @InjectRepository(GenderEntity)
        private repositoryStatus: Repository<GenderEntity>,
      ) {}
@@ -229,11 +229,11 @@ npm run seed:run:relational
    import { UserFactory } from './user.factory';
 
    import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
-   import { RoleEntity } from '../../../../roles/infrastructure/persistence/relational/entities/role.entity';
+   import { SurveyQuestionEntity } from '../../../../roles/infrastructure/persistence/relational/entities/role.entity';
    import { GenderEntity } from '../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
 
    @Module({
-     imports: [TypeOrmModule.forFeature([UserEntity, Role, Gender])],
+     imports: [TypeOrmModule.forFeature([UserEntity, SurveyQuestion, Gender])],
      providers: [UserSeedService, UserFactory],
      exports: [UserSeedService, UserFactory],
    })

@@ -163,6 +163,7 @@ model storyReview {
   rating    Int
   title     String   @db.VarChar
   comment   String   @db.VarChar
+  preRating Int?
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
   userId    Int
@@ -215,7 +216,8 @@ model readingSession {
   story   story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
   note          String?              @db.VarChar(4000) // Mentee requests for session (if yes)
-  review        String?              @db.VarChar(4000) // Mentor review for mentee
+  preRating     Int                  @default(0)
+  rating        Int                  @default(0)
   sessionUrl    String               @db.VarChar(1000) // Meeting URL
   recordingUrl  String?              @db.VarChar(500) // Meeting recording URL
   sessionStatus ReadingSessionStatus @default(pending)
@@ -244,12 +246,11 @@ model feedback {
   feedbackTo   user? @relation(name: "UserFeedbackTo", fields: [feedbackToId], references: [id], onDelete: Cascade)
 
   rating    Float
+  preRating Int?
   content   String?   @db.VarChar(4000)
   createdAt DateTime  @default(now()) @db.Timestamp(6)
   updatedAt DateTime  @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
-  // readingSession   readingSession? @relation(fields: [readingSessionId], references: [id])
-  // readingSessionId Int?
 }
 
 model message {
