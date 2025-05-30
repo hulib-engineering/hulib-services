@@ -27,8 +27,8 @@ export class StoryReviewsService {
   }
 
   update(id: number, updateStoryReviewDto: UpdateStoryReviewDto) {
-    return this.prisma.storyReview.update({
-      where: { id },
+    return this.prisma.storyReview.updateMany({
+      where: { storyId: id },
       data: updateStoryReviewDto,
     });
   }
