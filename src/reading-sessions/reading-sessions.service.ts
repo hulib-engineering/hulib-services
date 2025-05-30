@@ -134,13 +134,10 @@ export class ReadingSessionsService {
       };
     }
 
-    return this.readingSessionRepository.findManyWithPagination(
-      {
-        filterOptions: queryDto,
-        paginationOptions,
-      },
-      user,
-    );
+    return this.readingSessionRepository.findManyWithPagination({
+      filterOptions: queryDto,
+      paginationOptions,
+    });
   }
 
   async findOneSession(id: number): Promise<ReadingSession> {

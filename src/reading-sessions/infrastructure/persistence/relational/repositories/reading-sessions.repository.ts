@@ -16,8 +16,6 @@ import { ReadingSession } from '@reading-sessions/domain';
 import { ReadingSessionMapper } from '../mappers/reading-sessions.mapper';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { FindAllReadingSessionsQueryDto } from '../../../../dto/reading-session/find-all-reading-sessions-query.dto';
-import { User } from '../../../../../users/domain/user';
-import { RoleEnum } from '../../../../../roles/roles.enum';
 
 @Injectable()
 export class ReadingSessionRepository {
@@ -59,16 +57,13 @@ export class ReadingSessionRepository {
     return entities.map((entity) => ReadingSessionMapper.toDomain(entity));
   }
 
-  async findManyWithPagination(
-    {
-      filterOptions,
-      paginationOptions,
-    }: {
-      filterOptions?: FindAllReadingSessionsQueryDto;
-      paginationOptions?: IPaginationOptions;
-    },
-    user: User,
-  ): Promise<ReadingSession[]> {
+  async findManyWithPagination({
+    filterOptions,
+    paginationOptions,
+  }: {
+    filterOptions?: FindAllReadingSessionsQueryDto;
+    paginationOptions?: IPaginationOptions;
+  }): Promise<ReadingSession[]> {
     const where: FindOptionsWhere<ReadingSessionEntity> = {};
 
     if (filterOptions?.humanBookId) {
