@@ -13,15 +13,12 @@ export class WebRtcService {
     private readonly usersService: UsersService,
   ) {}
 
-  async generateToken(
+  generateToken(
     sessionData: Pick<
       ReadingSession,
       'id' | 'humanBookId' | 'readerId' | 'story' | 'endedAt' | 'startedAt'
     >,
   ) {
-    const liber = await this.usersService.findById(sessionData.readerId);
-    const huber = await this.usersService.findById(sessionData.readerId);
-
     const appId = this.configService.getOrThrow('agora.appId', { infer: true }); // Replace it with your Agora App ID
     const appCertificate = this.configService.getOrThrow(
       'agora.appCertificate',
@@ -33,11 +30,11 @@ export class WebRtcService {
     const role = RtcRole.PUBLISHER;
     const expiredTime =
       sessionData.startedAt.getTime() - new Date().getTime() + 1800;
-    const token = RtcTokenBuilder.buildTokenWithUserAccount(
+    const token = RtcTokenBuilder.buildTokenWithUid(
       appId,
       appCertificate,
-      sessionData.id.toString(),
-      huber?.email + '-' + liber?.email,
+      `session-${sessionData.id}`,
+      0,
       role,
       expiredTime,
       expiredTime,

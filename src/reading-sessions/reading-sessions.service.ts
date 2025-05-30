@@ -155,8 +155,8 @@ export class ReadingSessionsService {
     const session = await this.findOneSession(id);
 
     if (dto.sessionStatus === 'approved') {
-      const registeredMeeting = await this.webRtcService.generateToken(session);
-      session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=${session.id}&token=${registeredMeeting.token}`;
+      const registeredMeeting = this.webRtcService.generateToken(session);
+      session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=session-${session.id}&token=${registeredMeeting.token}`;
     }
 
     if (
