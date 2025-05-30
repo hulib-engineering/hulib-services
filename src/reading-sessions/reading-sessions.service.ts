@@ -16,6 +16,7 @@ import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-se
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
 import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { User } from '../users/domain/user';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@config/config.type';
 import { WebRtcService } from '../web-rtc/web-rtc.service';
@@ -108,8 +109,6 @@ export class ReadingSessionsService {
     if (overlap) {
       throw new UnprocessableEntityException({
         status: 422,
-        message:
-          'Khung giờ bạn chọn đã bị trùng với một phiên đọc khác trong ngày này. Vui lòng chọn thời gian khác.',
         errors: {
           sessionOverlap:
             'Session time overlaps with another session on the same day.',
@@ -120,7 +119,12 @@ export class ReadingSessionsService {
 
   async findAllSessions(
     queryDto: FindAllReadingSessionsQueryDto,
+    userId: User['id'],
   ): Promise<ReadingSession[]> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
     let paginationOptions: { page: number; limit: number } | undefined =
       undefined;
     if (queryDto.limit && queryDto.offset) {
@@ -149,22 +153,52 @@ export class ReadingSessionsService {
     dto: UpdateReadingSessionDto,
   ): Promise<ReadingSession> {
     const session = await this.findOneSession(id);
+
     if (dto.sessionStatus === 'approved') {
       const registeredMeeting = this.webRtcService.generateToken(session);
-      session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=${registeredMeeting.channelName}&token=${registeredMeeting.token}`;
+      session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=session-${session.id}&token=${registeredMeeting.token}`;
     }
+
+    if (
+      session.sessionStatus === ReadingSessionStatus.APPROVED &&
+      dto.presurvey
+    ) {
+      await this.storyReviewsService.create({
+        rating: 0,
+        preRating: dto.presurvey[1].rating,
+        title: '',
+        comment: '',
+        userId: session.readerId,
+        storyId: session.storyId,
+      });
+      await this.readingSessionRepository.update(id, {
+        preRating: dto.presurvey[2].rating,
+      });
+      await this.usersService.addFeedback(
+        session.readerId,
+        session.humanBookId,
+        {
+          preRating: dto.presurvey[3].rating,
+          rating: 0,
+        },
+      );
+    }
+
     if (dto.sessionStatus === 'finished') {
       if (!!dto.sessionFeedback) {
-        await this.storyReviewsService.create({
+        await this.readingSessionRepository.update(id, {
           ...dto.sessionFeedback,
-          title: '',
-          comment: dto.sessionFeedback.content ?? '',
-          userId: session.readerId,
-          storyId: session.storyId,
+        });
+      }
+      if (!!dto.storyReview) {
+        const { content, ...rest } = dto.storyReview;
+        await this.storyReviewsService.update(session.storyId, {
+          ...rest,
+          comment: content,
         });
       }
       if (!!dto.huberFeedback) {
-        await this.usersService.addFeedback(
+        await this.usersService.editFeedback(
           session.readerId,
           session.humanBookId,
           dto.huberFeedback,

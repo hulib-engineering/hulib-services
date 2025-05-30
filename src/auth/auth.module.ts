@@ -10,12 +10,14 @@ import { MailModule } from '@mail/mail.module';
 import { SessionModule } from '@session/session.module';
 import { UsersModule } from '@users/users.module';
 import { TopicsModule } from '@topics/topics.module';
+import { CaslModule } from '@casl/casl.module';
 
 @Module({
   imports: [
     UsersModule,
     SessionModule,
     PassportModule,
+    CaslModule,
     MailModule,
     TopicsModule,
     JwtModule.register({}),

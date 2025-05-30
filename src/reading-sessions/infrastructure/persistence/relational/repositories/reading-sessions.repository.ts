@@ -1,7 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, MoreThan, Between } from 'typeorm';
-import { ReadingSessionEntity } from '../entities/reading-session.entity';
+import {
+  Repository,
+  FindOptionsWhere,
+  MoreThan,
+  Between,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+} from 'typeorm';
+import {
+  ReadingSessionEntity,
+  ReadingSessionStatus,
+} from '../entities/reading-session.entity';
 import { ReadingSession } from '@reading-sessions/domain';
 import { ReadingSessionMapper } from '../mappers/reading-sessions.mapper';
 import { IPaginationOptions } from '@utils/types/pagination-options';
@@ -70,17 +80,19 @@ export class ReadingSessionRepository {
 
     if (filterOptions?.upcoming) {
       where.startedAt = MoreThan(new Date());
+      where.sessionStatus = ReadingSessionStatus.APPROVED;
     }
 
-    where.startedAt = Between(
-      filterOptions?.startedAt
-        ? new Date(filterOptions.startedAt)
-        : new Date(0),
-      filterOptions?.endedAt
-        ? new Date(filterOptions.endedAt)
-        : new Date(new Date().getTime() + 1000 * 60 * 60 * 24),
-    );
-
+    if (filterOptions?.startedAt && filterOptions?.endedAt) {
+      where.startedAt = Between(
+        new Date(filterOptions.startedAt),
+        new Date(filterOptions.endedAt),
+      );
+    } else if (filterOptions?.startedAt) {
+      where.startedAt = MoreThanOrEqual(new Date(filterOptions.startedAt));
+    } else if (filterOptions?.endedAt) {
+      where.startedAt = LessThanOrEqual(new Date(filterOptions.endedAt));
+    }
     const findOptions: any = {
       where: [
         { ...where, humanBookId: filterOptions?.userId },
@@ -88,6 +100,12 @@ export class ReadingSessionRepository {
       ],
       relations: ['humanBook', 'reader', 'story'],
     };
+    if (filterOptions?.upcoming) {
+      findOptions.order = {
+        startedAt: 'ASC',
+      };
+      findOptions.take = 1;
+    }
 
     if (paginationOptions) {
       findOptions.skip = (paginationOptions.page - 1) * paginationOptions.limit;

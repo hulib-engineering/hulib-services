@@ -15,10 +15,10 @@ export class StoryReviewSeedService {
         Array.from({ length: 25 }, (_, i) => i + 1).map((id) =>
           this.prisma.storyReview.create({
             data: {
-              id,
               title: `Story ${id}`,
               comment: this.getCommentForId(id),
-              rating: 4,
+              preRating: 4,
+              rating: 5,
               userId: user?.id ?? 1,
               storyId: 1,
               createdAt: new Date(

@@ -11,6 +11,8 @@ import {
   Patch,
   UseGuards,
   SerializeOptions,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -18,6 +20,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiCreatedResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { ReadingSessionsService } from './reading-sessions.service';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
@@ -49,6 +52,8 @@ export class ReadingSessionsController {
   ) {}
 
   @Post()
+  @Roles(RoleEnum.reader, RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiOperation({ summary: 'Create a new reading session' })
   @ApiCreatedResponse({
     type: ReadingSession,
@@ -57,31 +62,33 @@ export class ReadingSessionsController {
     return this.readingSessionsService.createSession(dto);
   }
 
-  @Get()
-  @Roles(RoleEnum.reader, RoleEnum.humanBook, RoleEnum.admin)
-  @CheckAbilities((ability) => ability.can(Action.Read, 'ReadingSession'))
-  @UseGuards(AuthGuard('jwt'), RolesGuard, CaslGuard)
   @ApiOperation({ summary: 'Query many reading sessions' })
   @ApiResponse({ type: [ReadingSessionResponseDto] })
+  @Get()
+  @CheckAbilities((ability) => ability.can(Action.Read, 'ReadingSession'))
+  @UseGuards(AuthGuard('jwt'), CaslGuard)
   async findAllSessions(
     @Query() queryDto: FindAllReadingSessionsQueryDto,
     @Request() request,
   ): Promise<ReadingSessionResponseDto[]> {
-    return this.readingSessionsService.findAllSessions({
-      ...queryDto,
-      userId: request.user.id,
-    });
+    return this.readingSessionsService.findAllSessions(
+      queryDto,
+      request.user.id,
+    );
   }
 
+  @ApiResponse({ type: ReadingSessionResponseDto })
   @SerializeOptions({
     excludePrefixes: ['__'],
   })
-  @Get('me')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Find all reading sessions of current user' })
   @Get(':id')
-  @ApiOperation({ summary: 'Find one reading session' })
-  @ApiResponse({ type: ReadingSessionResponseDto })
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
   async findOneSession(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ReadingSessionResponseDtoWithRelations> {
@@ -93,12 +100,12 @@ export class ReadingSessionsController {
     ]) as ReadingSessionResponseDtoWithRelations;
   }
 
-  @Patch(':id')
   @ApiOperation({
     summary:
       'Update a reading session status (finished | unInitialized | canceled | pending | rejected | approved)',
   })
   @ApiResponse({ type: ReadingSessionResponseDto })
+  @Patch(':id')
   async updateSession(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateReadingSessionDto,
@@ -106,8 +113,8 @@ export class ReadingSessionsController {
     return this.readingSessionsService.updateSession(id, dto);
   }
 
-  @Delete(':id')
   @ApiOperation({ summary: 'Delete a reading session' })
+  @Delete(':id')
   async deleteSession(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.readingSessionsService.deleteSession(id);
   }

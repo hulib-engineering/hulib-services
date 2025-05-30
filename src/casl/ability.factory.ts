@@ -1,6 +1,7 @@
 import {
   AbilityBuilder,
   ExtractSubjectType,
+  FieldMatcher,
   InferSubjects,
   MatchConditions,
   PureAbility,
@@ -19,11 +20,18 @@ export enum Action {
 }
 
 type Subjects = InferSubjects<
-  'User' | 'ReadingSession' | 'ReadingSessionParticipant' | 'all'
+  | 'User'
+  | 'ReadingSession'
+  | 'ReadingSessionParticipant'
+  | 'Story'
+  | 'Topic'
+  | 'all'
 >;
 
 export type AppAbility = PureAbility<[Action, Subjects], MatchConditions>;
 const lambdaMatcher = (matchConditions: MatchConditions) => matchConditions;
+const fieldMatcher: FieldMatcher = (fields) => (field) =>
+  fields.includes(field);
 
 @Injectable()
 export class CaslAbilityFactory {
@@ -32,11 +40,12 @@ export class CaslAbilityFactory {
 
     const roleId = user.role?.id;
 
+    can(Action.Update, 'User', (id) => id === user.id);
+
     if (roleId === RoleEnum.admin) {
       can(Action.Manage, 'all');
     } else if (roleId === RoleEnum.humanBook) {
       can(Action.Read, 'User');
-      can(Action.Update, 'User');
       can(Action.Create, 'ReadingSession');
       can(
         [Action.Read, Action.Update],
@@ -44,6 +53,14 @@ export class CaslAbilityFactory {
         ({ readerId, humanBookId }) =>
           readerId === user.id || humanBookId === user.id,
       );
+      can(Action.Create, 'ReadingSession');
+      can(
+        [Action.Read, Action.Update],
+        'ReadingSession',
+        ({ readerId, humanBookId }) =>
+          readerId === user.id || humanBookId === user.id,
+      );
+      // can(Action.Read, 'Topic', ['topic.id', 'topic.name']);
     } else if (roleId === RoleEnum.reader) {
       can(Action.Read, 'User');
       can(Action.Create, 'ReadingSession');
@@ -52,6 +69,7 @@ export class CaslAbilityFactory {
         'ReadingSession',
         ({ readerId }: { readerId: string | number }) => readerId === user.id,
       );
+      // can(Action.Read, 'Topic', ['topic.id', 'topic.name']);
     }
 
     // const permissions = {
@@ -86,6 +104,7 @@ export class CaslAbilityFactory {
     return build({
       detectSubjectType: (item) => item as ExtractSubjectType<Subjects>,
       conditionsMatcher: lambdaMatcher,
+      fieldMatcher,
     });
   }
 }

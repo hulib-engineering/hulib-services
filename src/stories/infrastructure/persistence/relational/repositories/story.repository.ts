@@ -1,25 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
+
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
-import { NullableType } from '@utils/types/nullable.type';
 import { Story } from '@stories/domain/story';
 import { StoryRepository } from '@stories/infrastructure/persistence/story.repository';
 import { StoryMapper } from '@stories/infrastructure/persistence/relational/mappers/story.mapper';
-import { IPaginationOptions } from '@utils/types/pagination-options';
 import {
   FilterStoryDto,
   SortStoryDto,
 } from '@stories/dto/find-all-stories.dto';
-import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { NullableType } from '@utils/types/nullable.type';
+import { IPaginationOptions } from '@utils/types/pagination-options';
 
 @Injectable()
 export class StoriesRelationalRepository implements StoryRepository {
   constructor(
     @InjectRepository(StoryEntity)
     private readonly storiesRepository: Repository<StoryEntity>,
-    @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   async create(data: Story): Promise<Story> {
@@ -36,23 +34,23 @@ export class StoriesRelationalRepository implements StoryRepository {
     sortOptions,
   }: {
     paginationOptions: IPaginationOptions;
-    filterOptions?: FilterStoryDto | null;
-    sortOptions?: SortStoryDto[] | null;
+    filterOptions?: FilterStoryDto;
+    sortOptions?: SortStoryDto[];
   }): Promise<Story[]> {
     const where: FindOptionsWhere<StoryEntity> = {};
-    if (filterOptions?.humanBookId) {
+    if (!!filterOptions?.humanBookId) {
       where.humanBook = { id: Number(filterOptions?.humanBookId) };
     }
 
-    if (filterOptions?.topicIds?.length) {
+    if (!!filterOptions?.topicIds && filterOptions?.topicIds.length) {
       where.topics = filterOptions.topicIds.map((topicId) => ({
         id: topicId,
       }));
     }
 
-    if (filterOptions?.publishStatus) {
-      where.publishStatus = filterOptions.publishStatus;
-    }
+    // if (!!filterOptions?.publishStatus) {
+    //   where.publishStatus = filterOptions.publishStatus;
+    // }
 
     const entities = await this.storiesRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
@@ -65,35 +63,20 @@ export class StoriesRelationalRepository implements StoryRepository {
         }),
         {},
       ),
-      // relations: ['humanBook', 'topics', 'humanBook.topics'],
-      relations: {
-        topics: true,
-      },
-    });
-
-    const huber = await this.userRepository.find({
-      where: {
-        id: In(
-          entities
-            .map((entity) => entity.humanBook?.id)
-            .filter((id): id is number => id !== undefined),
-        ),
-      },
-      relations: {
-        topics: true,
-      },
     });
 
     const stories = entities.map((entity) => StoryMapper.toDomain(entity));
+    // add field countTopics to each story
+    for (const story of stories) {
+      const storyTopics = await this.storiesRepository.findOne({
+        where: { id: story.id },
+        relations: {
+          topics: true,
+        },
+      });
 
-    // add field countTopics to story
-    stories.forEach((story) => {
-      const countTopics = huber.reduce(
-        (acc, user) => acc + (user.topics?.length || 0),
-        0,
-      );
-      story.humanBook.countTopics = countTopics;
-    });
+      story.topics = storyTopics?.topics;
+    }
 
     return stories;
   }

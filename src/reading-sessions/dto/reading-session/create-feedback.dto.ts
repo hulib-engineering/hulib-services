@@ -2,6 +2,9 @@ import { IsNumber, IsOptional, IsString, IsDate } from 'class-validator';
 
 export class CreateFeedbackDto {
   @IsNumber()
+  preRating: number;
+
+  @IsNumber()
   rating: number;
 
   @IsOptional()

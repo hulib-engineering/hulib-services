@@ -11,6 +11,7 @@ import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity({
   name: 'topics',
@@ -26,10 +27,12 @@ export class TopicsEntity extends EntityRelationalHelper {
 
   @ApiProperty()
   @CreateDateColumn()
+  @Exclude({ toPlainOnly: true })
   createdAt: Date;
 
   @ApiProperty()
   @UpdateDateColumn()
+  @Exclude({ toPlainOnly: true })
   updatedAt: Date;
 
   @ManyToMany(() => UserEntity)

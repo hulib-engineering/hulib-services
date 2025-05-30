@@ -7,11 +7,14 @@ import {
   Param,
   Query,
   Delete,
+  UseGuards,
+  SerializeOptions,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
 import {
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
@@ -24,14 +27,17 @@ import {
 } from '@utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
-import { DEFAULT_LIMIT } from '../utils/dto/pagination-input.dto';
-import { DEFAULT_PAGE } from '../utils/dto/pagination-input.dto';
+import { DEFAULT_LIMIT } from '@utils/dto/pagination-input.dto';
+import { DEFAULT_PAGE } from '@utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { PublishStatus } from './status.enum';
+import { AuthGuard } from '@nestjs/passport';
+import { Roles } from '@roles/roles.decorator';
+import { RoleEnum } from '@roles/roles.enum';
+import { RolesGuard } from '@roles/roles.guard';
 
 @ApiTags('Stories')
-// @ApiBearerAuth()
-// @UseGuards(AuthGuard('jwt'))
+@ApiBearerAuth()
 @Controller({
   path: 'stories',
   version: '1',
@@ -43,6 +49,8 @@ export class StoriesController {
   ) {}
 
   @Post()
+  @Roles(RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiCreatedResponse({
     type: Story,
   })
@@ -50,18 +58,21 @@ export class StoriesController {
     return this.storiesService.create(createStoriesDto);
   }
 
+  @SerializeOptions({
+    groups: ['admin'],
+    excludePrefixes: ['__'],
+  })
   @Get()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({
     type: InfinityPaginationResponse(Story),
   })
   async findAll(
     @Query() query: FindAllStoriesDto,
   ): Promise<InfinityPaginationResponseDto<Story>> {
-    const {
-      page = DEFAULT_PAGE,
-      limit = DEFAULT_LIMIT,
-      sort: sortOptions,
-    } = query || {};
+    const page = query.page ?? DEFAULT_PAGE;
+    const limit = query.limit ?? DEFAULT_LIMIT;
+
     return infinityPagination(
       await this.storiesService.findAllWithPagination({
         paginationOptions: {
@@ -73,12 +84,8 @@ export class StoriesController {
           topicIds: query.topicIds,
           publishStatus: query.publishStatus || PublishStatus.published,
         },
-        sortOptions: sortOptions ? [sortOptions] : [],
       }),
-      {
-        page,
-        limit,
-      },
+      { page, limit },
     );
   }
 

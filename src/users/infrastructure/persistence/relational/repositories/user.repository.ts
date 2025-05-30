@@ -4,7 +4,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { NullableType } from '@utils/types/nullable.type';
-import { FilterUserDto, SortUserDto } from '@users/dto/query-user.dto';
+import {
+  FilterUserDto,
+  QueryUserDto,
+  SortUserDto,
+} from '@users/dto/query-user.dto';
 import { User } from '@users/domain/user';
 import { UserRepository } from '@users/infrastructure/persistence/user.repository';
 import { UserMapper } from '@users/infrastructure/persistence/relational/mappers/user.mapper';
@@ -31,31 +35,32 @@ export class UsersRelationalRepository implements UserRepository {
     sortOptions,
     paginationOptions,
   }: {
-    filterOptions?: FilterUserDto | null;
+    filterOptions?: (FilterUserDto & Pick<QueryUserDto, 'role'>) | null;
     sortOptions?: SortUserDto[] | null;
     paginationOptions: IPaginationOptions;
   }): Promise<User[]> {
     const where: FindOptionsWhere<UserEntity> = {};
 
-    // Kiểm tra và áp dụng điều kiện lọc theo role.id
-    if (filterOptions?.roles?.length) {
-      where.role = filterOptions.roles.map((role) => ({
-        id: role.id, // Lọc theo role.id cụ thể
-      }));
+    if (filterOptions?.role) {
+      where.role = {
+        id:
+          filterOptions.role === 'huber' ? RoleEnum.humanBook : RoleEnum.reader,
+      };
     }
 
-    // Lọc theo các topic mà người dùng quan tâm
-    if (filterOptions?.topicsOfInterest?.length) {
+    if (
+      filterOptions?.topicsOfInterest &&
+      filterOptions?.topicsOfInterest?.length
+    ) {
       where.topics = filterOptions.topicsOfInterest.map((topicId) => ({
         id: topicId,
       }));
     }
 
-    // Truy vấn cơ sở dữ liệu
     const entities = await this.usersRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
-      where: where,
+      where,
       order: sortOptions?.reduce(
         (accumulator, sort) => ({
           ...accumulator,

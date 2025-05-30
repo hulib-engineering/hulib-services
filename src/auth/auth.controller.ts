@@ -8,7 +8,6 @@ import {
   Post,
   UseGuards,
   Patch,
-  Delete,
   SerializeOptions,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -28,6 +27,9 @@ import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { AuthValidateEmailDto } from './dto/auth-validate-email.dto';
 import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
+import { CheckAbilities } from '@casl/decorators/casl.decorator';
+import { Action } from '@casl/ability.factory';
+import { CaslGuard } from '@casl/guards/casl.guard';
 
 @ApiTags('Auth')
 @Controller({
@@ -39,6 +41,7 @@ export class AuthController {
 
   @SerializeOptions({
     groups: ['me'],
+    excludePrefixes: ['__'],
   })
   @Post('email/login')
   @ApiOkResponse({
@@ -112,9 +115,11 @@ export class AuthController {
   @ApiBearerAuth()
   @SerializeOptions({
     groups: ['me'],
+    excludePrefixes: ['__'],
   })
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
+  @CheckAbilities((ability) => ability.can(Action.Read, 'User'))
+  @UseGuards(AuthGuard('jwt'), CaslGuard)
   @ApiOkResponse({
     type: User,
   })
@@ -155,7 +160,8 @@ export class AuthController {
     groups: ['me'],
   })
   @Patch('me')
-  @UseGuards(AuthGuard('jwt'))
+  @CheckAbilities((ability) => ability.can(Action.Update, 'User'))
+  @UseGuards(AuthGuard('jwt'), CaslGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     type: User,
@@ -167,13 +173,13 @@ export class AuthController {
     return this.service.update(request.user, userDto);
   }
 
-  @ApiBearerAuth()
-  @Delete('me')
-  @UseGuards(AuthGuard('jwt'))
-  @HttpCode(HttpStatus.NO_CONTENT)
-  public async delete(@Request() request): Promise<void> {
-    return this.service.softDelete(request.user);
-  }
+  // @ApiBearerAuth()
+  // @Delete('me')
+  // @UseGuards(AuthGuard('jwt'))
+  // @HttpCode(HttpStatus.NO_CONTENT)
+  // public async delete(@Request() request): Promise<void> {
+  //   return this.service.softDelete(request.user);
+  // }
 
   @ApiBearerAuth()
   @Patch('upgrade/me')
@@ -201,15 +207,4 @@ export class AuthController {
       createHumanBooksDto,
     );
   }
-
-  // @ApiBearerAuth()
-  // @Patch('update/human-books')
-  // @UseGuards(AuthGuard('jwt'))
-  // @HttpCode(HttpStatus.OK)
-  // public updateHumanBooks(
-  //   @Request() request,
-  //   @Body() updateHumanBooksDto: UpdateHumanBooksDto,
-  // ): Promise<User | null> {
-  //   return this.service.updateHumanBook(request.user.id, updateHumanBooksDto);
-  // }
 }
