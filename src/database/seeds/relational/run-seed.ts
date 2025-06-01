@@ -9,6 +9,7 @@ import { ReadingSessionSeedService } from './reading-session/reading-session-see
 import { StorySeedService } from '@database/seeds/relational/story/story-seed.service';
 import { TimeSlotSeedService } from '@database/seeds/relational/time-slot/time-slot-seed.service';
 import { TopicSeedService } from '@database/seeds/relational/topic/topic-seed.service';
+import { notificationSeedService } from './notification/notification-seed.service';
 // import { StoryReviewSeedService } from './story-review/story-review-seed.service';
 // import { StorySeedService } from './story/story-seed.service';
 
@@ -26,6 +27,7 @@ const runSeed = async () => {
   await app.get(TimeSlotSeedService).run();
   await app.get(ReadingSessionSeedService).run();
   // await app.get(storyFavouritesSeedService).run();
+  await app.get(notificationSeedService).run();
 
   await app.close();
 };

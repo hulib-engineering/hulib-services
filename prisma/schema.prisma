@@ -114,7 +114,8 @@ model user {
   storyReview       storyReview[]
   stories           story[]
   storyFavorite     storyFavorite[]
-
+  notificationsReceived    notification[]  @relation("NotificationRecipient")
+  notificationsSent        notification[]  @relation("NotificationSender")
   huberReadingSessions readingSession[] @relation("HumanBookRelation")
 
   timeSlots timeSlot[]
@@ -145,7 +146,7 @@ model story {
   storyFavorite storyFavorite[]
   storyReview   storyReview[]
   topics        storyTopic[]
-
+  notifications notification[]
   readingSession readingSession[]
 }
 
@@ -269,4 +270,32 @@ model message {
   createdAt DateTime  @default(now()) @db.Timestamp(6)
   updatedAt DateTime  @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
+}
+
+
+enum notifType {
+  sessionRequest
+  account
+  contentModeration
+  other
+}
+
+model notification {
+  id              Int        @id @default(autoincrement())
+
+  recipientId     Int
+  recipient       user       @relation("NotificationRecipient", fields: [recipientId], references: [id])
+
+  senderId        Int
+  sender          user       @relation("NotificationSender", fields: [senderId], references: [id])
+
+  type            notifType  @default(sessionRequest)
+  seen            Boolean    @default(false)
+
+  relatedEntityId Int?
+  relatedEntity   story?     @relation(fields: [relatedEntityId], references: [id])
+
+  createdAt       DateTime   @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime   @default(now()) @db.Timestamp(6)
+  deletedAt       DateTime?
 }
