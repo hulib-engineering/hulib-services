@@ -19,7 +19,7 @@ import { UserEntity } from '@users/infrastructure/persistence/relational/entitie
 import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
 import { PublishStatus } from '@stories/status.enum';
 import { ReadingSessionEntity } from '@reading-sessions/infrastructure/persistence/relational/entities';
-
+import { notificationEntity } from '../../../../../notifications/infrastructure/persistence/relational/entities/notification.entity';
 @Entity({
   name: 'story',
 })
@@ -101,4 +101,10 @@ export class StoryEntity extends EntityRelationalHelper {
     (readingSession) => readingSession.story,
   )
   readingSessions: ReadingSessionEntity[];
+
+  @OneToMany(
+    () => notificationEntity,
+    (notification) => notification.relatedEntity,
+  )
+  notifications: Notification[];
 }
