@@ -92,4 +92,15 @@ export class HubersService {
       },
     });
   }
+
+  async getHuberSessions(id: Huber['id']) {
+    const huberReadingSessions = await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        huberReadingSessions: true,
+      },
+    });
+
+    return huberReadingSessions?.huberReadingSessions;
+  }
 }
