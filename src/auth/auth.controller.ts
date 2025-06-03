@@ -173,14 +173,6 @@ export class AuthController {
     return this.service.update(request.user, userDto);
   }
 
-  // @ApiBearerAuth()
-  // @Delete('me')
-  // @UseGuards(AuthGuard('jwt'))
-  // @HttpCode(HttpStatus.NO_CONTENT)
-  // public async delete(@Request() request): Promise<void> {
-  //   return this.service.softDelete(request.user);
-  // }
-
   @ApiBearerAuth()
   @Patch('upgrade/me')
   @UseGuards(AuthGuard('jwt'))
