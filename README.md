@@ -1,4 +1,4 @@
-# HuLib Repository
+# HuLib BE Repo
 
 ![image](https://res.cloudinary.com/doyfmg4kx/image/upload/v1748573381/Hulib_gnt6jm.png)
 

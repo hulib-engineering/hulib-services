@@ -145,35 +145,6 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  // public id
-  // @ApiOkResponse({ type: GetAuthorDetailByIdDto })
-  // @Get('author/:id')
-  // @HttpCode(HttpStatus.OK)
-  // @ApiParam({
-  //   name: 'id',
-  //   type: String,
-  //   required: true,
-  // })
-  // async getAuthorDetailById(
-  //   @Param('id') id: User['id'],
-  // ): Promise<GetAuthorDetailByIdDto> {
-  //   return this.usersService.getAuthorDetailById(id);
-  // }
-
-  // @ApiOkResponse({
-  //   type: User,
-  // })
-  // @Put('update-profile')
-  // @UseGuards(AuthGuard('jwt'))
-  // @HttpCode(HttpStatus.OK)
-  // updateProfile(
-  //   @Request() request,
-  //   @Body() updateProfileDto: UpdateUserDto,
-  // ): Promise<User | null> {
-  //   console.log('request.user.id', request.user.id);
-  //   return this.usersService.update(request.user.id, updateProfileDto);
-  // }
-
   @Post(':id/upgrade')
   @ApiParam({
     name: 'id',
