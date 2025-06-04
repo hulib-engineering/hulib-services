@@ -16,6 +16,8 @@ import { PrismaModule } from '@prisma-client/prisma-client.module';
 import { StorySeedModule } from './story/story-seed.module';
 import { ReadingSessionSeedModule } from './reading-session/reading-session-seed.module';
 import { TimeSlotSeedModule } from '@database/seeds/relational/time-slot/time-slot-seed.module';
+import { NotificationSeedModule } from './notification/notification-seed.module';
+import { NotificationTypeSeedModule } from './notification-type/notification-type-seed.module';
 // import { storyFavouritesSeedModule } from './story-favourites/story-favourites-seed.module';
 
 @Module({
@@ -30,6 +32,8 @@ import { TimeSlotSeedModule } from '@database/seeds/relational/time-slot/time-sl
     // StoryReviewSeedModule,
     TimeSlotSeedModule,
     ReadingSessionSeedModule,
+    NotificationTypeSeedModule,
+    NotificationSeedModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig, appConfig],
