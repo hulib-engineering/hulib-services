@@ -7,12 +7,10 @@
 - [Generate resource](#generate-resource)
   - [For document oriented database (MongoDB + Mongoose)](#for-document-oriented-database-mongodb--mongoose)
   - [For relational database (PostgreSQL + TypeORM)](#for-relational-database-postgresql--typeorm)
-    - [Video guideline for relational database (PostgreSQL + TypeORM)](#video-guideline-for-relational-database-postgresql--typeorm)
   - [For both databases](#for-both-databases)
 - [Add property to resource](#add-property-to-resource)
   - [Property for document oriented database (MongoDB + Mongoose)](#property-for-document-oriented-database-mongodb--mongoose)
   - [Property for relational database (PostgreSQL + TypeORM)](#property-for-relational-database-postgresql--typeorm)
-    - [Video guideline how to add property for relational database (PostgreSQL + TypeORM)](#video-guideline-how-to-add-property-for-relational-database-postgresql--typeorm)
   - [Property for both databases](#property-for-both-databases)
 
 ---
@@ -74,10 +72,6 @@ npm run add:property:to-document
 ```bash
 npm run add:property:to-relational
 ```
-
-#### Video guideline how to add property for relational database (PostgreSQL + TypeORM)
-
-<https://github.com/user-attachments/assets/95b9d70a-70cf-442a-b8bf-a73d32810e0c>
 
 ### Property for both databases
 

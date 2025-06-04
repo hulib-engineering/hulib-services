@@ -12,7 +12,6 @@
 - [Auth via Twitter](#auth-via-twitter)
 - [About JWT strategy](#about-jwt-strategy)
 - [Refresh token flow](#refresh-token-flow)
-  - [Video example](#video-example)
 - [Logout](#logout)
 
 ---

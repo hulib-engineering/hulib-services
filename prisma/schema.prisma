@@ -1,12 +1,13 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
+  unaccent        = true
 }
 
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [uuidOssp(map: "uuid-ossp")]
+  extensions = [uuid_ossp(map: "uuid-ossp"), unaccent]
 }
 
 model file {
