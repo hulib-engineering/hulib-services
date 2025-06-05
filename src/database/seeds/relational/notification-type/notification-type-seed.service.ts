@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { NotificationTypeEnum } from '../../../../notifications/notification-type.enum';
 
 @Injectable()
 export class NotificationTypeSeedService {
   constructor(private prisma: PrismaService) {}
 
   async run() {
-    const types = [
-      'sessionRequest',
-      'account',
-      'reviewStory',
-      'publishStory',
-      'other',
+    const types: NotificationTypeEnum[] = [
+      NotificationTypeEnum.sessionRequest,
+      NotificationTypeEnum.account,
+      NotificationTypeEnum.reviewStory,
+      NotificationTypeEnum.publishStory,
+      NotificationTypeEnum.other,
     ];
     const res = await this.prisma.notificationType.createMany({
       data: types.map((name) => ({ name })),
