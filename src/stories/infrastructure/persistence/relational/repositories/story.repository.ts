@@ -13,6 +13,7 @@ import {
 import { NullableType } from '@utils/types/nullable.type';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { PublishStatus } from '../../../../status.enum';
+import { fa } from '@faker-js/faker/.';
 
 @Injectable()
 export class StoriesRelationalRepository implements StoryRepository {
@@ -48,18 +49,17 @@ export class StoriesRelationalRepository implements StoryRepository {
         id: topicId,
       }));
     }
-
     // if (!!filterOptions?.publishStatus) {
     //   where.publishStatus = filterOptions.publishStatus;
     // }
-    if (filterOptions?.publishStatus) {
-      where.publishStatus = Not(PublishStatus.deleted);
-    }
 
     const entities = await this.storiesRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
-      where,
+      where: {
+        ...where,
+        publishStatus: Not(PublishStatus.deleted),
+      },
       order: sortOptions?.reduce(
         (accumulator, sort) => ({
           ...accumulator,
