@@ -1,3 +1,24 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+
 export class CreateNotificationDto {
-  // Don't forget to use the class-validator decorators in the DTO properties.
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  recipientId: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  senderId: number;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  type: string;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  relatedEntityId?: number;
 }

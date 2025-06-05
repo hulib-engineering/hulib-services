@@ -1,11 +1,28 @@
-import { Controller, Get, UseGuards, Query, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Query,
+  Request,
+  Post,
+  Body,
+} from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Notification } from './domain/notification';
 import { AuthGuard } from '@nestjs/passport';
 import { InfinityPaginationResponse } from '../utils/dto/infinity-pagination-response.dto';
 import { FindAllNotificationsDto } from './dto/find-all-notifications.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
+import { CreateNotificationDto } from './dto/create-notification.dto';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
+import { RolesGuard } from '../roles/roles.guard';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
@@ -37,5 +54,16 @@ export class NotificationsController {
       }),
       { page, limit },
     );
+  }
+
+  @Post()
+  @ApiOperation({
+    summary:
+      'Create Notification. Add relatedEntityId for story notification types (reviewStory, publishStory) else it will be null',
+  })
+  @Roles(RoleEnum.admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  create(@Body() body: CreateNotificationDto) {
+    return this.notificationsService.create(body);
   }
 }
