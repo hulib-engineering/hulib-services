@@ -98,43 +98,6 @@ export class NotificationsService {
         typeId: type.id,
         relatedEntityId: data.relatedEntityId ?? null,
       },
-      include: {
-        type: true,
-        recipient: {
-          select: {
-            id: true,
-            fullName: true,
-            file: {
-              select: {
-                path: true,
-              },
-            },
-          },
-        },
-        sender: {
-          select: {
-            id: true,
-            fullName: true,
-            file: {
-              select: {
-                path: true,
-              },
-            },
-          },
-        },
-        relatedEntity: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
-      },
-      omit: {
-        typeId: true,
-        recipientId: true,
-        senderId: true,
-        relatedEntityId: true,
-      },
     });
   }
 }
