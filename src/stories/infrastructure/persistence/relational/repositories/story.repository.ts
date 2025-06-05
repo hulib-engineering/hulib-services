@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, Not, Repository } from 'typeorm';
 
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 import { Story } from '@stories/domain/story';
@@ -12,6 +12,7 @@ import {
 } from '@stories/dto/find-all-stories.dto';
 import { NullableType } from '@utils/types/nullable.type';
 import { IPaginationOptions } from '@utils/types/pagination-options';
+import { PublishStatus } from '../../../../status.enum';
 
 @Injectable()
 export class StoriesRelationalRepository implements StoryRepository {
@@ -51,6 +52,9 @@ export class StoriesRelationalRepository implements StoryRepository {
     // if (!!filterOptions?.publishStatus) {
     //   where.publishStatus = filterOptions.publishStatus;
     // }
+    if (filterOptions?.publishStatus) {
+      where.publishStatus = Not(PublishStatus.deleted);
+    }
 
     const entities = await this.storiesRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
