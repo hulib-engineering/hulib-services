@@ -56,7 +56,10 @@ export class StoriesRelationalRepository implements StoryRepository {
     const entities = await this.storiesRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
-      where,
+      where: {
+        ...where,
+        publishStatus: Not(PublishStatus.deleted),
+      },
       order: sortOptions?.reduce(
         (accumulator, sort) => ({
           ...accumulator,
