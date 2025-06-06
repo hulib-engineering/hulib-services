@@ -100,4 +100,26 @@ export class NotificationsService {
       },
     });
   }
+
+  async updateSeenNotification({
+    id,
+    recipientId,
+  }: {
+    id: number;
+    recipientId: number;
+  }) {
+    await this.prisma.notification.update({
+      where: {
+        id,
+        recipientId,
+      },
+      data: {
+        seen: true,
+      },
+    });
+
+    return {
+      message: 'Update notification successfully',
+    };
+  }
 }

@@ -6,12 +6,17 @@ import {
   Request,
   Post,
   Body,
+  Param,
+  Patch,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { Notification } from './domain/notification';
@@ -65,5 +70,24 @@ export class NotificationsController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   create(@Body() body: CreateNotificationDto) {
     return this.notificationsService.create(body);
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Update Seen Notification',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @HttpCode(HttpStatus.ACCEPTED)
+  updateSeenNotification(@Request() request, @Param('id') id: number) {
+    const userId = request.user.id;
+
+    return this.notificationsService.updateSeenNotification({
+      id,
+      recipientId: userId,
+    });
   }
 }
