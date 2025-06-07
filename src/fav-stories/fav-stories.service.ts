@@ -18,10 +18,12 @@ export class FavStoriesService {
     });
 
     if (!favorites.length) {
-      return {
-        message: 'No favorites found',
-        data: [],
-      };
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          message: 'No favorite stories found for this user',
+        },
+      });
     }
 
     return favorites.map((favorite) => favorite.story);
@@ -83,9 +85,14 @@ export class FavStoriesService {
       },
     });
 
-    return {
-      message: 'Favorite added successfully',
-      data: favorite,
-    };
+    if (!favorite) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          message: 'Failed to save favorite story',
+        },
+      });
+    }
+    return favorite;
   }
 }
