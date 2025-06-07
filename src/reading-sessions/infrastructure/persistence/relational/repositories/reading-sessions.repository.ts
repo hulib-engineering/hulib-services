@@ -7,6 +7,7 @@ import {
   Between,
   LessThanOrEqual,
   MoreThanOrEqual,
+  In,
 } from 'typeorm';
 import {
   ReadingSessionEntity,
@@ -74,8 +75,14 @@ export class ReadingSessionRepository {
       where.readerId = filterOptions.readerId;
     }
 
-    if (filterOptions?.sessionStatus) {
-      where.sessionStatus = filterOptions.sessionStatus;
+    if (filterOptions?.sessionStatuses?.length) {
+      where.sessionStatus = In(filterOptions.sessionStatuses);
+    } else {
+      // Default to only pending and approved sessions
+      where.sessionStatus = In([
+        ReadingSessionStatus.PENDING,
+        ReadingSessionStatus.APPROVED,
+      ]);
     }
 
     if (filterOptions?.upcoming) {
