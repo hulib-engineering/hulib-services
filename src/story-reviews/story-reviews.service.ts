@@ -44,6 +44,17 @@ export class StoryReviewsService {
     });
   }
 
+  async updateByUserIdAndStoryId(
+    userId: number,
+    storyId: number,
+    updateStoryReviewDto: UpdateStoryReviewDto,
+  ) {
+    return this.prisma.storyReview.updateMany({
+      where: { userId, storyId },
+      data: updateStoryReviewDto,
+    });
+  }
+
   remove(id: number) {
     return this.prisma.storyReview.delete({
       where: { id },
