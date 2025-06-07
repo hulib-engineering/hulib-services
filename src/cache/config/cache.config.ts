@@ -37,8 +37,9 @@ class EnvironmentVariablesValidator {
 
 export function getConfig(): RedisConfig {
   return {
-    host: process.env.REDIS_HOST,
-    port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
+    host: 'redis-7-alpine-ursc', // TODO: remove this
+    // port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
+    port: 6379,
     password: process.env.REDIS_PASSWORD,
     tls:
       process.env.REDIS_TLS === 'true'
