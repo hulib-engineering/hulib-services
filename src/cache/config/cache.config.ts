@@ -1,6 +1,6 @@
 import { registerAs } from '@nestjs/config';
 
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import validateConfig from '@utils/validate-config';
 import { RedisConfig } from './cache-config.type';
 
@@ -14,20 +14,25 @@ class EnvironmentVariablesValidator {
   @IsString()
   REDIS_PORT: string;
 
+  @IsOptional()
   @IsString()
-  REDIS_TLS: string;
+  REDIS_TLS?: string;
 
+  @IsOptional()
   @IsString()
-  REDIS_REJECT_UNAUTHORIZED: string;
+  REDIS_REJECT_UNAUTHORIZED?: string;
 
+  @IsOptional()
   @IsString()
-  REDIS_CA: string;
+  REDIS_CA?: string;
 
+  @IsOptional()
   @IsString()
-  REDIS_KEY: string;
+  REDIS_KEY?: string;
 
+  @IsOptional()
   @IsString()
-  REDIS_CERT: string;
+  REDIS_CERT?: string;
 }
 
 export function getConfig(): RedisConfig {
