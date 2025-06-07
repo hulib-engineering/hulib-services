@@ -14,6 +14,10 @@ class EnvironmentVariablesValidator {
   @IsString()
   REDIS_PORT: string;
 
+  @IsString()
+  @IsOptional()
+  REDIS_USERNAME?: string;
+
   @IsOptional()
   @IsString()
   REDIS_TLS?: string;
@@ -40,6 +44,7 @@ export function getConfig(): RedisConfig {
     host: 'redis-7-alpine-ursc', // TODO: remove this
     // port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
     port: 6379,
+    username: process.env.REDIS_USERNAME ?? 'default',
     password: process.env.REDIS_PASSWORD,
     tls:
       process.env.REDIS_TLS === 'true'

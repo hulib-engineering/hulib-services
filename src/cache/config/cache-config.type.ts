@@ -7,6 +7,7 @@ type RedisTlsConfig = {
 
 export type RedisConfig = {
   host?: string;
+  username?: string;
   password?: string;
   port?: number;
   tls?: RedisTlsConfig;

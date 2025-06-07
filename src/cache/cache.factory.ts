@@ -14,6 +14,7 @@ async function useCacheFactory(config: ConfigService<AllConfigType>) {
       port: config.getOrThrow('redis.port', {
         infer: true,
       }),
+      username: 'default',
       password: config.getOrThrow('redis.password', {
         infer: true,
       }),
