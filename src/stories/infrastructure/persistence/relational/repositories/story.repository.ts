@@ -60,6 +60,11 @@ export class StoriesRelationalRepository implements StoryRepository {
         ...where,
         publishStatus: Not(PublishStatus.deleted),
       },
+      relations: {
+        topics: true,
+        cover: true,
+        humanBook: true,
+      },
       order: sortOptions?.reduce(
         (accumulator, sort) => ({
           ...accumulator,
