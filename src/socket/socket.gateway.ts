@@ -13,8 +13,15 @@ import 'dotenv/config';
 import { Server, Socket } from 'socket.io';
 import { CacheService } from '../cache/cache.service';
 import { AuthGuard } from '@nestjs/passport';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
-@WebSocketGateway(0, {
+// Extend Socket to include session property
+interface SocketWithSession
+  extends Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any> {
+  session?: string;
+}
+
+@WebSocketGateway(3003, {
   cors: {
     origin: [
       'http://localhost:3000',
@@ -50,14 +57,11 @@ export class SocketGateway
     this.logger.log(`Websocket gateway initialized.`);
     this.server.use((socket: Socket, next) => {
       try {
-        // const session = await this.betterAuthService.api.getSession({
-        //   headers: fromNodeHeaders(socket?.handshake?.headers),
-        // });
-        // if (!session) {
-        //   throw new Error();
-        // }
-        // socket['session'] = session;
-        console.log(socket.handshake.headers);
+        const token = socket.handshake.headers['authorization']?.split(' ')[1];
+        if (!token) {
+          throw new Error();
+        }
+        socket['session'] = token;
         return next();
       } catch {
         return next(
@@ -114,9 +118,11 @@ export class SocketGateway
   @UseGuards(AuthGuard('jwt'))
   @SubscribeMessage('message')
   handleMessage(
-    @ConnectedSocket() socket: Socket,
+    @ConnectedSocket() socket: SocketWithSession,
     @MessageBody() _message: any,
   ) {
+    const socketSession = socket?.session;
+    console.log('Connect session', socketSession);
     console.log(
       `Received message from client: ${socket?.id}.`,
       JSON.stringify(_message, null, 2),
