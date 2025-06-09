@@ -18,12 +18,7 @@ export class FavStoriesService {
     });
 
     if (!favorites.length) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          message: 'No favorite stories found for this user',
-        },
-      });
+      return [];
     }
 
     return favorites.map((favorite) => favorite.story);

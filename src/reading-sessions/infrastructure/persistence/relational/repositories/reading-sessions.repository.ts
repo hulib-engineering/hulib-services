@@ -93,6 +93,7 @@ export class ReadingSessionRepository {
     } else if (filterOptions?.endedAt) {
       where.startedAt = LessThanOrEqual(new Date(filterOptions.endedAt));
     }
+
     const findOptions: any = {
       where: [
         { ...where, humanBookId: filterOptions?.userId },
@@ -100,6 +101,7 @@ export class ReadingSessionRepository {
       ],
       relations: ['humanBook', 'reader', 'story'],
     };
+
     if (filterOptions?.upcoming) {
       findOptions.order = {
         startedAt: 'ASC',
