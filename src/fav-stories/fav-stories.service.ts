@@ -21,7 +21,10 @@ export class FavStoriesService {
       return [];
     }
 
-    return favorites.map((favorite) => favorite.story);
+    return favorites.map((favorite) => {
+      const { id, ...rest } = favorite.story;
+      return { storyId: favorite.story.id, ...rest };
+    });
   }
 
   async removeFavoriteStory(storyId: number, userId: number) {
