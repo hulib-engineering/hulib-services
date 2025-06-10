@@ -135,7 +135,10 @@ export class ReadingSessionsService {
     }
 
     return this.readingSessionRepository.findManyWithPagination({
-      filterOptions: queryDto,
+      filterOptions: {
+        ...queryDto,
+        userId: typeof userId === 'string' ? Number(userId) : userId,
+      },
       paginationOptions,
     });
   }
