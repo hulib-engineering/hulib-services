@@ -43,6 +43,10 @@ export class NotificationsController {
   @ApiOkResponse({
     type: InfinityPaginationResponse(Notification),
   })
+  @ApiOperation({
+    summary:
+      'Get all notifications. NotificationTypeEnum: ["account",  "reviewStory",  "publishStory",  "other", "sessionRequest"]',
+  })
   async findAll(@Query() query: FindAllNotificationsDto, @Request() request) {
     const userId = request.user.id;
 
@@ -64,7 +68,7 @@ export class NotificationsController {
   @Post()
   @ApiOperation({
     summary:
-      'Create Notification. Add relatedEntityId for story notification types (reviewStory, publishStory) else it will be null',
+      'Create Notification. Add relatedEntityId for story notification types (reviewStory, publishStory) and reading session notification (sessionRequest) else it will be null.',
   })
   @Roles(RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)

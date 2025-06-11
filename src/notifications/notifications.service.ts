@@ -7,9 +7,14 @@ import { NotificationTypeEnum } from './notification-type.enum';
 
 @Injectable()
 export class NotificationsService {
+  private readonly storyRelatedNotificationTypes: string[] = [
+    NotificationTypeEnum.reviewStory,
+    NotificationTypeEnum.publishStory,
+  ];
+
   constructor(private prisma: PrismaService) {}
 
-  findAllWithPagination({
+  async findAllWithPagination({
     filterOptions,
     paginationOptions,
   }: {
@@ -18,7 +23,7 @@ export class NotificationsService {
   }) {
     const skip = (paginationOptions.page - 1) * paginationOptions.limit;
     const take = paginationOptions.limit;
-    return this.prisma.notification.findMany({
+    const notifications = await this.prisma.notification.findMany({
       where: {
         ...filterOptions,
       },
@@ -46,22 +51,51 @@ export class NotificationsService {
             },
           },
         },
-        relatedEntity: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
       },
       omit: {
         typeId: true,
         recipientId: true,
         senderId: true,
-        relatedEntityId: true,
       },
       skip,
       take,
     });
+
+    const storyRelatedNotifications = notifications.filter(
+      (n) =>
+        this.storyRelatedNotificationTypes.includes(n.type.name) &&
+        n.relatedEntityId !== null,
+    );
+
+    const storyIds = storyRelatedNotifications
+      .map((n) => n.relatedEntityId)
+      .filter((id): id is number => id !== null);
+
+    let storyMap = new Map();
+    if (storyIds.length > 0) {
+      const stories = await this.prisma.story.findMany({
+        where: { id: { in: storyIds } },
+        select: {
+          id: true,
+          title: true,
+        },
+      });
+      storyMap = new Map(stories.map((s) => [s.id, s]));
+    }
+
+    const result = notifications.map((n) => {
+      if (this.storyRelatedNotificationTypes.includes(n.type.name)) {
+        return {
+          ...n,
+          relatedEntity:
+            n.relatedEntityId !== null
+              ? storyMap.get(n.relatedEntityId) || null
+              : null,
+        };
+      }
+      return { ...n, relatedEntity: null };
+    });
+    return result;
   }
 
   async create(data: CreateNotificationDto) {
@@ -80,15 +114,22 @@ export class NotificationsService {
       throw new BadRequestException('Invalid Notification Type');
     }
 
-    const storyNotificationTypes: string[] = [
-      NotificationTypeEnum.reviewStory,
-      NotificationTypeEnum.publishStory,
-    ];
+    const isStoryNotificationType = this.storyRelatedNotificationTypes.includes(
+      type.name,
+    );
 
-    const isStoryNotificationType = storyNotificationTypes.includes(type.name);
+    const isSessionRequestNotificationType =
+      type.name === NotificationTypeEnum.sessionRequest;
 
-    if (isStoryNotificationType && !data.relatedEntityId) {
+    const isNeedRelatedEntityId =
+      isStoryNotificationType || isSessionRequestNotificationType;
+
+    if (isNeedRelatedEntityId && !data.relatedEntityId) {
       throw new BadRequestException('Related entity ID is required');
+    }
+
+    if (data.relatedEntityId) {
+      await this.verifyRelatedEntityId(type.name, data.relatedEntityId);
     }
 
     return await this.prisma.notification.create({
@@ -96,9 +137,38 @@ export class NotificationsService {
         recipientId: data.recipientId,
         senderId: data.senderId,
         typeId: type.id,
-        relatedEntityId: data.relatedEntityId ?? null,
+        relatedEntityId: isNeedRelatedEntityId ? data.relatedEntityId : null,
       },
     });
+  }
+
+  private async verifyRelatedEntityId(
+    notificationType: string,
+    relatedEntityId: number,
+  ): Promise<void> {
+    if (this.storyRelatedNotificationTypes.includes(notificationType)) {
+      const story = await this.prisma.story.findUnique({
+        where: {
+          id: relatedEntityId,
+        },
+      });
+
+      if (!story) {
+        throw new BadRequestException('Invalid story ID');
+      }
+    }
+    if (notificationType === NotificationTypeEnum.sessionRequest) {
+      const readingSession = await this.prisma.readingSession.findUnique({
+        where: {
+          id: relatedEntityId,
+          deletedAt: null,
+        },
+      });
+
+      if (!readingSession) {
+        throw new BadRequestException('Invalid reading session ID');
+      }
+    }
   }
 
   async updateSeenNotification({

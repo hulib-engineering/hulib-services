@@ -10,11 +10,13 @@ export class NotificationSeedService {
     const notificationCount = await this.prisma.notification.count();
 
     if (notificationCount < 20) {
-      const [notificationTypeList, userList, storyList] = await Promise.all([
-        this.prisma.notificationType.findMany({}),
-        this.prisma.user.findMany({}),
-        this.prisma.story.findMany({}),
-      ]);
+      const [notificationTypeList, userList, storyList, readingSessionList] =
+        await Promise.all([
+          this.prisma.notificationType.findMany({}),
+          this.prisma.user.findMany({}),
+          this.prisma.story.findMany({}),
+          this.prisma.readingSession.findMany({}),
+        ]);
 
       const notificationTypeIds = notificationTypeList.map((item) => item.id);
       const storyNotificationTypeMap = notificationTypeList.reduce(
@@ -27,12 +29,19 @@ export class NotificationSeedService {
         {},
       );
 
+      const sessionRequestNotificationTypeId = notificationTypeList.find(
+        (item) => item.name === 'sessionRequest',
+      )?.id;
       const userIds = userList.map((user) => user.id);
       const storyIds = storyList.map((story) => story.id);
+      const readingSessionIds = readingSessionList.map(
+        (readingSession) => readingSession.id,
+      );
 
       const notifications = [...Array(20)].map(() => {
         const typeId = faker.helpers.arrayElement(notificationTypeIds);
         const storyId = faker.helpers.arrayElement(storyIds);
+        const readingSessionId = faker.helpers.arrayElement(readingSessionIds);
         const recipientId = faker.helpers.arrayElement(userIds);
         const possibleSenderIds = userIds.filter((id) => id !== recipientId);
         const senderId = faker.helpers.arrayElement(possibleSenderIds);
@@ -43,7 +52,9 @@ export class NotificationSeedService {
           seen: faker.helpers.arrayElement([true, false]),
           relatedEntityId: storyNotificationTypeMap[String(typeId)]
             ? storyId
-            : null,
+            : typeId === sessionRequestNotificationTypeId
+              ? readingSessionId
+              : null,
         };
       });
 
