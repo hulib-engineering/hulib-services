@@ -6,6 +6,7 @@ import {
   Min,
   IsBoolean,
   IsDateString,
+  IsArray,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -35,11 +36,20 @@ export class FindAllReadingSessionsQueryDto {
   @ApiProperty({
     required: false,
     description: 'Filter reading sessions by their statuses',
-    default: ReadingSessionStatus.APPROVED,
+    default: [ReadingSessionStatus.PENDING, ReadingSessionStatus.APPROVED],
+    isArray: true,
+    enum: ReadingSessionStatus,
   })
   @IsOptional()
-  @IsEnum(ReadingSessionStatus)
-  sessionStatus?: ReadingSessionStatus;
+  @IsArray()
+  @IsEnum(ReadingSessionStatus, { each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return [value];
+    }
+    return value;
+  })
+  sessionStatuses?: ReadingSessionStatus[];
 
   @ApiProperty({
     required: false,
