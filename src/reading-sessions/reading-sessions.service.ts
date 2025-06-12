@@ -195,10 +195,14 @@ export class ReadingSessionsService {
       }
       if (!!dto.storyReview) {
         const { content, ...rest } = dto.storyReview;
-        await this.storyReviewsService.updateByStoryId(session.storyId, {
-          ...rest,
-          comment: content,
-        });
+        await this.storyReviewsService.updateByUserIdAndStoryId(
+          session.readerId,
+          session.storyId,
+          {
+            ...rest,
+            comment: content,
+          },
+        );
       }
       if (!!dto.huberFeedback) {
         await this.usersService.editFeedback(
