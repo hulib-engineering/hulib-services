@@ -11,14 +11,25 @@ import {
 } from '@nestjs/websockets';
 import 'dotenv/config';
 import { Server, Socket } from 'socket.io';
-import { CacheService } from '../cache/cache.service';
-import { AuthGuard } from '@nestjs/passport';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import ms from 'ms';
 
-// Extend Socket to include session property
+import { User } from '@users/domain/user';
+import { Session } from '@session/domain/session';
+
+import { SocketGuard } from './socket.guard';
+
+import { CacheService } from '../cache/cache.service';
+import { AuthService } from '@auth/auth.service';
+
+// Extend Socket to include session properties
 interface SocketWithSession
   extends Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any> {
-  session?: string;
+  session?: {
+    id: User['id'];
+    role: User['role'];
+    sessionId: Session['id'];
+  };
 }
 
 @WebSocketGateway(3003, {
@@ -47,21 +58,22 @@ export class SocketGateway
   private readonly clients: Map<string, Socket>;
 
   constructor(
+    private readonly authService: AuthService,
     private readonly cacheService: CacheService,
-    // private readonly betterAuthService: BetterAuthService,
   ) {
     this.clients = new Map();
   }
 
   afterInit(): void {
     this.logger.log(`Websocket gateway initialized.`);
-    this.server.use((socket: Socket, next) => {
+    this.server.use(async (socket: Socket, next) => {
       try {
-        const token = socket.handshake.headers['authorization']?.split(' ')[1];
-        if (!token) {
+        const token = socket.handshake.headers['authorization'];
+        const session = await this.authService.getSession(token);
+        if (!session) {
           throw new Error();
         }
-        socket['session'] = token;
+        socket['session'] = session;
         return next();
       } catch {
         return next(
@@ -73,49 +85,49 @@ export class SocketGateway
     });
   }
 
-  async handleConnection() {
-    // console.log('New a client connected: ', socket?.id);
-    // const userId = socket?.session?.user?.id as string;
-    // if (!userId) {
-    //   return;
-    // }
-    // this.clients.set(socket?.id, socket);
-    // const userClients = await this.cacheService.get<string[]>({
-    //   key: 'UserSocketClients',
-    //   args: [userId],
-    // });
-    // const clients = new Set<string>(Array.from(userClients ?? []));
-    // clients.add(socket?.id);
-    // await this.cacheService.set(
-    //   { key: 'UserSocketClients', args: [userId] },
-    //   Array.from(clients),
-    //   { ttl: ms('1h') },
-    // );
+  async handleConnection(socket: SocketWithSession) {
+    console.log('New a client connected: ', socket?.id);
+    const userId = socket?.session?.id as string;
+    if (!userId) {
+      return;
+    }
+    this.clients.set(socket?.id, socket);
+    const userClients = await this.cacheService.get<string[]>({
+      key: 'UserSocketClients',
+      args: [userId],
+    });
+    const clients = new Set<string>(Array.from(userClients ?? []));
+    clients.add(socket?.id);
+    await this.cacheService.set(
+      { key: 'UserSocketClients', args: [userId] },
+      Array.from(clients),
+      { ttl: ms('1h') },
+    );
   }
 
-  async handleDisconnect() {
-    // console.log('Client disconnected: ', socket?.id);
-    // this.clients.delete(socket?.id);
-    // const userId = socket?.session?.user?.id as string;
-    // if (!userId) {
-    //   return;
-    // }
-    // const userClients = await this.cacheService.get<string[]>({
-    //   key: 'UserSocketClients',
-    //   args: [userId],
-    // });
-    // const clients = new Set<string>(Array.from(userClients ?? []));
-    // if (clients.has(socket?.id)) {
-    //   clients.delete(socket?.id);
-    //   await this.cacheService.set(
-    //     { key: 'UserSocketClients', args: [userId] },
-    //     Array.from(clients),
-    //     { ttl: ms('1h') },
-    //   );
-    // }
+  async handleDisconnect(socket: SocketWithSession) {
+    console.log('Client disconnected: ', socket?.id);
+    this.clients.delete(socket?.id);
+    const userId = socket?.session?.id as string;
+    if (!userId) {
+      return;
+    }
+    const userClients = await this.cacheService.get<string[]>({
+      key: 'UserSocketClients',
+      args: [userId],
+    });
+    const clients = new Set<string>(Array.from(userClients ?? []));
+    if (clients.has(socket?.id)) {
+      clients.delete(socket?.id);
+      await this.cacheService.set(
+        { key: 'UserSocketClients', args: [userId] },
+        Array.from(clients),
+        { ttl: ms('1h') },
+      );
+    }
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(SocketGuard)
   @SubscribeMessage('message')
   handleMessage(
     @ConnectedSocket() socket: SocketWithSession,

@@ -23,7 +23,7 @@ export class FavStoriesService {
 
     return favorites.map((favorite) => {
       const { id, ...rest } = favorite.story;
-      return { storyId: favorite.story.id, ...rest };
+      return { storyId: id, ...rest };
     });
   }
 

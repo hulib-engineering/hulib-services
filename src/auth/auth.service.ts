@@ -712,4 +712,68 @@ export class AuthService {
   //     educationEnd: educationEnd,
   //   });
   // }
+
+  async getSession(headerToken?: string) {
+    if (!headerToken) {
+      return null;
+    }
+    const [type, token] = headerToken.split(' ') ?? [];
+    if (type !== 'Bearer') {
+      return null;
+    }
+
+    const payload = await this.jwtService.verifyAsync<{
+      id: User['id'];
+      role: User['role'];
+      sessionId: Session['id'];
+    }>(token, {
+      secret: this.configService.getOrThrow('auth.secret', {
+        infer: true,
+      }),
+    });
+
+    if (!payload.id || !payload.sessionId) {
+      return null;
+    }
+
+    const session = await this.sessionService.findById(payload.sessionId);
+
+    if (!session) {
+      return null;
+    }
+
+    return payload;
+  }
+
+  async verifySession(headerToken?: string) {
+    if (!headerToken) {
+      return null;
+    }
+    const [type, token] = headerToken.split(' ') ?? [];
+    if (type !== 'Bearer') {
+      return null;
+    }
+
+    const payload = await this.jwtService.verifyAsync<{
+      id: User['id'];
+      role: User['role'];
+      sessionId: Session['id'];
+    }>(token, {
+      secret: this.configService.getOrThrow('auth.secret', {
+        infer: true,
+      }),
+    });
+
+    if (!payload.id || !payload.sessionId) {
+      return null;
+    }
+
+    const session = await this.sessionService.findById(payload.sessionId);
+
+    if (!session) {
+      return null;
+    }
+
+    return payload;
+  }
 }
