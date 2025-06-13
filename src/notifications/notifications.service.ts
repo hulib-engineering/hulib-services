@@ -61,27 +61,65 @@ export class NotificationsService {
       take,
     });
 
-    const storyRelatedNotifications = notifications.filter(
-      (n) =>
-        this.storyRelatedNotificationTypes.includes(n.type.name) &&
-        n.relatedEntityId !== null,
-    );
-
-    const storyIds = storyRelatedNotifications
+    const storyIds = notifications
+      .filter(
+        (n) =>
+          this.storyRelatedNotificationTypes.includes(n.type.name) &&
+          n.relatedEntityId !== null,
+      )
       .map((n) => n.relatedEntityId)
       .filter((id): id is number => id !== null);
 
-    let storyMap = new Map();
-    if (storyIds.length > 0) {
-      const stories = await this.prisma.story.findMany({
+    const readingSessionIds = notifications
+      .filter(
+        (n) =>
+          n.type.name === NotificationTypeEnum.sessionRequest &&
+          n.relatedEntityId !== null,
+      )
+      .map((n) => n.relatedEntityId)
+      .filter((id): id is number => id !== null);
+
+    const [stories, readingSessions] = await Promise.all([
+      this.prisma.story.findMany({
         where: { id: { in: storyIds } },
+        include: {
+          storyReview: {
+            where: {
+              rating: { gt: 0 },
+            },
+          },
+        },
+      }),
+      this.prisma.readingSession.findMany({
+        where: { id: { in: readingSessionIds } },
         select: {
           id: true,
-          title: true,
+          sessionStatus: true,
         },
-      });
-      storyMap = new Map(stories.map((s) => [s.id, s]));
-    }
+      }),
+    ]);
+
+    const storyMap = new Map(
+      stories.map((s) => [
+        s.id,
+        {
+          id: s.id,
+          title: s.title,
+          numOfRatings: s.storyReview.length,
+          numOfComments: s.storyReview.length,
+        },
+      ]),
+    );
+
+    const readingSessionMap = new Map(
+      readingSessions.map((rs) => [
+        rs.id,
+        {
+          id: rs.id,
+          sessionStatus: rs.sessionStatus,
+        },
+      ]),
+    );
 
     const result = notifications.map((n) => {
       if (this.storyRelatedNotificationTypes.includes(n.type.name)) {
@@ -90,6 +128,15 @@ export class NotificationsService {
           relatedEntity:
             n.relatedEntityId !== null
               ? storyMap.get(n.relatedEntityId) || null
+              : null,
+        };
+      }
+      if (n.type.name === NotificationTypeEnum.sessionRequest) {
+        return {
+          ...n,
+          relatedEntity:
+            n.relatedEntityId !== null
+              ? readingSessionMap.get(n.relatedEntityId) || null
               : null,
         };
       }
