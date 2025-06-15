@@ -90,7 +90,7 @@ export class SocketGateway
   }
 
   async handleConnection(socket: SocketWithSession) {
-    console.log('New a client connected: ', socket?.id);
+    console.log('A new client connected: ', socket?.id);
     const userId = socket?.session?.id as string;
     if (!userId) {
       return;
