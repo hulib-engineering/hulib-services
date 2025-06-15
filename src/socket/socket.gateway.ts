@@ -32,7 +32,7 @@ interface SocketWithSession
   };
 }
 
-@WebSocketGateway(3003, {
+@WebSocketGateway({
   cors: {
     origin: [
       'http://localhost:3000',
@@ -43,7 +43,11 @@ interface SocketWithSession
       'https://hulib.org',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept,Authorization,X-Requested-With',
+    allowedHeaders: [
+      'Content-Type, Accept,Authorization,X-Requested-With',
+      'baggage',
+      'sentry-trace',
+    ],
     credentials: true,
   },
 })
