@@ -71,8 +71,14 @@ export class ReadingSessionsService {
     session.sessionUrl = '';
     session.note = dto.note;
     session.sessionStatus = ReadingSessionStatus.PENDING;
-    session.startedAt = new Date(dto.startedAt);
-    session.endedAt = new Date(dto.endedAt);
+    session.startedAt = new Date(
+      new Date(dto.startedAt).getTime() +
+        (420 - new Date(dto.startedAt).getTimezoneOffset()) * 60000,
+    );
+    session.endedAt = new Date(
+      new Date(dto.endedAt).getTime() +
+        (420 - new Date(dto.endedAt).getTimezoneOffset()) * 60000,
+    );
     session.startTime = dto.startTime;
     session.endTime = dto.endTime;
 
@@ -135,7 +141,10 @@ export class ReadingSessionsService {
     }
 
     return this.readingSessionRepository.findManyWithPagination({
-      filterOptions: queryDto,
+      filterOptions: {
+        ...queryDto,
+        userId: typeof userId === 'string' ? Number(userId) : userId,
+      },
       paginationOptions,
     });
   }
@@ -192,10 +201,14 @@ export class ReadingSessionsService {
       }
       if (!!dto.storyReview) {
         const { content, ...rest } = dto.storyReview;
-        await this.storyReviewsService.update(session.storyId, {
-          ...rest,
-          comment: content,
-        });
+        await this.storyReviewsService.updateByUserIdAndStoryId(
+          session.readerId,
+          session.storyId,
+          {
+            ...rest,
+            comment: content,
+          },
+        );
       }
       if (!!dto.huberFeedback) {
         await this.usersService.editFeedback(

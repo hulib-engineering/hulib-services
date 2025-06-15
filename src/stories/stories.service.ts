@@ -88,6 +88,15 @@ export class StoriesService {
       },
     });
 
+    if (!result || result.publishStatus === PublishStatus.deleted) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          story: 'storyNotFound',
+        },
+      });
+    }
+
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
 
     return {

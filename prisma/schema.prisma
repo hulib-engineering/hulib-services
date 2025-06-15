@@ -1,12 +1,13 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
+  unaccent        = true
 }
 
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [uuidOssp(map: "uuid-ossp")]
+  extensions = [uuid_ossp(map: "uuid-ossp"), unaccent]
 }
 
 model file {
@@ -85,35 +86,37 @@ model topics {
 }
 
 model user {
-  id                Int                    @id @default(autoincrement())
-  email             String?                @db.VarChar
-  password          String?                @db.VarChar
-  provider          String                 @default("email") @db.VarChar
-  socialId          String?                @db.VarChar
-  fullName          String?                @db.VarChar
-  birthday          String?                @db.VarChar
-  createdAt         DateTime               @default(now()) @db.Time(6)
-  updatedAt         DateTime               @default(now()) @db.Time(6)
-  deletedAt         DateTime?              @db.Time(6)
-  genderId          Int?
-  roleId            Int?
-  statusId          Int?
-  approval          String?                @db.VarChar
-  photoId           String?                @db.Uuid
-  address           String?                @db.VarChar
-  parentPhoneNumber String?                @db.VarChar
-  phoneNumber       String?                @db.VarChar
-  bio               String?                @db.VarChar
-  videoUrl          String?                @db.VarChar
-  education         String?                @db.VarChar
-  educationStart    DateTime?              @db.Date
-  educationEnd      DateTime?              @db.Date
-  humanBookTopic    humanBookTopic[]
-  topicsOfInterest  liberTopicOfInterest[]
-  humanBooks        humanBooks[]
-  storyReview       storyReview[]
-  stories           story[]
-  storyFavorite     storyFavorite[]
+  id                    Int                    @id @default(autoincrement())
+  email                 String?                @db.VarChar
+  password              String?                @db.VarChar
+  provider              String                 @default("email") @db.VarChar
+  socialId              String?                @db.VarChar
+  fullName              String?                @db.VarChar
+  birthday              String?                @db.VarChar
+  createdAt             DateTime               @default(now()) @db.Time(6)
+  updatedAt             DateTime               @default(now()) @db.Time(6)
+  deletedAt             DateTime?              @db.Time(6)
+  genderId              Int?
+  roleId                Int?
+  statusId              Int?
+  approval              String?                @db.VarChar
+  photoId               String?                @db.Uuid
+  address               String?                @db.VarChar
+  parentPhoneNumber     String?                @db.VarChar
+  phoneNumber           String?                @db.VarChar
+  bio                   String?                @db.VarChar
+  videoUrl              String?                @db.VarChar
+  education             String?                @db.VarChar
+  educationStart        DateTime?              @db.Date
+  educationEnd          DateTime?              @db.Date
+  humanBookTopic        humanBookTopic[]
+  topicsOfInterest      liberTopicOfInterest[]
+  humanBooks            humanBooks[]
+  storyReview           storyReview[]
+  stories               story[]
+  storyFavorite         storyFavorite[]
+  notificationsReceived notification[]         @relation("RecipientNotification")
+  notificationsSent     notification[]         @relation("SenderNotification")
 
   huberReadingSessions readingSession[] @relation("HumanBookRelation")
 
@@ -269,4 +272,25 @@ model message {
   createdAt DateTime  @default(now()) @db.Timestamp(6)
   updatedAt DateTime  @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
+}
+
+model notification {
+  id              Int              @id @default(autoincrement())
+  recipientId     Int
+  recipient       user             @relation("RecipientNotification", fields: [recipientId], references: [id])
+  senderId        Int
+  sender          user             @relation("SenderNotification", fields: [senderId], references: [id])
+  typeId          Int
+  type            notificationType @relation(fields: [typeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  seen            Boolean          @default(false)
+  relatedEntityId Int?
+  createdAt       DateTime         @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime         @default(now()) @db.Timestamp(6)
+  deletedAt       DateTime?
+}
+
+model notificationType {
+  id           Int            @id @default(autoincrement())
+  name         String         @unique @db.VarChar
+  notification notification[]
 }

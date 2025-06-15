@@ -48,14 +48,19 @@ export class StoriesRelationalRepository implements StoryRepository {
       }));
     }
 
-    // if (!!filterOptions?.publishStatus) {
-    //   where.publishStatus = filterOptions.publishStatus;
-    // }
+    if (!!filterOptions?.publishStatus) {
+      where.publishStatus = filterOptions.publishStatus;
+    }
 
     const entities = await this.storiesRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
       where,
+      relations: {
+        topics: true,
+        cover: true,
+        humanBook: true,
+      },
       order: sortOptions?.reduce(
         (accumulator, sort) => ({
           ...accumulator,

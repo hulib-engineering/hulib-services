@@ -1,7 +1,24 @@
-import { Controller, Get, UseGuards, Query, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Query,
+  Request,
+  Post,
+  HttpCode,
+  HttpStatus,
+  Body,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { HubersService } from './hubers.service';
 
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { InfinityPaginationResponse } from '@utils/dto/infinity-pagination-response.dto';
 
@@ -10,6 +27,7 @@ import { User } from '@users/domain/user';
 import { pagination } from '@utils/types/pagination';
 import { UsersService } from '@users/users.service';
 import { omit } from 'lodash';
+import { CheckSessionAvailabilityDto } from './dto/check-session-availability.dto';
 
 @ApiTags('Hubers')
 @ApiBearerAuth()
@@ -60,5 +78,61 @@ export class HubersController {
     });
 
     return pagination(sanitizedData, count, { page, limit });
+  }
+
+  @Get(':id/booked-sessions')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Array<Date>,
+  })
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  async getHuberBookedSessions(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Date[]> {
+    const sessions = await this.hubersService.getHuberSessions(id);
+
+    if (sessions && sessions.length > 0) {
+      return sessions.map((session) => session.startedAt);
+    }
+    return [];
+  }
+
+  @Post(':id/validate-availability')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  async create(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() checkSessionAvailabilityDto: CheckSessionAvailabilityDto,
+  ): Promise<{ booked: boolean }> {
+    let booked: boolean = false;
+    if (!!checkSessionAvailabilityDto.startAt) {
+      const sessions = await this.hubersService.getHuberSessions(id);
+
+      if (
+        sessions &&
+        sessions.length > 0 &&
+        sessions.some(
+          (session) =>
+            session.startedAt.getTime() ===
+              new Date(checkSessionAvailabilityDto.startAt).getTime() &&
+            (session.sessionStatus === 'pending' ||
+              session.sessionStatus === 'approved'),
+        )
+      ) {
+        booked = true;
+      }
+    }
+
+    return { booked };
   }
 }

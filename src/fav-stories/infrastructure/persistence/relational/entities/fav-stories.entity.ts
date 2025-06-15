@@ -10,5 +10,5 @@ export class storyFavouritesEntity extends EntityRelationalHelper {
     type: Number,
   })
   @PrimaryColumn()
-  id: number;
+  storyId: number;
 }

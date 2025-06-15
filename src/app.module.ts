@@ -11,6 +11,7 @@ import fileConfig from './files/config/file.config';
 import facebookConfig from './auth-facebook/config/facebook.config';
 import googleConfig from './auth-google/config/google.config';
 import webRtcConfig from './web-rtc/config/web-rtc.config';
+import cacheConfig from './cache/config/cache.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -39,6 +40,9 @@ import { CaslModule } from './casl/casl.module';
 import { TimeSlotModule } from './time-slots/time-slots.module';
 import { ReadingSessionsModule } from './reading-sessions/reading-sessions.module';
 import { HubersModule } from './hubers/hubers.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { SocketModule } from './socket/socket.module';
+import { CacheModule as CacheManagerModule } from './cache/cache.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -49,6 +53,8 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
 
 @Module({
   imports: [
+    SocketModule,
+    NotificationsModule,
     SentryModule.forRoot(),
     HealthcheckModule,
     StoriesModule,
@@ -65,6 +71,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
         facebookConfig,
         googleConfig,
         webRtcConfig,
+        cacheConfig,
       ],
       envFilePath: ['.env'],
     }),
@@ -92,6 +99,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
     }),
+    CacheManagerModule,
     UsersModule,
     FilesModule,
     AuthModule,

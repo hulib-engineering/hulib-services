@@ -18,13 +18,13 @@ export class FavStoriesService {
     });
 
     if (!favorites.length) {
-      return {
-        message: 'No favorites found',
-        data: [],
-      };
+      return [];
     }
 
-    return favorites.map((favorite) => favorite.story);
+    return favorites.map((favorite) => {
+      const { id, ...rest } = favorite.story;
+      return { storyId: id, ...rest };
+    });
   }
 
   async removeFavoriteStory(storyId: number, userId: number) {
@@ -83,9 +83,14 @@ export class FavStoriesService {
       },
     });
 
-    return {
-      message: 'Favorite added successfully',
-      data: favorite,
-    };
+    if (!favorite) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          message: 'Failed to save favorite story',
+        },
+      });
+    }
+    return favorite;
   }
 }
