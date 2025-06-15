@@ -35,10 +35,11 @@ services:
       - .env.production
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
-      - ./redis-entrypoint.sh:/usr/local/bin/redis-entrypoint.sh
-      - redis-data:/data
-    entrypoint: ["/usr/local/bin/redis-entrypoint.sh"]
+    command:
+      [
+        "redis-server",
+        "/usr/local/etc/redis/redis.conf",
+        "--requirepass",
+        "${REDIS_PASSWORD}"
+      ]
     restart: unless-stopped
-
-volumes:
-  redis-data:
