@@ -25,3 +25,20 @@ services:
       interval: 1m30s
       timeout: 10s
       retries: 3
+
+  redis:
+    image: redis
+    container_name: redis-server
+    ports:
+      - "6379:6379"
+    env_file:
+      - .env
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis-entrypoint.sh:/usr/local/bin/redis-entrypoint.sh
+      - redis-data:/data
+    entrypoint: ["/usr/local/bin/redis-entrypoint.sh"]
+    restart: unless-stopped
+
+volumes:
+  redis-data:
