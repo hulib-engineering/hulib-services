@@ -49,7 +49,7 @@ export class StoriesController {
   ) {}
 
   @Post()
-  @Roles(RoleEnum.humanBook)
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiCreatedResponse({
     type: Story,
