@@ -1,4 +1,4 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 import { FileType } from '@files/domain/file';
 import { Role } from '@roles/domain/role';
 import { Status } from '@statuses/domain/status';
@@ -31,14 +31,12 @@ export class User {
     type: String,
     example: 'email',
   })
-  @Expose({ groups: ['me', 'admin'] })
   provider: string;
 
   @ApiProperty({
     type: String,
     example: '1234567890',
   })
-  @Expose({ groups: ['me', 'admin'] })
   socialId?: string | null;
 
   @ApiProperty({

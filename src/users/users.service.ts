@@ -257,6 +257,21 @@ export class UsersService {
     return this.usersRepository.update(id, clonedPayload);
   }
 
+  updateUserStatus(id: User['id'], status: string) {
+    const isExistStatus = Object.keys(StatusEnum).includes(status);
+    if (!isExistStatus) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          status: 'statusNotExists',
+        },
+      });
+    }
+    return this.usersRepository.update(id, {
+      status: { id: StatusEnum[status] },
+    });
+  }
+
   async remove(id: User['id']): Promise<void> {
     await this.usersRepository.remove(id);
   }

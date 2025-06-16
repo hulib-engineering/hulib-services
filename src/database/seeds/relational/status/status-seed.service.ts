@@ -12,19 +12,29 @@ export class StatusSeedService {
   ) {}
 
   async run() {
-    const count = await this.repository.count();
+    const statuses = [
+      {
+        id: StatusEnum.active,
+        name: 'Active',
+      },
+      {
+        id: StatusEnum.inactive,
+        name: 'Inactive',
+      },
+      {
+        id: StatusEnum.under_warning,
+        name: 'Under Warning',
+      },
+    ];
 
-    if (!count) {
-      await this.repository.save([
-        this.repository.create({
-          id: StatusEnum.active,
-          name: 'Active',
-        }),
-        this.repository.create({
-          id: StatusEnum.inactive,
-          name: 'Inactive',
-        }),
-      ]);
+    for (const status of statuses) {
+      const existingStatus = await this.repository.findOne({
+        where: { id: status.id },
+      });
+
+      if (!existingStatus) {
+        await this.repository.save(this.repository.create(status));
+      }
     }
   }
 }
