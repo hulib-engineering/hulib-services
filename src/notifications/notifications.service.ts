@@ -23,7 +23,7 @@ export class NotificationsService {
   }) {
     const skip = (paginationOptions.page - 1) * paginationOptions.limit;
     const take = paginationOptions.limit;
-    const [unseenCount, notifications] = await Promise.all([
+    const [unseenCount, notifications] = await this.prisma.$transaction([
       this.prisma.notification.count({
         where: {
           recipientId: filterOptions.recipientId,
