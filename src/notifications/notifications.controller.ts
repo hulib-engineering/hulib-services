@@ -56,13 +56,16 @@ export class NotificationsController {
       limit = 50;
     }
 
-    return infinityPagination(
+    const notificationData =
       await this.notificationsService.findAllWithPagination({
         filterOptions: { recipientId: userId },
         paginationOptions: { limit, page },
-      }),
-      { page, limit },
-    );
+      });
+
+    return {
+      ...infinityPagination(notificationData.data, { page, limit }),
+      unseenCount: notificationData.unseenCount,
+    };
   }
 
   @Post()
