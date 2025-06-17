@@ -21,8 +21,8 @@ export class CacheService {
   }
 
   /**
-   * Return remaining ttl of a key if it was set.
-   * By default -1 and -2 cases are obfuscated to avoid confusion but if `disableResponseFilter = true`:
+   * Return the remaining ttl of a key if it was set.
+   * By default -1 and -2, cases are obfuscated to avoid confusion but if `disableResponseFilter = true`:
    * -1: If key exists but has no expiry
    * -2: If key does not exist at all
    */

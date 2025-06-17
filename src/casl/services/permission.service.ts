@@ -27,7 +27,7 @@ export class PermissionService {
    */
   getAllowedFields(user: User, subject: any): string[] {
     const ability = this.abilityFactory.defineAbilitiesFor(user);
-    const subjectType = ability.detectSubjectType(subject);
+    // const subjectType = ability.detectSubjectType(subject);
 
     // This is a simplified implementation
     // In a real scenario, you might want to store field permissions in a more structured way

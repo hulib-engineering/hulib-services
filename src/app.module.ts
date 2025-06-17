@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
-import { UsersModule } from './users/users.module';
-import { FilesModule } from './files/files.module';
-import { AuthModule } from './auth/auth.module';
+import { UsersModule } from '@users/users.module';
+import { FilesModule } from '@files/files.module';
+import { AuthModule } from '@auth/auth.module';
 import databaseConfig from './database/config/database.config';
 import authConfig from './auth/config/auth.config';
 import appConfig from './config/app.config';
@@ -15,34 +15,37 @@ import cacheConfig from './cache/config/cache.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthFacebookModule } from './auth-facebook/auth-facebook.module';
-import { AuthGoogleModule } from './auth-google/auth-google.module';
+import { AuthFacebookModule } from '@auth-facebook/auth-facebook.module';
+import { AuthGoogleModule } from '@auth-google/auth-google.module';
 import { I18nModule } from 'nestjs-i18n/dist/i18n.module';
 import { HeaderResolver } from 'nestjs-i18n';
-import { TypeOrmConfigService } from './database/typeorm-config.service';
-import { MailModule } from './mail/mail.module';
-import { HomeModule } from './home/home.module';
+import { TypeOrmConfigService } from '@database/typeorm-config.service';
+import { MailModule } from '@mail/mail.module';
+import { HomeModule } from '@home/home.module';
 import { DataSource, DataSourceOptions } from 'typeorm';
-import { AllConfigType } from './config/config.type';
-import { SessionModule } from './session/session.module';
-import { MailerModule } from './mailer/mailer.module';
-import { BooksModule } from './books/book.module';
-import { TopicsModule } from './topics/topics.module';
-import { StoriesModule } from './stories/stories.module';
-import { FavStoriesModule } from './fav-stories/fav-stories.module';
-import { StoryReviewsModule } from './story-reviews/story-reviews.module';
-import { PrismaModule } from './prisma-client/prisma-client.module';
+import { AllConfigType } from '@config/config.type';
+import { SessionModule } from '@session/session.module';
+import { MailerModule } from '@mailer/mailer.module';
+import { BooksModule } from '@books/book.module';
+import { TopicsModule } from '@topics/topics.module';
+import { StoriesModule } from '@stories/stories.module';
+import { FavStoriesModule } from '@fav-stories/fav-stories.module';
+import { StoryReviewsModule } from '@story-reviews/story-reviews.module';
+import { PrismaModule } from '@prisma-client/prisma-client.module';
 import { SearchModule } from './search/search.module';
 import { HealthcheckModule } from './healthcheck/healthcheck.module';
 import { APP_FILTER } from '@nestjs/core';
-import { SchedulesModule } from './schedules/schedules.module';
-import { CaslModule } from './casl/casl.module';
-import { TimeSlotModule } from './time-slots/time-slots.module';
-import { ReadingSessionsModule } from './reading-sessions/reading-sessions.module';
+import { SchedulesModule } from '@schedules/schedules.module';
+import { CaslModule } from '@casl/casl.module';
+import { TimeSlotModule } from '@time-slots/time-slots.module';
+import { ReadingSessionsModule } from '@reading-sessions/reading-sessions.module';
 import { HubersModule } from './hubers/hubers.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SocketModule } from './socket/socket.module';
 import { CacheModule as CacheManagerModule } from './cache/cache.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { SocketGateway } from './socket/socket.gateway';
+import { NotificationGateway } from './notifications/notifications.gateway';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -56,6 +59,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     SocketModule,
     NotificationsModule,
     SentryModule.forRoot(),
+    EventEmitterModule.forRoot(),
     HealthcheckModule,
     StoriesModule,
     FavStoriesModule,
@@ -120,6 +124,8 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     HubersModule,
   ],
   providers: [
+    SocketGateway,
+    NotificationGateway,
     {
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,

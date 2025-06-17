@@ -75,7 +75,7 @@ export class CaslAbilityFactory {
       this.defineReaderPermissions(can, cannot, user);
     } else if (roleId === RoleEnum.guest) {
       // Guest permissions (limited read access)
-      this.defineGuestPermissions(can, cannot, user);
+      this.defineGuestPermissions(can, cannot);
     }
 
     // Field-level permissions for sensitive data
@@ -187,7 +187,7 @@ export class CaslAbilityFactory {
     can([Action.Create, Action.Read], 'Notification');
   }
 
-  private defineGuestPermissions(can: any, cannot: any, user: User): void {
+  private defineGuestPermissions(can: any, cannot: any): void {
     // Limited user access
     can(Action.Read, 'User', ['id', 'fullName', 'photo', 'bio', 'role']);
 
@@ -242,10 +242,7 @@ export class CaslAbilityFactory {
     return ability.can(Action.Read, subject, field);
   }
 
-  getAllowedFields(user: User, subject: any): string[] {
-    const ability = this.defineAbilitiesFor(user);
-    const subjectType = ability.detectSubjectType(subject);
-
+  getAllowedFields(): string[] {
     // Return common fields that most users can access
     return ['id', 'title', 'content'];
   }
