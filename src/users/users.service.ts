@@ -257,7 +257,7 @@ export class UsersService {
     return this.usersRepository.update(id, clonedPayload);
   }
 
-  updateUserStatus(id: User['id'], status: string) {
+  updateStatus(id: User['id'], status: string) {
     const isExistStatus = Object.keys(StatusEnum).includes(status);
     if (!isExistStatus) {
       throw new UnprocessableEntityException({
