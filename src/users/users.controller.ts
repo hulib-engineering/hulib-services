@@ -130,7 +130,7 @@ export class UsersController {
     @Param('id') id: User['id'],
     @Body() updateUserStatusDto: UpdateUserStatusDto,
   ): Promise<User | null> {
-    return this.usersService.updateUserStatus(id, updateUserStatusDto.status);
+    return this.usersService.updateStatus(id, updateUserStatusDto.status);
   }
 
   @Delete(':id')

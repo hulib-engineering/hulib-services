@@ -92,6 +92,15 @@ export class AuthService {
       });
     }
 
+    if (user.status?.id === StatusEnum.inactive) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          status: 'inactiveUser',
+        },
+      });
+    }
+
     const hash = crypto
       .createHash('sha256')
       .update(randomStringGenerator())
@@ -153,7 +162,7 @@ export class AuthService {
 
       user = await this.usersService.create({
         email: socialEmail ?? null,
-        fullName: `${socialData.firstName} ${socialData.lastName}` ?? null,
+        fullName: `${socialData.firstName} ${socialData.lastName}`,
         socialId: socialData.id,
         provider: authProvider,
         role,
