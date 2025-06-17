@@ -100,10 +100,6 @@ export class StoriesService {
           paginationOptions: { page: 1, limit: 5 },
         });
 
-      this.eventEmitter.onAny((event, value) => {
-        console.log('[DEBUG] Event fired:', event, value);
-      });
-
       this.eventEmitter.emit('notification.list.fetch', {
         userId: notification.recipientId,
         notifications: updatedNotifications,

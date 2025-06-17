@@ -34,7 +34,7 @@ export class SocketGateway extends BaseSocketGateway {
 
   @UseGuards(SocketGuard)
   @SubscribeMessage('message')
-  async handleMessage(
+  handleMessage(
     @ConnectedSocket() socket: SocketWithSession,
     @MessageBody() _message: any,
   ) {
@@ -45,12 +45,6 @@ export class SocketGateway extends BaseSocketGateway {
       JSON.stringify(_message, null, 2),
       // _user,
     );
-    console.log('User id', socket?.session?.id.toString());
-    const userClients = await this.cacheService.get<string[]>({
-      key: 'UserSocketClients',
-      args: [socket?.session?.id.toString() ?? ''],
-    });
-    console.log('Socket gateway User Clients:', userClients);
     socket.send('hello world');
   }
 

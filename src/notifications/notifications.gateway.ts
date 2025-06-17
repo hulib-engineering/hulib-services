@@ -24,14 +24,9 @@ export class NotificationGateway
     super(auth, cache);
   }
 
-  async afterInit() {
+  afterInit() {
     this.setupAuthMiddleware();
     this.logger.log('Notification gateway initialized');
-    const userClients = await this.cacheService.get<string[]>({
-      key: 'UserSocketClients',
-      args: ['18'],
-    });
-    console.log('Notification gateway User Clients:', userClients);
   }
 
   @OnEvent('notification.list.fetch')
