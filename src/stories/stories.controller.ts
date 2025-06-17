@@ -73,9 +73,15 @@ export class StoriesController {
   })
   async findAll(
     @Query() query: FindAllStoriesDto,
+    @Request() request,
   ): Promise<InfinityPaginationResponseDto<Story>> {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
+
+    const isAdmin = request.user.role.id === RoleEnum.admin;
+    const defaultPublishStatus = isAdmin
+      ? PublishStatus.draft
+      : PublishStatus.published;
 
     return infinityPagination(
       await this.storiesService.findAllWithPagination({
@@ -86,7 +92,7 @@ export class StoriesController {
         filterOptions: {
           humanBookId: query.humanBookId,
           topicIds: query.topicIds,
-          publishStatus: query.publishStatus || PublishStatus.published,
+          publishStatus: query.publishStatus || defaultPublishStatus,
         },
       }),
       { page, limit },
