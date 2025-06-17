@@ -13,11 +13,11 @@ import {
   SerializeOptions,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
@@ -37,6 +37,7 @@ import { UpgradeDto } from './dto/upgrade.dto';
 
 import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 
 @ApiBearerAuth()
 @ApiTags('Users')
@@ -95,7 +96,7 @@ export class UsersController {
     type: User,
   })
   @SerializeOptions({
-    groups: ['admin', 'me'],
+    groups: ['admin'],
     excludePrefixes: ['__'],
   })
   @Get(':id')
@@ -113,9 +114,6 @@ export class UsersController {
   @ApiOkResponse({
     type: User,
   })
-  @SerializeOptions({
-    groups: ['admin'],
-  })
   @Patch(':id')
   @Roles(RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -125,11 +123,14 @@ export class UsersController {
     type: String,
     required: true,
   })
+  @ApiOperation({
+    description: 'Update user status: ["active", "inactive", "under_warning"]',
+  })
   update(
     @Param('id') id: User['id'],
-    @Body() updateProfileDto: Pick<UpdateUserDto, 'status'>,
+    @Body() updateUserStatusDto: UpdateUserStatusDto,
   ): Promise<User | null> {
-    return this.usersService.update(id, updateProfileDto);
+    return this.usersService.updateStatus(id, updateUserStatusDto.status);
   }
 
   @Delete(':id')

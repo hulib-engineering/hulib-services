@@ -23,43 +23,54 @@ export class NotificationsService {
   }) {
     const skip = (paginationOptions.page - 1) * paginationOptions.limit;
     const take = paginationOptions.limit;
-    const notifications = await this.prisma.notification.findMany({
-      where: {
-        ...filterOptions,
-      },
-      include: {
-        type: true,
-        recipient: {
-          select: {
-            id: true,
-            fullName: true,
-            file: {
-              select: {
-                path: true,
+    const [unseenCount, notifications] = await this.prisma.$transaction([
+      this.prisma.notification.count({
+        where: {
+          recipientId: filterOptions.recipientId,
+          seen: false,
+        },
+      }),
+      this.prisma.notification.findMany({
+        where: {
+          ...filterOptions,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          type: true,
+          recipient: {
+            select: {
+              id: true,
+              fullName: true,
+              file: {
+                select: {
+                  path: true,
+                },
+              },
+            },
+          },
+          sender: {
+            select: {
+              id: true,
+              fullName: true,
+              file: {
+                select: {
+                  path: true,
+                },
               },
             },
           },
         },
-        sender: {
-          select: {
-            id: true,
-            fullName: true,
-            file: {
-              select: {
-                path: true,
-              },
-            },
-          },
+        omit: {
+          typeId: true,
+          recipientId: true,
+          senderId: true,
         },
-      },
-      omit: {
-        typeId: true,
-        recipientId: true,
-        senderId: true,
-      },
-      skip,
-      take,
-    });
+        skip,
+        take,
+      }),
+    ]);
 
     const storyIds = notifications
       .filter(
@@ -142,7 +153,10 @@ export class NotificationsService {
       }
       return { ...n, relatedEntity: null };
     });
-    return result;
+    return {
+      data: result,
+      unseenCount,
+    };
   }
 
   async create(data: CreateNotificationDto) {
@@ -179,7 +193,7 @@ export class NotificationsService {
       await this.verifyRelatedEntityId(type.name, data.relatedEntityId);
     }
 
-    return await this.prisma.notification.create({
+    return this.prisma.notification.create({
       data: {
         recipientId: data.recipientId,
         senderId: data.senderId,

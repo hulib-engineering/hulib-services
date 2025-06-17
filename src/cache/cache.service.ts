@@ -1,5 +1,5 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cache as CacheManager } from 'cache-manager';
 import util from 'util';
@@ -9,11 +9,13 @@ import { CacheKey, CacheParam } from '@utils/types/cache.type';
 
 @Injectable()
 export class CacheService {
+  private readonly logger = new Logger(this.constructor.name);
+
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: CacheManager,
     private readonly configService: ConfigService<AllConfigType>,
   ) {
-    console.log('Cache Service', cacheManager);
+    this.logger.log(cacheManager);
   }
 
   async get<T>(keyParams: CacheParam) {
@@ -21,8 +23,8 @@ export class CacheService {
   }
 
   /**
-   * Return remaining ttl of a key if it was set.
-   * By default -1 and -2 cases are obfuscated to avoid confusion but if `disableResponseFilter = true`:
+   * Return the remaining ttl of a key if it was set.
+   * By default -1 and -2, cases are obfuscated to avoid confusion but if `disableResponseFilter = true`:
    * -1: If key exists but has no expiry
    * -2: If key does not exist at all
    */

@@ -3,6 +3,8 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
 import { StoryRepository } from './infrastructure/persistence/story.repository';
@@ -15,6 +17,10 @@ import { UsersService } from '@users/users.service';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repository';
+import { User } from '@users/domain/user';
+import { Topic } from '@topics/domain/topics';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
 @Injectable()
 export class StoriesService {
@@ -23,7 +29,9 @@ export class StoriesService {
     private readonly storyReviewService: StoryReviewsService,
     private readonly topicsRepository: TopicsRepository,
     private readonly usersService: UsersService,
+    private readonly notifsService: NotificationsService,
     private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(createStoriesDto: CreateStoryDto) {
@@ -53,6 +61,52 @@ export class StoriesService {
       humanBook,
       topics: topicsEntities,
     });
+  }
+
+  async createFirst(userId: User['id'], createStoriesDto: CreateStoryDto) {
+    const user = await this.usersService.findById(userId);
+
+    if (!user) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.NOT_FOUND,
+        errors: {
+          email: 'userNotFound',
+        },
+      });
+    }
+
+    let topicsEntities: Topic[] = [];
+    if (createStoriesDto.topics && createStoriesDto.topics.length > 0) {
+      topicsEntities = await this.topicsRepository.findByIds(
+        createStoriesDto.topics.map((t) => t.id),
+      );
+    }
+    const newStory = await this.storiesRepository.create({
+      ...createStoriesDto,
+      humanBook: user,
+      topics: topicsEntities,
+    });
+
+    const notification = await this.notifsService.create({
+      senderId: Number(userId),
+      recipientId: 1,
+      type: NotificationTypeEnum.account,
+    });
+
+    if (notification) {
+      const updatedNotifications =
+        await this.notifsService.findAllWithPagination({
+          filterOptions: { recipientId: 1 },
+          paginationOptions: { page: 1, limit: 5 },
+        });
+
+      this.eventEmitter.emit('notification.list.fetch', {
+        userId: notification.recipientId,
+        notifications: updatedNotifications,
+      });
+    }
+
+    return newStory;
   }
 
   findAllWithPagination({

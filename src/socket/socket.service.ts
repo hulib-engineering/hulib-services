@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { SocketGateway } from './socket.gateway';
-
 import { CacheService } from '../cache/cache.service';
+import { SocketGateway } from './socket.gateway';
 
 @Injectable()
 export class SocketService {

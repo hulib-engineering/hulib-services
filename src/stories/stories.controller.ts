@@ -9,6 +9,7 @@ import {
   Delete,
   UseGuards,
   SerializeOptions,
+  Request,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -54,7 +55,10 @@ export class StoriesController {
   @ApiCreatedResponse({
     type: Story,
   })
-  create(@Body() createStoriesDto: CreateStoryDto) {
+  create(@Request() request, @Body() createStoriesDto: CreateStoryDto) {
+    if (request.user.role.id === RoleEnum.reader) {
+      return this.storiesService.createFirst(request.user.id, createStoriesDto);
+    }
     return this.storiesService.create(createStoriesDto);
   }
 
@@ -69,9 +73,15 @@ export class StoriesController {
   })
   async findAll(
     @Query() query: FindAllStoriesDto,
+    @Request() request,
   ): Promise<InfinityPaginationResponseDto<Story>> {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
+
+    const isAdmin = request.user.role.id === RoleEnum.admin;
+    const defaultPublishStatus = isAdmin
+      ? PublishStatus.draft
+      : PublishStatus.published;
 
     return infinityPagination(
       await this.storiesService.findAllWithPagination({
@@ -82,7 +92,7 @@ export class StoriesController {
         filterOptions: {
           humanBookId: query.humanBookId,
           topicIds: query.topicIds,
-          publishStatus: query.publishStatus || PublishStatus.published,
+          publishStatus: query.publishStatus || defaultPublishStatus,
         },
       }),
       { page, limit },
