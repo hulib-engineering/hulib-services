@@ -96,7 +96,7 @@ export class UsersController {
     type: User,
   })
   @SerializeOptions({
-    groups: ['admin', 'me'],
+    groups: ['admin'],
     excludePrefixes: ['__'],
   })
   @Get(':id')

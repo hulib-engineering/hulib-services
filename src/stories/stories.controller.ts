@@ -9,6 +9,7 @@ import {
   Delete,
   UseGuards,
   SerializeOptions,
+  Request,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -54,7 +55,10 @@ export class StoriesController {
   @ApiCreatedResponse({
     type: Story,
   })
-  create(@Body() createStoriesDto: CreateStoryDto) {
+  create(@Request() request, @Body() createStoriesDto: CreateStoryDto) {
+    if (request.user.role.id === RoleEnum.reader) {
+      return this.storiesService.createFirst(request.user.id, createStoriesDto);
+    }
     return this.storiesService.create(createStoriesDto);
   }
 

@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { CaslAbilityFactory, AppAbility, Action } from '../ability.factory';
+import { CaslAbilityFactory, AppAbility } from '../ability.factory';
 import { CHECK_ABILITY } from '../decorators/casl.decorator';
 
 @Injectable()

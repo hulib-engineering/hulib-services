@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { plainToClass, ClassTransformOptions } from 'class-transformer';
 import { CaslAbilityFactory } from '../ability.factory';
 import { Action } from '../ability.factory';
 

@@ -34,6 +34,9 @@ export class NotificationsService {
         where: {
           ...filterOptions,
         },
+        orderBy: {
+          createdAt: 'desc',
+        },
         include: {
           type: true,
           recipient: {
@@ -190,7 +193,7 @@ export class NotificationsService {
       await this.verifyRelatedEntityId(type.name, data.relatedEntityId);
     }
 
-    return await this.prisma.notification.create({
+    return this.prisma.notification.create({
       data: {
         recipientId: data.recipientId,
         senderId: data.senderId,
