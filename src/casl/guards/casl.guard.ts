@@ -3,9 +3,10 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { CaslAbilityFactory, AppAbility } from '../ability.factory';
+import { CaslAbilityFactory, AppAbility, Action } from '../ability.factory';
 import { CHECK_ABILITY } from '../decorators/casl.decorator';
 
 @Injectable()
@@ -29,18 +30,30 @@ export class CaslGuard implements CanActivate {
     const user = request.user;
 
     if (!user || !user.id) {
-      throw new ForbiddenException('User not authenticated');
+      throw new UnauthorizedException('User not authenticated');
     }
 
     const ability = this.abilityFactory.defineAbilitiesFor(user);
 
-    const isAllowed = abilityHandlers.every((handler) => handler(ability));
+    // Check if any handler returns false
+    const isAllowed = abilityHandlers.every((handler) => {
+      try {
+        return handler(ability);
+      } catch (error) {
+        // Log error for debugging
+        console.error('CASL handler error:', error);
+        return false;
+      }
+    });
 
     if (!isAllowed) {
       throw new ForbiddenException(
         'You do not have permission to access this resource',
       );
     }
+
+    // Store ability in request for use in controllers/services
+    request.ability = ability;
 
     return true;
   }
