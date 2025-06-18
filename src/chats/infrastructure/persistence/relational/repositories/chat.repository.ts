@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { NullableType } from '@utils/types/nullable.type';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 
 import { ChatRepository } from '../../chat.repository';
-import { Chat } from '../../../../domain/chat';
+import { Chat, ChatStatus } from '../../../../domain/chat';
 import { ChatEntity } from '../entities/chat.entity';
 import { ChatMapper } from '../mappers/chat.mapper';
 import { User } from '@users/domain/user';
@@ -14,98 +14,75 @@ import { User } from '@users/domain/user';
 export class ChatRelationalRepository implements ChatRepository {
   constructor(
     @InjectRepository(ChatEntity)
-    private readonly timeSlotRepository: Repository<ChatEntity>,
+    private readonly chatRepository: Repository<ChatEntity>,
     private readonly prisma: PrismaService,
   ) {}
 
-  async create(data: Chat, user: User): Promise<Chat> {
+  async create(data: Chat, sender: User, recipient: User): Promise<Chat> {
     const persistenceModel = ChatMapper.toPersistence({
       ...data,
-      huber: user,
+      sender: sender,
+      recipient: recipient,
     });
-    const newEntity = await this.timeSlotRepository.save(
-      this.timeSlotRepository.create(persistenceModel),
+    const newEntity = await this.chatRepository.save(
+      this.chatRepository.create(persistenceModel),
     );
     return ChatMapper.toDomain(newEntity);
   }
 
-  async createMany(data: Chat[], user: User): Promise<Chat[]> {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.timeSlot.deleteMany({
-        where: {
-          huberId: Number(user.id),
-        },
-      });
-
-      await tx.timeSlot.createMany({
-        data: data.map((timeSlot) => ({
-          dayOfWeek: timeSlot.dayOfWeek,
-          startTime: timeSlot.startTime,
-          huberId: Number(user.id),
-        })),
-      });
-
-      const timeSlotEntities = await tx.timeSlot.findMany({
-        where: {
-          huberId: Number(user.id),
-        },
-      });
-
-      return timeSlotEntities.map((timeSlot) => {
-        return ChatMapper.toDomain(timeSlot);
-      });
-    });
-  }
-
-  async findAll(): Promise<Chat[]> {
-    const entities = await this.timeSlotRepository.find();
-    return entities.map((entity) => ChatMapper.toDomain(entity));
-  }
-
-  async findById(id: Chat['id']): Promise<NullableType<Chat>> {
-    const entity = await this.timeSlotRepository.findOne({
-      where: { id },
-    });
-
-    return entity ? ChatMapper.toDomain(entity) : null;
-  }
-
   async findByUser(userId: User['id']): Promise<Chat[]> {
-    const entities = await this.timeSlotRepository.find({
-      where: { huberId: Number(userId) },
+    const entities = await this.chatRepository.find({
+      where: [
+        { senderId: Number(userId), status: Not(ChatStatus.DELETED) },
+        { recipientId: Number(userId), status: Not(ChatStatus.DELETED) }
+      ],
       relations: {
-        huber: true,
+        sender: true,
+        recipient: true,
+      },
+      order: {
+        createdAt: 'DESC',
       },
     });
     return entities.map((entity) => ChatMapper.toDomain(entity));
   }
 
-  async findByTime(
-    dayOfWeek: Chat['dayOfWeek'],
-    startTime: Chat['startTime'],
-  ): Promise<NullableType<Chat>> {
-    const entity = await this.timeSlotRepository.findOne({
-      where: { dayOfWeek, startTime },
+  async findByUsers(user1: User['id'], user2: User['id']): Promise<Chat[]> {
+    const entities = await this.chatRepository.find({
+      where: [
+        { senderId: Number(user1), recipientId: Number(user2), status: Not(ChatStatus.DELETED) },
+        { senderId: Number(user2), recipientId: Number(user1), status: Not(ChatStatus.DELETED) }
+      ],
+      relations: {
+        sender: true,
+        recipient: true,
+      },
+      order: {
+        createdAt: 'DESC',}
     });
-
-    return entity ? ChatMapper.toDomain(entity) : null;
+    return entities.map((entity) => ChatMapper.toDomain(entity));
   }
 
-  async remove(id: Chat['id']): Promise<void> {
-    await this.timeSlotRepository.delete(id);
+  async findById(id: Chat['id']): Promise<NullableType<Chat>> {
+    const entity = await this.chatRepository.findOne({
+      where: { id: Number(id), status: Not(ChatStatus.DELETED) },
+      relations: {
+        sender: true,
+        recipient: true,
+      },
+    });
+
+    if (!entity) {
+      return null;
+    }
+
+    return ChatMapper.toDomain(entity);
   }
 
   async update(data: Chat): Promise<Chat> {
     const entity = ChatMapper.toPersistence(data);
-    await this.timeSlotRepository.update(data.id, entity);
+    await this.chatRepository.update(data.id, entity);
 
     return data;
-  }
-
-  async findByDayOfWeek(dayOfWeek: Chat['dayOfWeek']): Promise<Chat[]> {
-    const entities = await this.timeSlotRepository.find({
-      where: { dayOfWeek },
-    });
-    return entities.map((entity) => ChatMapper.toDomain(entity));
   }
 }

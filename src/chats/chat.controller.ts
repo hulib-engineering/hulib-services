@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { User } from '@users/domain/user';
 import { ChatService } from './chat.service';
-import { CreateChatsDto } from './dto/create-chat.dto';
+import { CreateChatDto } from './dto/create-chat.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { Chat } from './domain/chat';
 import { AuthGuard } from '@nestjs/passport';
+import { Conversation } from './domain/conversation';
 
 @ApiTags('Chat')
 // @ApiBearerAuth()
@@ -28,37 +29,37 @@ import { AuthGuard } from '@nestjs/passport';
   path: 'chat',
   version: '1',
 })
-export class TimeSlotController {
-  constructor(private readonly timeSlotService: ChatService) {}
+export class ChatController {
+  constructor(private readonly chatService: ChatService) {}
 
   @Post()
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Create a new time slot' })
+  @ApiOperation({ summary: 'Create a new chat' })
   @ApiCreatedResponse({
     type: Chat,
   })
   create(
-    @Body() createTimeSlotsDto: CreateChatsDto,
+    @Body() createChatDto: CreateChatDto,
     @Request() request: any,
   ) {
-    return this.timeSlotService.createMany(createTimeSlotsDto, request.user.id);
+    return this.chatService.create(createChatDto, request.user.id);
   }
 
   @Get()
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get all time slots' })
+  @ApiOperation({ summary: 'Get all conversations' })
   @ApiOkResponse({
-    type: Chat,
+    type: Conversation,
     isArray: true,
   })
-  async findAll(@Request() request: any): Promise<Chat[]> {
-    return this.timeSlotService.findAll(request.user.id);
+  async findAllConversations(@Request() request: any): Promise<Conversation[]> {
+    return this.chatService.findAllConversations(request.user.id);
   }
 
-  @Get('huber/:id')
-  @ApiOperation({ summary: 'Get time slots of a huber' })
+  @Get('user/:id')
+  @ApiOperation({ summary: 'Get chat with user' })
   @ApiParam({
     name: 'id',
     type: Number,
@@ -68,53 +69,10 @@ export class TimeSlotController {
     type: Chat,
     isArray: true,
   })
-  async findByHuber(@Param('id') id: User['id']): Promise<Chat[]> {
-    return this.timeSlotService.findByHuber(id);
+  async findAllChat(
+    @Request() request: any,
+    @Param('id') id: User['id']
+  ): Promise<Chat[]> {
+    return this.chatService.findAllChats(request.user.id, id);
   }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a specific time slot' })
-  @ApiParam({
-    name: 'id',
-    type: Number,
-    required: true,
-  })
-  @ApiOkResponse({
-    type: Chat,
-  })
-  findOne(@Param('id') id: Chat['id']) {
-    return this.timeSlotService.findOne(id);
-  }
-
-  // @Put(':id')
-  // @ApiOperation({ summary: 'Update a specific time slot' })
-  // @ApiParam({
-  //   name: 'id',
-  //   type: Number,
-  //   required: true,
-  // })
-  // @ApiCreatedResponse({
-  //   type: TimeSlot,
-  // })
-  // update(
-  //   @Param('id') id: TimeSlot['id'],
-  //   @Body() updateTimeSlotDto: CreateTimeSlotDto,
-  // ) {
-  //   return this.timeSlotService.update(id, updateTimeSlotDto);
-  // }
-
-  // @Get('day-of-week/:dayOfWeek')
-  // @ApiOperation({ summary: 'Get time slots by day of week' })
-  // @ApiParam({
-  //   name: 'dayOfWeek',
-  //   type: Number,
-  //   required: true,
-  // })
-  // @ApiOkResponse({
-  //   type: TimeSlot,
-  //   isArray: true,
-  // })
-  // findByDayOfWeek(@Param('dayOfWeek') dayOfWeek: TimeSlot['dayOfWeek']) {
-  //   return this.timeSlotService.findByDayOfWeek(dayOfWeek);
-  // }
 }

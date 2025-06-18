@@ -14,14 +14,6 @@ export class CreateChatDto {
     type: Number,
     example: 0,
   })
-  @IsNotEmpty({ message: 'Sender ID is required' })
-  @IsNumber(undefined, { message: 'Sender ID must be a number' })
-  senderId: number;
-
-  @ApiProperty({
-    type: Number,
-    example: 0,
-  })
   @IsNotEmpty({ message: 'Recipient ID is required' })
   @IsNumber(undefined, { message: 'Recipient ID must be a number' })
   recipientId: number;

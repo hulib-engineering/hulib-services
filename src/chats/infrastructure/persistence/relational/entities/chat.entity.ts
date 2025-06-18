@@ -8,50 +8,47 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
-import { ApiProperty } from '@nestjs/swagger';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { ChatStatus } from '../../../../domain/chat';
 
 @Entity({
-  name: 'timeSlot',
+  name: 'chat',
 })
 export class ChatEntity extends EntityRelationalHelper {
-  @ApiProperty({
-    type: Number,
-  })
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ApiProperty({
-    type: Number,
-    example: 0,
-  })
   @Column({ type: Number })
-  dayOfWeek: number;
+  senderId: number;
 
-  @ApiProperty({
-    type: Number,
-  })
-  @Column({ type: Number })
-  huberId: number;
-
-  @ManyToOne(() => UserEntity, (user) => user.timeSlots, {
+  @ManyToOne(() => UserEntity, (user) => user.chatsAsSender, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'huberId' })
-  huber: UserEntity;
+  @JoinColumn({ name: 'senderId' })
+  sender: UserEntity;
 
-  @ApiProperty({
-    type: String,
-    example: '06:00',
+  @Column({ type: Number })
+  recipientId: number;
+
+  @ManyToOne(() => UserEntity, (user) => user.chatsAsRecipient, {
+    onDelete: 'CASCADE',
   })
-  @Column({ type: String })
-  startTime: string;
+  @JoinColumn({ name: 'recipientId' })
+  recipient: UserEntity;
 
-  @ApiProperty()
+  @Column({ type: String })
+  message: string;
+
+  @Column({
+    enum: ChatStatus,
+    type: 'enum',
+    default: ChatStatus.SENT,
+  })
+  status: ChatStatus;
+
   @CreateDateColumn()
   createdAt: Date;
 
-  @ApiProperty()
   @UpdateDateColumn()
   updatedAt: Date;
 }

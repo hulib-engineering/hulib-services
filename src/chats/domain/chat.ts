@@ -55,9 +55,8 @@ export class Chat {
   @ApiProperty()
   updatedAt: Date;
 
-  constructor(createChatDto: CreateChatDto) {
-    this.message = createChatDto.message;
-    this.senderId = createChatDto.senderId;
-    this.recipientId = createChatDto.recipientId;
+  constructor(createChatDto?: CreateChatDto) {
+    this.message = createChatDto?.message ?? '';
+    this.recipientId = createChatDto?.recipientId ?? 0;
   }
 }

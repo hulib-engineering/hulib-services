@@ -19,6 +19,7 @@ import { TimeSlotSeedModule } from '@database/seeds/relational/time-slot/time-sl
 import { NotificationSeedModule } from './notification/notification-seed.module';
 import { NotificationTypeSeedModule } from './notification-type/notification-type-seed.module';
 // import { storyFavouritesSeedModule } from './story-favourites/story-favourites-seed.module';
+import { ChatSeedModule } from './chat/chat-seed.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { NotificationTypeSeedModule } from './notification-type/notification-typ
       },
     }),
     PrismaModule,
+    ChatSeedModule,
   ],
 })
 export class SeedModule {}
