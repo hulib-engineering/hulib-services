@@ -73,7 +73,6 @@ export class StoriesController {
   async findAll(
     @Request() request,
     @Query() query: FindAllStoriesDto,
-    @Request() request,
   ): Promise<InfinityPaginationResponseDto<Story>> {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
