@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma-client/prisma-client.service';
 import { FindQueryNotificationsDto } from './dto/find-all-notifications-query.dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationTypeEnum } from './notification-type.enum';
+import { infinityPagination } from '@utils/infinity-pagination';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class NotificationsService {
@@ -12,7 +14,10 @@ export class NotificationsService {
     NotificationTypeEnum.publishStory,
   ];
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async findAllWithPagination({
     filterOptions,
@@ -252,5 +257,24 @@ export class NotificationsService {
     return {
       message: 'Update notification successfully',
     };
+  }
+
+  async pushNoti(createNotificationDto: CreateNotificationDto) {
+    const notification = await this.create(createNotificationDto);
+
+    if (notification) {
+      const refetchedNotifs = await this.findAllWithPagination({
+        filterOptions: { recipientId: notification.recipientId },
+        paginationOptions: { page: 1, limit: 5 },
+      });
+
+      this.eventEmitter.emit('notification.list.fetch', {
+        userId: notification.recipientId,
+        notifications: {
+          ...refetchedNotifs,
+          ...infinityPagination(refetchedNotifs.data, { page: 1, limit: 5 }),
+        },
+      });
+    }
   }
 }

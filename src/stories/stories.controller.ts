@@ -1,15 +1,15 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
-  Query,
+  Controller,
   Delete,
-  UseGuards,
-  SerializeOptions,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
   Request,
+  SerializeOptions,
+  UseGuards,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -28,8 +28,7 @@ import {
 } from '@utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
-import { DEFAULT_LIMIT } from '@utils/dto/pagination-input.dto';
-import { DEFAULT_PAGE } from '@utils/dto/pagination-input.dto';
+import { DEFAULT_LIMIT, DEFAULT_PAGE } from '@utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { PublishStatus } from './status.enum';
 import { AuthGuard } from '@nestjs/passport';
@@ -72,8 +71,8 @@ export class StoriesController {
     type: InfinityPaginationResponse(Story),
   })
   async findAll(
-    @Query() query: FindAllStoriesDto,
     @Request() request,
+    @Query() query: FindAllStoriesDto,
   ): Promise<InfinityPaginationResponseDto<Story>> {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;

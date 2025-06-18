@@ -3,7 +3,13 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+
+import { UsersService } from '@users/users.service';
+import { PrismaService } from '@prisma-client/prisma-client.service';
+import { StoryReviewsService } from '@story-reviews/story-reviews.service';
+import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repository';
+import { User } from '@users/domain/user';
+import { Topic } from '@topics/domain/topics';
 
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
@@ -13,12 +19,6 @@ import { Story } from './domain/story';
 import { FilterStoryDto, SortStoryDto } from './dto/find-all-stories.dto';
 import { PublishStatus } from './status.enum';
 
-import { UsersService } from '@users/users.service';
-import { PrismaService } from '@prisma-client/prisma-client.service';
-import { StoryReviewsService } from '@story-reviews/story-reviews.service';
-import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repository';
-import { User } from '@users/domain/user';
-import { Topic } from '@topics/domain/topics';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
@@ -31,7 +31,6 @@ export class StoriesService {
     private readonly usersService: UsersService,
     private readonly notifsService: NotificationsService,
     private prisma: PrismaService,
-    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(createStoriesDto: CreateStoryDto) {
@@ -56,11 +55,20 @@ export class StoriesService {
       );
     }
 
-    return this.storiesRepository.create({
+    const newStory = await this.storiesRepository.create({
       ...createStoriesDto,
       humanBook,
       topics: topicsEntities,
     });
+
+    await this.notifsService.pushNoti({
+      senderId: Number(humanBook.id),
+      recipientId: 1,
+      type: NotificationTypeEnum.publishStory,
+      relatedEntityId: newStory.id,
+    });
+
+    return newStory;
   }
 
   async createFirst(userId: User['id'], createStoriesDto: CreateStoryDto) {
@@ -87,24 +95,11 @@ export class StoriesService {
       topics: topicsEntities,
     });
 
-    const notification = await this.notifsService.create({
+    await this.notifsService.pushNoti({
       senderId: Number(userId),
       recipientId: 1,
       type: NotificationTypeEnum.account,
     });
-
-    if (notification) {
-      const updatedNotifications =
-        await this.notifsService.findAllWithPagination({
-          filterOptions: { recipientId: 1 },
-          paginationOptions: { page: 1, limit: 5 },
-        });
-
-      this.eventEmitter.emit('notification.list.fetch', {
-        userId: notification.recipientId,
-        notifications: updatedNotifications,
-      });
-    }
 
     return newStory;
   }
@@ -160,8 +155,32 @@ export class StoriesService {
     };
   }
 
-  update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {
-    return this.storiesRepository.update(id, updateStoriesDto);
+  async update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {
+    const story = await this.findOne(id);
+
+    if (!story) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          story: 'storyNotFound',
+        },
+      });
+    }
+
+    const updated = await this.storiesRepository.update(id, updateStoriesDto);
+
+    if (
+      !!updateStoriesDto.publishStatus &&
+      updateStoriesDto.publishStatus === 'published'
+    ) {
+      await this.notifsService.pushNoti({
+        senderId: 1,
+        recipientId: story.humanBookId,
+        type: NotificationTypeEnum.publishStory,
+        relatedEntityId: story.id,
+      });
+    }
+    return updated;
   }
 
   remove(id: Story['id']) {
