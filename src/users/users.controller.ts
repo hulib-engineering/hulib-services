@@ -146,17 +146,29 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
+  @ApiOkResponse({
+    description: 'Approve request to become huber successfully.',
+  })
+  @ApiOkResponse({
+    description: 'Reject request to become huber!',
+  })
+  @ApiOperation({
+    summary:
+      'Perform action to upgrade account to huber. Only admin can perform this action (accept | reject).',
+  })
   @Post(':id/upgrade')
   @ApiParam({
     name: 'id',
     type: String,
     required: true,
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(RoleEnum.admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @HttpCode(HttpStatus.OK)
   upgrade(
     @Param('id') id: User['id'],
-    @Body() { action }: UpgradeDto,
+    @Body() upgradeDto: UpgradeDto,
   ): Promise<User | { message: string } | void> {
-    return this.usersService.upgrade(id, action);
+    return this.usersService.upgrade(id, upgradeDto);
   }
 }

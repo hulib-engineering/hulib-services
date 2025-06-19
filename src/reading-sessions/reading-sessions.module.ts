@@ -29,6 +29,7 @@ import { UsersModule } from '@users/users.module';
 import { StoriesModule } from '@stories/stories.module';
 import { WebRtcModule } from '../web-rtc/web-rtc.module';
 import { StoryReviewsModule } from '@story-reviews/story-reviews.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { StoryReviewsModule } from '@story-reviews/story-reviews.module';
     StoriesModule,
     StoryReviewsModule,
     WebRtcModule,
+    NotificationsModule,
   ],
   controllers: [ReadingSessionsController],
   providers: [
