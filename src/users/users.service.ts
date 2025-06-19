@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpStatus,
   Injectable,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -132,8 +133,62 @@ export class UsersService {
     });
   }
 
-  findById(id: User['id']): Promise<NullableType<User>> {
-    return this.usersRepository.findById(id);
+  async findById(id: User['id']): Promise<NullableType<any>> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: Number(id),
+      },
+      include: {
+        topicsOfInterest: true,
+        gender: true,
+        role: true,
+        status: true,
+      },
+      omit: {
+        deletedAt: true,
+        genderId: true,
+        roleId: true,
+        statusId: true,
+        photoId: true,
+        password: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    const { topicsOfInterest, ...rest } = user;
+    const isLiber = user.role?.id === RoleEnum.reader;
+
+    if (isLiber) {
+      const firstStory = await this.prisma.story.findFirst({
+        where: {
+          humanBookId: Number(id),
+        },
+        include: {
+          cover: true,
+        },
+        omit: {
+          coverId: true,
+          createdAt: true,
+          updatedAt: true,
+          humanBookId: true,
+        },
+      });
+      return {
+        ...rest,
+        topics: topicsOfInterest,
+        firstStory,
+      };
+    }
+
+    return {
+      ...rest,
+      topics: topicsOfInterest,
+    };
   }
 
   // async findHumanBookById(id: User['id']): Promise<NullableType<User>> {

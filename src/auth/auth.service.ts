@@ -93,12 +93,7 @@ export class AuthService {
     }
 
     if (user.status?.id === StatusEnum.inactive) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          status: 'inactiveUser',
-        },
-      });
+      throw new UnauthorizedException();
     }
 
     const hash = crypto
