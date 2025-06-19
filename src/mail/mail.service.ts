@@ -194,4 +194,50 @@ export class MailService {
       },
     });
   }
+
+  async remindParticipants(
+    mailData: MailData<{ name: string; sessionUrl: string; cohost: string }>,
+  ): Promise<void> {
+    const i18n = I18nContext.current();
+    let reminderEmailTitle: MaybeType<string>;
+    let dear: MaybeType<string>;
+    let reminderPt1: MaybeType<string>;
+    let reminderPt2: MaybeType<string>;
+
+    let regard: MaybeType<string>;
+
+    if (i18n) {
+      [reminderEmailTitle, dear, reminderPt1, reminderPt2] = await Promise.all([
+        i18n.t('common.reminderEmail'),
+        i18n.t('common.dear'),
+        i18n.t('reminder-email.reminderPt1'),
+        i18n.t('reminder-email.reminderPt2'),
+      ]);
+    }
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: reminderEmailTitle,
+      text: reminderEmailTitle,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'reminder.hbs',
+      ),
+      context: {
+        title: reminderEmailTitle,
+        fullname: mailData.data.name.toString(),
+        url: mailData.data.sessionUrl.toString(),
+        cohost: mailData.data.cohost.toString(),
+        dear,
+        reminderPt1,
+        reminderPt2,
+        regard,
+      },
+    });
+  }
 }

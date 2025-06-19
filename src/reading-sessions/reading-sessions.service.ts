@@ -18,11 +18,16 @@ import { StoriesService } from '@stories/stories.service';
 import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { User } from '@users/domain/user';
 import { ConfigService } from '@nestjs/config';
+import { Queue } from 'bull';
+import { Cron } from '@nestjs/schedule';
+
 import { AllConfigType } from '@config/config.type';
 import { WebRtcService } from '../web-rtc/web-rtc.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
+import { InjectQueue } from '@nestjs/bull';
+import { PrismaService } from '@prisma-client/prisma-client.service';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -36,6 +41,8 @@ export class ReadingSessionsService {
     private readonly webRtcService: WebRtcService,
     private readonly notificationService: NotificationsService,
     private readonly configService: ConfigService<AllConfigType>,
+    @InjectQueue('reminder') private readonly reminderQueue: Queue,
+    private prisma: PrismaService,
   ) {}
 
   async createSession(dto: CreateReadingSessionDto): Promise<ReadingSession> {
@@ -290,5 +297,44 @@ export class ReadingSessionsService {
   async getSessionMessages(id: number): Promise<Message[]> {
     await this.findOneSession(id);
     return await this.messageRepository.findByReadingSessionId(id);
+  }
+
+  @Cron('30 5 * * *') // 05:30
+  @Cron('0,30 6-22 * * *') // 06:00–22:30
+  @Cron('0 23 * * *') // 23:00
+  async checkAndScheduleReminders() {
+    const now = new Date();
+    const targetStart = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
+
+    const sessions = await this.prisma.readingSession.findMany({
+      where: {
+        startedAt: {
+          gte: new Date(targetStart.getTime() - 5 * 60 * 1000), // 5 min buffer before
+          lt: new Date(targetStart.getTime() + 5 * 60 * 1000), // 5 min buffer after
+        },
+      },
+    });
+
+    for (const session of sessions) {
+      const delay = 15 * 60 * 1000; // Delay = 15 minutes
+
+      await this.reminderQueue.add(
+        'send-email-and-notify-user',
+        { sessionId: session.id },
+        {
+          delay,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
+
+      // Update flag to avoid rescheduling
+      // await this.prisma.meeting.update({
+      //   where: { id: meeting.id },
+      //   data: { reminderScheduled: true },
+      // });
+
+      // this.logger.log(`Scheduled reminder for meeting ${meeting.id}`);
+    }
   }
 }
