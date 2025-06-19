@@ -21,12 +21,16 @@ import { Action, Approval } from '@users/approval.enum';
 import { CreateFeedbackDto } from '@users/dto/create-feedback.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { user as PrismaUser } from '@prisma/client';
+import { UpgradeDto } from '@users/dto/upgrade.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
+    private readonly notificationsService: NotificationsService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -299,18 +303,29 @@ export class UsersService {
     await this.usersRepository.update(userId, { password: newPassword });
   }
 
-  async upgrade(id: User['id'], action: string): Promise<void> {
-    if (action === Action.accept) {
+  async upgrade(id: User['id'], upgradeDto: UpgradeDto) {
+    if (upgradeDto.action === Action.accept) {
       await this.usersRepository.update(id, {
         role: {
           id: RoleEnum.humanBook,
         },
         approval: Approval.approved,
       });
-    } else if (action === Action.reject) {
+      await this.notificationsService.pushNoti({
+        senderId: 1,
+        recipientId: Number(id),
+        type: NotificationTypeEnum.account,
+      });
+      return {
+        message: 'Approve request to become huber successfully.',
+      };
+    } else if (upgradeDto.action === Action.reject) {
       await this.usersRepository.update(id, {
         approval: Approval.rejected,
       });
+      return {
+        message: 'Reject request to become huber!',
+      };
     } else {
       throw new BadRequestException({
         status: HttpStatus.BAD_REQUEST,

@@ -16,11 +16,13 @@ import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-se
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
 import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { User } from '../users/domain/user';
+import { User } from '@users/domain/user';
 import { ConfigService } from '@nestjs/config';
 import { AllConfigType } from '@config/config.type';
 import { WebRtcService } from '../web-rtc/web-rtc.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -32,6 +34,7 @@ export class ReadingSessionsService {
     private readonly storiesService: StoriesService,
     private readonly storyReviewsService: StoryReviewsService,
     private readonly webRtcService: WebRtcService,
+    private readonly notificationService: NotificationsService,
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
 
@@ -91,7 +94,17 @@ export class ReadingSessionsService {
 
     await this.validateSessionOverlap(session);
 
-    return this.readingSessionRepository.create(session);
+    const newReadingSession =
+      await this.readingSessionRepository.create(session);
+
+    await this.notificationService.pushNoti({
+      senderId: newReadingSession?.readerId,
+      recipientId: newReadingSession?.humanBookId,
+      type: NotificationTypeEnum.sessionRequest,
+      relatedEntityId: newReadingSession.id,
+    });
+
+    return newReadingSession;
   }
 
   private async validateSessionOverlap(session: ReadingSession): Promise<void> {
