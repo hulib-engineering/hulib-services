@@ -13,7 +13,27 @@ export class FavStoriesService {
     const favorites = await this.prisma.storyFavorite.findMany({
       where: { userId },
       include: {
-        story: true,
+        story: {
+          include: {
+            humanBook: {
+              include: {
+                gender: true,
+                role: true,
+                status: true,
+              },
+              omit: {
+                deletedAt: true,
+                genderId: true,
+                roleId: true,
+                statusId: true,
+                photoId: true,
+                password: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        },
       },
     });
 
