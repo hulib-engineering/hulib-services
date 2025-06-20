@@ -312,6 +312,7 @@ export class ReadingSessionsService {
           gte: new Date(targetStart.getTime() - 5 * 60 * 1000), // 5 min buffer before
           lt: new Date(targetStart.getTime() + 5 * 60 * 1000), // 5 min buffer after
         },
+        sessionStatus: ReadingSessionStatus.APPROVED,
       },
     });
 
