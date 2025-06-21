@@ -15,6 +15,7 @@ import cacheConfig from './cache/config/cache.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 import { AuthFacebookModule } from '@auth-facebook/auth-facebook.module';
 import { AuthGoogleModule } from '@auth-google/auth-google.module';
 import { I18nModule } from 'nestjs-i18n/dist/i18n.module';
@@ -46,6 +47,7 @@ import { CacheModule as CacheManagerModule } from './cache/cache.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { SocketGateway } from './socket/socket.gateway';
 import { NotificationGateway } from './notifications/notifications.gateway';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ChatModule } from './chats/chat.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
@@ -61,6 +63,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     NotificationsModule,
     SentryModule.forRoot(),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     HealthcheckModule,
     StoriesModule,
     FavStoriesModule,
@@ -104,6 +107,24 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
     }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        redis: {
+          host: configService.getOrThrow('redis.host', {
+            infer: true,
+          }),
+          port: configService.getOrThrow('redis.port', {
+            infer: true,
+          }),
+          password: configService.getOrThrow('redis.password', {
+            infer: true,
+          }),
+        },
+      }),
+    }),
+    BullModule.registerQueue({ name: 'reminder' }),
     CacheManagerModule,
     UsersModule,
     FilesModule,

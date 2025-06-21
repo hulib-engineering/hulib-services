@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { I18nContext } from 'nestjs-i18n';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { MailData } from './interfaces/mail-data.interface';
 
 import { MaybeType } from '@utils/types/maybe.type';
@@ -14,6 +14,7 @@ export class MailService {
   constructor(
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService<AllConfigType>,
+    private readonly i18n: I18nService, // inject this instead of relying on context
   ) {}
 
   async userSignUp(
@@ -191,6 +192,60 @@ export class MailService {
         text1,
         text2,
         text3,
+      },
+    });
+  }
+
+  async remindParticipants(
+    mailData: MailData<{ name: string; sessionUrl: string; cohost: string }>,
+  ): Promise<void> {
+    const locale = 'en'; // or dynamically determine it (e.g., from mailData)
+
+    // const i18n = I18nContext.current();
+    let reminderEmailTitle: MaybeType<string>;
+    let dear: MaybeType<string>;
+    let reminderPt1: MaybeType<string>;
+    let reminderPt2: MaybeType<string>;
+
+    let contact: MaybeType<string>;
+    let regard: MaybeType<string>;
+
+    // if (i18n) {
+    // eslint-disable-next-line prefer-const
+    [reminderEmailTitle, dear, reminderPt1, reminderPt2, contact, regard] =
+      await Promise.all([
+        this.i18n.t('common.reminderEmail', { lang: locale }),
+        this.i18n.t('common.dear', { lang: locale }),
+        this.i18n.t('reminder-email.reminderPt1', { lang: locale }),
+        this.i18n.t('reminder-email.reminderPt2', { lang: locale }),
+        this.i18n.t('reset-password.contact', { lang: locale }),
+        this.i18n.t('common.bestRegards', { lang: locale }),
+      ]);
+    // }
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: reminderEmailTitle,
+      text: reminderEmailTitle,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'reminder.hbs',
+      ),
+      context: {
+        title: reminderEmailTitle,
+        fullname: mailData.data.name.toString(),
+        url: mailData.data.sessionUrl.toString(),
+        cohost: mailData.data.cohost.toString(),
+        dear,
+        reminderPt1,
+        reminderPt2,
+        contact,
+        regard,
       },
     });
   }
