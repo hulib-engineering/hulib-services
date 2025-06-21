@@ -117,6 +117,8 @@ model user {
   storyFavorite         storyFavorite[]
   notificationsReceived notification[]         @relation("RecipientNotification")
   notificationsSent     notification[]         @relation("SenderNotification")
+  chatsSent             chat[]                 @relation("ChatSender")
+  chatsReceived         chat[]                 @relation("ChatRecipient")
 
   huberReadingSessions readingSession[] @relation("HumanBookRelation")
 
@@ -293,4 +295,28 @@ model notificationType {
   id           Int            @id @default(autoincrement())
   name         String         @unique @db.VarChar
   notification notification[]
+}
+
+model chat {
+  id          Int      @id @default(autoincrement())
+  
+  senderId    Int
+  recipientId Int
+  message     String   @db.VarChar(4000)
+  status      chatStatus @default(sent)
+
+  sender      user     @relation("ChatSender", fields: [senderId], references: [id])
+  recipient   user     @relation("ChatRecipient", fields: [recipientId], references: [id])
+  
+  createdAt   DateTime @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime @default(now()) @db.Timestamp(6)
+  deletedAt   DateTime?
+
+}
+
+enum chatStatus {
+  sent
+  delivered
+  read
+  deleted
 }

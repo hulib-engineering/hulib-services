@@ -48,6 +48,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { SocketGateway } from './socket/socket.gateway';
 import { NotificationGateway } from './notifications/notifications.gateway';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ChatModule } from './chats/chat.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -143,6 +144,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     TimeSlotModule,
     ReadingSessionsModule,
     HubersModule,
+    ChatModule,
   ],
   providers: [
     SocketGateway,
