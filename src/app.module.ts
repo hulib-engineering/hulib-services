@@ -15,6 +15,7 @@ import cacheConfig from './cache/config/cache.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 import { AuthFacebookModule } from '@auth-facebook/auth-facebook.module';
 import { AuthGoogleModule } from '@auth-google/auth-google.module';
 import { I18nModule } from 'nestjs-i18n/dist/i18n.module';
@@ -103,6 +104,24 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
     }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        redis: {
+          host: configService.getOrThrow('redis.host', {
+            infer: true,
+          }),
+          port: configService.getOrThrow('redis.port', {
+            infer: true,
+          }),
+          password: configService.getOrThrow('redis.password', {
+            infer: true,
+          }),
+        },
+      }),
+    }),
+    BullModule.registerQueue({ name: 'reminder' }),
     CacheManagerModule,
     UsersModule,
     FilesModule,
