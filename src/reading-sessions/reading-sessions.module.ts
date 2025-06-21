@@ -31,6 +31,8 @@ import { WebRtcModule } from '../web-rtc/web-rtc.module';
 import { StoryReviewsModule } from '@story-reviews/story-reviews.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { BullModule } from '@nestjs/bull';
+import { MailModule } from '@mail/mail.module';
+import { ReadingSessionsProcessor } from '@reading-sessions/reading-sessions.processor';
 
 @Module({
   imports: [
@@ -51,6 +53,7 @@ import { BullModule } from '@nestjs/bull';
     BullModule.registerQueue({
       name: 'reminder',
     }),
+    MailModule,
   ],
   controllers: [ReadingSessionsController],
   providers: [
@@ -61,6 +64,7 @@ import { BullModule } from '@nestjs/bull';
     ReadingSessionMapper,
     FeedbackMapper,
     MessageMapper,
+    ReadingSessionsProcessor,
   ],
   exports: [
     ReadingSessionsService,

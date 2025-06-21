@@ -1,18 +1,16 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
-import { PrismaService } from '@prisma-client/prisma-client.service';
 import { ReadingSessionsService } from '@reading-sessions/reading-sessions.service';
 import { MailService } from '@mail/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
 @Processor('reminder')
-export class ReadingSessionsProcessorProcessor {
+export class ReadingSessionsProcessor {
   constructor(
     private readingSessionsService: ReadingSessionsService,
     private mailService: MailService,
     private notificationsService: NotificationsService,
-    private prisma: PrismaService,
   ) {}
 
   @Process('send-email-and-notify-user')
