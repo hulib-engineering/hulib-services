@@ -7,6 +7,7 @@ import { UsersModule } from '@users/users.module';
 import { StoryReviewsModule } from '@story-reviews/story-reviews.module';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { CaslModule } from '../casl';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     UsersModule,
     StoryReviewsModule,
     NotificationsModule,
+    CaslModule,
   ],
   controllers: [StoriesController],
   providers: [StoriesService, StoryReviewsService],
