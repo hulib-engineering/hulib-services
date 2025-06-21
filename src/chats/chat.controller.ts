@@ -59,6 +59,8 @@ export class ChatController {
   }
 
   @Get('user/:id')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get chat with user' })
   @ApiParam({
     name: 'id',

@@ -13,8 +13,8 @@ export class ChatSeedService {
       return;
     }
     console.log('Seeding chats...');
-    for (let i = 0; i < 10; i++) {
-      for (let j = i + 1; j < 10; j++) {
+    for (let i = 1; i <= 5; i++) {
+      for (let j = i + 1; j <= 5; j++) {
         const chatData = [
           'Hello, how are you?',
           'I am fine, thank you! And you?',
@@ -32,15 +32,16 @@ export class ChatSeedService {
           message,
           status: index === 9 ? ChatStatus.READ : ChatStatus.SENT,
         }));
-        await this.prisma.chat.createMany({
-          data: chatData,
-          skipDuplicates: true,
-          include: {
-            sender: true,
-            recipient: true,
-          },
+        chatData.forEach(async (chat) => {
+          await this.prisma.chat.create({
+            data: chat,
+            include: {
+              sender: true,
+              recipient: true,
+            },
+          });
         });
-        console.log(`Created chat between user ${i + 1} and user ${j + 1}`);
+        console.log(`Created chat between user ${i} and user ${j}`);
       }
     }
   }

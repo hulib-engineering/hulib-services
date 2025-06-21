@@ -52,6 +52,10 @@ export class ChatService {
     }
     const conversations: Conversation[] = [];
     for (const chat of chats) {
+      const recipientId = chat.sender.id === userId ? chat.recipient.id : chat.sender.id;
+      if (conversations.some(conv => conv.recipient.id === recipientId)) {
+        continue;
+      }
       const conversation = new Conversation();
       conversation.recipient = chat.sender.id === userId ? chat.recipient : chat.sender;
       conversation.last_message = chat;
