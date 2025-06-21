@@ -35,6 +35,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
 import { RolesGuard } from '@roles/roles.guard';
+import { Action, CaslAbilityFactory } from '../casl';
 
 @ApiTags('Stories')
 @ApiBearerAuth()
@@ -44,6 +45,7 @@ import { RolesGuard } from '@roles/roles.guard';
 })
 export class StoriesController {
   constructor(
+    private readonly caslAbilityFactory: CaslAbilityFactory,
     private readonly storiesService: StoriesService,
     private readonly storyReviewService: StoryReviewsService,
   ) {}
@@ -77,7 +79,8 @@ export class StoriesController {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
 
-    const isAdmin = request.user.role.id === RoleEnum.admin;
+    const ability = this.caslAbilityFactory.defineAbilitiesFor(request.user);
+    const isAdmin = ability.can(Action.Manage, 'all');
     const defaultPublishStatus = isAdmin
       ? PublishStatus.draft
       : PublishStatus.published;
