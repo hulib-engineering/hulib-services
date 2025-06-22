@@ -231,6 +231,12 @@ export class ReadingSessionsService {
             comment: content,
           },
         );
+        await this.notificationService.pushNoti({
+          senderId: session.readerId,
+          recipientId: session.humanBookId,
+          type: NotificationTypeEnum.reviewStory,
+          relatedEntityId: session.storyId,
+        });
       }
       if (!!dto.huberFeedback) {
         await this.usersService.editFeedback(
