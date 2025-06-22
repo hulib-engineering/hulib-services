@@ -34,7 +34,7 @@ export class ChatRelationalRepository implements ChatRepository {
     const entities = await this.chatRepository.find({
       where: [
         { senderId: Number(userId), status: Not(ChatStatus.DELETED) },
-        { recipientId: Number(userId), status: Not(ChatStatus.DELETED) }
+        { recipientId: Number(userId), status: Not(ChatStatus.DELETED) },
       ],
       relations: {
         sender: true,
@@ -50,15 +50,24 @@ export class ChatRelationalRepository implements ChatRepository {
   async findByUsers(user1: User['id'], user2: User['id']): Promise<Chat[]> {
     const entities = await this.chatRepository.find({
       where: [
-        { senderId: Number(user1), recipientId: Number(user2), status: Not(ChatStatus.DELETED) },
-        { senderId: Number(user2), recipientId: Number(user1), status: Not(ChatStatus.DELETED) }
+        {
+          senderId: Number(user1),
+          recipientId: Number(user2),
+          status: Not(ChatStatus.DELETED),
+        },
+        {
+          senderId: Number(user2),
+          recipientId: Number(user1),
+          status: Not(ChatStatus.DELETED),
+        },
       ],
       relations: {
         sender: true,
         recipient: true,
       },
       order: {
-        createdAt: 'DESC',}
+        createdAt: 'DESC',
+      },
     });
     return entities.map((entity) => ChatMapper.toDomain(entity));
   }

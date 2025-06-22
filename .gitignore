@@ -41,3 +41,4 @@ lerna-debug.log*
 /ormconfig.json
 /docker-volumes
 .env.keys
+.env.local

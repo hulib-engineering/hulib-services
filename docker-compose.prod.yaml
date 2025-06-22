@@ -30,16 +30,16 @@ services:
     image: redis
     container_name: redis-server
     ports:
-      - "6379:6379"
+      - '6379:6379'
     env_file:
       - .env.production
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
     command:
       [
-        "redis-server",
-        "/usr/local/etc/redis/redis.conf",
-        "--requirepass",
-        "${REDIS_PASSWORD}"
+        'redis-server',
+        '/usr/local/etc/redis/redis.conf',
+        '--requirepass',
+        '${REDIS_PASSWORD}',
       ]
     restart: unless-stopped
