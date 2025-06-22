@@ -1,13 +1,7 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '@users/domain/user';
 
-import {
-  CreateChatDto,
-} from './dto/create-chat.dto';
+import { CreateChatDto } from './dto/create-chat.dto';
 import { ChatRepository } from './infrastructure/persistence/chat.repository';
 import { Chat, ChatStatus } from './domain/chat';
 import { Conversation } from './domain/conversation';
@@ -52,17 +46,23 @@ export class ChatService {
     }
     const conversations: Conversation[] = [];
     for (const chat of chats) {
-      const recipientId = chat.sender.id === userId ? chat.recipient.id : chat.sender.id;
-      if (conversations.some(conv => conv.recipient.id === recipientId)) {
+      const recipientId =
+        chat.sender.id === userId ? chat.recipient.id : chat.sender.id;
+      if (conversations.some((conv) => conv.recipient.id === recipientId)) {
         continue;
       }
       const conversation = new Conversation();
-      conversation.recipient = chat.sender.id === userId ? chat.recipient : chat.sender;
+      conversation.recipient =
+        chat.sender.id === userId ? chat.recipient : chat.sender;
       conversation.last_message = chat;
-      conversation.isUnread = chat.recipient.id === userId && chat.status !== ChatStatus.READ;
+      conversation.isUnread =
+        chat.recipient.id === userId && chat.status !== ChatStatus.READ;
       conversations.push(conversation);
     }
-    conversations.sort((a, b) => b.last_message.createdAt.getTime() - a.last_message.createdAt.getTime());
+    conversations.sort(
+      (a, b) =>
+        b.last_message.createdAt.getTime() - a.last_message.createdAt.getTime(),
+    );
     return conversations;
   }
 
