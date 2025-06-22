@@ -83,14 +83,16 @@ export class ReadingSessionsService {
     session.sessionUrl = '';
     session.note = dto.note;
     session.sessionStatus = ReadingSessionStatus.PENDING;
-    session.startedAt = new Date(
-      new Date(dto.startedAt).getTime() +
-        (420 - new Date(dto.startedAt).getTimezoneOffset()) * 60000,
-    );
-    session.endedAt = new Date(
-      new Date(dto.endedAt).getTime() +
-        (420 - new Date(dto.endedAt).getTimezoneOffset()) * 60000,
-    );
+    session.startedAt = new Date(dto.startedAt);
+    session.endedAt = new Date(dto.endedAt);
+    // session.startedAt = new Date(
+    //   new Date(dto.startedAt).getTime() +
+    //     (7 * 60 - new Date(dto.startedAt).getTimezoneOffset()) * 60000,
+    // );
+    // session.endedAt = new Date(
+    //   new Date(dto.endedAt).getTime() +
+    //     (7 * 60 - new Date(dto.endedAt).getTimezoneOffset()) * 60000,
+    // );
     session.startTime = dto.startTime;
     session.endTime = dto.endTime;
 
