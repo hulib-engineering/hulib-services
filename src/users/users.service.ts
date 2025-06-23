@@ -25,6 +25,8 @@ import { user as PrismaUser } from '@prisma/client';
 import { UpgradeDto } from '@users/dto/upgrade.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
+import { ReadingSessionStatus } from '@reading-sessions/infrastructure/persistence/relational/entities';
+import { pagination } from '@utils/types/pagination';
 
 @Injectable()
 export class UsersService {
@@ -432,6 +434,72 @@ export class UsersService {
     return this.prisma.feedback.update({
       where: { id: feedback?.id || 0 },
       data: { rating: payload.rating, content: payload.content },
+    });
+  }
+
+  async getReadingSessions({
+    userId,
+    status,
+    paginationOptions,
+  }: {
+    userId: User['id'];
+    status: ReadingSessionStatus;
+    paginationOptions: IPaginationOptions;
+  }) {
+    const skip = (paginationOptions.page - 1) * paginationOptions.limit;
+    const take = paginationOptions.limit;
+    const where = {
+      AND: [
+        {
+          OR: [{ humanBookId: Number(userId) }, { readerId: Number(userId) }],
+        },
+        { sessionStatus: status },
+      ],
+    };
+    const userConfig = {
+      include: {
+        topicsOfInterest: true,
+        gender: true,
+        role: true,
+        status: true,
+      },
+      omit: {
+        deletedAt: true,
+        genderId: true,
+        roleId: true,
+        statusId: true,
+        photoId: true,
+        password: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    };
+
+    const [totalItems, data] = await this.prisma.$transaction([
+      this.prisma.readingSession.count({ where }),
+      this.prisma.readingSession.findMany({
+        where,
+        include: {
+          humanBook: userConfig,
+          reader: userConfig,
+        },
+        omit: {
+          readerId: true,
+          humanBookId: true,
+          sessionUrl: true,
+          recordingUrl: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+        },
+        skip,
+        take,
+      }),
+    ]);
+
+    return pagination(data, totalItems, {
+      page: paginationOptions.page,
+      limit: paginationOptions.limit,
     });
   }
 }
