@@ -10,6 +10,7 @@ import {
   Request,
   SerializeOptions,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -35,7 +36,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
 import { RolesGuard } from '@roles/roles.guard';
-import { Action, CaslAbilityFactory } from '../casl';
+import { CaslSerializationInterceptor } from '../casl';
 
 @ApiTags('Stories')
 @ApiBearerAuth()
@@ -45,7 +46,6 @@ import { Action, CaslAbilityFactory } from '../casl';
 })
 export class StoriesController {
   constructor(
-    private readonly caslAbilityFactory: CaslAbilityFactory,
     private readonly storiesService: StoriesService,
     private readonly storyReviewService: StoryReviewsService,
   ) {}
@@ -69,6 +69,7 @@ export class StoriesController {
   })
   @Get()
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(CaslSerializationInterceptor)
   @ApiOkResponse({
     type: InfinityPaginationResponse(Story),
   })
@@ -78,10 +79,7 @@ export class StoriesController {
   ): Promise<InfinityPaginationResponseDto<Story>> {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
-
-    const ability = this.caslAbilityFactory.defineAbilitiesFor(request.user);
-    const isAdmin = ability.can(Action.Manage, 'all');
-    const defaultPublishStatus = isAdmin
+    const defaultPublishStatus = request.isAdmin
       ? PublishStatus.draft
       : PublishStatus.published;
 
