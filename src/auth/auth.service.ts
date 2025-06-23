@@ -678,9 +678,6 @@ export class AuthService {
     const educationEnd = createHumanBooksDto.educationEnd
       ? new Date(createHumanBooksDto.educationEnd)
       : null;
-    const role = {
-      id: RoleEnum.humanBook,
-    };
 
     return await this.usersService.update(userId, {
       ...user,
@@ -689,7 +686,6 @@ export class AuthService {
       educationEnd,
       approval: Approval.pending,
       topics: createHumanBooksDto.topics ?? undefined,
-      role: role,
     });
   }
 
