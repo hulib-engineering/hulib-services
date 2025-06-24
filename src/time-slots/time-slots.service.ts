@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { TimeSlotRepository } from './infrastructure/persistence/time-slot.repos
 import { TimeSlot } from './domain/time-slot';
 import { UsersService } from '@users/users.service';
 import { RoleEnum } from '../roles/roles.enum';
+import { Approval } from '../users/approval.enum';
 
 @Injectable()
 export class TimeSlotService {
@@ -35,8 +37,15 @@ export class TimeSlotService {
 
   async createMany(createTimeSlotsDto: CreateTimeSlotsDto, userId: number) {
     const user = await this.userService.findById(userId);
-    if (!user || user.role?.id != RoleEnum.humanBook) {
-      throw new NotFoundException(`Huber with id ${userId} not found`);
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+    const acceptableRole =
+      user.role.id === RoleEnum.humanBook ||
+      (user.role.id === RoleEnum.reader && user.approval === Approval.pending);
+    if (!acceptableRole) {
+      throw new ForbiddenException();
     }
     const timeSlots = createTimeSlotsDto.timeSlots.map((createTimeSlotDto) => {
       const timeSlot = new TimeSlot(createTimeSlotDto);
