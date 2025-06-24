@@ -16,11 +16,19 @@ import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-se
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
 import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { User } from '../users/domain/user';
+import { User } from '@users/domain/user';
 import { ConfigService } from '@nestjs/config';
+import { Queue } from 'bull';
+import { Cron } from '@nestjs/schedule';
+
 import { AllConfigType } from '@config/config.type';
 import { WebRtcService } from '../web-rtc/web-rtc.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
+import { InjectQueue } from '@nestjs/bull';
+import { PrismaService } from '@prisma-client/prisma-client.service';
+import { MailService } from '@mail/mail.service';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -32,7 +40,11 @@ export class ReadingSessionsService {
     private readonly storiesService: StoriesService,
     private readonly storyReviewsService: StoryReviewsService,
     private readonly webRtcService: WebRtcService,
+    private readonly notificationService: NotificationsService,
+    private readonly mailService: MailService,
     private readonly configService: ConfigService<AllConfigType>,
+    @InjectQueue('reminder') private readonly reminderQueue: Queue,
+    private prisma: PrismaService,
   ) {}
 
   async createSession(dto: CreateReadingSessionDto): Promise<ReadingSession> {
@@ -71,14 +83,16 @@ export class ReadingSessionsService {
     session.sessionUrl = '';
     session.note = dto.note;
     session.sessionStatus = ReadingSessionStatus.PENDING;
-    session.startedAt = new Date(
-      new Date(dto.startedAt).getTime() +
-        (420 - new Date(dto.startedAt).getTimezoneOffset()) * 60000,
-    );
-    session.endedAt = new Date(
-      new Date(dto.endedAt).getTime() +
-        (420 - new Date(dto.endedAt).getTimezoneOffset()) * 60000,
-    );
+    session.startedAt = new Date(dto.startedAt);
+    session.endedAt = new Date(dto.endedAt);
+    // session.startedAt = new Date(
+    //   new Date(dto.startedAt).getTime() +
+    //     (7 * 60 - new Date(dto.startedAt).getTimezoneOffset()) * 60000,
+    // );
+    // session.endedAt = new Date(
+    //   new Date(dto.endedAt).getTime() +
+    //     (7 * 60 - new Date(dto.endedAt).getTimezoneOffset()) * 60000,
+    // );
     session.startTime = dto.startTime;
     session.endTime = dto.endTime;
 
@@ -91,7 +105,17 @@ export class ReadingSessionsService {
 
     await this.validateSessionOverlap(session);
 
-    return this.readingSessionRepository.create(session);
+    const newReadingSession =
+      await this.readingSessionRepository.create(session);
+
+    await this.notificationService.pushNoti({
+      senderId: newReadingSession?.readerId,
+      recipientId: newReadingSession?.humanBookId,
+      type: NotificationTypeEnum.sessionRequest,
+      relatedEntityId: newReadingSession.id,
+    });
+
+    return newReadingSession;
   }
 
   private async validateSessionOverlap(session: ReadingSession): Promise<void> {
@@ -209,6 +233,12 @@ export class ReadingSessionsService {
             comment: content,
           },
         );
+        await this.notificationService.pushNoti({
+          senderId: session.readerId,
+          recipientId: session.humanBookId,
+          type: NotificationTypeEnum.reviewStory,
+          relatedEntityId: session.storyId,
+        });
       }
       if (!!dto.huberFeedback) {
         await this.usersService.editFeedback(
@@ -277,5 +307,44 @@ export class ReadingSessionsService {
   async getSessionMessages(id: number): Promise<Message[]> {
     await this.findOneSession(id);
     return await this.messageRepository.findByReadingSessionId(id);
+  }
+
+  @Cron('30 5 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 05:30 only
+  @Cron('0,30 6-22 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 06:00 to 22:30
+  @Cron('0 23 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 23:00 only
+  async checkAndScheduleReminders() {
+    const now = new Date();
+    const targetStart = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
+
+    const sessions = await this.prisma.readingSession.findMany({
+      where: {
+        startedAt: {
+          gte: new Date(targetStart.getTime() - 5 * 60 * 1000), // 5 min buffer before
+          lt: new Date(targetStart.getTime() + 5 * 60 * 1000), // 5 min buffer after
+        },
+        sessionStatus: ReadingSessionStatus.APPROVED,
+      },
+    });
+    for (const session of sessions) {
+      const delay = 15 * 60 * 1000; // Delay = 1 minutes
+
+      await this.reminderQueue.add(
+        'send-email-and-notify-user',
+        { sessionId: session.id },
+        {
+          delay,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
+
+      // Update flag to avoid rescheduling
+      // await this.prisma.meeting.update({
+      //   where: { id: meeting.id },
+      //   data: { reminderScheduled: true },
+      // });
+
+      // this.logger.log(`Scheduled reminder for meeting ${meeting.id}`);
+    }
   }
 }

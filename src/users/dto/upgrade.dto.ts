@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 export class UpgradeDto {
   @ApiProperty({
     example: 'accept',
@@ -10,4 +10,12 @@ export class UpgradeDto {
   })
   @IsString()
   action: string;
+
+  @ApiPropertyOptional({
+    example: 'Huber information is invalid',
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  reason?: string;
 }

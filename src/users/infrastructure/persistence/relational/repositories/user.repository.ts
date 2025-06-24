@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { NullableType } from '@utils/types/nullable.type';
 import {
@@ -39,36 +39,55 @@ export class UsersRelationalRepository implements UserRepository {
     sortOptions?: SortUserDto[] | null;
     paginationOptions: IPaginationOptions;
   }): Promise<User[]> {
-    const where: FindOptionsWhere<UserEntity> = {};
+    const queryBuilder = this.usersRepository.createQueryBuilder('user');
+    queryBuilder
+      .leftJoinAndSelect('user.role', 'role')
+      .leftJoinAndSelect('user.status', 'status')
+      .leftJoinAndSelect('user.gender', 'gender')
+      .leftJoinAndSelect('user.photo', 'photo')
+      .leftJoinAndSelect('user.topics', 'topics');
 
     if (filterOptions?.role) {
-      where.role = {
-        id:
+      queryBuilder.andWhere('user.roleId = :roleId', {
+        roleId:
           filterOptions.role === 'huber' ? RoleEnum.humanBook : RoleEnum.reader,
-      };
+      });
     }
 
     if (
       filterOptions?.topicsOfInterest &&
       filterOptions?.topicsOfInterest?.length
     ) {
-      where.topics = filterOptions.topicsOfInterest.map((topicId) => ({
-        id: topicId,
-      }));
+      queryBuilder.innerJoin(
+        'user.topics',
+        'topic',
+        'topic.id IN (:...topicIds)',
+        {
+          topicIds: filterOptions.topicsOfInterest,
+        },
+      );
     }
 
-    const entities = await this.usersRepository.find({
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-      where,
-      order: sortOptions?.reduce(
-        (accumulator, sort) => ({
-          ...accumulator,
-          [sort.orderBy]: sort.order,
-        }),
-        {},
-      ),
-    });
+    queryBuilder
+      .addSelect(
+        `CASE WHEN user.approval = 'Pending' THEN 0 ELSE 1 END`,
+        'approval_priority',
+      )
+      .orderBy('approval_priority', 'ASC');
+
+    if (sortOptions && sortOptions.length > 0) {
+      sortOptions.forEach((sort) => {
+        queryBuilder.addOrderBy(
+          `user.${sort.orderBy}`,
+          sort.order.toUpperCase() as 'ASC' | 'DESC',
+        );
+      });
+    }
+
+    queryBuilder.skip((paginationOptions.page - 1) * paginationOptions.limit);
+    queryBuilder.take(paginationOptions.limit);
+
+    const entities = await queryBuilder.getMany();
     return entities.map((user) => UserMapper.toDomain(user));
   }
 
