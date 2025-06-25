@@ -10,6 +10,7 @@ import {
   Request,
   SerializeOptions,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -35,6 +36,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
 import { RolesGuard } from '@roles/roles.guard';
+import { CaslSerializationInterceptor } from '../casl';
 
 @ApiTags('Stories')
 @ApiBearerAuth()
@@ -67,6 +69,7 @@ export class StoriesController {
   })
   @Get()
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(CaslSerializationInterceptor)
   @ApiOkResponse({
     type: InfinityPaginationResponse(Story),
   })
@@ -76,9 +79,7 @@ export class StoriesController {
   ): Promise<InfinityPaginationResponseDto<Story>> {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
-
-    const isAdmin = request.user.role.id === RoleEnum.admin;
-    const defaultPublishStatus = isAdmin
+    const defaultPublishStatus = request.isAdmin
       ? PublishStatus.draft
       : PublishStatus.published;
 
