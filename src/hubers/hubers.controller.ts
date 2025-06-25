@@ -28,6 +28,12 @@ import { pagination } from '@utils/types/pagination';
 import { UsersService } from '@users/users.service';
 import { omit } from 'lodash';
 import { CheckSessionAvailabilityDto } from './dto/check-session-availability.dto';
+import { Story } from '../stories/domain/story';
+import { Roles } from '../roles/roles.decorator';
+import { RoleEnum } from '../roles/roles.enum';
+import { RolesGuard } from '../roles/roles.guard';
+import { PaginationInputDto } from '../utils/dto/pagination-input.dto';
+import { infinityPagination } from '../utils/infinity-pagination';
 
 @ApiTags('Hubers')
 @ApiBearerAuth()
@@ -134,5 +140,33 @@ export class HubersController {
     }
 
     return { booked };
+  }
+
+  @Get(':id/stories')
+  @Roles(RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(Story),
+  })
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  async getStories(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: PaginationInputDto,
+  ) {
+    const page = query?.page ?? 1;
+    let limit = query?.limit ?? 10;
+    if (limit > 50) {
+      limit = 50;
+    }
+
+    return infinityPagination(await this.hubersService.getStories(id), {
+      page,
+      limit,
+    });
   }
 }

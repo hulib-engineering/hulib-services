@@ -132,7 +132,18 @@ export class StoriesService {
             topic: true,
           },
         },
-        humanBook: true,
+        humanBook: {
+          omit: {
+            deletedAt: true,
+            genderId: true,
+            roleId: true,
+            statusId: true,
+            photoId: true,
+            password: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
         cover: true,
       },
     });
