@@ -93,8 +93,9 @@ export class StoriesService {
       ...createStoriesDto,
       humanBook: user,
       topics: topicsEntities,
+      publishStatus: PublishStatus[PublishStatus.published] as string,
     });
-
+    
     await this.notifsService.pushNoti({
       senderId: Number(userId),
       recipientId: 1,
