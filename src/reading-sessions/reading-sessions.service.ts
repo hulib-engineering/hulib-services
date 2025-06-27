@@ -1,6 +1,7 @@
 import {
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -32,6 +33,8 @@ import { MailService } from '@mail/mail.service';
 
 @Injectable()
 export class ReadingSessionsService {
+  private readonly logger = new Logger(this.constructor.name);
+
   constructor(
     private readonly readingSessionRepository: ReadingSessionRepository,
     private readonly feedbackRepository: FeedbackRepository,
@@ -309,11 +312,16 @@ export class ReadingSessionsService {
     return await this.messageRepository.findByReadingSessionId(id);
   }
 
-  @Cron('30 5 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 05:30 only
-  @Cron('0,30 6-22 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 06:00 to 22:30
-  @Cron('0 23 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 23:00 only
+  // @Cron('30 5 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 05:30 only
+  // @Cron('0,30 6-22 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 06:00 to 22:30
+  // @Cron('0 23 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 23:00 only
+  @Cron('* * * * * *') // every second
   async checkAndScheduleReminders() {
     const now = new Date();
+    this.logger.log(
+      `[CRON] Running reminder scheduler at ${now.toISOString()}`,
+    );
+
     const targetStart = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
 
     const sessions = await this.prisma.readingSession.findMany({
@@ -325,8 +333,10 @@ export class ReadingSessionsService {
         sessionStatus: ReadingSessionStatus.APPROVED,
       },
     });
+    console.log('matched', sessions);
+
     for (const session of sessions) {
-      const delay = 15 * 60 * 1000; // Delay = 1 minutes
+      const delay = 60 * 1000; // Delay = 1 minutes
 
       await this.reminderQueue.add(
         'send-email-and-notify-user',
