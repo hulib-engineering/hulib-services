@@ -187,8 +187,12 @@ export class NotificationsService {
     const isSessionRequestNotificationType =
       type.name === NotificationTypeEnum.sessionRequest;
 
+    const isOtherNotificationType = type.name === NotificationTypeEnum.other;
+
     const isNeedRelatedEntityId =
-      isStoryNotificationType || isSessionRequestNotificationType;
+      isStoryNotificationType ||
+      isSessionRequestNotificationType ||
+      isOtherNotificationType;
 
     if (isNeedRelatedEntityId && !data.relatedEntityId) {
       throw new BadRequestException('Related entity ID is required');
