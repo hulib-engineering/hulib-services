@@ -315,7 +315,7 @@ export class ReadingSessionsService {
   // @Cron('30 5 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 05:30 only
   // @Cron('0,30 6-22 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 06:00 to 22:30
   // @Cron('0 23 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 23:00 only
-  @Cron('* * * * * *') // every second
+  @Cron('0 */30 * * * *', { timeZone: 'UTC' }) // Every 15 mins, starting from 00:00 UTC
   async checkAndScheduleReminders() {
     const now = new Date();
     this.logger.log(
@@ -333,10 +333,10 @@ export class ReadingSessionsService {
         sessionStatus: ReadingSessionStatus.APPROVED,
       },
     });
-    console.log('matched', sessions);
+    // console.log('matched', sessions);
 
     for (const session of sessions) {
-      const delay = 60 * 1000; // Delay = 1 minutes
+      const delay = 15 * 60 * 1000; // Delay = 15 minutes
 
       await this.reminderQueue.add(
         'send-email-and-notify-user',
@@ -347,14 +347,6 @@ export class ReadingSessionsService {
           removeOnFail: true,
         },
       );
-
-      // Update flag to avoid rescheduling
-      // await this.prisma.meeting.update({
-      //   where: { id: meeting.id },
-      //   data: { reminderScheduled: true },
-      // });
-
-      // this.logger.log(`Scheduled reminder for meeting ${meeting.id}`);
     }
   }
 }
