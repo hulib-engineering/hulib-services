@@ -186,7 +186,8 @@
       "^@casl/(.*)$": "<rootDir>/casl/$1",
       "^@schedules/(.*)$": "<rootDir>/schedules/$1",
       "^@time-slots/(.*)$": "<rootDir>/time-slots/$1",
-      "^@reading-sessions/(.*)$": "<rootDir>/reading-sessions/$1"
+      "^@reading-sessions/(.*)$": "<rootDir>/reading-sessions/$1",
+      "^@agora/(.*)$": "<rootDir>/agora/$1"
     }
   },
   "engines": {

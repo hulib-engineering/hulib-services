@@ -43,13 +43,13 @@ export class ReadingSessionsProcessor {
       senderId: 1,
       recipientId: session.humanBookId,
       type: NotificationTypeEnum.other,
-      relatedEntityId: session.id,
+      relatedEntityId: sessionId,
     });
     await this.notificationsService.pushNoti({
       senderId: 1,
       recipientId: session.readerId,
       type: NotificationTypeEnum.other,
-      relatedEntityId: session.id,
+      relatedEntityId: sessionId,
     });
   }
 }
