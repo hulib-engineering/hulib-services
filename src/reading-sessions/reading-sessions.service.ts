@@ -133,9 +133,11 @@ export class ReadingSessionsService {
 
     // Kiểm tra overlap về giờ trong ngày
     const overlap = existingSessions.some((existing) => {
-      return (
-        existing.startTime <= session.endTime &&
-        existing.endTime >= session.startTime
+      return this.isTimeOverlap(
+        existing.startTime,
+        existing.endTime,
+        session.startTime,
+        session.endTime,
       );
     });
 
@@ -148,6 +150,24 @@ export class ReadingSessionsService {
         },
       });
     }
+  }
+
+  private isTimeOverlap(
+    startTime1: string,
+    endTime1: string,
+    startTime2: string,
+    endTime2: string,
+  ): boolean {
+    const start1 = this.timeStringToMinutes(startTime1);
+    const end1 = this.timeStringToMinutes(endTime1);
+    const start2 = this.timeStringToMinutes(startTime2);
+    const end2 = this.timeStringToMinutes(endTime2);
+    return start1 < end2 && start2 < end1;
+  }
+
+  private timeStringToMinutes(timeString: string): number {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
   }
 
   async findAllSessions(
