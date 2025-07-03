@@ -27,6 +27,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { ReadingSessionStatus } from '@reading-sessions/infrastructure/persistence/relational/entities';
 import { pagination } from '@utils/types/pagination';
+import { StoriesService } from '../stories/stories.service';
 
 @Injectable()
 export class UsersService {
@@ -35,6 +36,7 @@ export class UsersService {
     private readonly filesService: FilesService,
     private readonly notificationsService: NotificationsService,
     private readonly prisma: PrismaService,
+    private readonly StoriesService: StoriesService,
   ) {}
 
   async create(createProfileDto: CreateUserDto): Promise<User> {
@@ -373,6 +375,8 @@ export class UsersService {
         recipientId: Number(id),
         type: NotificationTypeEnum.account,
       });
+      await this.StoriesService.findStoriesByHumanBookId(Number(id));
+        
       return {
         message: 'Approve request to become huber successfully.',
       };

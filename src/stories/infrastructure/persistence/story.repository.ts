@@ -6,6 +6,7 @@ import {
   FilterStoryDto,
   SortStoryDto,
 } from '@stories/dto/find-all-stories.dto';
+import { User } from '@sentry/nestjs';
 
 export abstract class StoryRepository {
   abstract create(
@@ -30,4 +31,5 @@ export abstract class StoryRepository {
   ): Promise<Story | null>;
 
   abstract remove(id: Story['id']): Promise<void>;
+
 }
