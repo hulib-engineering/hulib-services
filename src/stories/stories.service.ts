@@ -10,6 +10,8 @@ import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repository';
 import { User } from '@users/domain/user';
 import { Topic } from '@topics/domain/topics';
+import { AppConfig } from '@config/app-config.type';
+import appConfig from '@config/app.config';
 
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
@@ -157,12 +159,20 @@ export class StoriesService {
       });
     }
 
+    const coverWithUrl = result.cover
+      ? {
+          id: result.cover.id,
+          path: (appConfig() as AppConfig).backendDomain + result.cover.path,
+        }
+      : null;
+
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
 
     return {
       ...result,
       storyReview,
       topics: result?.topics.map((nestedTopic) => nestedTopic.topic),
+      cover: coverWithUrl,
     };
   }
 
