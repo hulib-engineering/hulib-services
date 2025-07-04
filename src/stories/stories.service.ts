@@ -204,21 +204,5 @@ export class StoriesService {
     return story;
   }
 
-  async findStoriesByHumanBookId(humanBookId: User['id']) {
-    console.log('findStoriesByHumanBookId', humanBookId);
-    const storyOfHumanBook = await this.prisma.story.findMany({
-      where: { humanBookId: Number(humanBookId) },
-    });
-    if (!storyOfHumanBook) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          humanBook: 'notFound',
-        },
-      });
-    }
-    console.log('humanBook', storyOfHumanBook);
-    // const updateStory = this.storiesRepository.update(humanBook.id, );
-    return storyOfHumanBook;
-  }
+ 
 }
