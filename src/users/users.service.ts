@@ -27,6 +27,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { ReadingSessionStatus } from '@reading-sessions/infrastructure/persistence/relational/entities';
 import { pagination } from '@utils/types/pagination';
+import { PublishStatus } from '../stories/status.enum';
 
 @Injectable()
 export class UsersService {
@@ -373,6 +374,13 @@ export class UsersService {
         recipientId: Number(id),
         type: NotificationTypeEnum.account,
       });
+    
+      // change status for first story when becoming human book
+      await this.prisma.story.updateMany({
+        where: { humanBookId: Number(id) },
+        data: { publishStatus: PublishStatus.published },
+      });
+    
       return {
         message: 'Approve request to become huber successfully.',
       };

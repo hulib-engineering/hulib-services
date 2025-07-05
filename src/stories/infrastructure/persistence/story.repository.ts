@@ -30,4 +30,5 @@ export abstract class StoryRepository {
   ): Promise<Story | null>;
 
   abstract remove(id: Story['id']): Promise<void>;
+
 }
