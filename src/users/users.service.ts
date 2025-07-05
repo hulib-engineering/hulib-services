@@ -27,6 +27,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { ReadingSessionStatus } from '@reading-sessions/infrastructure/persistence/relational/entities';
 import { pagination } from '@utils/types/pagination';
+import { PublishStatus } from '../stories/status.enum';
 
 @Injectable()
 export class UsersService {
@@ -377,7 +378,7 @@ export class UsersService {
       // change status for first story when becoming human book
       await this.prisma.story.updateMany({
         where: { humanBookId: Number(id) },
-        data: { publishStatus: 2 },
+        data: { publishStatus: PublishStatus.published },
       });
     
       return {
