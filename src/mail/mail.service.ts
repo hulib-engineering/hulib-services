@@ -249,4 +249,67 @@ export class MailService {
       },
     });
   }
+
+  async sendBookingEmail(
+    mailData: MailData<{
+      name: string;
+      huberName: string;
+      liberName: string;
+      storyTitle: string;
+      sessionDate: string;
+      sessionTime: string;
+      sessionUrl?: string;
+    }>,
+  ): Promise<void> {
+    const locale = 'en';
+
+    const [
+      bookingEmailTitle,
+      dear,
+      bookingPt1,
+      bookingPt2,
+      bookingPt3,
+      contact,
+      regard,
+    ] = await Promise.all([
+      this.i18n.t('common.bookingEmail', { lang: locale }),
+      this.i18n.t('common.dear', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt1', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt2', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt3', { lang: locale }),
+      this.i18n.t('reset-password.contact', { lang: locale }),
+      this.i18n.t('common.bestRegards', { lang: locale }),
+    ]);
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: bookingEmailTitle,
+      text: bookingEmailTitle,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'booking.hbs',
+      ),
+      context: {
+        title: bookingEmailTitle,
+        fullname: mailData.data.name.toString(),
+        huberName: mailData.data.huberName.toString(),
+        liberName: mailData.data.liberName.toString(),
+        storyTitle: mailData.data.storyTitle.toString(),
+        sessionDate: mailData.data.sessionDate.toString(),
+        sessionTime: mailData.data.sessionTime.toString(),
+        sessionUrl: mailData.data.sessionUrl?.toString() || '',
+        dear,
+        bookingPt1,
+        bookingPt2,
+        bookingPt3,
+        contact,
+        regard,
+      },
+    });
+  }
 }

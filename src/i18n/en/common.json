@@ -1,7 +1,8 @@
 {
   "confirmEmail": "Welcome to HuLib – Complete Your Registration",
-  "reminderEmail": "It’s time for your session",
-  "resetPassword": "Reset Your HuLib’s Password",
+  "reminderEmail": "It's time for your session",
+  "bookingEmail": "Your Reading Session Has Been Booked",
+  "resetPassword": "Reset Your HuLib's Password",
   "dear": "Dear",
   "bestRegards": "Best regards",
   "smsPt1": "Hello friend! Your child has registered for an account at HuLib. The OTP for confirmation is",
