@@ -111,12 +111,22 @@ export class ReadingSessionsService {
     const newReadingSession =
       await this.readingSessionRepository.create(session);
 
-    await this.notificationService.pushNoti({
-      senderId: newReadingSession?.readerId,
-      recipientId: newReadingSession?.humanBookId,
-      type: NotificationTypeEnum.sessionRequest,
-      relatedEntityId: newReadingSession.id,
-    });
+    await Promise.all([
+      this.notificationService.pushNoti({
+        senderId: newReadingSession?.readerId,
+        recipientId: newReadingSession?.humanBookId,
+        type: NotificationTypeEnum.sessionRequest,
+        relatedEntityId: newReadingSession.id,
+      }),
+      this.reminderQueue.add(
+        'send-booking-email',
+        { sessionId: newReadingSession.id },
+        {
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      ),
+    ]);
 
     return newReadingSession;
   }
