@@ -213,7 +213,7 @@ export class UsersService {
       });
       return {
         ...user,
-        humanBookTopic: mappedHumanBookTopic,
+        sharingTopics: mappedHumanBookTopic,
         topicsOfInterest: mappedTopicsOfInterest,
         firstStory,
       };
@@ -221,7 +221,7 @@ export class UsersService {
 
     return {
       ...user,
-      humanBookTopic: mappedHumanBookTopic,
+      sharingTopics: mappedHumanBookTopic,
       topicsOfInterest: mappedTopicsOfInterest,
     };
   }
