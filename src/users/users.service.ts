@@ -150,6 +150,7 @@ export class UsersService {
         gender: true,
         role: true,
         status: true,
+        file: true,
       },
       omit: {
         deletedAt: true,
@@ -374,13 +375,13 @@ export class UsersService {
         recipientId: Number(id),
         type: NotificationTypeEnum.account,
       });
-    
+
       // change status for first story when becoming human book
       await this.prisma.story.updateMany({
         where: { humanBookId: Number(id) },
         data: { publishStatus: PublishStatus.published },
       });
-    
+
       return {
         message: 'Approve request to become huber successfully.',
       };
