@@ -39,10 +39,7 @@ export class ChatController {
   @ApiCreatedResponse({
     type: Chat,
   })
-  create(
-    @Body() createChatDto: CreateChatDto,
-    @Request() request: any,
-  ) {
+  create(@Body() createChatDto: CreateChatDto, @Request() request: any) {
     return this.chatService.create(createChatDto, request.user.id);
   }
 
@@ -73,7 +70,7 @@ export class ChatController {
   })
   async findAllChat(
     @Request() request: any,
-    @Param('id') id: User['id']
+    @Param('id') id: User['id'],
   ): Promise<Chat[]> {
     return this.chatService.findAllChats(request.user.id, id);
   }

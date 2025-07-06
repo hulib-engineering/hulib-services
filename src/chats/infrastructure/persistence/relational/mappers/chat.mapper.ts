@@ -9,7 +9,7 @@ export class ChatMapper {
     domain.id = raw.id ?? 0;
     domain.senderId = raw.senderId ?? 0;
     domain.recipientId = raw.recipientId ?? 0;
-    domain.status = raw.status ?? ChatStatus.SENT
+    domain.status = raw.status ?? ChatStatus.SENT;
     if (raw.createdAt) {
       domain.createdAt = raw.createdAt;
     }
@@ -39,7 +39,9 @@ export class ChatMapper {
       persistenceEntity.sender = UserMapper.toPersistence(domainEntity.sender);
     }
     if (domainEntity.recipient) {
-      persistenceEntity.recipient = UserMapper.toPersistence(domainEntity.recipient);
+      persistenceEntity.recipient = UserMapper.toPersistence(
+        domainEntity.recipient,
+      );
     }
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
