@@ -146,7 +146,26 @@ export class UsersService {
         id: Number(id),
       },
       include: {
-        topicsOfInterest: true,
+        humanBookTopic: {
+          include: {
+            topic: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        topicsOfInterest: {
+          include: {
+            topic: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         gender: true,
         role: true,
         status: true,
@@ -167,7 +186,14 @@ export class UsersService {
       throw new NotFoundException();
     }
 
-    const { topicsOfInterest, ...rest } = user;
+    const mappedHumanBookTopic = user.humanBookTopic
+      ? user.humanBookTopic.map((item) => item.topic)
+      : [];
+
+    const mappedTopicsOfInterest = user.topicsOfInterest
+      ? user.topicsOfInterest.map((item) => item.topic)
+      : [];
+
     const isLiber = user.role?.id === RoleEnum.reader;
 
     if (isLiber) {
@@ -186,15 +212,17 @@ export class UsersService {
         },
       });
       return {
-        ...rest,
-        topics: topicsOfInterest,
+        ...user,
+        humanBookTopic: mappedHumanBookTopic,
+        topicsOfInterest: mappedTopicsOfInterest,
         firstStory,
       };
     }
 
     return {
-      ...rest,
-      topics: topicsOfInterest,
+      ...user,
+      humanBookTopic: mappedHumanBookTopic,
+      topicsOfInterest: mappedTopicsOfInterest,
     };
   }
 
@@ -374,13 +402,13 @@ export class UsersService {
         recipientId: Number(id),
         type: NotificationTypeEnum.account,
       });
-    
+
       // change status for first story when becoming human book
       await this.prisma.story.updateMany({
         where: { humanBookId: Number(id) },
         data: { publishStatus: PublishStatus.published },
       });
-    
+
       return {
         message: 'Approve request to become huber successfully.',
       };
