@@ -152,7 +152,9 @@ model story {
   topics        storyTopic[]
 
   readingSession readingSession[]
+  rejectionReason String?
 }
+
 
 model storyTopic {
   storyId Int
