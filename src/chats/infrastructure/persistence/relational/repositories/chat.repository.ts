@@ -5,7 +5,7 @@ import { NullableType } from '@utils/types/nullable.type';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 
 import { ChatRepository } from '../../chat.repository';
-import { Chat, ChatStatus } from '../../../../domain/chat';
+import { Chat, ChatStatus } from '@chats/domain/chat';
 import { ChatEntity } from '../entities/chat.entity';
 import { ChatMapper } from '../mappers/chat.mapper';
 import { User } from '@users/domain/user';
@@ -76,6 +76,7 @@ export class ChatRelationalRepository implements ChatRepository {
           photo: true,
           role: true,
         },
+        sticker: true,
       },
       order: {
         createdAt: 'DESC',

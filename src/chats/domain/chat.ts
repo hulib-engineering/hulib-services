@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '@users/domain/user';
 import { CreateChatDto } from '../dto/create-chat.dto';
+import { ChatType } from '@chat-types/domain/chat-type';
+import { Sticker } from '../../stickers/domain/sticker';
 
 const idType = Number;
 
@@ -22,6 +24,16 @@ export class Chat {
     example: 'hi',
   })
   message: string;
+
+  @ApiProperty({
+    type: () => ChatType,
+  })
+  chatType?: ChatType | null;
+
+  @ApiProperty({
+    type: () => Sticker,
+  })
+  sticker?: Sticker | null;
 
   @ApiProperty({
     type: Number,
@@ -48,6 +60,9 @@ export class Chat {
     enumName: 'ChatStatus',
   })
   status: ChatStatus;
+
+  @ApiProperty()
+  readAt?: Date;
 
   @ApiProperty()
   createdAt: Date;

@@ -8,5 +8,7 @@ export class Conversation {
 
   isUnread: boolean;
 
+  unreadCount: number;
+
   constructoṛ() {}
 }

@@ -23,8 +23,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { Conversation } from './domain/conversation';
 
 @ApiTags('Chat')
-// @ApiBearerAuth()
-// @UseGuards(AuthGuard('jwt'))
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'chat',
   version: '1',
@@ -33,21 +33,15 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post()
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create a new chat' })
   @ApiCreatedResponse({
     type: Chat,
   })
-  create(
-    @Body() createChatDto: CreateChatDto,
-    @Request() request: any,
-  ) {
+  create(@Body() createChatDto: CreateChatDto, @Request() request: any) {
     return this.chatService.create(createChatDto, request.user.id);
   }
 
   @Get()
-  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get all conversations' })
   @ApiOkResponse({
@@ -59,7 +53,6 @@ export class ChatController {
   }
 
   @Get('user/:id')
-  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get chat with user' })
   @ApiParam({
@@ -73,7 +66,7 @@ export class ChatController {
   })
   async findAllChat(
     @Request() request: any,
-    @Param('id') id: User['id']
+    @Param('id') id: User['id'],
   ): Promise<Chat[]> {
     return this.chatService.findAllChats(request.user.id, id);
   }

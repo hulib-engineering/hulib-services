@@ -1,5 +1,7 @@
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ChatTypeDto } from '@chat-types/dto/chat-type.dto';
 
 export class CreateChatDto {
   @ApiProperty({
@@ -17,4 +19,9 @@ export class CreateChatDto {
   @IsNotEmpty({ message: 'Recipient ID is required' })
   @IsNumber(undefined, { message: 'Recipient ID must be a number' })
   recipientId: number;
+
+  @ApiProperty({ type: ChatTypeDto })
+  @IsNotEmpty()
+  @Type(() => ChatTypeDto)
+  chatType?: ChatTypeDto;
 }
