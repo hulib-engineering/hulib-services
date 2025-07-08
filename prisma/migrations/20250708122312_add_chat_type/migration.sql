@@ -1,5 +1,6 @@
 -- AlterTable
-ALTER TABLE "chat" ADD COLUMN     "chatTypeId" INTEGER DEFAULT 1,
+ALTER TABLE "chat"
+-- ADD COLUMN     "chatTypeId" INTEGER DEFAULT 1,
 ADD COLUMN     "readAt" TIMESTAMP(3),
 ADD COLUMN     "stickerId" INTEGER,
 ALTER COLUMN "message" DROP NOT NULL;
@@ -41,4 +42,4 @@ ALTER TABLE "sticker" ADD CONSTRAINT "sticker_statusId_fkey" FOREIGN KEY ("statu
 ALTER TABLE "chat" ADD CONSTRAINT "chat_stickerId_fkey" FOREIGN KEY ("stickerId") REFERENCES "sticker"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "chat" ADD CONSTRAINT "chat_chatTypeId_fkey" FOREIGN KEY ("chatTypeId") REFERENCES "chatType"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+-- ALTER TABLE "chat" ADD CONSTRAINT "chat_chatTypeId_fkey" FOREIGN KEY ("chatTypeId") REFERENCES "chatType"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
