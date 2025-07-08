@@ -12,7 +12,7 @@ import { NotificationSeedService } from './notification/notification-seed.servic
 import { NotificationTypeSeedService } from './notification-type/notification-type-seed.service';
 // import { ChatSeedService } from './chat/chat-seed.service';
 // import { ChatTypeSeedService } from './chat-type/chat-type-seed.service';
-import { StickerSeedService } from '@database/seeds/relational/sticker/sticker-seed.service';
+// import { StickerSeedService } from '@database/seeds/relational/sticker/sticker-seed.service';
 
 const runSeed = async () => {
   const app = await NestFactory.create(SeedModule);
@@ -29,7 +29,7 @@ const runSeed = async () => {
   await app.get(NotificationTypeSeedService).run();
   await app.get(NotificationSeedService).run();
   // await app.get(ChatTypeSeedService).run();
-  await app.get(StickerSeedService).run();
+  // await app.get(StickerSeedService).run();
   // await app.get(ChatSeedService).run();
 
   await app.close();
