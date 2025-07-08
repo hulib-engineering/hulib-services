@@ -10,6 +10,9 @@ import {
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { ChatStatus } from '../../../../domain/chat';
+import { ApiProperty } from '@nestjs/swagger';
+import { ChatTypeEntity } from '@chat-types/infrastructure/persistence/relational/entities/chat-type.entity';
+import { StickerEntity } from '../../../../../stickers/infrastructure/persistence/relational/entities/sticker.entity';
 
 @Entity({
   name: 'chat',
@@ -45,6 +48,23 @@ export class ChatEntity extends EntityRelationalHelper {
     default: ChatStatus.SENT,
   })
   status: ChatStatus;
+
+  @ApiProperty({
+    type: () => ChatTypeEntity,
+  })
+  @ManyToOne(() => ChatTypeEntity, {
+    eager: true,
+  })
+  chatType?: ChatTypeEntity;
+
+  @ApiProperty({
+    type: () => StickerEntity,
+  })
+  @ManyToOne(() => StickerEntity, {
+    eager: true,
+  })
+  @JoinColumn()
+  sticker?: StickerEntity | null;
 
   @CreateDateColumn()
   createdAt: Date;

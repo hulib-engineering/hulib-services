@@ -6,13 +6,14 @@ import { ChatRepository } from './infrastructure/persistence/chat.repository';
 import { Chat, ChatStatus } from './domain/chat';
 import { Conversation } from './domain/conversation';
 import { UsersService } from '@users/users.service';
-import { RoleEnum } from '../roles/roles.enum';
+import { PrismaService } from '@prisma-client/prisma-client.service';
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly chatRepository: ChatRepository,
     private readonly userService: UsersService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async create(createChatDto: CreateChatDto, userId: number) {
@@ -32,7 +33,11 @@ export class ChatService {
     const chat = new Chat(createChatDto);
     chat.senderId = userId;
 
-    return this.chatRepository.create(chat, sender, recipient);
+    return this.chatRepository.create(
+      { ...chat, chatType: createChatDto.chatType },
+      sender,
+      recipient,
+    );
   }
 
   async findAllConversations(userId: User['id']): Promise<Conversation[]> {
@@ -44,6 +49,13 @@ export class ChatService {
     if (!chats || chats.length === 0) {
       return [];
     }
+
+    const unreadMap = new Map<number, number>();
+    const unreadList = await this.countUnreadMessages(userId);
+    unreadList.forEach(({ senderId, unread }) => {
+      unreadMap.set(senderId, unread);
+    });
+
     const conversations: Conversation[] = [];
     for (const chat of chats) {
       const recipientId =
@@ -55,8 +67,13 @@ export class ChatService {
       conversation.recipient =
         chat.sender.id === userId ? chat.recipient : chat.sender;
       conversation.last_message = chat;
-      conversation.isUnread =
-        chat.recipient.id === userId && chat.status !== ChatStatus.READ;
+      conversation.isUnread = chat.readAt === null;
+      conversation.unreadCount =
+        unreadMap.get(
+          chat.sender.id === userId
+            ? Number(chat.recipient.id)
+            : Number(chat.sender.id),
+        ) || 0;
       conversations.push(conversation);
     }
     conversations.sort(
@@ -72,7 +89,7 @@ export class ChatService {
       throw new NotFoundException(`User with id ${myId} not found`);
     }
     const user = await this.userService.findById(userId);
-    if (!user || user.role?.id != RoleEnum.humanBook) {
+    if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
     // Update pagination logic as needed
@@ -95,5 +112,36 @@ export class ChatService {
     }
     Object.assign(chat, updateChatDto);
     return this.chatRepository.update(chat);
+  }
+
+  async markMessagesAsRead(from: Chat['senderId'], to: Chat['recipientId']) {
+    await this.prisma.chat.updateMany({
+      where: {
+        recipientId: from,
+        senderId: to,
+        readAt: null,
+      },
+      data: {
+        readAt: new Date(),
+      },
+    });
+  }
+
+  private async countUnreadMessages(userId: User['id']) {
+    const unreadCounts = await this.prisma.chat.groupBy({
+      by: ['senderId'],
+      where: {
+        recipientId: Number(userId),
+        readAt: null,
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    return unreadCounts.map((item) => ({
+      senderId: item.senderId,
+      unread: item._count.id,
+    }));
   }
 }
