@@ -48,8 +48,10 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { SocketGateway } from './socket/socket.gateway';
 import { NotificationGateway } from './notifications/notifications.gateway';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ChatModule } from './chats/chat.module';
+import { ChatModule } from '@chats/chat.module';
 import { AgoraModule } from '@agora/agora.module';
+import { StickersModule } from './stickers/stickers.module';
+import { ChatGateway } from '@chats/chat.gateway';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -147,10 +149,12 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     HubersModule,
     ChatModule,
     AgoraModule,
+    StickersModule,
   ],
   providers: [
     SocketGateway,
     NotificationGateway,
+    ChatGateway,
     {
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,

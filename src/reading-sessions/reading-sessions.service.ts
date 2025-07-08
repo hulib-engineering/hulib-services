@@ -111,12 +111,22 @@ export class ReadingSessionsService {
     const newReadingSession =
       await this.readingSessionRepository.create(session);
 
-    await this.notificationService.pushNoti({
-      senderId: newReadingSession?.readerId,
-      recipientId: newReadingSession?.humanBookId,
-      type: NotificationTypeEnum.sessionRequest,
-      relatedEntityId: newReadingSession.id,
-    });
+    await Promise.all([
+      this.notificationService.pushNoti({
+        senderId: newReadingSession?.readerId,
+        recipientId: newReadingSession?.humanBookId,
+        type: NotificationTypeEnum.sessionRequest,
+        relatedEntityId: newReadingSession.id,
+      }),
+      this.reminderQueue.add(
+        'send-booking-email',
+        { sessionId: newReadingSession.id },
+        {
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      ),
+    ]);
 
     return newReadingSession;
   }
@@ -332,10 +342,7 @@ export class ReadingSessionsService {
     return await this.messageRepository.findByReadingSessionId(id);
   }
 
-  // @Cron('30 5 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 05:30 only
-  // @Cron('0,30 6-22 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 06:00 to 22:30
-  // @Cron('0 23 * * *', { timeZone: 'Asia/Ho_Chi_Minh' }) // 23:00 only
-  @Cron('0 */30 * * * *', { timeZone: 'UTC' }) // Every 15 mins, starting from 00:00 UTC
+  @Cron('0 */30 * * * *', { timeZone: 'UTC' }) // Every 30 mins, starting from 00:00 UTC
   async checkAndScheduleReminders() {
     const now = new Date();
     this.logger.log(

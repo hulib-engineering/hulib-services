@@ -22,7 +22,7 @@ export class TopicsEntity extends EntityRelationalHelper {
   id: number;
 
   @ApiProperty()
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @ApiProperty()

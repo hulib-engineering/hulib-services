@@ -11,10 +11,12 @@ datasource db {
 }
 
 model file {
-  id      String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  path    String  @db.VarChar
-  user    user[]
-  stories story[]
+  id   String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  path String @db.VarChar
+
+  user     user[]
+  stories  story[]
+  stickers sticker[]
 }
 
 model gender {
@@ -72,7 +74,10 @@ model session {
 model status {
   id   Int    @id
   name String @db.VarChar
-  user user[]
+
+  // Optional back relation
+  user     user[]
+  stickers sticker[]
 }
 
 model topics {
@@ -297,21 +302,50 @@ model notificationType {
   notification notification[]
 }
 
+model chatType {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar
+  chat chat[]
+}
+
+model sticker {
+  id       Int     @id @default(autoincrement())
+  name     String
+  imageId  String? @db.Uuid
+  category String?
+  statusId Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  image  file?   @relation(fields: [imageId], references: [id])
+  status status? @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  // Optional back relation
+  chat chat[]
+}
+
 model chat {
-  id          Int      @id @default(autoincrement())
-  
+  id Int @id @default(autoincrement())
+
   senderId    Int
   recipientId Int
-  message     String   @db.VarChar(4000)
+  message     String?    @db.VarChar(4000)
   status      chatStatus @default(sent)
+  chatTypeId  Int?       @default(1)
+  stickerId   Int?
 
-  sender      user     @relation("ChatSender", fields: [senderId], references: [id])
-  recipient   user     @relation("ChatRecipient", fields: [recipientId], references: [id])
-  
-  createdAt   DateTime @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime @default(now()) @db.Timestamp(6)
-  deletedAt   DateTime?
+  sticker   sticker?  @relation(fields: [stickerId], references: [id])
+  sender    user      @relation("ChatSender", fields: [senderId], references: [id])
+  recipient user      @relation("ChatRecipient", fields: [recipientId], references: [id])
+  chatType  chatType? @relation(fields: [chatTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  readAt    DateTime?
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt DateTime?
+
+  @@index([recipientId, readAt])
 }
 
 enum chatStatus {

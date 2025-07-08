@@ -52,4 +52,49 @@ export class ReadingSessionsProcessor {
       relatedEntityId: sessionId,
     });
   }
+
+  @Process('send-booking-email')
+  async handleSendBookingEmail(job: Job) {
+    const { sessionId } = job.data;
+    const session = await this.readingSessionsService.findOneSession(sessionId);
+
+    const sessionDate = session.startedAt.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    const sessionTime = `${session.startTime} - ${session.endTime}`;
+
+    if (session.humanBook?.email) {
+      await this.mailService.sendBookingEmail({
+        to: session.humanBook.email,
+        data: {
+          name: session.humanBook.fullName || 'Huber',
+          huberName: session.humanBook.fullName || 'Huber',
+          liberName: session.reader.fullName || 'Liber',
+          storyTitle: session.story?.title || 'Story',
+          sessionDate,
+          sessionTime,
+          sessionUrl: session.sessionUrl,
+        },
+      });
+    }
+
+    if (session.reader?.email) {
+      await this.mailService.sendBookingEmail({
+        to: session.reader.email,
+        data: {
+          name: session.reader.fullName || 'Liber',
+          huberName: session.humanBook.fullName || 'Huber',
+          liberName: session.reader.fullName || 'Liber',
+          storyTitle: session.story?.title || 'Story',
+          sessionDate,
+          sessionTime,
+          sessionUrl: session.sessionUrl,
+        },
+      });
+    }
+  }
 }
