@@ -82,7 +82,7 @@ model status {
 
 model topics {
   id        Int                    @id @default(autoincrement())
-  name      String                 @db.VarChar
+  name      String                 @unique @db.VarChar
   createdAt DateTime               @default(now()) @db.Timestamp(6)
   updatedAt DateTime               @default(now()) @db.Timestamp(6)
   hubers    humanBookTopic[]
