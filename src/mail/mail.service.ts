@@ -197,68 +197,96 @@ export class MailService {
   }
 
   async remindParticipants(
-    mailData: MailData<{ name: string; sessionUrl: string; cohost: string }>,
+    mailData: MailData<{ name: string; sessionUrl: string; isHuber: boolean }>,
   ): Promise<void> {
     const locale = 'en'; // or dynamically determine it (e.g., from mailData)
 
-    // const i18n = I18nContext.current();
-    let reminderEmailTitle: MaybeType<string>;
-    let dear: MaybeType<string>;
-    let reminderPt1: MaybeType<string>;
-    let reminderPt2: MaybeType<string>;
+    const [
+      reminderLiberEmailTitle,
+      reminderHubberEmailTitle,
+      dear,
+      reminderLiberPt1,
+      reminderHuberPt1,
+      reminderPt2,
+      reminderPt3,
+      reminderPt4,
+      regard,
+    ] = await Promise.all([
+      this.i18n.t('common.reminderLiberEmail', { lang: locale }),
+      this.i18n.t('common.reminderHubberEmail', { lang: locale }),
+      this.i18n.t('common.dear', { lang: locale }),
+      this.i18n.t('reminder-email.reminderLiberPt1', { lang: locale }),
+      this.i18n.t('reminder-email.reminderHuberPt1', { lang: locale }),
+      this.i18n.t('reminder-email.reminderPt2', { lang: locale }),
+      this.i18n.t('reminder-email.reminderPt3', { lang: locale }),
+      this.i18n.t('reminder-email.reminderPt4', { lang: locale }),
+      this.i18n.t('common.bestRegards', { lang: locale }),
+    ]);
 
-    let contact: MaybeType<string>;
-    let regard: MaybeType<string>;
-
-    // if (i18n) {
-    // eslint-disable-next-line prefer-const
-    [reminderEmailTitle, dear, reminderPt1, reminderPt2, contact, regard] =
-      await Promise.all([
-        this.i18n.t('common.reminderEmail', { lang: locale }),
-        this.i18n.t('common.dear', { lang: locale }),
-        this.i18n.t('reminder-email.reminderPt1', { lang: locale }),
-        this.i18n.t('reminder-email.reminderPt2', { lang: locale }),
-        this.i18n.t('reset-password.contact', { lang: locale }),
-        this.i18n.t('common.bestRegards', { lang: locale }),
-      ]);
-    // }
-
-    await this.mailerService.sendMail({
-      to: mailData.to,
-      subject: reminderEmailTitle,
-      text: reminderEmailTitle,
-      templatePath: path.join(
-        this.configService.getOrThrow('app.workingDirectory', {
-          infer: true,
-        }),
-        'src',
-        'mail',
-        'mail-templates',
-        'reminder.hbs',
-      ),
-      context: {
-        title: reminderEmailTitle,
-        fullname: mailData.data.name.toString(),
-        url: mailData.data.sessionUrl.toString(),
-        cohost: mailData.data.cohost.toString(),
-        dear,
-        reminderPt1,
-        reminderPt2,
-        contact,
-        regard,
-      },
+    const url = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
     });
+
+    if (mailData.data.isHuber) {
+      await this.mailerService.sendMail({
+        to: mailData.to,
+        subject: reminderHubberEmailTitle,
+        text: reminderHubberEmailTitle,
+        templatePath: path.join(
+          this.configService.getOrThrow('app.workingDirectory', {
+            infer: true,
+          }),
+          'src',
+          'mail',
+          'mail-templates',
+          'reminder.hbs',
+        ),
+        context: {
+          title: reminderHubberEmailTitle,
+          fullname: mailData.data.name.toString(),
+          url,
+          sessionUrl: mailData.data.sessionUrl.toString(),
+          dear,
+          reminderPt1: reminderHuberPt1,
+          reminderPt2,
+          reminderPt3,
+          reminderPt4,
+          regard,
+        },
+      });
+    } else {
+      await this.mailerService.sendMail({
+        to: mailData.to,
+        subject: reminderLiberEmailTitle,
+        text: reminderLiberEmailTitle,
+        templatePath: path.join(
+          this.configService.getOrThrow('app.workingDirectory', {
+            infer: true,
+          }),
+          'src',
+          'mail',
+          'mail-templates',
+          'reminder.hbs',
+        ),
+        context: {
+          title: reminderLiberEmailTitle,
+          fullname: mailData.data.name.toString(),
+          url,
+          sessionUrl: mailData.data.sessionUrl.toString(),
+          dear,
+          reminderPt1: reminderLiberPt1,
+          reminderPt2,
+          reminderPt3,
+          reminderPt4,
+          regard,
+        },
+      });
+    }
   }
 
   async sendBookingEmail(
     mailData: MailData<{
       name: string;
-      huberName: string;
-      liberName: string;
-      storyTitle: string;
-      sessionDate: string;
-      sessionTime: string;
-      sessionUrl?: string;
     }>,
   ): Promise<void> {
     const locale = 'en';
@@ -281,6 +309,16 @@ export class MailService {
       this.i18n.t('common.bestRegards', { lang: locale }),
     ]);
 
+    const url = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+
+    const schedulingUrl = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + '/scheduling',
+    );
+
     await this.mailerService.sendMail({
       to: mailData.to,
       subject: bookingEmailTitle,
@@ -296,18 +334,14 @@ export class MailService {
       ),
       context: {
         title: bookingEmailTitle,
-        fullname: mailData.data.name.toString(),
-        huberName: mailData.data.huberName.toString(),
-        liberName: mailData.data.liberName.toString(),
-        storyTitle: mailData.data.storyTitle.toString(),
-        sessionDate: mailData.data.sessionDate.toString(),
-        sessionTime: mailData.data.sessionTime.toString(),
-        sessionUrl: mailData.data.sessionUrl?.toString() || '',
+        fullname: mailData.data.name,
         dear,
         bookingPt1,
         bookingPt2,
         bookingPt3,
         contact,
+        url,
+        schedulingUrl,
         regard,
       },
     });
