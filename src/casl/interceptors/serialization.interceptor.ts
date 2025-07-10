@@ -17,9 +17,18 @@ export class CaslSerializationInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
+    if (!user) {
+      return next.handle();
+    }
+
+    const ROLE_ID_ADMIN = 1;
+    const isAdmin = user.role.id === ROLE_ID_ADMIN;
+
+    request.isAdmin = isAdmin;
+
     return next.handle().pipe(
       map((data) => {
-        if (!user) {
+        if (isAdmin) {
           return data;
         }
 
@@ -37,11 +46,16 @@ export class CaslSerializationInterceptor implements NestInterceptor {
     if (data && typeof data === 'object') {
       const sanitizedData: any = {};
 
+      const subjectType = data.constructor.name;
+
       for (const [key, value] of Object.entries(data)) {
-        // Check if user can read this field
-        if (ability.can(Action.Read, data, key)) {
-          if (value && typeof value === 'object') {
+        if (ability.can(Action.Read, subjectType, key)) {
+          if (value && typeof value === 'object' && !Array.isArray(value)) {
             sanitizedData[key] = this.sanitizeData(value, ability);
+          } else if (Array.isArray(value)) {
+            sanitizedData[key] = value.map((item) =>
+              this.sanitizeData(item, ability),
+            );
           } else {
             sanitizedData[key] = value;
           }
