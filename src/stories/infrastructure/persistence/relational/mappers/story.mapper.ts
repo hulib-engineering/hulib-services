@@ -25,6 +25,9 @@ export class StoryMapper {
         TopicsMapper.toDomain(topic),
       );
     }
+    if (raw.rejectionReason) {
+      domainEntity.rejectionReason = raw.rejectionReason;
+    }
     domainEntity.topics = raw.topics;
     // domainEntity.rating = raw.rating;
     domainEntity.publishStatus = PublishStatus[raw.publishStatus];
@@ -52,6 +55,9 @@ export class StoryMapper {
       persistenceEntity.topics = domainEntity.topics.map((topic) =>
         TopicsMapper.toPersistence(topic),
       );
+    }
+    if (domainEntity.rejectionReason) {
+      persistenceEntity.rejectionReason = domainEntity.rejectionReason;
     }
     // persistenceEntity.rating = domainEntity.rating;
     persistenceEntity.publishStatus =
