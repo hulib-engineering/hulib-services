@@ -49,4 +49,9 @@ export class CreateStoryDto {
   @IsIn(Object.keys(PublishStatus).filter((key) => isNaN(Number(key))))
   publishStatus: string;
   // Don't forget to use the class-validator decorators in the DTO properties.
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  rejectionReason: string;
 }
