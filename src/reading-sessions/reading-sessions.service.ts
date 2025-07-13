@@ -132,6 +132,8 @@ export class ReadingSessionsService {
   }
 
   private async validateSessionOverlap(session: ReadingSession): Promise<void> {
+    const sameDay = new Date(session.startedAt).toDateString();
+
     // Lấy các session cùng ngày với session mới
     const existingSessions = await this.readingSessionRepository.find({
       where: {
@@ -141,49 +143,28 @@ export class ReadingSessionsService {
       },
     });
 
-    const overlapDateStarted = existingSessions.filter((existing) => {
-      const existingDate = new Date(existing.startedAt).toDateString();
-      const newSessionDate = new Date(session.startedAt).toDateString();
-      return existingDate === newSessionDate;
-    });
-    
-    const overlapTimeStarted = overlapDateStarted.filter((existing) => {
-      const existingStartTime = existing.startTime;
-      const existingEndTime = existing.endTime;
-      const newSessionStartTime = session.startTime;
-      const newSessionEndTime = session.endTime;
-      return this.isTimeOverlap(
-        existingStartTime,
-        existingEndTime,
-        newSessionStartTime,
-        newSessionEndTime,
-      );
-    });
+      // Kiểm tra xem có session nào trùng thời gian với session mới 
+     const hasOverlap = existingSessions.some((existing) => {
+       const isSameDay =
+         new Date(existing.startedAt).toDateString() === sameDay;
+       const isTimeOverlap = this.isTimeOverlap(
+         existing.startTime,
+         existing.endTime,
+         session.startTime,
+         session.endTime,
+       );
+       return isSameDay && isTimeOverlap;
+     });
 
-
-    console.log('overlapDateStarted', overlapTimeStarted);
-
-
-    if (overlapTimeStarted.length === 0) {
-      const overlap = existingSessions.some((existing) => {
-        return this.isTimeOverlap(
-          existing.startTime,
-          existing.endTime,
-          session.startTime,
-          session.endTime,
-        );
-      });
-
-      console.log('overlap', overlap);
-    }else{
-      throw new UnprocessableEntityException({
-        status: 422,
-        errors: {
-          sessionOverlap:
-            'Session time overlaps with another session on the same day.',
-        },
-      });
-    }
+     if (hasOverlap) {
+       throw new UnprocessableEntityException({
+         status: 422,
+         errors: {
+           sessionOverlap:
+             'Session time overlaps with another session on the same day.',
+         },
+       });
+     }
   }
 
   private isTimeOverlap(
