@@ -141,17 +141,41 @@ export class ReadingSessionsService {
       },
     });
 
-    // Kiểm tra overlap về giờ trong ngày
-    const overlap = existingSessions.some((existing) => {
+    const overlapDateStarted = existingSessions.filter((existing) => {
+      const existingDate = new Date(existing.startedAt).toDateString();
+      const newSessionDate = new Date(session.startedAt).toDateString();
+      return existingDate === newSessionDate;
+    });
+    
+    const overlapTimeStarted = overlapDateStarted.filter((existing) => {
+      const existingStartTime = existing.startTime;
+      const existingEndTime = existing.endTime;
+      const newSessionStartTime = session.startTime;
+      const newSessionEndTime = session.endTime;
       return this.isTimeOverlap(
-        existing.startTime,
-        existing.endTime,
-        session.startTime,
-        session.endTime,
+        existingStartTime,
+        existingEndTime,
+        newSessionStartTime,
+        newSessionEndTime,
       );
     });
 
-    if (overlap) {
+
+    console.log('overlapDateStarted', overlapTimeStarted);
+
+
+    if (overlapTimeStarted.length === 0) {
+      const overlap = existingSessions.some((existing) => {
+        return this.isTimeOverlap(
+          existing.startTime,
+          existing.endTime,
+          session.startTime,
+          session.endTime,
+        );
+      });
+
+      console.log('overlap', overlap);
+    }else{
       throw new UnprocessableEntityException({
         status: 422,
         errors: {
