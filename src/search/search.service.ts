@@ -5,25 +5,6 @@ import { RoleEnum } from '@roles/roles.enum';
 
 import { SearchDto } from './dto/search.dto';
 
-export interface SearchStoryResult {
-  id: string;
-  title: string;
-  abstract: string;
-  snippet: string;
-  score: number;
-}
-
-export interface SearchOptions {
-  /** Maximum rows to return. Default = 20 */
-  limit?: number;
-  /** Tag that wraps the first character of each hit. Default = <b> */
-  startTag?: string;
-  /** Closing tag for the hit wrapper. Default = </b> */
-  endTag?: string;
-  /** Levenshtein distance for fuzzy search. Default ≈ 20 % of query length (1‑3) */
-  fuzzyDistance?: number;
-}
-
 @Injectable()
 export class SearchService {
   constructor(private readonly prisma: PrismaService) {}
@@ -51,7 +32,7 @@ export class SearchService {
   }
 
   // prisma search stories
-  async searchByKeyword(query: SearchDto, options: SearchOptions = {}) {
+  async searchByKeyword(query: SearchDto) {
     const { keyword = '' } = query;
 
     const keywordTrimmed = keyword?.trim().replace('+', ' ');
