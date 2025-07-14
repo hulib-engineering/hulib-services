@@ -5,12 +5,31 @@ import { RoleEnum } from '@roles/roles.enum';
 
 import { SearchDto } from './dto/search.dto';
 
+export interface SearchStoryResult {
+  id: string;
+  title: string;
+  abstract: string;
+  snippet: string;
+  score: number;
+}
+
+export interface SearchOptions {
+  /** Maximum rows to return. Default = 20 */
+  limit?: number;
+  /** Tag that wraps the first character of each hit. Default = <b> */
+  startTag?: string;
+  /** Closing tag for the hit wrapper. Default = </b> */
+  endTag?: string;
+  /** Levenshtein distance for fuzzy search. Default ≈ 20 % of query length (1‑3) */
+  fuzzyDistance?: number;
+}
+
 @Injectable()
 export class SearchService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getStoryIdsByAccentedKeyword(text?: string | null) {
-    if (!text) return [];
+    if (!text) return { ids: [], highlightTitles: [], highlightAbstracts: [] };
     // Search accent case with View
     const unaccentedLower = (str: string) =>
       str
@@ -19,14 +38,20 @@ export class SearchService {
         .toLocaleLowerCase();
     const nameWhere = `unaccent(lower(title)) ilike '%${unaccentedLower(text)}%'`;
     const where = [...(nameWhere ? [nameWhere] : [])].join(' OR ');
-    const founds: { id: number }[] = await this.prisma.$queryRawUnsafe(
-      `SELECT id FROM "story" WHERE ${where};`,
+    const founds: { id: number; highlight_title: string; highlight_abstract: string }[] = await this.prisma.$queryRawUnsafe(
+      `SELECT id, ts_headline(title, plainto_tsquery('${text}'), 'HighlightAll=true') as highlight_title, ts_headline(abstract, plainto_tsquery('${text}'), 'HighlightAll=true') as highlight_abstract
+      FROM story
+      WHERE to_tsvector(abstract) @@ plainto_tsquery('${text}') OR to_tsvector(title) @@ plainto_tsquery('${text}') OR ${where};`,
     );
-    return founds.map((el) => el.id);
+
+    const ids = founds.map((el) => el.id);
+    const highlightTitles = founds.map((el) => el.highlight_title);
+    const highlightAbstracts = founds.map((el) => el.highlight_abstract);
+    return { ids, highlightTitles, highlightAbstracts };
   }
 
   // prisma search stories
-  async searchByKeyword(query: SearchDto) {
+  async searchByKeyword(query: SearchDto, options: SearchOptions = {}) {
     const { keyword = '' } = query;
 
     const keywordTrimmed = keyword?.trim().replace('+', ' ');
@@ -61,9 +86,11 @@ export class SearchService {
     //     createdAt: 'desc',
     //   },
     // });
+
+    const { ids, highlightTitles, highlightAbstracts } = await this.getStoryIdsByAccentedKeyword(keywordTrimmed);
     const stories = await this.prisma.story.findMany({
       where: {
-        id: { in: await this.getStoryIdsByAccentedKeyword(keywordTrimmed) },
+        id: { in: ids },
       },
       include: {
         humanBook: {
@@ -89,11 +116,13 @@ export class SearchService {
       omit: { humanBookId: true, coverId: true },
     });
 
-    const serializedStories = stories.map((story) => ({
+    const serializedStories = stories.map((story, index) => ({
       ...story,
       topics: story.topics.map((topic) => ({
         ...topic.topic,
       })),
+      highlightTitle: highlightTitles[index] !== story.title ? highlightTitles[index] : null,
+      highlightAbstract: highlightAbstracts[index] !== story.abstract ? highlightAbstracts[index] : null,
     }));
 
     return {
