@@ -4,8 +4,8 @@ import { FilterUserDto } from '@users/dto/query-user.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { RoleEnum } from '@roles/roles.enum';
 import { ISortOptions } from '@utils/types/sort-options';
-
 import { Huber } from './domain/huber';
+import { PublishStatus } from '../stories/status.enum';
 
 @Injectable()
 export class HubersService {
@@ -102,5 +102,52 @@ export class HubersService {
     });
 
     return huberReadingSessions?.huberReadingSessions;
+  }
+
+  async getStories(id: Huber['id']) {
+    const stories = await this.prisma.story.findMany({
+      where: {
+        humanBookId: id,
+        publishStatus: {
+          not: PublishStatus.deleted,
+        },
+      },
+      include: {
+        humanBook: {
+          omit: {
+            deletedAt: true,
+            genderId: true,
+            roleId: true,
+            statusId: true,
+            photoId: true,
+            password: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        storyReview: true,
+        cover: true,
+      },
+    });
+    const customStories = stories.map((item) => {
+      const numOfReview = item.storyReview.length;
+      let rating = 0;
+      if (numOfReview > 0) {
+        rating =
+          item.storyReview.reduce((acc, currentValue) => {
+            return acc + currentValue.rating;
+          }, 0) / numOfReview;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { storyReview, ...rest } = item;
+      return {
+        ...rest,
+        numOfReview,
+        rating,
+      };
+    });
+
+    return customStories;
   }
 }

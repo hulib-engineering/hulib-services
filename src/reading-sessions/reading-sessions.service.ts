@@ -1,6 +1,7 @@
 import {
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -16,14 +17,24 @@ import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-se
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
 import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { User } from '../users/domain/user';
+import { User } from '@users/domain/user';
 import { ConfigService } from '@nestjs/config';
+import { Queue } from 'bull';
+import { Cron } from '@nestjs/schedule';
+
 import { AllConfigType } from '@config/config.type';
 import { WebRtcService } from '../web-rtc/web-rtc.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
+import { InjectQueue } from '@nestjs/bull';
+import { PrismaService } from '@prisma-client/prisma-client.service';
+import { MailService } from '@mail/mail.service';
 
 @Injectable()
 export class ReadingSessionsService {
+  private readonly logger = new Logger(this.constructor.name);
+
   constructor(
     private readonly readingSessionRepository: ReadingSessionRepository,
     private readonly feedbackRepository: FeedbackRepository,
@@ -32,7 +43,11 @@ export class ReadingSessionsService {
     private readonly storiesService: StoriesService,
     private readonly storyReviewsService: StoryReviewsService,
     private readonly webRtcService: WebRtcService,
+    private readonly notificationService: NotificationsService,
+    private readonly mailService: MailService,
     private readonly configService: ConfigService<AllConfigType>,
+    @InjectQueue('reminder') private readonly reminderQueue: Queue,
+    private prisma: PrismaService,
   ) {}
 
   async createSession(dto: CreateReadingSessionDto): Promise<ReadingSession> {
@@ -71,14 +86,16 @@ export class ReadingSessionsService {
     session.sessionUrl = '';
     session.note = dto.note;
     session.sessionStatus = ReadingSessionStatus.PENDING;
-    session.startedAt = new Date(
-      new Date(dto.startedAt).getTime() +
-        (420 - new Date(dto.startedAt).getTimezoneOffset()) * 60000,
-    );
-    session.endedAt = new Date(
-      new Date(dto.endedAt).getTime() +
-        (420 - new Date(dto.endedAt).getTimezoneOffset()) * 60000,
-    );
+    session.startedAt = new Date(dto.startedAt);
+    session.endedAt = new Date(dto.endedAt);
+    // session.startedAt = new Date(
+    //   new Date(dto.startedAt).getTime() +
+    //     (7 * 60 - new Date(dto.startedAt).getTimezoneOffset()) * 60000,
+    // );
+    // session.endedAt = new Date(
+    //   new Date(dto.endedAt).getTime() +
+    //     (7 * 60 - new Date(dto.endedAt).getTimezoneOffset()) * 60000,
+    // );
     session.startTime = dto.startTime;
     session.endTime = dto.endTime;
 
@@ -91,10 +108,32 @@ export class ReadingSessionsService {
 
     await this.validateSessionOverlap(session);
 
-    return this.readingSessionRepository.create(session);
+    const newReadingSession =
+      await this.readingSessionRepository.create(session);
+
+    await Promise.all([
+      this.notificationService.pushNoti({
+        senderId: newReadingSession?.readerId,
+        recipientId: newReadingSession?.humanBookId,
+        type: NotificationTypeEnum.sessionRequest,
+        relatedEntityId: newReadingSession.id,
+      }),
+      this.reminderQueue.add(
+        'send-booking-email',
+        { sessionId: newReadingSession.id },
+        {
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      ),
+    ]);
+
+    return newReadingSession;
   }
 
   private async validateSessionOverlap(session: ReadingSession): Promise<void> {
+    const sameDay = new Date(session.startedAt).toDateString();
+
     // Lấy các session cùng ngày với session mới
     const existingSessions = await this.readingSessionRepository.find({
       where: {
@@ -104,23 +143,46 @@ export class ReadingSessionsService {
       },
     });
 
-    // Kiểm tra overlap về giờ trong ngày
-    const overlap = existingSessions.some((existing) => {
-      return (
-        existing.startTime <= session.endTime &&
-        existing.endTime >= session.startTime
-      );
-    });
+      // Kiểm tra xem có session nào trùng thời gian với session mới 
+     const hasOverlap = existingSessions.some((existing) => {
+       const isSameDay =
+         new Date(existing.startedAt).toDateString() === sameDay;
+       const isTimeOverlap = this.isTimeOverlap(
+         existing.startTime,
+         existing.endTime,
+         session.startTime,
+         session.endTime,
+       );
+       return isSameDay && isTimeOverlap;
+     });
 
-    if (overlap) {
-      throw new UnprocessableEntityException({
-        status: 422,
-        errors: {
-          sessionOverlap:
-            'Session time overlaps with another session on the same day.',
-        },
-      });
-    }
+     if (hasOverlap) {
+       throw new UnprocessableEntityException({
+         status: 422,
+         errors: {
+           sessionOverlap:
+             'Session time overlaps with another session on the same day.',
+         },
+       });
+     }
+  }
+
+  private isTimeOverlap(
+    startTime1: string,
+    endTime1: string,
+    startTime2: string,
+    endTime2: string,
+  ): boolean {
+    const start1 = this.timeStringToMinutes(startTime1);
+    const end1 = this.timeStringToMinutes(endTime1);
+    const start2 = this.timeStringToMinutes(startTime2);
+    const end2 = this.timeStringToMinutes(endTime2);
+    return start1 < end2 && start2 < end1;
+  }
+
+  private timeStringToMinutes(timeString: string): number {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
   }
 
   async findAllSessions(
@@ -209,6 +271,12 @@ export class ReadingSessionsService {
             comment: content,
           },
         );
+        await this.notificationService.pushNoti({
+          senderId: session.readerId,
+          recipientId: session.humanBookId,
+          type: NotificationTypeEnum.reviewStory,
+          relatedEntityId: session.storyId,
+        });
       }
       if (!!dto.huberFeedback) {
         await this.usersService.editFeedback(
@@ -277,5 +345,40 @@ export class ReadingSessionsService {
   async getSessionMessages(id: number): Promise<Message[]> {
     await this.findOneSession(id);
     return await this.messageRepository.findByReadingSessionId(id);
+  }
+
+  @Cron('0 */30 * * * *', { timeZone: 'UTC' }) // Every 30 mins, starting from 00:00 UTC
+  async checkAndScheduleReminders() {
+    const now = new Date();
+    this.logger.log(
+      `[CRON] Running reminder scheduler at ${now.toISOString()}`,
+    );
+
+    const targetStart = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
+
+    const sessions = await this.prisma.readingSession.findMany({
+      where: {
+        startedAt: {
+          gte: new Date(targetStart.getTime() - 5 * 60 * 1000), // 5 min buffer before
+          lt: new Date(targetStart.getTime() + 5 * 60 * 1000), // 5 min buffer after
+        },
+        sessionStatus: ReadingSessionStatus.APPROVED,
+      },
+    });
+    // console.log('matched', sessions);
+
+    for (const session of sessions) {
+      const delay = 15 * 60 * 1000; // Delay = 15 minutes
+
+      await this.reminderQueue.add(
+        'send-email-and-notify-user',
+        { sessionId: session.id },
+        {
+          delay,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
+    }
   }
 }

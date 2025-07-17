@@ -23,6 +23,9 @@
       "@auth-facebook/*": ["src/auth-facebook/*"],
       "@auth-google/*": ["src/auth-google/*"],
       "@books/*": ["src/books/*"],
+      "@cache/*": ["src/cache/*"],
+      "@chat-types/*": ["src/chat-types/*"],
+      "@chats/*": ["src/chats/*"],
       "@config/*": ["src/config/*"],
       "@database/*": ["src/database/*"],
       "@fav-stories/*": ["src/fav-stories/*"],
@@ -46,7 +49,8 @@
       "@casl/*": ["src/casl/*"],
       "@time-slots/*": ["src/time-slots/*"],
       "@schedules/*": ["src/schedules/*"],
-      "@reading-sessions/*": ["src/reading-sessions/*"]
+      "@reading-sessions/*": ["src/reading-sessions/*"],
+      "@agora/*": ["src/agora/*"]
     }
   }
 }

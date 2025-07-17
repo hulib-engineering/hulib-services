@@ -3,6 +3,16 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
+
+import { UsersService } from '@users/users.service';
+import { PrismaService } from '@prisma-client/prisma-client.service';
+import { StoryReviewsService } from '@story-reviews/story-reviews.service';
+import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repository';
+import { User } from '@users/domain/user';
+import { Topic } from '@topics/domain/topics';
+import { AppConfig } from '@config/app-config.type';
+import appConfig from '@config/app.config';
+
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
 import { StoryRepository } from './infrastructure/persistence/story.repository';
@@ -11,10 +21,8 @@ import { Story } from './domain/story';
 import { FilterStoryDto, SortStoryDto } from './dto/find-all-stories.dto';
 import { PublishStatus } from './status.enum';
 
-import { UsersService } from '@users/users.service';
-import { PrismaService } from '@prisma-client/prisma-client.service';
-import { StoryReviewsService } from '@story-reviews/story-reviews.service';
-import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repository';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
 @Injectable()
 export class StoriesService {
@@ -23,6 +31,7 @@ export class StoriesService {
     private readonly storyReviewService: StoryReviewsService,
     private readonly topicsRepository: TopicsRepository,
     private readonly usersService: UsersService,
+    private readonly notifsService: NotificationsService,
     private prisma: PrismaService,
   ) {}
 
@@ -48,11 +57,53 @@ export class StoriesService {
       );
     }
 
-    return this.storiesRepository.create({
+    const newStory = await this.storiesRepository.create({
       ...createStoriesDto,
       humanBook,
       topics: topicsEntities,
     });
+
+    await this.notifsService.pushNoti({
+      senderId: Number(humanBook.id),
+      recipientId: 1,
+      type: NotificationTypeEnum.publishStory,
+      relatedEntityId: newStory.id,
+    });
+
+    return newStory;
+  }
+
+  async createFirst(userId: User['id'], createStoriesDto: CreateStoryDto) {
+    const user = await this.usersService.findById(userId);
+
+    if (!user) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.NOT_FOUND,
+        errors: {
+          email: 'userNotFound',
+        },
+      });
+    }
+
+    let topicsEntities: Topic[] = [];
+    if (createStoriesDto.topics && createStoriesDto.topics.length > 0) {
+      topicsEntities = await this.topicsRepository.findByIds(
+        createStoriesDto.topics.map((t) => t.id),
+      );
+    }
+    const newStory = await this.storiesRepository.create({
+      ...createStoriesDto,
+      humanBook: user,
+      topics: topicsEntities,
+    });
+
+    await this.notifsService.pushNoti({
+      senderId: Number(userId),
+      recipientId: 1,
+      type: NotificationTypeEnum.account,
+    });
+
+    return newStory;
   }
 
   findAllWithPagination({
@@ -83,7 +134,18 @@ export class StoriesService {
             topic: true,
           },
         },
-        humanBook: true,
+        humanBook: {
+          omit: {
+            deletedAt: true,
+            genderId: true,
+            roleId: true,
+            statusId: true,
+            photoId: true,
+            password: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
         cover: true,
       },
     });
@@ -97,17 +159,49 @@ export class StoriesService {
       });
     }
 
+    const coverWithUrl = result.cover
+      ? {
+          id: result.cover.id,
+          path: (appConfig() as AppConfig).backendDomain + result.cover.path,
+        }
+      : null;
+
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
 
     return {
       ...result,
       storyReview,
       topics: result?.topics.map((nestedTopic) => nestedTopic.topic),
+      cover: coverWithUrl,
     };
   }
 
-  update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {
-    return this.storiesRepository.update(id, updateStoriesDto);
+  async update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {
+    const story = await this.findOne(id);
+
+    if (!story) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          story: 'storyNotFound',
+        },
+      });
+    }
+
+    const updated = await this.storiesRepository.update(id, updateStoriesDto);
+
+    if (
+      !!updateStoriesDto.publishStatus &&
+      updateStoriesDto.publishStatus === 'published'
+    ) {
+      await this.notifsService.pushNoti({
+        senderId: 1,
+        recipientId: story.humanBookId,
+        type: NotificationTypeEnum.publishStory,
+        relatedEntityId: story.id,
+      });
+    }
+    return updated;
   }
 
   remove(id: Story['id']) {

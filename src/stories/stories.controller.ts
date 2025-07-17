@@ -1,14 +1,15 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
-  Query,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
   SerializeOptions,
+  UseGuards,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -27,8 +28,7 @@ import {
 } from '@utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
-import { DEFAULT_LIMIT } from '@utils/dto/pagination-input.dto';
-import { DEFAULT_PAGE } from '@utils/dto/pagination-input.dto';
+import { DEFAULT_LIMIT, DEFAULT_PAGE } from '@utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { PublishStatus } from './status.enum';
 import { AuthGuard } from '@nestjs/passport';
@@ -54,7 +54,10 @@ export class StoriesController {
   @ApiCreatedResponse({
     type: Story,
   })
-  create(@Body() createStoriesDto: CreateStoryDto) {
+  create(@Request() request, @Body() createStoriesDto: CreateStoryDto) {
+    if (request.user.role.id === RoleEnum.reader) {
+      return this.storiesService.createFirst(request.user.id, createStoriesDto);
+    }
     return this.storiesService.create(createStoriesDto);
   }
 
@@ -68,10 +71,16 @@ export class StoriesController {
     type: InfinityPaginationResponse(Story),
   })
   async findAll(
+    @Request() request,
     @Query() query: FindAllStoriesDto,
   ): Promise<InfinityPaginationResponseDto<Story>> {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
+
+    const isAdmin = request.user.role.id === RoleEnum.admin;
+    const defaultPublishStatus = isAdmin
+      ? PublishStatus.draft
+      : PublishStatus.published;
 
     return infinityPagination(
       await this.storiesService.findAllWithPagination({
@@ -82,7 +91,7 @@ export class StoriesController {
         filterOptions: {
           humanBookId: query.humanBookId,
           topicIds: query.topicIds,
-          publishStatus: query.publishStatus || PublishStatus.published,
+          publishStatus: query.publishStatus || defaultPublishStatus,
         },
       }),
       { page, limit },
@@ -103,6 +112,8 @@ export class StoriesController {
   }
 
   @Patch(':id')
+  @Roles(RoleEnum.humanBook, RoleEnum.admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
     type: String,

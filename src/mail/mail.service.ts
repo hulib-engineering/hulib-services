@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { I18nContext } from 'nestjs-i18n';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { MailData } from './interfaces/mail-data.interface';
 
 import { MaybeType } from '@utils/types/maybe.type';
@@ -14,6 +14,7 @@ export class MailService {
   constructor(
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService<AllConfigType>,
+    private readonly i18n: I18nService, // inject this instead of relying on context
   ) {}
 
   async userSignUp(
@@ -191,6 +192,157 @@ export class MailService {
         text1,
         text2,
         text3,
+      },
+    });
+  }
+
+  async remindParticipants(
+    mailData: MailData<{ name: string; sessionUrl: string; isHuber: boolean }>,
+  ): Promise<void> {
+    const locale = 'en'; // or dynamically determine it (e.g., from mailData)
+
+    const [
+      reminderLiberEmailTitle,
+      reminderHubberEmailTitle,
+      dear,
+      reminderLiberPt1,
+      reminderHuberPt1,
+      reminderPt2,
+      reminderPt3,
+      reminderPt4,
+      regard,
+    ] = await Promise.all([
+      this.i18n.t('common.reminderLiberEmail', { lang: locale }),
+      this.i18n.t('common.reminderHubberEmail', { lang: locale }),
+      this.i18n.t('common.dear', { lang: locale }),
+      this.i18n.t('reminder-email.reminderLiberPt1', { lang: locale }),
+      this.i18n.t('reminder-email.reminderHuberPt1', { lang: locale }),
+      this.i18n.t('reminder-email.reminderPt2', { lang: locale }),
+      this.i18n.t('reminder-email.reminderPt3', { lang: locale }),
+      this.i18n.t('reminder-email.reminderPt4', { lang: locale }),
+      this.i18n.t('common.bestRegards', { lang: locale }),
+    ]);
+
+    const url = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+
+    if (mailData.data.isHuber) {
+      await this.mailerService.sendMail({
+        to: mailData.to,
+        subject: reminderHubberEmailTitle,
+        text: reminderHubberEmailTitle,
+        templatePath: path.join(
+          this.configService.getOrThrow('app.workingDirectory', {
+            infer: true,
+          }),
+          'src',
+          'mail',
+          'mail-templates',
+          'reminder.hbs',
+        ),
+        context: {
+          title: reminderHubberEmailTitle,
+          fullname: mailData.data.name.toString(),
+          url,
+          sessionUrl: mailData.data.sessionUrl.toString(),
+          dear,
+          reminderPt1: reminderHuberPt1,
+          reminderPt2,
+          reminderPt3,
+          reminderPt4,
+          regard,
+        },
+      });
+    } else {
+      await this.mailerService.sendMail({
+        to: mailData.to,
+        subject: reminderLiberEmailTitle,
+        text: reminderLiberEmailTitle,
+        templatePath: path.join(
+          this.configService.getOrThrow('app.workingDirectory', {
+            infer: true,
+          }),
+          'src',
+          'mail',
+          'mail-templates',
+          'reminder.hbs',
+        ),
+        context: {
+          title: reminderLiberEmailTitle,
+          fullname: mailData.data.name.toString(),
+          url,
+          sessionUrl: mailData.data.sessionUrl.toString(),
+          dear,
+          reminderPt1: reminderLiberPt1,
+          reminderPt2,
+          reminderPt3,
+          reminderPt4,
+          regard,
+        },
+      });
+    }
+  }
+
+  async sendBookingEmail(
+    mailData: MailData<{
+      name: string;
+    }>,
+  ): Promise<void> {
+    const locale = 'en';
+
+    const [
+      bookingEmailTitle,
+      dear,
+      bookingPt1,
+      bookingPt2,
+      bookingPt3,
+      contact,
+      regard,
+    ] = await Promise.all([
+      this.i18n.t('common.bookingEmail', { lang: locale }),
+      this.i18n.t('common.dear', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt1', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt2', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt3', { lang: locale }),
+      this.i18n.t('reset-password.contact', { lang: locale }),
+      this.i18n.t('common.bestRegards', { lang: locale }),
+    ]);
+
+    const url = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+
+    const schedulingUrl = new URL(
+      this.configService.getOrThrow('app.frontendDomain', {
+        infer: true,
+      }) + '/scheduling',
+    );
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: bookingEmailTitle,
+      text: bookingEmailTitle,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', {
+          infer: true,
+        }),
+        'src',
+        'mail',
+        'mail-templates',
+        'booking.hbs',
+      ),
+      context: {
+        title: bookingEmailTitle,
+        fullname: mailData.data.name,
+        dear,
+        bookingPt1,
+        bookingPt2,
+        bookingPt3,
+        contact,
+        url,
+        schedulingUrl,
+        regard,
       },
     });
   }

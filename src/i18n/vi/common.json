@@ -1,5 +1,8 @@
 {
   "confirmEmail": "Chào mừng đến với HuLib – Xác nhận đăng ký thành công",
+  "reminderLiberEmail": "Chỉ là một lời nhắc nhẹ — cuộc họp của bạn sắp diễn ra!",
+  "reminderHubberEmail": "Hãy sẵn sàng — thời khắc để bạn truyền cảm hứng đang đến gần!",
+  "bookingEmail": "Liber muốn kết nối với bạn",
   "resetPassword": "Thông báo cài đặt lại mật khẩu",
   "dear": "Thân chào",
   "bestRegards": "Trân trọng"

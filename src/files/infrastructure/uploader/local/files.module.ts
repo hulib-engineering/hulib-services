@@ -3,6 +3,7 @@ import {
   Module,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import * as fs from 'fs';
 import { FilesLocalController } from './files.controller';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -39,7 +40,14 @@ const infrastructurePersistenceModule = RelationalFilePersistenceModule;
             callback(null, true);
           },
           storage: diskStorage({
-            destination: './files',
+            destination: (req, file, callback) => {
+              const uploadPath = './files';
+              if (!fs.existsSync(uploadPath)) {
+                fs.mkdirSync(uploadPath, { recursive: true });
+                fs.writeFileSync(`${uploadPath}/.files`, '');
+              }
+              callback(null, uploadPath);
+            },
             filename: (request, file, callback) => {
               callback(
                 null,

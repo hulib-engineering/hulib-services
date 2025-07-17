@@ -33,9 +33,6 @@ export class UserMapper {
       domainEntity.photo = FileMapper.toDomain(raw.photo);
     }
 
-    if (raw.approval) {
-      domainEntity.approval = raw.approval;
-    }
     domainEntity.gender = raw.gender;
     domainEntity.role = raw.role;
     domainEntity.status = raw.status;
@@ -51,6 +48,7 @@ export class UserMapper {
     domainEntity.educationEnd = raw.educationEnd;
     domainEntity.topics = raw.topics;
     domainEntity.countTopics = raw.countTopics;
+    domainEntity.approval = raw.approval;
     return domainEntity;
   }
 

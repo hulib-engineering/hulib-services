@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma-client/prisma-client.service';
 import { FindQueryNotificationsDto } from './dto/find-all-notifications-query.dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationTypeEnum } from './notification-type.enum';
+import { infinityPagination } from '@utils/infinity-pagination';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class NotificationsService {
@@ -12,7 +14,10 @@ export class NotificationsService {
     NotificationTypeEnum.publishStory,
   ];
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async findAllWithPagination({
     filterOptions,
@@ -23,43 +28,54 @@ export class NotificationsService {
   }) {
     const skip = (paginationOptions.page - 1) * paginationOptions.limit;
     const take = paginationOptions.limit;
-    const notifications = await this.prisma.notification.findMany({
-      where: {
-        ...filterOptions,
-      },
-      include: {
-        type: true,
-        recipient: {
-          select: {
-            id: true,
-            fullName: true,
-            file: {
-              select: {
-                path: true,
+    const [unseenCount, notifications] = await this.prisma.$transaction([
+      this.prisma.notification.count({
+        where: {
+          recipientId: filterOptions.recipientId,
+          seen: false,
+        },
+      }),
+      this.prisma.notification.findMany({
+        where: {
+          ...filterOptions,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          type: true,
+          recipient: {
+            select: {
+              id: true,
+              fullName: true,
+              file: {
+                select: {
+                  path: true,
+                },
+              },
+            },
+          },
+          sender: {
+            select: {
+              id: true,
+              fullName: true,
+              file: {
+                select: {
+                  path: true,
+                },
               },
             },
           },
         },
-        sender: {
-          select: {
-            id: true,
-            fullName: true,
-            file: {
-              select: {
-                path: true,
-              },
-            },
-          },
+        omit: {
+          typeId: true,
+          recipientId: true,
+          senderId: true,
         },
-      },
-      omit: {
-        typeId: true,
-        recipientId: true,
-        senderId: true,
-      },
-      skip,
-      take,
-    });
+        skip,
+        take,
+      }),
+    ]);
 
     const storyIds = notifications
       .filter(
@@ -142,7 +158,10 @@ export class NotificationsService {
       }
       return { ...n, relatedEntity: null };
     });
-    return result;
+    return {
+      data: result,
+      unseenCount,
+    };
   }
 
   async create(data: CreateNotificationDto) {
@@ -168,8 +187,12 @@ export class NotificationsService {
     const isSessionRequestNotificationType =
       type.name === NotificationTypeEnum.sessionRequest;
 
+    const isOtherNotificationType = type.name === NotificationTypeEnum.other;
+
     const isNeedRelatedEntityId =
-      isStoryNotificationType || isSessionRequestNotificationType;
+      isStoryNotificationType ||
+      isSessionRequestNotificationType ||
+      isOtherNotificationType;
 
     if (isNeedRelatedEntityId && !data.relatedEntityId) {
       throw new BadRequestException('Related entity ID is required');
@@ -179,7 +202,7 @@ export class NotificationsService {
       await this.verifyRelatedEntityId(type.name, data.relatedEntityId);
     }
 
-    return await this.prisma.notification.create({
+    return this.prisma.notification.create({
       data: {
         recipientId: data.recipientId,
         senderId: data.senderId,
@@ -238,5 +261,24 @@ export class NotificationsService {
     return {
       message: 'Update notification successfully',
     };
+  }
+
+  async pushNoti(createNotificationDto: CreateNotificationDto) {
+    const notification = await this.create(createNotificationDto);
+
+    if (notification) {
+      const refetchedNotifs = await this.findAllWithPagination({
+        filterOptions: { recipientId: notification.recipientId },
+        paginationOptions: { page: 1, limit: 5 },
+      });
+
+      this.eventEmitter.emit('notification.list.fetch', {
+        userId: notification.recipientId,
+        notifications: {
+          ...refetchedNotifs,
+          ...infinityPagination(refetchedNotifs.data, { page: 1, limit: 5 }),
+        },
+      });
+    }
   }
 }

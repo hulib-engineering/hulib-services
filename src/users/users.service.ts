@@ -2,6 +2,7 @@ import {
   BadRequestException,
   HttpStatus,
   Injectable,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -21,12 +22,19 @@ import { Action, Approval } from '@users/approval.enum';
 import { CreateFeedbackDto } from '@users/dto/create-feedback.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { user as PrismaUser } from '@prisma/client';
+import { UpgradeDto } from '@users/dto/upgrade.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
+import { ReadingSessionStatus } from '@reading-sessions/infrastructure/persistence/relational/entities';
+import { pagination } from '@utils/types/pagination';
+import { PublishStatus } from '../stories/status.enum';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
+    private readonly notificationsService: NotificationsService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -132,8 +140,91 @@ export class UsersService {
     });
   }
 
-  findById(id: User['id']): Promise<NullableType<User>> {
-    return this.usersRepository.findById(id);
+  async findById(id: User['id']): Promise<NullableType<any>> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: Number(id),
+      },
+      include: {
+        humanBookTopic: {
+          include: {
+            topic: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        topicsOfInterest: {
+          include: {
+            topic: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        gender: true,
+        role: true,
+        status: true,
+        file: true,
+      },
+      omit: {
+        deletedAt: true,
+        genderId: true,
+        roleId: true,
+        statusId: true,
+        photoId: true,
+        password: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    const mappedHumanBookTopic = user.humanBookTopic
+      ? user.humanBookTopic.map((item) => item.topic)
+      : [];
+
+    const mappedTopicsOfInterest = user.topicsOfInterest
+      ? user.topicsOfInterest.map((item) => item.topic)
+      : [];
+
+    const isLiber = user.role?.id === RoleEnum.reader;
+
+    if (isLiber) {
+      const firstStory = await this.prisma.story.findFirst({
+        where: {
+          humanBookId: Number(id),
+        },
+        include: {
+          cover: true,
+        },
+        omit: {
+          coverId: true,
+          createdAt: true,
+          updatedAt: true,
+          humanBookId: true,
+        },
+      });
+      return {
+        ...user,
+        sharingTopics: mappedHumanBookTopic,
+        topicsOfInterest: mappedTopicsOfInterest,
+        firstStory,
+      };
+    }
+
+    return {
+      ...user,
+      sharingTopics: mappedHumanBookTopic,
+      topicsOfInterest: mappedTopicsOfInterest,
+    };
   }
 
   // async findHumanBookById(id: User['id']): Promise<NullableType<User>> {
@@ -257,6 +348,21 @@ export class UsersService {
     return this.usersRepository.update(id, clonedPayload);
   }
 
+  updateStatus(id: User['id'], status: string) {
+    const isExistStatus = Object.keys(StatusEnum).includes(status);
+    if (!isExistStatus) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          status: 'statusNotExists',
+        },
+      });
+    }
+    return this.usersRepository.update(id, {
+      status: { id: StatusEnum[status] },
+    });
+  }
+
   async remove(id: User['id']): Promise<void> {
     await this.usersRepository.remove(id);
   }
@@ -284,18 +390,36 @@ export class UsersService {
     await this.usersRepository.update(userId, { password: newPassword });
   }
 
-  async upgrade(id: User['id'], action: string): Promise<void> {
-    if (action === Action.accept) {
+  async upgrade(id: User['id'], upgradeDto: UpgradeDto) {
+    if (upgradeDto.action === Action.accept) {
       await this.usersRepository.update(id, {
         role: {
           id: RoleEnum.humanBook,
         },
         approval: Approval.approved,
       });
-    } else if (action === Action.reject) {
+      await this.notificationsService.pushNoti({
+        senderId: 1,
+        recipientId: Number(id),
+        type: NotificationTypeEnum.account,
+      });
+
+      // change status for first story when becoming human book
+      await this.prisma.story.updateMany({
+        where: { humanBookId: Number(id) },
+        data: { publishStatus: PublishStatus.published },
+      });
+
+      return {
+        message: 'Approve request to become huber successfully.',
+      };
+    } else if (upgradeDto.action === Action.reject) {
       await this.usersRepository.update(id, {
         approval: Approval.rejected,
       });
+      return {
+        message: 'Reject request to become huber!',
+      };
     } else {
       throw new BadRequestException({
         status: HttpStatus.BAD_REQUEST,
@@ -347,6 +471,72 @@ export class UsersService {
     return this.prisma.feedback.update({
       where: { id: feedback?.id || 0 },
       data: { rating: payload.rating, content: payload.content },
+    });
+  }
+
+  async getReadingSessions({
+    userId,
+    status,
+    paginationOptions,
+  }: {
+    userId: User['id'];
+    status: ReadingSessionStatus;
+    paginationOptions: IPaginationOptions;
+  }) {
+    const skip = (paginationOptions.page - 1) * paginationOptions.limit;
+    const take = paginationOptions.limit;
+    const where = {
+      AND: [
+        {
+          OR: [{ humanBookId: Number(userId) }, { readerId: Number(userId) }],
+        },
+        { sessionStatus: status },
+      ],
+    };
+    const userConfig = {
+      include: {
+        topicsOfInterest: true,
+        gender: true,
+        role: true,
+        status: true,
+      },
+      omit: {
+        deletedAt: true,
+        genderId: true,
+        roleId: true,
+        statusId: true,
+        photoId: true,
+        password: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    };
+
+    const [totalItems, data] = await this.prisma.$transaction([
+      this.prisma.readingSession.count({ where }),
+      this.prisma.readingSession.findMany({
+        where,
+        include: {
+          humanBook: userConfig,
+          reader: userConfig,
+        },
+        omit: {
+          readerId: true,
+          humanBookId: true,
+          sessionUrl: true,
+          recordingUrl: true,
+          createdAt: true,
+          updatedAt: true,
+          deletedAt: true,
+        },
+        skip,
+        take,
+      }),
+    ]);
+
+    return pagination(data, totalItems, {
+      page: paginationOptions.page,
+      limit: paginationOptions.limit,
     });
   }
 }
