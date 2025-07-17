@@ -132,6 +132,8 @@ export class ReadingSessionsService {
   }
 
   private async validateSessionOverlap(session: ReadingSession): Promise<void> {
+    const sameDay = new Date(session.startedAt).toDateString();
+
     // Lấy các session cùng ngày với session mới
     const existingSessions = await this.readingSessionRepository.find({
       where: {
@@ -141,25 +143,28 @@ export class ReadingSessionsService {
       },
     });
 
-    // Kiểm tra overlap về giờ trong ngày
-    const overlap = existingSessions.some((existing) => {
-      return this.isTimeOverlap(
-        existing.startTime,
-        existing.endTime,
-        session.startTime,
-        session.endTime,
-      );
-    });
+      // Kiểm tra xem có session nào trùng thời gian với session mới 
+     const hasOverlap = existingSessions.some((existing) => {
+       const isSameDay =
+         new Date(existing.startedAt).toDateString() === sameDay;
+       const isTimeOverlap = this.isTimeOverlap(
+         existing.startTime,
+         existing.endTime,
+         session.startTime,
+         session.endTime,
+       );
+       return isSameDay && isTimeOverlap;
+     });
 
-    if (overlap) {
-      throw new UnprocessableEntityException({
-        status: 422,
-        errors: {
-          sessionOverlap:
-            'Session time overlaps with another session on the same day.',
-        },
-      });
-    }
+     if (hasOverlap) {
+       throw new UnprocessableEntityException({
+         status: 422,
+         errors: {
+           sessionOverlap:
+             'Session time overlaps with another session on the same day.',
+         },
+       });
+     }
   }
 
   private isTimeOverlap(

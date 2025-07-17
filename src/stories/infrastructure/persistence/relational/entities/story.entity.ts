@@ -101,4 +101,11 @@ export class StoryEntity extends EntityRelationalHelper {
     (readingSession) => readingSession.story,
   )
   readingSessions: ReadingSessionEntity[];
+
+  @ApiProperty({
+    type: String,
+    example: 'Reject reason',
+  })
+  @Column({ type: String })
+  rejectionReason?: string;
 }

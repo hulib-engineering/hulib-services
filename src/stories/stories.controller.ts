@@ -112,6 +112,8 @@ export class StoriesController {
   }
 
   @Patch(':id')
+  @Roles(RoleEnum.humanBook, RoleEnum.admin)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
     type: String,

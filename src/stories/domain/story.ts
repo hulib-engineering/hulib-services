@@ -56,4 +56,10 @@ export class Story {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiProperty({
+    type: String,
+    example: 'Reject reason',
+  })
+  rejectionReason?: string;
 }

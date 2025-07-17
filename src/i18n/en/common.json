@@ -1,7 +1,8 @@
 {
   "confirmEmail": "Welcome to HuLib – Complete Your Registration",
-  "reminderEmail": "It's time for your session",
-  "bookingEmail": "Your Reading Session Has Been Booked",
+  "reminderLiberEmail": "Just a gentle reminder - your meeting is coming up!",
+  "reminderHubberEmail": "Get ready - your time to inspire is near!",
+  "bookingEmail": "Liber wants to connect",
   "resetPassword": "Reset Your HuLib's Password",
   "dear": "Dear",
   "bestRegards": "Best regards",
