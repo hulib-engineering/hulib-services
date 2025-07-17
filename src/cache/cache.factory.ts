@@ -4,6 +4,8 @@ import { redisStore } from 'cache-manager-ioredis-yet';
 import { AllConfigType } from '@config/config.type';
 
 async function useCacheFactory(config: ConfigService<AllConfigType>) {
+  const tls = config.get('redis.tls', { infer: true });
+
   return {
     store: await redisStore({
       host: config.getOrThrow('redis.host', {
@@ -18,7 +20,7 @@ async function useCacheFactory(config: ConfigService<AllConfigType>) {
       password: config.getOrThrow('redis.password', {
         infer: true,
       }),
-      tls: config.get('redis.tls', { infer: true }),
+      ...(tls ? { tls } : undefined), // only add tls if it's defined
     }),
   };
 }
