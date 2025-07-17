@@ -10,26 +10,28 @@ import {
   Patch,
   SerializeOptions,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+
+import { CheckAbilities } from '@casl/decorators/casl.decorator';
+import { Action } from '@casl/ability.factory';
+import { CaslGuard } from '@casl/guards/casl.guard';
+import { NullableType } from '@utils/types/nullable.type';
+import { User } from '@users/domain/user';
+
+import { AuthService } from './auth.service';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto';
 import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
 import { AuthResetPasswordDto } from './dto/auth-reset-password.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { AuthRegisterLoginDto } from './dto/auth-register-login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
-import { NullableType } from '@utils/types/nullable.type';
-import { User } from '@users/domain/user';
 import { RefreshResponseDto } from './dto/refresh-response.dto';
 import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { AuthValidateEmailDto } from './dto/auth-validate-email.dto';
 import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
-import { CheckAbilities } from '@casl/decorators/casl.decorator';
-import { Action } from '@casl/ability.factory';
-import { CaslGuard } from '@casl/guards/casl.guard';
 
 @ApiTags('Auth')
 @Controller({
