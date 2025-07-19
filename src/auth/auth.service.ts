@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
   UnprocessableEntityException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import ms from 'ms';
 import crypto from 'crypto';
@@ -26,6 +27,7 @@ import { StatusEnum } from '@statuses/statuses.enum';
 import { User } from '@users/domain/user';
 import { Approval } from '@users/approval.enum';
 import { TopicsService } from '@topics/topics.service';
+import { PrismaService } from '@prisma-client/prisma-client.service';
 
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
@@ -47,6 +49,7 @@ export class AuthService {
     private mailService: MailService,
     private configService: ConfigService<AllConfigType>,
     private topicsService: TopicsService,
+    private prisma: PrismaService,
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
@@ -488,7 +491,11 @@ export class AuthService {
       });
     }
 
-    const user = await this.usersService.findById(userId);
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: Number(userId),
+      },
+    });
 
     if (!user) {
       throw new UnprocessableEntityException({
@@ -498,6 +505,13 @@ export class AuthService {
         },
       });
     }
+
+    if (user.provider !== 'email') {
+      throw new BadRequestException(
+        'Social login accounts do not support password changes',
+      );
+    }
+
     const isCurrentPasswordValid = await bcrypt.compare(
       currentPassword,
       user.password!,
