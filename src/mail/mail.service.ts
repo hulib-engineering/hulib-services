@@ -316,7 +316,7 @@ export class MailService {
     const schedulingUrl = new URL(
       this.configService.getOrThrow('app.frontendDomain', {
         infer: true,
-      }) + '/scheduling',
+      }) + '/schedule-meeting/weekly-schedule',
     );
 
     await this.mailerService.sendMail({
