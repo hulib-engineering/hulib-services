@@ -96,6 +96,19 @@ export class ChatGateway extends BaseSocketGateway implements OnGatewayInit {
   ) {
     const userId = client.session?.id;
     await this.chatService.markMessagesAsRead(data.senderId, Number(userId));
+
+    const senderSockets = await this.cacheService.get<string[]>({
+      key: 'UserSocketClients',
+      args: [data.senderId.toString()],
+    });
+    if (senderSockets) {
+      for (const socketId of senderSockets) {
+        const senderSocket = this.clients.get(socketId);
+        if (senderSocket) {
+          senderSocket.emit('read');
+        }
+      }
+    }
   }
 
   // (Optional) Trigger message from outside service

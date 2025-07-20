@@ -19,7 +19,11 @@ export class SearchService {
         .toLocaleLowerCase();
     const nameWhere = `unaccent(lower(title)) ilike '%${unaccentedLower(text)}%'`;
     const where = [...(nameWhere ? [nameWhere] : [])].join(' OR ');
-    const founds: { id: number; highlight_title: string; highlight_abstract: string }[] = await this.prisma.$queryRawUnsafe(
+    const founds: {
+      id: number;
+      highlight_title: string;
+      highlight_abstract: string;
+    }[] = await this.prisma.$queryRawUnsafe(
       `SELECT id, ts_headline(title, plainto_tsquery('${text}'), 'HighlightAll=true') as highlight_title, ts_headline(abstract, plainto_tsquery('${text}'), 'HighlightAll=true') as highlight_abstract
       FROM story
       WHERE to_tsvector(abstract) @@ plainto_tsquery('${text}') OR to_tsvector(title) @@ plainto_tsquery('${text}') OR ${where};`,
@@ -68,7 +72,8 @@ export class SearchService {
     //   },
     // });
 
-    const { ids, highlightTitles, highlightAbstracts } = await this.getStoryIdsByAccentedKeyword(keywordTrimmed);
+    const { ids, highlightTitles, highlightAbstracts } =
+      await this.getStoryIdsByAccentedKeyword(keywordTrimmed);
     const stories = await this.prisma.story.findMany({
       where: {
         id: { in: ids },
@@ -102,8 +107,12 @@ export class SearchService {
       topics: story.topics.map((topic) => ({
         ...topic.topic,
       })),
-      highlightTitle: highlightTitles[index] !== story.title ? highlightTitles[index] : null,
-      highlightAbstract: highlightAbstracts[index] !== story.abstract ? highlightAbstracts[index] : null,
+      highlightTitle:
+        highlightTitles[index] !== story.title ? highlightTitles[index] : null,
+      highlightAbstract:
+        highlightAbstracts[index] !== story.abstract
+          ? highlightAbstracts[index]
+          : null,
     }));
 
     return {
