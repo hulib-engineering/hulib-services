@@ -348,18 +348,65 @@ export class UsersService {
     return this.usersRepository.update(id, clonedPayload);
   }
 
-  updateStatus(id: User['id'], status: string) {
-    const isExistStatus = Object.keys(StatusEnum).includes(status);
-    if (!isExistStatus) {
+  async updateStatus(id: User['id'], status: string) {
+    const statusValue = StatusEnum[status as keyof typeof StatusEnum];
+    if (!statusValue) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          status: 'statusNotExists',
-        },
+        errors: { status: 'statusNotExists' },
       });
     }
-    return this.usersRepository.update(id, {
-      status: { id: StatusEnum[status] },
+
+    const userConfig = {
+      include: {
+        gender: true,
+        role: true,
+        status: true,
+      },
+      omit: {
+        deletedAt: true,
+        genderId: true,
+        roleId: true,
+        statusId: true,
+        photoId: true,
+        password: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    };
+
+    const userExist = await this.prisma.user.findUnique({
+      where: { id: Number(id) },
+      select: { id: true },
+    });
+    if (!userExist) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        errors: { user: 'userNotFound' },
+      });
+    }
+
+    if (statusValue === StatusEnum.inactive) {
+      const [user] = await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: { id: Number(id) },
+          data: { statusId: statusValue },
+          ...userConfig,
+        }),
+        this.prisma.story.updateMany({
+          where: { humanBookId: Number(id) },
+          data: {
+            publishStatus: PublishStatus.deleted,
+          },
+        }),
+      ]);
+      return user;
+    }
+
+    return this.prisma.user.update({
+      where: { id: Number(id) },
+      data: { statusId: statusValue },
+      ...userConfig,
     });
   }
 
