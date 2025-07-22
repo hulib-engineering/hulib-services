@@ -22,6 +22,9 @@ export class ChatMapper {
     if (raw.updatedAt) {
       domain.updatedAt = raw.updatedAt;
     }
+    if (raw.readAt) {
+      domain.readAt = raw.readAt;
+    }
     if (raw.sender) {
       domain.sender = UserMapper.toDomain(raw.sender);
     }

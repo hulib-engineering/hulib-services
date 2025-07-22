@@ -7,6 +7,7 @@ import { Chat, ChatStatus } from './domain/chat';
 import { Conversation } from './domain/conversation';
 import { UsersService } from '@users/users.service';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { SocketService } from '../socket/socket.service';
 
 @Injectable()
 export class ChatService {
@@ -14,6 +15,7 @@ export class ChatService {
     private readonly chatRepository: ChatRepository,
     private readonly userService: UsersService,
     private readonly prisma: PrismaService,
+    private readonly socketService: SocketService,
   ) {}
 
   async create(createChatDto: CreateChatDto, userId: number) {
@@ -75,6 +77,8 @@ export class ChatService {
             : Number(chat.sender.id),
         ) || 0;
       conversations.push(conversation);
+      conversation.isOnline =
+        await this.socketService.isUserOnline(recipientId);
     }
     conversations.sort(
       (a, b) =>
@@ -117,14 +121,18 @@ export class ChatService {
   async markMessagesAsRead(from: Chat['senderId'], to: Chat['recipientId']) {
     await this.prisma.chat.updateMany({
       where: {
-        recipientId: from,
-        senderId: to,
+        recipientId: to,
+        senderId: from,
         readAt: null,
       },
       data: {
         readAt: new Date(),
       },
     });
+  }
+
+  checkUserOnline(userId: User['id']) {
+    return this.socketService.isUserOnline(userId);
   }
 
   private async countUnreadMessages(userId: User['id']) {

@@ -143,28 +143,27 @@ export class ReadingSessionsService {
       },
     });
 
-      // Kiểm tra xem có session nào trùng thời gian với session mới 
-     const hasOverlap = existingSessions.some((existing) => {
-       const isSameDay =
-         new Date(existing.startedAt).toDateString() === sameDay;
-       const isTimeOverlap = this.isTimeOverlap(
-         existing.startTime,
-         existing.endTime,
-         session.startTime,
-         session.endTime,
-       );
-       return isSameDay && isTimeOverlap;
-     });
+    // Kiểm tra xem có session nào trùng thời gian với session mới
+    const hasOverlap = existingSessions.some((existing) => {
+      const isSameDay = new Date(existing.startedAt).toDateString() === sameDay;
+      const isTimeOverlap = this.isTimeOverlap(
+        existing.startTime,
+        existing.endTime,
+        session.startTime,
+        session.endTime,
+      );
+      return isSameDay && isTimeOverlap;
+    });
 
-     if (hasOverlap) {
-       throw new UnprocessableEntityException({
-         status: 422,
-         errors: {
-           sessionOverlap:
-             'Session time overlaps with another session on the same day.',
-         },
-       });
-     }
+    if (hasOverlap) {
+      throw new UnprocessableEntityException({
+        status: 422,
+        errors: {
+          sessionOverlap:
+            'Session time overlaps with another session on the same day.',
+        },
+      });
+    }
   }
 
   private isTimeOverlap(

@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 
 import { CacheService } from '../cache/cache.service';
 import { SocketGateway } from './socket.gateway';
+import ms from 'ms';
+import { User } from '@users/domain/user';
 
 @Injectable()
 export class SocketService {
@@ -40,5 +42,39 @@ export class SocketService {
         }),
       );
     }
+  }
+
+  async markUserOnline(userId: string) {
+    await this.cacheService.set(
+      { key: 'UserOnlineStatus', args: [userId] },
+      true,
+      { ttl: ms('10m') }, // Adjust TTL as needed
+    );
+  }
+
+  async getOnlineStatus(
+    userIds: User['id'][],
+  ): Promise<Record<number, boolean>> {
+    const status: Record<number, boolean> = {};
+
+    await Promise.all(
+      userIds.map(async (id) => {
+        const isOnline = await this.cacheService.get<boolean>({
+          key: 'UserOnlineStatus',
+          args: [id.toString()],
+        });
+        status[id] = !!isOnline;
+      }),
+    );
+
+    return status;
+  }
+
+  async isUserOnline(userId: User['id']): Promise<boolean> {
+    const userClients = await this.cacheService.get<string[]>({
+      key: 'UserSocketClients',
+      args: [String(userId)],
+    });
+    return !!(userClients && userClients.length > 0);
   }
 }

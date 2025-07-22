@@ -70,4 +70,17 @@ export class ChatController {
   ): Promise<Chat[]> {
     return this.chatService.findAllChats(request.user.id, id);
   }
+
+  @Get('user/:id/status')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  getOneUserStatus(@Param('id') id: User['id']) {
+    return {
+      isOnline: this.chatService.checkUserOnline(id),
+    };
+  }
 }

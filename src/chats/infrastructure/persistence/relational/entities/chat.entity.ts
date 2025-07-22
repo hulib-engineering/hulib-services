@@ -71,4 +71,7 @@ export class ChatEntity extends EntityRelationalHelper {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ type: Date })
+  readAt: Date;
 }
