@@ -10,5 +10,7 @@ export class Conversation {
 
   unreadCount: number;
 
+  isOnline: boolean;
+
   constructoṛ() {}
 }

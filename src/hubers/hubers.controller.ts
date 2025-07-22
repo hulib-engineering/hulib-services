@@ -116,7 +116,7 @@ export class HubersController {
   })
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
-  async create(
+  async validateAvailability(
     @Param('id', ParseIntPipe) id: number,
     @Body() checkSessionAvailabilityDto: CheckSessionAvailabilityDto,
   ): Promise<{ booked: boolean }> {
