@@ -27,7 +27,14 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { ReadingSessionStatus } from '@reading-sessions/infrastructure/persistence/relational/entities';
 import { pagination } from '@utils/types/pagination';
-import { PublishStatus } from '../stories/status.enum';
+import { PublishStatus } from '@stories/status.enum';
+import { FileDto } from '@files/dto/file.dto';
+import fileConfig from '@files/config/file.config';
+import { FileConfig, FileDriver } from '@files/config/file-config.type';
+import appConfig from '@config/app.config';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { AppConfig } from '@config/app-config.type';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class UsersService {
@@ -214,6 +221,7 @@ export class UsersService {
       });
       return {
         ...user,
+        photo: this.transformFileUrl(user.file),
         sharingTopics: mappedHumanBookTopic,
         topicsOfInterest: mappedTopicsOfInterest,
         firstStory,
@@ -222,6 +230,7 @@ export class UsersService {
 
     return {
       ...user,
+      photo: this.transformFileUrl(user.file),
       sharingTopics: mappedHumanBookTopic,
       topicsOfInterest: mappedTopicsOfInterest,
     };
@@ -451,7 +460,7 @@ export class UsersService {
         type: NotificationTypeEnum.account,
       });
 
-      // change status for first story when becoming human book
+      // change status for the first story when becoming a human book
       await this.prisma.story.updateMany({
         where: { humanBookId: Number(id) },
         data: { publishStatus: PublishStatus.published },
@@ -585,5 +594,36 @@ export class UsersService {
       page: paginationOptions.page,
       limit: paginationOptions.limit,
     });
+  }
+
+  private async transformFileUrl(
+    file: FileDto | null,
+  ): Promise<FileDto | null> {
+    if (!file) return file;
+
+    const config = fileConfig() as FileConfig;
+
+    if (config.driver === FileDriver.LOCAL) {
+      file.path = (appConfig() as AppConfig).backendDomain + file.path;
+    } else if (
+      [FileDriver.S3, FileDriver.S3_PRESIGNED].includes(config.driver)
+    ) {
+      const s3 = new S3Client({
+        region: config.awsS3Region ?? '',
+        credentials: {
+          accessKeyId: config.accessKeyId ?? '',
+          secretAccessKey: config.secretAccessKey ?? '',
+        },
+      });
+
+      const command = new GetObjectCommand({
+        Bucket: config.awsDefaultS3Bucket,
+        Key: file.path,
+      });
+
+      file.path = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    }
+
+    return file;
   }
 }
