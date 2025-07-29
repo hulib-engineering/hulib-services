@@ -58,11 +58,25 @@ export class ReadingSessionsProcessor {
     const { sessionId } = job.data;
     const session = await this.readingSessionsService.findOneSession(sessionId);
 
+    const sessionDate = session.startedAt.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    const sessionTime = `${session.startTime} - ${session.endTime}`;
+
     if (session.humanBook?.email) {
       await this.mailService.sendBookingEmail({
         to: session.humanBook.email,
         data: {
-          name: session.humanBook.fullName || 'Huber',
+          huberName: session.humanBook.fullName || '',
+          liberName: session.reader.fullName || '',
+          sessionTime,
+          sessionDate,
+          storyTitle: session.story?.title || '',
+          message: session.note || '',
         },
       });
     }

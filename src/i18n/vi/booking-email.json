@@ -1,5 +1,10 @@
 {
   "bookingPt1": "Bạn vừa nhận được một yêu cầu hẹn gặp mới. Lời nói của bạn có thể làm bừng sáng một ngày của ai đó — sẵn sàng kết nối chứ?",
-  "bookingPt2": "Bạn có thể xem chi tiết yêu cầu tại",
-  "bookingPt3": "Link tới detail meeting tại webapp."
+  "bookingPt2": "Chấp nhận yêu cầu tại",
+  "bookingPt3": "chi tiết cuộc họp.",
+  "bookingPt4": "Chi tiết yêu cầu",
+  "bookingPt5": "Câu chuyện",
+  "bookingPt6": "Thời gian",
+  "bookingPt7": "Yêu cầu từ Liber",
+  "bookingPt8": "Tin nhắn từ Liber"
 }
