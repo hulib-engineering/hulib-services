@@ -286,7 +286,12 @@ export class MailService {
 
   async sendBookingEmail(
     mailData: MailData<{
-      name: string;
+      huberName: string;
+      liberName: string;
+      sessionTime: string;
+      sessionDate: string;
+      storyTitle: string;
+      message: string;
     }>,
   ): Promise<void> {
     const locale = 'en';
@@ -297,6 +302,11 @@ export class MailService {
       bookingPt1,
       bookingPt2,
       bookingPt3,
+      bookingPt4,
+      bookingPt5,
+      bookingPt6,
+      bookingPt7,
+      bookingPt8,
       contact,
       regard,
     ] = await Promise.all([
@@ -305,6 +315,11 @@ export class MailService {
       this.i18n.t('booking-email.bookingPt1', { lang: locale }),
       this.i18n.t('booking-email.bookingPt2', { lang: locale }),
       this.i18n.t('booking-email.bookingPt3', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt4', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt5', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt6', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt7', { lang: locale }),
+      this.i18n.t('booking-email.bookingPt8', { lang: locale }),
       this.i18n.t('reset-password.contact', { lang: locale }),
       this.i18n.t('common.bestRegards', { lang: locale }),
     ]);
@@ -334,11 +349,21 @@ export class MailService {
       ),
       context: {
         title: bookingEmailTitle,
-        fullname: mailData.data.name,
+        huberName: mailData.data.huberName,
+        liberName: mailData.data.liberName,
+        sessionTime: mailData.data.sessionTime,
+        sessionDate: mailData.data.sessionDate,
+        storyTitle: mailData.data.storyTitle,
+        message: mailData.data.message,
         dear,
         bookingPt1,
         bookingPt2,
         bookingPt3,
+        bookingPt4,
+        bookingPt5,
+        bookingPt6,
+        bookingPt7,
+        bookingPt8,
         contact,
         url,
         schedulingUrl,
