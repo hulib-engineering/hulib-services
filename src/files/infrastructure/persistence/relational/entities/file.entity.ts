@@ -28,6 +28,8 @@ export class FileEntity extends EntityRelationalHelper {
   @Column()
   @Transform(
     ({ value }) => {
+      if (!value) return value;
+
       if ((fileConfig() as FileConfig).driver === FileDriver.LOCAL) {
         return (appConfig() as AppConfig).backendDomain + value;
       } else if (
