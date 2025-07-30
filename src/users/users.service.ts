@@ -608,6 +608,10 @@ export class UsersService {
     } else if (
       [FileDriver.S3, FileDriver.S3_PRESIGNED].includes(config.driver)
     ) {
+      if (!file.path) {
+        throw new BadRequestException('Missing file path for S3 object.');
+      }
+
       const s3 = new S3Client({
         region: config.awsS3Region ?? '',
         credentials: {

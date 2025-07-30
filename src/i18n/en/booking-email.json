@@ -1,5 +1,10 @@
 {
   "bookingPt1": "You’ve just received a new meeting request. Your words might light up someone’s day — ready to connect?",
-  "bookingPt2": "You can see the detail request at",
-  "bookingPt3": "Link to meeting detail in webapp."
+  "bookingPt2": "Accept the request at",
+  "bookingPt3": "meeting details.",
+  "bookingPt4": "Detail request",
+  "bookingPt5": "Story",
+  "bookingPt6": "Time",
+  "bookingPt7": "Liber request",
+  "bookingPt8": "Message from Liber"
 }
