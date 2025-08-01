@@ -145,6 +145,14 @@ export class StoriesService {
             createdAt: true,
             updatedAt: true,
           },
+          include: {
+            feedbackTos: true,
+            _count: {
+              select: {
+                humanBookTopic: true,
+              },
+            },
+          },
         },
         cover: true,
       },
@@ -159,6 +167,15 @@ export class StoriesService {
       });
     }
 
+    const humanBookRating = Number(
+      (
+        result.humanBook.feedbackTos.reduce(
+          (total, feedback) => total + feedback.rating,
+          0,
+        ) / result.humanBook.feedbackTos.length
+      ).toFixed(1),
+    );
+
     const coverWithUrl = result.cover
       ? {
           id: result.cover.id,
@@ -168,11 +185,20 @@ export class StoriesService {
 
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { feedbackTos, _count, ...humanBookWithoutFeedback } =
+      result.humanBook;
+
     return {
       ...result,
       storyReview,
-      topics: result?.topics.map((nestedTopic) => nestedTopic.topic),
+      topics: result.topics?.map((nestedTopic) => nestedTopic.topic) || [],
       cover: coverWithUrl,
+      humanBook: {
+        ...humanBookWithoutFeedback,
+        countTopics: result.humanBook._count.humanBookTopic,
+        rating: humanBookRating,
+      },
     };
   }
 
