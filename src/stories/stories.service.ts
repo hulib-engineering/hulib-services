@@ -167,11 +167,14 @@ export class StoriesService {
       });
     }
 
-    const humanBookRating =
-      result.humanBook.feedbackTos.reduce(
-        (total, feedback) => total + feedback.rating,
-        0,
-      ) / result.humanBook.feedbackTos.length;
+    const humanBookRating = Number(
+      (
+        result.humanBook.feedbackTos.reduce(
+          (total, feedback) => total + feedback.rating,
+          0,
+        ) / result.humanBook.feedbackTos.length
+      ).toFixed(1),
+    );
 
     const coverWithUrl = result.cover
       ? {
