@@ -52,6 +52,7 @@ import { ChatModule } from '@chats/chat.module';
 import { AgoraModule } from '@agora/agora.module';
 import { StickersModule } from './stickers/stickers.module';
 import { ChatGateway } from '@chats/chat.gateway';
+import { ReportsModule } from './reports/reports.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -62,6 +63,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
 
 @Module({
   imports: [
+    ReportsModule,
     SocketModule,
     NotificationsModule,
     SentryModule.forRoot(),
