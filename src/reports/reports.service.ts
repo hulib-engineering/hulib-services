@@ -6,10 +6,15 @@ import {
 import { CreateReportDto } from './dto/create-report.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { RoleEnum } from '../roles/roles.enum';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async create(reporterId: number, createReportDto: CreateReportDto) {
     const { reportedUserId, reason } = createReportDto;
@@ -39,7 +44,7 @@ export class ReportsService {
       throw new BadRequestException('You have already reported this Huber');
     }
 
-    return this.prisma.report.create({
+    const report = await this.prisma.report.create({
       data: {
         reporterId,
         reportedUserId,
@@ -58,5 +63,14 @@ export class ReportsService {
         reportedUserId: true,
       },
     });
+
+    await this.notificationsService.pushNoti({
+      senderId: reporterId,
+      recipientId: 1,
+      type: NotificationTypeEnum.huberReported,
+      relatedEntityId: report.id,
+    });
+
+    return report;
   }
 }

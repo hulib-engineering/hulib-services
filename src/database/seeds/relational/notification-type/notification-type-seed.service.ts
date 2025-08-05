@@ -12,6 +12,7 @@ export class NotificationTypeSeedService {
       NotificationTypeEnum.account,
       NotificationTypeEnum.reviewStory,
       NotificationTypeEnum.publishStory,
+      NotificationTypeEnum.huberReported,
       NotificationTypeEnum.other,
     ];
     const res = await this.prisma.notificationType.createMany({

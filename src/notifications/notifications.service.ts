@@ -95,7 +95,16 @@ export class NotificationsService {
       .map((n) => n.relatedEntityId)
       .filter((id): id is number => id !== null);
 
-    const [stories, readingSessions] = await Promise.all([
+    const reportIds = notifications
+      .filter(
+        (n) =>
+          n.type.name === NotificationTypeEnum.huberReported &&
+          n.relatedEntityId !== null,
+      )
+      .map((n) => n.relatedEntityId)
+      .filter((id): id is number => id !== null);
+
+    const [stories, readingSessions, reports] = await Promise.all([
       this.prisma.story.findMany({
         where: { id: { in: storyIds } },
         include: {
@@ -112,6 +121,9 @@ export class NotificationsService {
           id: true,
           sessionStatus: true,
         },
+      }),
+      this.prisma.report.findMany({
+        where: { id: { in: reportIds } },
       }),
     ]);
 
@@ -137,6 +149,19 @@ export class NotificationsService {
       ]),
     );
 
+    const reportMap = new Map(
+      reports.map((rs) => [
+        rs.id,
+        {
+          id: rs.id,
+          reason: rs.reason,
+          reporterId: rs.reporterId,
+          reportedUserId: rs.reportedUserId,
+          markAsResolved: rs.markAsResolved,
+        },
+      ]),
+    );
+
     const result = notifications.map((n) => {
       if (this.storyRelatedNotificationTypes.includes(n.type.name)) {
         return {
@@ -153,6 +178,15 @@ export class NotificationsService {
           relatedEntity:
             n.relatedEntityId !== null
               ? readingSessionMap.get(n.relatedEntityId) || null
+              : null,
+        };
+      }
+      if (n.type.name === NotificationTypeEnum.huberReported) {
+        return {
+          ...n,
+          relatedEntity:
+            n.relatedEntityId !== null
+              ? reportMap.get(n.relatedEntityId) || null
               : null,
         };
       }
@@ -189,9 +223,13 @@ export class NotificationsService {
 
     const isOtherNotificationType = type.name === NotificationTypeEnum.other;
 
+    const isHuberReportNotiType =
+      type.name === NotificationTypeEnum.huberReported;
+
     const isNeedRelatedEntityId =
       isStoryNotificationType ||
       isSessionRequestNotificationType ||
+      isHuberReportNotiType ||
       isOtherNotificationType;
 
     if (isNeedRelatedEntityId && !data.relatedEntityId) {
@@ -237,6 +275,17 @@ export class NotificationsService {
 
       if (!readingSession) {
         throw new BadRequestException('Invalid reading session ID');
+      }
+    }
+    if (notificationType === NotificationTypeEnum.huberReported) {
+      const report = await this.prisma.report.findUnique({
+        where: {
+          id: relatedEntityId,
+        },
+      });
+
+      if (!report) {
+        throw new BadRequestException('Invalid report ID');
       }
     }
   }
