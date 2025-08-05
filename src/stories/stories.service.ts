@@ -106,7 +106,7 @@ export class StoriesService {
     return newStory;
   }
 
-  findAllWithPagination({
+  async findAllWithPagination({
     paginationOptions,
     filterOptions,
     sortOptions,
@@ -115,7 +115,7 @@ export class StoriesService {
     filterOptions?: FilterStoryDto;
     sortOptions?: SortStoryDto[];
   }) {
-    return this.storiesRepository.findAllWithPagination({
+    const result = await this.storiesRepository.findAllWithPagination({
       paginationOptions: {
         page: paginationOptions.page,
         limit: paginationOptions.limit,
@@ -123,6 +123,28 @@ export class StoriesService {
       filterOptions,
       sortOptions,
     });
+    console.log('findAllWithPagination result', result);
+    const addRatingToStories = await this.prisma.storyReview.findMany({
+      where: {
+        storyId: {
+          in: result.map((story) => story.id),
+        },
+      },
+    });
+    console.log('findAllWithPagination result', addRatingToStories);
+
+    const storiesWithRating = result.map((story) => {
+      const reviews = addRatingToStories.filter(
+        (review) => review.storyId === story.id,
+      );
+      const rating =
+        reviews.reduce((total, review) => total + review.rating, 0) /
+        (reviews.length || 1);
+      return { ...story, rating: Number(rating.toFixed(1)) };
+    });
+    console.log('findAllWithPagination result', storiesWithRating);
+
+    return storiesWithRating;
   }
 
   async findOne(id: Story['id']) {
