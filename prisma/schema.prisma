@@ -245,8 +245,9 @@ model readingSession {
   updatedAt DateTime  @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
 
+  rejectReason String?
   // feedbacks feedback[] @relation("ReadingSessionFeedback")
-  messages message[] @relation("ReadingSessionMessage")
+  messages     message[] @relation("ReadingSessionMessage")
   // feedback  feedback[]
 }
 

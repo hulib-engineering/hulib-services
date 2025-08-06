@@ -227,6 +227,22 @@ export class ReadingSessionsService {
     if (dto.sessionStatus === 'approved') {
       const registeredMeeting = this.webRtcService.generateToken(session);
       session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=session-${session.id}&token=${registeredMeeting.token}`;
+
+      await this.notificationService.pushNoti({
+        senderId: session.humanBookId,
+        recipientId: session.readerId,
+        type: NotificationTypeEnum.approveReadingSession,
+        relatedEntityId: session.id,
+      });
+    }
+
+    if (dto.sessionStatus === 'rejected') {
+      await this.notificationService.pushNoti({
+        senderId: session.humanBookId,
+        recipientId: session.readerId,
+        type: NotificationTypeEnum.rejectReadingSession,
+        relatedEntityId: session.id,
+      });
     }
 
     if (
