@@ -123,7 +123,7 @@ export class StoriesService {
       filterOptions,
       sortOptions,
     });
-    console.log('findAllWithPagination result', result);
+
     const addRatingToStories = await this.prisma.storyReview.findMany({
       where: {
         storyId: {
@@ -131,18 +131,21 @@ export class StoriesService {
         },
       },
     });
-    console.log('findAllWithPagination result', addRatingToStories);
 
     const storiesWithRating = result.map((story) => {
       const reviews = addRatingToStories.filter(
         (review) => review.storyId === story.id,
       );
       const rating =
-        reviews.reduce((total, review) => total + review.rating, 0) /
-        (reviews.length || 1);
-      return { ...story, rating: Number(rating.toFixed(1)) };
+        reviews.length > 0
+          ? reviews.reduce((total, review) => total + review.rating, 0) /
+            reviews.length
+          : 0;
+      return {
+        ...story,
+        rating: rating ? Number(rating.toFixed(1)) : null,
+      };
     });
-    console.log('findAllWithPagination result', storiesWithRating);
 
     return storiesWithRating;
   }
