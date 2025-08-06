@@ -13,6 +13,11 @@ export class NotificationsService {
     NotificationTypeEnum.reviewStory,
     NotificationTypeEnum.publishStory,
   ];
+  private readonly readingSessionRelatedNotiTypes: string[] = [
+    NotificationTypeEnum.sessionRequest,
+    NotificationTypeEnum.approveReadingSession,
+    NotificationTypeEnum.rejectReadingSession,
+  ];
 
   constructor(
     private prisma: PrismaService,
@@ -89,7 +94,7 @@ export class NotificationsService {
     const readingSessionIds = notifications
       .filter(
         (n) =>
-          n.type.name === NotificationTypeEnum.sessionRequest &&
+          this.readingSessionRelatedNotiTypes.includes(n.type.name) &&
           n.relatedEntityId !== null,
       )
       .map((n) => n.relatedEntityId)
@@ -120,6 +125,15 @@ export class NotificationsService {
         select: {
           id: true,
           sessionStatus: true,
+          startedAt: true,
+          startTime: true,
+          endTime: true,
+          rejectReason: true,
+          story: {
+            select: {
+              title: true,
+            },
+          },
         },
       }),
       this.prisma.report.findMany({
@@ -145,6 +159,11 @@ export class NotificationsService {
         {
           id: rs.id,
           sessionStatus: rs.sessionStatus,
+          startedAt: rs.startedAt,
+          startTime: rs.startTime,
+          endTime: rs.endTime,
+          rejectReason: rs.rejectReason,
+          storyTitle: rs.story.title,
         },
       ]),
     );
@@ -172,7 +191,7 @@ export class NotificationsService {
               : null,
         };
       }
-      if (n.type.name === NotificationTypeEnum.sessionRequest) {
+      if (this.readingSessionRelatedNotiTypes.includes(n.type.name)) {
         return {
           ...n,
           relatedEntity:
@@ -218,8 +237,8 @@ export class NotificationsService {
       type.name,
     );
 
-    const isSessionRequestNotificationType =
-      type.name === NotificationTypeEnum.sessionRequest;
+    const isReadingSessionRelatedNotiType =
+      this.readingSessionRelatedNotiTypes.includes(type.name);
 
     const isOtherNotificationType = type.name === NotificationTypeEnum.other;
 
@@ -228,7 +247,7 @@ export class NotificationsService {
 
     const isNeedRelatedEntityId =
       isStoryNotificationType ||
-      isSessionRequestNotificationType ||
+      isReadingSessionRelatedNotiType ||
       isHuberReportNotiType ||
       isOtherNotificationType;
 
@@ -265,7 +284,7 @@ export class NotificationsService {
         throw new BadRequestException('Invalid story ID');
       }
     }
-    if (notificationType === NotificationTypeEnum.sessionRequest) {
+    if (this.readingSessionRelatedNotiTypes.includes(notificationType)) {
       const readingSession = await this.prisma.readingSession.findUnique({
         where: {
           id: relatedEntityId,
