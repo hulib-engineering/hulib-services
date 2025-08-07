@@ -17,6 +17,7 @@ export class NotificationsService {
     NotificationTypeEnum.sessionRequest,
     NotificationTypeEnum.approveReadingSession,
     NotificationTypeEnum.rejectReadingSession,
+    NotificationTypeEnum.cancelReadingSession,
   ];
 
   constructor(

@@ -15,6 +15,7 @@ export class NotificationTypeSeedService {
       NotificationTypeEnum.huberReported,
       NotificationTypeEnum.rejectReadingSession,
       NotificationTypeEnum.approveReadingSession,
+      NotificationTypeEnum.cancelReadingSession,
       NotificationTypeEnum.other,
     ];
     const res = await this.prisma.notificationType.createMany({

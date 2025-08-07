@@ -245,6 +245,15 @@ export class ReadingSessionsService {
       });
     }
 
+    if (dto.sessionStatus === 'canceled') {
+      await this.notificationService.pushNoti({
+        senderId: session.readerId,
+        recipientId: session.humanBookId,
+        type: NotificationTypeEnum.cancelReadingSession,
+        relatedEntityId: session.id,
+      });
+    }
+
     if (
       session.sessionStatus === ReadingSessionStatus.APPROVED &&
       dto.presurvey
