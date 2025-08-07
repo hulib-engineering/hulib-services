@@ -41,14 +41,6 @@ export class Story {
   storyReview?: StoryReviewOverview | null;
 
   @ApiProperty({
-    type: Number,
-    example: 4.5,
-    description: 'Average rating based on reviews',
-    required: false,
-  })
-  rating?: number | null;
-
-  @ApiProperty({
     type: () => [Topic],
   })
   topics?: Topic[] | null;

@@ -125,13 +125,17 @@ export class StoriesService {
     });
 
     const reviews = await this.prisma.storyReview.findMany({
-      where: { storyId: { in: result.map(story => story.id) } },
+      where: { storyId: { in: result.map((story) => story.id) } },
       select: { storyId: true, rating: true },
     });
 
-    return result.map(story => {
-      const storyReviews = reviews.filter(review => review.storyId === story.id);
-      const avgRating = storyReviews.reduce((sum, review) => sum + review.rating, 0) / (storyReviews.length || 1);
+    return result.map((story) => {
+      const storyReviews = reviews.filter(
+        (review) => review.storyId === story.id,
+      );
+      const avgRating =
+        storyReviews.reduce((sum, review) => sum + review.rating, 0) /
+        (storyReviews.length || 1);
 
       return {
         ...story,
