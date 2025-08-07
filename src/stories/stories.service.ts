@@ -124,30 +124,21 @@ export class StoriesService {
       sortOptions,
     });
 
-    const addRatingToStories = await this.prisma.storyReview.findMany({
-      where: {
-        storyId: {
-          in: result.map((story) => story.id),
-        },
-      },
+    const reviews = await this.prisma.storyReview.findMany({
+      where: { storyId: { in: result.map(story => story.id) } },
+      select: { storyId: true, rating: true },
     });
 
-    const storiesWithRating = result.map((story) => {
-      const reviews = addRatingToStories.filter(
-        (review) => review.storyId === story.id,
-      );
-      const rating =
-        reviews.length > 0
-          ? reviews.reduce((total, review) => total + review.rating, 0) /
-            reviews.length
-          : 0;
+    return result.map(story => {
+      const storyReviews = reviews.filter(review => review.storyId === story.id);
+      const avgRating = storyReviews.reduce((sum, review) => sum + review.rating, 0) / (storyReviews.length || 1);
+
       return {
         ...story,
-        rating: rating ? Number(rating.toFixed(1)) : null,
+        rating: avgRating ? Number(avgRating.toFixed(1)) : 0,
+        countReviews: storyReviews?.length || 0,
       };
     });
-
-    return storiesWithRating;
   }
 
   async findOne(id: Story['id']) {
