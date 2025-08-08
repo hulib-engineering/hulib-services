@@ -106,7 +106,7 @@ export class StoriesService {
     return newStory;
   }
 
-  findAllWithPagination({
+  async findAllWithPagination({
     paginationOptions,
     filterOptions,
     sortOptions,
@@ -115,13 +115,33 @@ export class StoriesService {
     filterOptions?: FilterStoryDto;
     sortOptions?: SortStoryDto[];
   }) {
-    return this.storiesRepository.findAllWithPagination({
+    const result = await this.storiesRepository.findAllWithPagination({
       paginationOptions: {
         page: paginationOptions.page,
         limit: paginationOptions.limit,
       },
       filterOptions,
       sortOptions,
+    });
+
+    const reviews = await this.prisma.storyReview.findMany({
+      where: { storyId: { in: result.map((story) => story.id) } },
+      select: { storyId: true, rating: true },
+    });
+
+    return result.map((story) => {
+      const storyReviews = reviews.filter(
+        (review) => review.storyId === story.id,
+      );
+      const avgRating =
+        storyReviews.reduce((sum, review) => sum + review.rating, 0) /
+        (storyReviews.length || 1);
+
+      return {
+        ...story,
+        rating: avgRating ? Number(avgRating.toFixed(1)) : 0,
+        countReviews: storyReviews?.length || 0,
+      };
     });
   }
 
