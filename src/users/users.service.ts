@@ -475,7 +475,7 @@ export class UsersService {
       });
       
       await this.notificationsService.pushNoti({
-        senderId: 1, // Admin ID
+        senderId: 1, 
         recipientId: Number(id),
         type: NotificationTypeEnum.account,
       });
