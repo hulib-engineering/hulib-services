@@ -473,6 +473,13 @@ export class UsersService {
       await this.usersRepository.update(id, {
         approval: Approval.rejected,
       });
+      
+      await this.notificationsService.pushNoti({
+        senderId: 1, // Admin ID
+        recipientId: Number(id),
+        type: NotificationTypeEnum.account,
+      });
+      
       return {
         message: 'Reject request to become huber!',
       };
