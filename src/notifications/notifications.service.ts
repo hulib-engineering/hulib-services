@@ -20,6 +20,9 @@ export class NotificationsService {
     NotificationTypeEnum.rejectReadingSession,
     NotificationTypeEnum.cancelReadingSession,
   ];
+  private readonly userRelatedNotificationTypes: string[] = [
+    NotificationTypeEnum.rejectHuber,
+  ];
 
   constructor(
     private prisma: PrismaService,
@@ -210,6 +213,12 @@ export class NotificationsService {
             n.relatedEntityId !== null
               ? reportMap.get(n.relatedEntityId) || null
               : null,
+        };
+      }
+      if (this.userRelatedNotificationTypes.includes(n.type.name)) {
+        return {
+          ...n,
+          relatedEntity: { id: n.recipient.id, fullName: n.recipient.fullName }, // show fullname rejected
         };
       }
       return { ...n, relatedEntity: null };

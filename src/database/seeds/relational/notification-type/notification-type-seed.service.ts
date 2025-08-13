@@ -14,6 +14,7 @@ export class NotificationTypeSeedService {
       NotificationTypeEnum.publishStory,
       NotificationTypeEnum.rejectStory,
       NotificationTypeEnum.huberReported,
+      NotificationTypeEnum.rejectHuber,
       NotificationTypeEnum.rejectReadingSession,
       NotificationTypeEnum.approveReadingSession,
       NotificationTypeEnum.cancelReadingSession,

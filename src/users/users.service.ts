@@ -446,7 +446,7 @@ export class UsersService {
     await this.usersRepository.update(userId, { password: newPassword });
   }
 
-  async upgrade(id: User['id'], upgradeDto: UpgradeDto) {
+  async upgrade(id: User['id'], upgradeDto: UpgradeDto, senderId?: number) {
     if (upgradeDto.action === Action.accept) {
       await this.usersRepository.update(id, {
         role: {
@@ -455,7 +455,7 @@ export class UsersService {
         approval: Approval.approved,
       });
       await this.notificationsService.pushNoti({
-        senderId: 1,
+        senderId: senderId ?? 1,
         recipientId: Number(id),
         type: NotificationTypeEnum.account,
       });
@@ -475,9 +475,9 @@ export class UsersService {
       });
       
       await this.notificationsService.pushNoti({
-        senderId: 1, 
+        senderId: senderId ?? 1,
         recipientId: Number(id),
-        type: NotificationTypeEnum.account,
+        type: NotificationTypeEnum.rejectHuber,
       });
       
       return {
