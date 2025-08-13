@@ -247,6 +247,19 @@ export class StoriesService {
         relatedEntityId: story.id,
       });
     }
+
+    if (
+      !!updateStoriesDto.publishStatus &&
+      updateStoriesDto.publishStatus === 'rejected'
+    ) {
+      await this.notifsService.pushNoti({
+        senderId: 1,
+        recipientId: story.humanBookId,
+        type: NotificationTypeEnum.rejectStory,
+        relatedEntityId: story.id,
+      });
+    }
+
     return updated;
   }
 
