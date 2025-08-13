@@ -12,6 +12,7 @@ export class NotificationsService {
   private readonly storyRelatedNotificationTypes: string[] = [
     NotificationTypeEnum.reviewStory,
     NotificationTypeEnum.publishStory,
+    NotificationTypeEnum.rejectStory,
   ];
   private readonly readingSessionRelatedNotiTypes: string[] = [
     NotificationTypeEnum.sessionRequest,
@@ -150,6 +151,7 @@ export class NotificationsService {
           title: s.title,
           numOfRatings: s.storyReview.length,
           numOfComments: s.storyReview.length,
+          rejectionReason: s.rejectionReason,
         },
       ]),
     );
