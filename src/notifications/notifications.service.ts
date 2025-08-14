@@ -218,7 +218,7 @@ export class NotificationsService {
       if (this.userRelatedNotificationTypes.includes(n.type.name)) {
         return {
           ...n,
-          relatedEntity: { id: n.recipient.id, fullName: n.recipient.fullName }, // show fullname rejected
+          relatedEntity:null,
         };
       }
       return { ...n, relatedEntity: null };

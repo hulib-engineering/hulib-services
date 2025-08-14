@@ -172,9 +172,8 @@ export class UsersController {
   upgrade(
     @Param('id') id: User['id'],
     @Body() upgradeDto: UpgradeDto,
-    @Request() request, // Take info of Admin
   ): Promise<User | { message: string } | void> {
-    return this.usersService.upgrade(id, upgradeDto, Number(request.user.id));
+    return this.usersService.upgrade(id, upgradeDto);
   }
 
   @ApiResponse({ type: ReadingSessionResponseDto })
