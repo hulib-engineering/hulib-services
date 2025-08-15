@@ -13,6 +13,14 @@ class EnvironmentVariablesValidator {
   @IsString()
   @IsOptional()
   AGORA_APP_CERTIFICATE: string;
+
+  @IsString()
+  @IsOptional()
+  AGORA_CUSTOMER_ID: string;
+
+  @IsString()
+  @IsOptional()
+  AGORA_CUSTOMER_SECRET: string;
 }
 
 export default registerAs<AgoraConfig>('agora', () => {
@@ -21,5 +29,7 @@ export default registerAs<AgoraConfig>('agora', () => {
   return {
     appId: process.env.AGORA_APP_ID,
     appCertificate: process.env.AGORA_APP_CERTIFICATE,
+    customerId: process.env.AGORA_CUSTOMER_ID,
+    customerSecret: process.env.AGORA_CUSTOMER_SECRET,
   };
 });

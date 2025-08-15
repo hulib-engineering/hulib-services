@@ -12,6 +12,7 @@ import facebookConfig from './auth-facebook/config/facebook.config';
 import googleConfig from './auth-google/config/google.config';
 import webRtcConfig from './web-rtc/config/web-rtc.config';
 import cacheConfig from './cache/config/cache.config';
+import agoraConfig from '@agora/config/agora.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -85,6 +86,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
         googleConfig,
         webRtcConfig,
         cacheConfig,
+        agoraConfig,
       ],
       envFilePath: ['.env'],
     }),

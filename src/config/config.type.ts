@@ -5,8 +5,8 @@ import { FacebookConfig } from '@auth-facebook/config/facebook-config.type';
 import { FileConfig } from '@files/config/file-config.type';
 import { GoogleConfig } from '@auth-google/config/google-config.type';
 import { MailConfig } from '@mail/config/mail-config.type';
-import { AgoraConfig } from '../web-rtc/config/web-rtc-config.type';
-import { RedisConfig } from '../cache/config/cache-config.type';
+import { RedisConfig } from '@cache/config/cache-config.type';
+import { AgoraConfig } from '@agora/config/agora-config.type';
 
 export type AllConfigType = {
   app: AppConfig;
