@@ -4,14 +4,10 @@ import { RtcRole, RtcTokenBuilder } from 'agora-token';
 
 import { AllConfigType } from '@config/config.type';
 import { ReadingSession } from '@reading-sessions/domain';
-import { UsersService } from '@users/users.service';
 
 @Injectable()
 export class WebRtcService {
-  constructor(
-    private configService: ConfigService<AllConfigType>,
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private configService: ConfigService<AllConfigType>) {}
 
   generateToken(
     sessionData: Pick<
