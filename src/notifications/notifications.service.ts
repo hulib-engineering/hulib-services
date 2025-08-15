@@ -215,12 +215,6 @@ export class NotificationsService {
               : null,
         };
       }
-      if (this.userRelatedNotificationTypes.includes(n.type.name)) {
-        return {
-          ...n,
-          relatedEntity:null,
-        };
-      }
       return { ...n, relatedEntity: null };
     });
     return {
