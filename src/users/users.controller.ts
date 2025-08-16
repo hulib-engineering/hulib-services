@@ -1,18 +1,18 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
-  Query,
-  HttpStatus,
+  Get,
   HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
   SerializeOptions,
+  UseGuards
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -22,25 +22,25 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { CreateUserDto } from './dto/create-user.dto';
 
+import { RolesGuard } from '@roles/roles.guard';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
 } from '@utils/dto/infinity-pagination-response.dto';
-import { NullableType } from '@utils/types/nullable.type';
-import { QueryUserDto } from './dto/query-user.dto';
-import { User } from './domain/user';
-import { UsersService } from './users.service';
-import { RolesGuard } from '@roles/roles.guard';
 import { infinityPagination } from '@utils/infinity-pagination';
+import { NullableType } from '@utils/types/nullable.type';
+import { User } from './domain/user';
+import { QueryUserDto } from './dto/query-user.dto';
 import { UpgradeDto } from './dto/upgrade.dto';
+import { UsersService } from './users.service';
 
+import { ReadingSessionResponseDto } from '@reading-sessions/dto/reading-session/reading-session-response.dto';
 import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
-import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { GetUserReadingSessionsQueryDto } from './dto/get-user-reading-sessions-query.dto';
-import { ReadingSessionResponseDto } from '@reading-sessions/dto/reading-session/reading-session-response.dto';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 
 @ApiBearerAuth()
 @ApiTags('Users')

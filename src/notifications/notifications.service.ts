@@ -20,6 +20,9 @@ export class NotificationsService {
     NotificationTypeEnum.rejectReadingSession,
     NotificationTypeEnum.cancelReadingSession,
   ];
+  private readonly userRelatedNotificationTypes: string[] = [
+    NotificationTypeEnum.rejectHuber,
+  ];
 
   constructor(
     private prisma: PrismaService,

@@ -45,7 +45,7 @@ export class NotificationsController {
   })
   @ApiOperation({
     summary:
-      'Get all notifications. NotificationTypeEnum: ["account",  "reviewStory",  "publishStory",  "other", "sessionRequest"]',
+      'Get all notifications. NotificationTypeEnum: [reviewStory, publishStory, rejectStory, huberReported, rejectHuber, approveReadingSession, rejectReadingSession, cancelReadingSession]',
   })
   async findAll(@Query() query: FindAllNotificationsDto, @Request() request) {
     const userId = request.user.id;
