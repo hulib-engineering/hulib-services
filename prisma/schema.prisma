@@ -215,6 +215,7 @@ enum ReadingSessionStatus {
   rejected
   approved
   unInitialized
+  missed
 }
 
 model readingSession {

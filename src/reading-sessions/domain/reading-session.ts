@@ -16,6 +16,7 @@ export enum ReadingSessionStatus {
   PENDING = 'pending',
   REJECTED = 'rejected',
   APPROVED = 'approved',
+  MISSED = 'missed',
 }
 
 export class ReadingSession {

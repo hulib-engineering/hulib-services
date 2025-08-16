@@ -9,8 +9,7 @@ import {
   IsArray,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-
-import { ReadingSessionStatus } from '@reading-sessions/infrastructure/persistence/relational/entities';
+import { ReadingSessionStatus } from '../../domain';
 
 export class FindAllReadingSessionsQueryDto {
   @IsOptional()

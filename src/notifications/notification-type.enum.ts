@@ -1,5 +1,6 @@
 export enum NotificationTypeEnum {
   sessionRequest = 'sessionRequest',
+  sessionFinish = 'sessionFinish',
   account = 'account',
   reviewStory = 'reviewStory',
   publishStory = 'publishStory',

@@ -9,6 +9,7 @@ export class NotificationTypeSeedService {
   async run() {
     const types: NotificationTypeEnum[] = [
       NotificationTypeEnum.sessionRequest,
+      NotificationTypeEnum.sessionFinish,
       NotificationTypeEnum.account,
       NotificationTypeEnum.reviewStory,
       NotificationTypeEnum.publishStory,
