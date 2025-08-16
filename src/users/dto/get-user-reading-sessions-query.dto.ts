@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNumber, IsOptional } from 'class-validator';
-import { ReadingSessionStatus } from '@reading-sessions/infrastructure/persistence/relational/entities';
 import { Transform } from 'class-transformer';
+import { ReadingSessionStatus } from '../../reading-sessions/domain';
 
 export class GetUserReadingSessionsQueryDto {
   @ApiProperty({

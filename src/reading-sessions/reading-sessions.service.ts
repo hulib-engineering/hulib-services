@@ -280,6 +280,15 @@ export class ReadingSessionsService {
     }
 
     if (dto.sessionStatus === 'finished') {
+      await this.notificationService.pushNoti({
+        senderId: 1,
+        recipientId: session.readerId,
+        type: NotificationTypeEnum.sessionFinish,
+        relatedEntityId: session.id,
+      });
+    }
+
+    if (session.sessionStatus === ReadingSessionStatus.FINISHED) {
       if (!!dto.sessionFeedback) {
         await this.readingSessionRepository.update(id, {
           ...dto.sessionFeedback,

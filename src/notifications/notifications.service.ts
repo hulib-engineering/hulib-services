@@ -16,12 +16,10 @@ export class NotificationsService {
   ];
   private readonly readingSessionRelatedNotiTypes: string[] = [
     NotificationTypeEnum.sessionRequest,
+    NotificationTypeEnum.sessionFinish,
     NotificationTypeEnum.approveReadingSession,
     NotificationTypeEnum.rejectReadingSession,
     NotificationTypeEnum.cancelReadingSession,
-  ];
-  private readonly userRelatedNotificationTypes: string[] = [
-    NotificationTypeEnum.rejectHuber,
   ];
 
   constructor(
@@ -139,6 +137,18 @@ export class NotificationsService {
               title: true,
             },
           },
+          humanBook: {
+            select: {
+              id: true,
+              fullName: true,
+            },
+          },
+          reader: {
+            select: {
+              id: true,
+              fullName: true,
+            },
+          },
         },
       }),
       this.prisma.report.findMany({
@@ -170,6 +180,8 @@ export class NotificationsService {
           endTime: rs.endTime,
           rejectReason: rs.rejectReason,
           storyTitle: rs.story.title,
+          humanBook: rs.humanBook,
+          reader: rs.reader,
         },
       ]),
     );

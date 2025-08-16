@@ -9,11 +9,8 @@ import {
   MoreThanOrEqual,
   In,
 } from 'typeorm';
-import {
-  ReadingSessionEntity,
-  ReadingSessionStatus,
-} from '../entities/reading-session.entity';
-import { ReadingSession } from '@reading-sessions/domain';
+import { ReadingSessionEntity } from '../entities/reading-session.entity';
+import { ReadingSession, ReadingSessionStatus } from '@reading-sessions/domain';
 import { ReadingSessionMapper } from '../mappers/reading-sessions.mapper';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { FindAllReadingSessionsQueryDto } from '../../../../dto/reading-session/find-all-reading-sessions-query.dto';
