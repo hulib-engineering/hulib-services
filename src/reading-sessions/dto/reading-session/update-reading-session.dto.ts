@@ -89,4 +89,8 @@ export class UpdateReadingSessionDto extends PartialType(
   @Type(() => CreateSurveyQuestionDtoDto)
   @IsOptional()
   presurvey?: CreateSurveyQuestionDtoDto[];
+
+  @IsString()
+  @IsOptional()
+  recordingUrl?: string;
 }
