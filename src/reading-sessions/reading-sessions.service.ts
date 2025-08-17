@@ -227,6 +227,31 @@ export class ReadingSessionsService {
     if (dto.sessionStatus === 'approved') {
       const registeredMeeting = this.webRtcService.generateToken(session);
       session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=session-${session.id}&token=${registeredMeeting.token}`;
+
+      await this.notificationService.pushNoti({
+        senderId: session.humanBookId,
+        recipientId: session.readerId,
+        type: NotificationTypeEnum.approveReadingSession,
+        relatedEntityId: session.id,
+      });
+    }
+
+    if (dto.sessionStatus === 'rejected') {
+      await this.notificationService.pushNoti({
+        senderId: session.humanBookId,
+        recipientId: session.readerId,
+        type: NotificationTypeEnum.rejectReadingSession,
+        relatedEntityId: session.id,
+      });
+    }
+
+    if (dto.sessionStatus === 'canceled') {
+      await this.notificationService.pushNoti({
+        senderId: session.readerId,
+        recipientId: session.humanBookId,
+        type: NotificationTypeEnum.cancelReadingSession,
+        relatedEntityId: session.id,
+      });
     }
 
     if (
@@ -255,6 +280,15 @@ export class ReadingSessionsService {
     }
 
     if (dto.sessionStatus === 'finished') {
+      await this.notificationService.pushNoti({
+        senderId: 1,
+        recipientId: session.readerId,
+        type: NotificationTypeEnum.sessionFinish,
+        relatedEntityId: session.id,
+      });
+    }
+
+    if (session.sessionStatus === ReadingSessionStatus.FINISHED) {
       if (!!dto.sessionFeedback) {
         await this.readingSessionRepository.update(id, {
           ...dto.sessionFeedback,

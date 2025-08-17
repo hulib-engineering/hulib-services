@@ -12,6 +12,7 @@ import facebookConfig from './auth-facebook/config/facebook.config';
 import googleConfig from './auth-google/config/google.config';
 import webRtcConfig from './web-rtc/config/web-rtc.config';
 import cacheConfig from './cache/config/cache.config';
+import agoraConfig from '@agora/config/agora.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -52,6 +53,7 @@ import { ChatModule } from '@chats/chat.module';
 import { AgoraModule } from '@agora/agora.module';
 import { StickersModule } from './stickers/stickers.module';
 import { ChatGateway } from '@chats/chat.gateway';
+import { ReportsModule } from './reports/reports.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -62,6 +64,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
 
 @Module({
   imports: [
+    ReportsModule,
     SocketModule,
     NotificationsModule,
     SentryModule.forRoot(),
@@ -83,6 +86,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
         googleConfig,
         webRtcConfig,
         cacheConfig,
+        agoraConfig,
       ],
       envFilePath: ['.env'],
     }),

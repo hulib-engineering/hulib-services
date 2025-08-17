@@ -4,14 +4,10 @@ import { RtcRole, RtcTokenBuilder } from 'agora-token';
 
 import { AllConfigType } from '@config/config.type';
 import { ReadingSession } from '@reading-sessions/domain';
-import { UsersService } from '@users/users.service';
 
 @Injectable()
 export class WebRtcService {
-  constructor(
-    private configService: ConfigService<AllConfigType>,
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private configService: ConfigService<AllConfigType>) {}
 
   generateToken(
     sessionData: Pick<
@@ -26,18 +22,22 @@ export class WebRtcService {
         infer: true,
       },
     ); // Replace it with your Agora Certificate
-    // const channelName = `${sessionData.story.title}-${sessionData.id}`;
     const role = RtcRole.PUBLISHER;
-    const expiredTime =
-      sessionData.startedAt.getTime() - new Date().getTime() + 1800;
+
+    // Convert meeting start time to seconds
+    const startSeconds = Math.floor(sessionData.startedAt.getTime() / 1000);
+
+    // Token expiry = meeting start + 30 minutes
+    const privilegeExpiredTs = startSeconds + 30 * 60;
+
     const token = RtcTokenBuilder.buildTokenWithUid(
       appId,
       appCertificate,
       `session-${sessionData.id}`,
       0,
       role,
-      expiredTime,
-      expiredTime,
+      privilegeExpiredTs, // RTC privilege expiry
+      privilegeExpiredTs, // join privilege expiry (same as above)
     );
     return { token };
   }

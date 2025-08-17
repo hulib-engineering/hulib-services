@@ -139,6 +139,9 @@ model user {
   readingSession readingSession[] @relation(name: "ReaderRelation")
   feedbackBys    feedback[]       @relation(name: "UserFeedbackBy")
   feedbackTos    feedback[]       @relation(name: "UserFeedbackTo")
+
+  reportsGiven    report[] @relation("UserReports")
+  reportsReceived report[] @relation("UserReported")
 }
 
 model story {
@@ -156,10 +159,9 @@ model story {
   storyReview   storyReview[]
   topics        storyTopic[]
 
-  readingSession readingSession[]
+  readingSession  readingSession[]
   rejectionReason String?
 }
-
 
 model storyTopic {
   storyId Int
@@ -213,6 +215,7 @@ enum ReadingSessionStatus {
   rejected
   approved
   unInitialized
+  missed
 }
 
 model readingSession {
@@ -243,8 +246,9 @@ model readingSession {
   updatedAt DateTime  @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
 
+  rejectReason String?
   // feedbacks feedback[] @relation("ReadingSessionFeedback")
-  messages message[] @relation("ReadingSessionMessage")
+  messages     message[] @relation("ReadingSessionMessage")
   // feedback  feedback[]
 }
 
@@ -348,6 +352,21 @@ model chat {
   deletedAt DateTime?
 
   @@index([recipientId, readAt])
+}
+
+model report {
+  id             Int      @id @default(autoincrement())
+  reason         String
+  markAsResolved Boolean  @default(false)
+  createdAt      DateTime @default(now()) @db.Timestamp(6)
+
+  reporterId     Int
+  reportedUserId Int
+
+  reporter     user @relation("UserReports", fields: [reporterId], references: [id])
+  reportedUser user @relation("UserReported", fields: [reportedUserId], references: [id])
+
+  @@unique([reporterId, reportedUserId])
 }
 
 enum chatStatus {

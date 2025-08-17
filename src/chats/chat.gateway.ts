@@ -9,18 +9,18 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { Injectable } from '@nestjs/common';
 
 import { AuthService } from '@auth/auth.service';
+import { CacheService } from '@cache/cache.service';
+import { Chat } from '@chats/domain/chat';
+import { ChatTypeEnum } from '@chat-types/chat-types.enum';
 
-import { CacheService } from '../cache/cache.service';
-import { SocketService } from '../socket/socket.service';
 import {
   BaseSocketGateway,
   defaultCorsConfig,
   SocketWithSession,
 } from '../socket/base-socket.gateway';
+
 import { ChatService } from './chat.service';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { ChatTypeEnum } from '@chat-types/chat-types.enum';
-import { Chat } from '@chats/domain/chat';
 
 interface ChatMessage {
   from: number;
@@ -35,7 +35,6 @@ export class ChatGateway extends BaseSocketGateway implements OnGatewayInit {
   constructor(
     auth: AuthService,
     cache: CacheService,
-    private readonly socketService: SocketService,
     private readonly chatService: ChatService,
   ) {
     super(auth, cache);

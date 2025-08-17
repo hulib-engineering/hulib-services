@@ -12,6 +12,14 @@ export class NotificationsService {
   private readonly storyRelatedNotificationTypes: string[] = [
     NotificationTypeEnum.reviewStory,
     NotificationTypeEnum.publishStory,
+    NotificationTypeEnum.rejectStory,
+  ];
+  private readonly readingSessionRelatedNotiTypes: string[] = [
+    NotificationTypeEnum.sessionRequest,
+    NotificationTypeEnum.sessionFinish,
+    NotificationTypeEnum.approveReadingSession,
+    NotificationTypeEnum.rejectReadingSession,
+    NotificationTypeEnum.cancelReadingSession,
   ];
 
   constructor(
@@ -89,13 +97,22 @@ export class NotificationsService {
     const readingSessionIds = notifications
       .filter(
         (n) =>
-          n.type.name === NotificationTypeEnum.sessionRequest &&
+          this.readingSessionRelatedNotiTypes.includes(n.type.name) &&
           n.relatedEntityId !== null,
       )
       .map((n) => n.relatedEntityId)
       .filter((id): id is number => id !== null);
 
-    const [stories, readingSessions] = await Promise.all([
+    const reportIds = notifications
+      .filter(
+        (n) =>
+          n.type.name === NotificationTypeEnum.huberReported &&
+          n.relatedEntityId !== null,
+      )
+      .map((n) => n.relatedEntityId)
+      .filter((id): id is number => id !== null);
+
+    const [stories, readingSessions, reports] = await Promise.all([
       this.prisma.story.findMany({
         where: { id: { in: storyIds } },
         include: {
@@ -111,7 +128,31 @@ export class NotificationsService {
         select: {
           id: true,
           sessionStatus: true,
+          startedAt: true,
+          startTime: true,
+          endTime: true,
+          rejectReason: true,
+          story: {
+            select: {
+              title: true,
+            },
+          },
+          humanBook: {
+            select: {
+              id: true,
+              fullName: true,
+            },
+          },
+          reader: {
+            select: {
+              id: true,
+              fullName: true,
+            },
+          },
         },
+      }),
+      this.prisma.report.findMany({
+        where: { id: { in: reportIds } },
       }),
     ]);
 
@@ -123,6 +164,7 @@ export class NotificationsService {
           title: s.title,
           numOfRatings: s.storyReview.length,
           numOfComments: s.storyReview.length,
+          rejectionReason: s.rejectionReason,
         },
       ]),
     );
@@ -133,6 +175,26 @@ export class NotificationsService {
         {
           id: rs.id,
           sessionStatus: rs.sessionStatus,
+          startedAt: rs.startedAt,
+          startTime: rs.startTime,
+          endTime: rs.endTime,
+          rejectReason: rs.rejectReason,
+          storyTitle: rs.story.title,
+          humanBook: rs.humanBook,
+          reader: rs.reader,
+        },
+      ]),
+    );
+
+    const reportMap = new Map(
+      reports.map((rs) => [
+        rs.id,
+        {
+          id: rs.id,
+          reason: rs.reason,
+          reporterId: rs.reporterId,
+          reportedUserId: rs.reportedUserId,
+          markAsResolved: rs.markAsResolved,
         },
       ]),
     );
@@ -147,12 +209,21 @@ export class NotificationsService {
               : null,
         };
       }
-      if (n.type.name === NotificationTypeEnum.sessionRequest) {
+      if (this.readingSessionRelatedNotiTypes.includes(n.type.name)) {
         return {
           ...n,
           relatedEntity:
             n.relatedEntityId !== null
               ? readingSessionMap.get(n.relatedEntityId) || null
+              : null,
+        };
+      }
+      if (n.type.name === NotificationTypeEnum.huberReported) {
+        return {
+          ...n,
+          relatedEntity:
+            n.relatedEntityId !== null
+              ? reportMap.get(n.relatedEntityId) || null
               : null,
         };
       }
@@ -184,14 +255,18 @@ export class NotificationsService {
       type.name,
     );
 
-    const isSessionRequestNotificationType =
-      type.name === NotificationTypeEnum.sessionRequest;
+    const isReadingSessionRelatedNotiType =
+      this.readingSessionRelatedNotiTypes.includes(type.name);
 
     const isOtherNotificationType = type.name === NotificationTypeEnum.other;
 
+    const isHuberReportNotiType =
+      type.name === NotificationTypeEnum.huberReported;
+
     const isNeedRelatedEntityId =
       isStoryNotificationType ||
-      isSessionRequestNotificationType ||
+      isReadingSessionRelatedNotiType ||
+      isHuberReportNotiType ||
       isOtherNotificationType;
 
     if (isNeedRelatedEntityId && !data.relatedEntityId) {
@@ -227,7 +302,7 @@ export class NotificationsService {
         throw new BadRequestException('Invalid story ID');
       }
     }
-    if (notificationType === NotificationTypeEnum.sessionRequest) {
+    if (this.readingSessionRelatedNotiTypes.includes(notificationType)) {
       const readingSession = await this.prisma.readingSession.findUnique({
         where: {
           id: relatedEntityId,
@@ -237,6 +312,17 @@ export class NotificationsService {
 
       if (!readingSession) {
         throw new BadRequestException('Invalid reading session ID');
+      }
+    }
+    if (notificationType === NotificationTypeEnum.huberReported) {
+      const report = await this.prisma.report.findUnique({
+        where: {
+          id: relatedEntityId,
+        },
+      });
+
+      if (!report) {
+        throw new BadRequestException('Invalid report ID');
       }
     }
   }

@@ -106,7 +106,7 @@ export class StoriesService {
     return newStory;
   }
 
-  findAllWithPagination({
+  async findAllWithPagination({
     paginationOptions,
     filterOptions,
     sortOptions,
@@ -115,13 +115,33 @@ export class StoriesService {
     filterOptions?: FilterStoryDto;
     sortOptions?: SortStoryDto[];
   }) {
-    return this.storiesRepository.findAllWithPagination({
+    const result = await this.storiesRepository.findAllWithPagination({
       paginationOptions: {
         page: paginationOptions.page,
         limit: paginationOptions.limit,
       },
       filterOptions,
       sortOptions,
+    });
+
+    const reviews = await this.prisma.storyReview.findMany({
+      where: { storyId: { in: result.map((story) => story.id) } },
+      select: { storyId: true, rating: true },
+    });
+
+    return result.map((story) => {
+      const storyReviews = reviews.filter(
+        (review) => review.storyId === story.id,
+      );
+      const avgRating =
+        storyReviews.reduce((sum, review) => sum + review.rating, 0) /
+        (storyReviews.length || 1);
+
+      return {
+        ...story,
+        rating: avgRating ? Number(avgRating.toFixed(1)) : 0,
+        countReviews: storyReviews?.length || 0,
+      };
     });
   }
 
@@ -145,6 +165,14 @@ export class StoriesService {
             createdAt: true,
             updatedAt: true,
           },
+          include: {
+            feedbackTos: true,
+            _count: {
+              select: {
+                humanBookTopic: true,
+              },
+            },
+          },
         },
         cover: true,
       },
@@ -159,6 +187,15 @@ export class StoriesService {
       });
     }
 
+    const humanBookRating = Number(
+      (
+        result.humanBook.feedbackTos.reduce(
+          (total, feedback) => total + feedback.rating,
+          0,
+        ) / result.humanBook.feedbackTos.length
+      ).toFixed(1),
+    );
+
     const coverWithUrl = result.cover
       ? {
           id: result.cover.id,
@@ -168,11 +205,20 @@ export class StoriesService {
 
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { feedbackTos, _count, ...humanBookWithoutFeedback } =
+      result.humanBook;
+
     return {
       ...result,
       storyReview,
-      topics: result?.topics.map((nestedTopic) => nestedTopic.topic),
+      topics: result.topics?.map((nestedTopic) => nestedTopic.topic) || [],
       cover: coverWithUrl,
+      humanBook: {
+        ...humanBookWithoutFeedback,
+        countTopics: result.humanBook._count.humanBookTopic,
+        rating: humanBookRating,
+      },
     };
   }
 
@@ -201,6 +247,19 @@ export class StoriesService {
         relatedEntityId: story.id,
       });
     }
+
+    if (
+      !!updateStoriesDto.publishStatus &&
+      updateStoriesDto.publishStatus === 'rejected'
+    ) {
+      await this.notifsService.pushNoti({
+        senderId: 1,
+        recipientId: story.humanBookId,
+        type: NotificationTypeEnum.rejectStory,
+        relatedEntityId: story.id,
+      });
+    }
+
     return updated;
   }
 

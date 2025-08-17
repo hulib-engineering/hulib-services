@@ -1,8 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '../../users/domain/user';
-import { Story } from '../../stories/domain/story';
+import { User } from '@users/domain/user';
+import { Story } from '@stories/domain/story';
 import { Feedback } from './feedback';
 import { Message } from './message';
+import { Transform } from 'class-transformer';
+import fileConfig from '@files/config/file.config';
+import { FileConfig } from '@files/config/file-config.type';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export enum ReadingSessionStatus {
   FINISHED = 'finished',
@@ -11,6 +16,7 @@ export enum ReadingSessionStatus {
   PENDING = 'pending',
   REJECTED = 'rejected',
   APPROVED = 'approved',
+  MISSED = 'missed',
 }
 
 export class ReadingSession {
@@ -83,6 +89,33 @@ export class ReadingSession {
     nullable: true,
     example: 'https://drive.google.com/file/d/123/view',
   })
+  @Transform(
+    ({ value }) => {
+      if (!value) return value;
+
+      const s3 = new S3Client({
+        region: (fileConfig() as FileConfig).awsS3Region ?? '',
+        credentials: {
+          accessKeyId: (fileConfig() as FileConfig).accessKeyId ?? '',
+          secretAccessKey: (fileConfig() as FileConfig).secretAccessKey ?? '',
+        },
+      });
+
+      const fileKey = value.startsWith('recordings/')
+        ? value
+        : `recordings/${value}`;
+
+      const command = new GetObjectCommand({
+        Bucket: (fileConfig() as FileConfig).awsDefaultS3Bucket ?? '',
+        Key: fileKey,
+      });
+
+      return getSignedUrl(s3, command, { expiresIn: 3600 });
+    },
+    {
+      toPlainOnly: true,
+    },
+  )
   recordingUrl?: string;
 
   @ApiProperty({

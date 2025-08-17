@@ -14,15 +14,7 @@ import { UserEntity } from '@users/infrastructure/persistence/relational/entitie
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 import { FeedbackEntity } from './feedback.entity';
 import { MessageEntity } from './message.entity';
-
-export enum ReadingSessionStatus {
-  FINISHED = 'finished',
-  UNINITIALIZED = 'unInitialized',
-  CANCELED = 'canceled',
-  PENDING = 'pending',
-  REJECTED = 'rejected',
-  APPROVED = 'approved',
-}
+import { ReadingSessionStatus } from '../../../../domain';
 
 @Entity({
   name: 'readingSession',

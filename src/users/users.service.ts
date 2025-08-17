@@ -25,7 +25,6 @@ import { user as PrismaUser } from '@prisma/client';
 import { UpgradeDto } from '@users/dto/upgrade.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
-import { ReadingSessionStatus } from '@reading-sessions/infrastructure/persistence/relational/entities';
 import { pagination } from '@utils/types/pagination';
 import { PublishStatus } from '@stories/status.enum';
 import { FileDto } from '@files/dto/file.dto';
@@ -35,6 +34,7 @@ import appConfig from '@config/app.config';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { AppConfig } from '@config/app-config.type';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { ReadingSessionStatus } from '../reading-sessions/domain';
 
 @Injectable()
 export class UsersService {
@@ -473,6 +473,13 @@ export class UsersService {
       await this.usersRepository.update(id, {
         approval: Approval.rejected,
       });
+
+      await this.notificationsService.pushNoti({
+        senderId: 1,
+        recipientId: Number(id),
+        type: NotificationTypeEnum.rejectHuber,
+      });
+
       return {
         message: 'Reject request to become huber!',
       };

@@ -10,5 +10,6 @@ export type FileConfig = {
   secretAccessKey?: string;
   awsDefaultS3Bucket?: string;
   awsS3Region?: string;
+  awsS3RegionCode?: string;
   maxFileSize: number;
 };

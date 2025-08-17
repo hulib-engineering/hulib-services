@@ -9,9 +9,16 @@ export class NotificationTypeSeedService {
   async run() {
     const types: NotificationTypeEnum[] = [
       NotificationTypeEnum.sessionRequest,
+      NotificationTypeEnum.sessionFinish,
       NotificationTypeEnum.account,
       NotificationTypeEnum.reviewStory,
       NotificationTypeEnum.publishStory,
+      NotificationTypeEnum.rejectStory,
+      NotificationTypeEnum.huberReported,
+      NotificationTypeEnum.rejectHuber,
+      NotificationTypeEnum.rejectReadingSession,
+      NotificationTypeEnum.approveReadingSession,
+      NotificationTypeEnum.cancelReadingSession,
       NotificationTypeEnum.other,
     ];
     const res = await this.prisma.notificationType.createMany({
