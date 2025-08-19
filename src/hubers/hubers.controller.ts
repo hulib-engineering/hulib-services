@@ -11,8 +11,6 @@ import {
   Param,
   ParseIntPipe,
 } from '@nestjs/common';
-import { HubersService } from './hubers.service';
-
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -20,20 +18,25 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { InfinityPaginationResponse } from '@utils/dto/infinity-pagination-response.dto';
+import { omit } from 'lodash';
 
-import { FindAllHubersDto } from './dto/find-all-hubers.dto';
+import { InfinityPaginationResponse } from '@utils/dto/infinity-pagination-response.dto';
 import { User } from '@users/domain/user';
 import { pagination } from '@utils/types/pagination';
 import { UsersService } from '@users/users.service';
-import { omit } from 'lodash';
+import { Story } from '@stories/domain/story';
+import { Roles } from '@roles/roles.decorator';
+import { RoleEnum } from '@roles/roles.enum';
+import { RolesGuard } from '@roles/roles.guard';
+import { PaginationInputDto } from '@utils/dto/pagination-input.dto';
+import { infinityPagination } from '@utils/infinity-pagination';
+
+import { ReportsService } from '../reports/reports.service';
+
+import { ReportHuberDto } from './dto/report-huber.dto';
+import { FindAllHubersDto } from './dto/find-all-hubers.dto';
 import { CheckSessionAvailabilityDto } from './dto/check-session-availability.dto';
-import { Story } from '../stories/domain/story';
-import { Roles } from '../roles/roles.decorator';
-import { RoleEnum } from '../roles/roles.enum';
-import { RolesGuard } from '../roles/roles.guard';
-import { PaginationInputDto } from '../utils/dto/pagination-input.dto';
-import { infinityPagination } from '../utils/infinity-pagination';
+import { HubersService } from './hubers.service';
 
 @ApiTags('Hubers')
 @ApiBearerAuth()
@@ -46,6 +49,7 @@ export class HubersController {
   constructor(
     private readonly hubersService: HubersService,
     private readonly userService: UsersService,
+    private readonly reportService: ReportsService,
   ) {}
 
   @Get()
@@ -167,6 +171,27 @@ export class HubersController {
     return infinityPagination(await this.hubersService.getStories(id), {
       page,
       limit,
+    });
+  }
+
+  @Post(':id/reports')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  async report(
+    @Request() request,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() reportHuberDto: ReportHuberDto,
+  ) {
+    const reporterId = request.user.id;
+
+    return this.reportService.create(reporterId, {
+      reason: reportHuberDto.reasons,
+      reportedUserId: id,
     });
   }
 }
