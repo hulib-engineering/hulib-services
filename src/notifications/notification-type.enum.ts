@@ -10,5 +10,6 @@ export enum NotificationTypeEnum {
   approveReadingSession = 'approveReadingSession',
   rejectReadingSession = 'rejectReadingSession',
   cancelReadingSession = 'cancelReadingSession',
+  missReadingSession = 'missReadingSession',
   other = 'other',
 }

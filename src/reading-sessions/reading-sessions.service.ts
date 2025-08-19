@@ -387,6 +387,12 @@ export class ReadingSessionsService {
       `[CRON] Running reminder scheduler at ${now.toISOString()}`,
     );
 
+    await this.scheduleRemindersForUpcomingSessions(now);
+
+    await this.markOverdueSessionsAsMissed(now);
+  }
+
+  private async scheduleRemindersForUpcomingSessions(now: Date) {
     const targetStart = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
 
     const sessions = await this.prisma.readingSession.findMany({
@@ -412,6 +418,49 @@ export class ReadingSessionsService {
           removeOnFail: true,
         },
       );
+    }
+  }
+
+  private async markOverdueSessionsAsMissed(now: Date) {
+    const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
+
+    const overdueSessions = await this.prisma.readingSession.findMany({
+      where: {
+        startedAt: {
+          lt: thirtyMinutesAgo,
+        },
+        sessionStatus: ReadingSessionStatus.APPROVED,
+        OR: [
+          {
+            preRating: 0,
+          },
+          {
+            rating: 0,
+          },
+        ],
+      },
+    });
+
+    if (overdueSessions.length > 0) {
+      this.logger.log(
+        `[CRON] Found ${overdueSessions.length} overdue sessions to mark as missed`,
+      );
+
+      for (const session of overdueSessions) {
+        await this.prisma.readingSession.update({
+          where: { id: session.id },
+          data: { sessionStatus: ReadingSessionStatus.MISSED },
+        });
+
+        await this.notificationService.pushNoti({
+          senderId: 1,
+          recipientId: session.readerId,
+          type: NotificationTypeEnum.missReadingSession,
+          relatedEntityId: session.id,
+        });
+
+        this.logger.log(`[CRON] Marked session ${session.id} as MISSED`);
+      }
     }
   }
 }

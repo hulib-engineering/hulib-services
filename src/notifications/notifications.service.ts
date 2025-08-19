@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { PrismaService } from '../prisma-client/prisma-client.service';
 import { FindQueryNotificationsDto } from './dto/find-all-notifications-query.dto';
@@ -9,6 +9,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(this.constructor.name);
+
   private readonly storyRelatedNotificationTypes: string[] = [
     NotificationTypeEnum.reviewStory,
     NotificationTypeEnum.publishStory,
@@ -20,6 +22,7 @@ export class NotificationsService {
     NotificationTypeEnum.approveReadingSession,
     NotificationTypeEnum.rejectReadingSession,
     NotificationTypeEnum.cancelReadingSession,
+    NotificationTypeEnum.missReadingSession,
   ];
 
   constructor(
@@ -236,55 +239,62 @@ export class NotificationsService {
   }
 
   async create(data: CreateNotificationDto) {
-    if (data.recipientId === data.senderId) {
-      throw new BadRequestException(
-        'senderId and recipientId must be different',
-      );
+    try {
+      if (data.recipientId === data.senderId) {
+        this.logger.warn(
+          'Notification skipped: senderId and recipientId must be different',
+        );
+        return null;
+      }
+
+      const type = await this.prisma.notificationType.findUnique({
+        where: { name: data.type },
+      });
+
+      if (!type) {
+        this.logger.warn(
+          `Notification skipped: Invalid Notification Type (${data.type})`,
+        );
+        return null;
+      }
+
+      const isStoryNotificationType =
+        this.storyRelatedNotificationTypes.includes(type.name);
+      const isReadingSessionRelatedNotiType =
+        this.readingSessionRelatedNotiTypes.includes(type.name);
+      const isOtherNotificationType = type.name === NotificationTypeEnum.other;
+      const isHuberReportNotiType =
+        type.name === NotificationTypeEnum.huberReported;
+
+      const isNeedRelatedEntityId =
+        isStoryNotificationType ||
+        isReadingSessionRelatedNotiType ||
+        isHuberReportNotiType ||
+        isOtherNotificationType;
+
+      if (isNeedRelatedEntityId && !data.relatedEntityId) {
+        this.logger.warn(
+          `Notification skipped: Related entity ID is required for type ${type.name}`,
+        );
+        return null;
+      }
+
+      if (data.relatedEntityId) {
+        await this.verifyRelatedEntityId(type.name, data.relatedEntityId);
+      }
+
+      return this.prisma.notification.create({
+        data: {
+          recipientId: data.recipientId,
+          senderId: data.senderId,
+          typeId: type.id,
+          relatedEntityId: isNeedRelatedEntityId ? data.relatedEntityId : null,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Notification creation failed: ${error.message}`);
+      return null;
     }
-    const type = await this.prisma.notificationType.findUnique({
-      where: {
-        name: data.type,
-      },
-    });
-
-    if (!type) {
-      throw new BadRequestException('Invalid Notification Type');
-    }
-
-    const isStoryNotificationType = this.storyRelatedNotificationTypes.includes(
-      type.name,
-    );
-
-    const isReadingSessionRelatedNotiType =
-      this.readingSessionRelatedNotiTypes.includes(type.name);
-
-    const isOtherNotificationType = type.name === NotificationTypeEnum.other;
-
-    const isHuberReportNotiType =
-      type.name === NotificationTypeEnum.huberReported;
-
-    const isNeedRelatedEntityId =
-      isStoryNotificationType ||
-      isReadingSessionRelatedNotiType ||
-      isHuberReportNotiType ||
-      isOtherNotificationType;
-
-    if (isNeedRelatedEntityId && !data.relatedEntityId) {
-      throw new BadRequestException('Related entity ID is required');
-    }
-
-    if (data.relatedEntityId) {
-      await this.verifyRelatedEntityId(type.name, data.relatedEntityId);
-    }
-
-    return this.prisma.notification.create({
-      data: {
-        recipientId: data.recipientId,
-        senderId: data.senderId,
-        typeId: type.id,
-        relatedEntityId: isNeedRelatedEntityId ? data.relatedEntityId : null,
-      },
-    });
   }
 
   private async verifyRelatedEntityId(
