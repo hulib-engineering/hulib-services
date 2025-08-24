@@ -23,6 +23,7 @@ export class NotificationsService {
     NotificationTypeEnum.rejectReadingSession,
     NotificationTypeEnum.cancelReadingSession,
     NotificationTypeEnum.missReadingSession,
+    NotificationTypeEnum.other,
   ];
 
   constructor(
@@ -135,6 +136,7 @@ export class NotificationsService {
           startTime: true,
           endTime: true,
           rejectReason: true,
+          sessionUrl: true,
           story: {
             select: {
               title: true,
@@ -185,6 +187,7 @@ export class NotificationsService {
           storyTitle: rs.story.title,
           humanBook: rs.humanBook,
           reader: rs.reader,
+          sessionUrl: rs.sessionUrl,
         },
       ]),
     );
@@ -203,39 +206,45 @@ export class NotificationsService {
     );
 
     const result = notifications.map((n) => {
+      const recipient = this.mapUserWithPhoto(n.recipient);
+      const sender = this.mapUserWithPhoto(n.sender);
+
+      let relatedEntity: any = null;
+
       if (this.storyRelatedNotificationTypes.includes(n.type.name)) {
-        return {
-          ...n,
-          relatedEntity:
-            n.relatedEntityId !== null
-              ? storyMap.get(n.relatedEntityId) || null
-              : null,
-        };
+        relatedEntity =
+          n.relatedEntityId !== null
+            ? storyMap.get(n.relatedEntityId) || null
+            : null;
+      } else if (this.readingSessionRelatedNotiTypes.includes(n.type.name)) {
+        relatedEntity =
+          n.relatedEntityId !== null
+            ? readingSessionMap.get(n.relatedEntityId) || null
+            : null;
+      } else if (n.type.name === NotificationTypeEnum.huberReported) {
+        relatedEntity =
+          n.relatedEntityId !== null
+            ? reportMap.get(n.relatedEntityId) || null
+            : null;
       }
-      if (this.readingSessionRelatedNotiTypes.includes(n.type.name)) {
-        return {
-          ...n,
-          relatedEntity:
-            n.relatedEntityId !== null
-              ? readingSessionMap.get(n.relatedEntityId) || null
-              : null,
-        };
-      }
-      if (n.type.name === NotificationTypeEnum.huberReported) {
-        return {
-          ...n,
-          relatedEntity:
-            n.relatedEntityId !== null
-              ? reportMap.get(n.relatedEntityId) || null
-              : null,
-        };
-      }
-      return { ...n, relatedEntity: null };
+
+      return {
+        ...n,
+        recipient,
+        sender,
+        relatedEntity,
+      };
     });
     return {
       data: result,
       unseenCount,
     };
+  }
+
+  private mapUserWithPhoto<T extends { file?: any }>(user: T | null) {
+    if (!user) return null;
+    const { file, ...rest } = user;
+    return { ...rest, photo: file };
   }
 
   async create(data: CreateNotificationDto) {
@@ -262,15 +271,13 @@ export class NotificationsService {
         this.storyRelatedNotificationTypes.includes(type.name);
       const isReadingSessionRelatedNotiType =
         this.readingSessionRelatedNotiTypes.includes(type.name);
-      const isOtherNotificationType = type.name === NotificationTypeEnum.other;
       const isHuberReportNotiType =
         type.name === NotificationTypeEnum.huberReported;
 
       const isNeedRelatedEntityId =
         isStoryNotificationType ||
         isReadingSessionRelatedNotiType ||
-        isHuberReportNotiType ||
-        isOtherNotificationType;
+        isHuberReportNotiType;
 
       if (isNeedRelatedEntityId && !data.relatedEntityId) {
         this.logger.warn(
@@ -289,6 +296,7 @@ export class NotificationsService {
           senderId: data.senderId,
           typeId: type.id,
           relatedEntityId: isNeedRelatedEntityId ? data.relatedEntityId : null,
+          extraNote: data.extraNote,
         },
       });
     } catch (error) {

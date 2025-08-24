@@ -297,6 +297,7 @@ model notification {
   type            notificationType @relation(fields: [typeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   seen            Boolean          @default(false)
   relatedEntityId Int?
+  extraNote       String?
   createdAt       DateTime         @default(now()) @db.Timestamp(6)
   updatedAt       DateTime         @default(now()) @db.Timestamp(6)
   deletedAt       DateTime?

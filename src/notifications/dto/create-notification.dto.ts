@@ -21,4 +21,9 @@ export class CreateNotificationDto {
   @IsNumber()
   @IsOptional()
   relatedEntityId?: number;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  extraNote?: string;
 }
