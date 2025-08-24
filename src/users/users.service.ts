@@ -478,6 +478,7 @@ export class UsersService {
         senderId: 1,
         recipientId: Number(id),
         type: NotificationTypeEnum.rejectHuber,
+        extraNote: upgradeDto.reason,
       });
 
       return {
