@@ -54,6 +54,9 @@ export class ReadingSessionEntity {
   @Column({ type: 'varchar', length: 4000, nullable: true })
   note?: string;
 
+  @Column({ type: 'varchar', length: 4000, nullable: true })
+  rejectReason?: string;
+
   @Column({ type: 'varchar', length: 255 })
   sessionUrl: string;
 

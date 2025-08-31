@@ -17,6 +17,7 @@ export class ReadingSessionMapper {
     domain.storyId = entity.storyId;
     domain.sessionUrl = entity.sessionUrl;
     domain.note = entity.note;
+    domain.rejectReason = entity.rejectReason;
     domain.recordingUrl = entity.recordingUrl;
     domain.sessionStatus = entity.sessionStatus;
     domain.startTime = entity.startTime;
@@ -58,6 +59,7 @@ export class ReadingSessionMapper {
     entity.storyId = domain.storyId;
     entity.sessionUrl = domain.sessionUrl;
     entity.note = domain.note;
+    entity.rejectReason = domain.rejectReason;
     // entity.review = domain.review;
     entity.recordingUrl = domain.recordingUrl;
     entity.sessionStatus = domain.sessionStatus;

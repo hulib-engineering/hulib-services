@@ -1,11 +1,13 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { IPaginationOptions } from '../utils/types/pagination-options';
-import { PrismaService } from '../prisma-client/prisma-client.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
+import { PrismaService } from '@prisma-client/prisma-client.service';
+import { infinityPagination } from '@utils/infinity-pagination';
+import { IPaginationOptions } from '@utils/types/pagination-options';
+
 import { FindQueryNotificationsDto } from './dto/find-all-notifications-query.dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationTypeEnum } from './notification-type.enum';
-import { infinityPagination } from '@utils/infinity-pagination';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class NotificationsService {

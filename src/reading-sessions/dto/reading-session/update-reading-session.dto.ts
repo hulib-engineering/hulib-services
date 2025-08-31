@@ -35,6 +35,14 @@ export class UpdateReadingSessionDto extends PartialType(
   note?: string;
 
   @ApiPropertyOptional({
+    example: 'Reason for rejecting the reading session',
+    description: 'Note or reason when rejecting the reading session',
+  })
+  @IsOptional()
+  @IsString()
+  rejectReason?: string;
+
+  @ApiPropertyOptional({
     type: () => CreateFeedbackDto,
     example: { rating: 5 },
   })
@@ -93,4 +101,8 @@ export class UpdateReadingSessionDto extends PartialType(
   @IsString()
   @IsOptional()
   recordingUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  sessionUrl?: string;
 }
