@@ -1,14 +1,18 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { IPaginationOptions } from '../utils/types/pagination-options';
-import { PrismaService } from '../prisma-client/prisma-client.service';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
+import { PrismaService } from '@prisma-client/prisma-client.service';
+import { infinityPagination } from '@utils/infinity-pagination';
+import { IPaginationOptions } from '@utils/types/pagination-options';
+
 import { FindQueryNotificationsDto } from './dto/find-all-notifications-query.dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationTypeEnum } from './notification-type.enum';
-import { infinityPagination } from '@utils/infinity-pagination';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(this.constructor.name);
+
   private readonly storyRelatedNotificationTypes: string[] = [
     NotificationTypeEnum.reviewStory,
     NotificationTypeEnum.publishStory,
@@ -20,6 +24,8 @@ export class NotificationsService {
     NotificationTypeEnum.approveReadingSession,
     NotificationTypeEnum.rejectReadingSession,
     NotificationTypeEnum.cancelReadingSession,
+    NotificationTypeEnum.missReadingSession,
+    NotificationTypeEnum.other,
   ];
 
   constructor(
@@ -132,6 +138,7 @@ export class NotificationsService {
           startTime: true,
           endTime: true,
           rejectReason: true,
+          sessionUrl: true,
           story: {
             select: {
               title: true,
@@ -182,6 +189,7 @@ export class NotificationsService {
           storyTitle: rs.story.title,
           humanBook: rs.humanBook,
           reader: rs.reader,
+          sessionUrl: rs.sessionUrl,
         },
       ]),
     );
@@ -200,34 +208,34 @@ export class NotificationsService {
     );
 
     const result = notifications.map((n) => {
+      const recipient = this.mapUserWithPhoto(n.recipient);
+      const sender = this.mapUserWithPhoto(n.sender);
+
+      let relatedEntity: any = null;
+
       if (this.storyRelatedNotificationTypes.includes(n.type.name)) {
-        return {
-          ...n,
-          relatedEntity:
-            n.relatedEntityId !== null
-              ? storyMap.get(n.relatedEntityId) || null
-              : null,
-        };
+        relatedEntity =
+          n.relatedEntityId !== null
+            ? storyMap.get(n.relatedEntityId) || null
+            : null;
+      } else if (this.readingSessionRelatedNotiTypes.includes(n.type.name)) {
+        relatedEntity =
+          n.relatedEntityId !== null
+            ? readingSessionMap.get(n.relatedEntityId) || null
+            : null;
+      } else if (n.type.name === NotificationTypeEnum.huberReported) {
+        relatedEntity =
+          n.relatedEntityId !== null
+            ? reportMap.get(n.relatedEntityId) || null
+            : null;
       }
-      if (this.readingSessionRelatedNotiTypes.includes(n.type.name)) {
-        return {
-          ...n,
-          relatedEntity:
-            n.relatedEntityId !== null
-              ? readingSessionMap.get(n.relatedEntityId) || null
-              : null,
-        };
-      }
-      if (n.type.name === NotificationTypeEnum.huberReported) {
-        return {
-          ...n,
-          relatedEntity:
-            n.relatedEntityId !== null
-              ? reportMap.get(n.relatedEntityId) || null
-              : null,
-        };
-      }
-      return { ...n, relatedEntity: null };
+
+      return {
+        ...n,
+        recipient,
+        sender,
+        relatedEntity,
+      };
     });
     return {
       data: result,
@@ -235,56 +243,68 @@ export class NotificationsService {
     };
   }
 
+  private mapUserWithPhoto<T extends { file?: any }>(user: T | null) {
+    if (!user) return null;
+    const { file, ...rest } = user;
+    return { ...rest, photo: file };
+  }
+
   async create(data: CreateNotificationDto) {
-    if (data.recipientId === data.senderId) {
-      throw new BadRequestException(
-        'senderId and recipientId must be different',
-      );
+    try {
+      if (data.recipientId === data.senderId) {
+        this.logger.warn(
+          'Notification skipped: senderId and recipientId must be different',
+        );
+        return null;
+      }
+
+      const type = await this.prisma.notificationType.findUnique({
+        where: { name: data.type },
+      });
+
+      if (!type) {
+        this.logger.warn(
+          `Notification skipped: Invalid Notification Type (${data.type})`,
+        );
+        return null;
+      }
+
+      const isStoryNotificationType =
+        this.storyRelatedNotificationTypes.includes(type.name);
+      const isReadingSessionRelatedNotiType =
+        this.readingSessionRelatedNotiTypes.includes(type.name);
+      const isHuberReportNotiType =
+        type.name === NotificationTypeEnum.huberReported;
+
+      const isNeedRelatedEntityId =
+        isStoryNotificationType ||
+        isReadingSessionRelatedNotiType ||
+        isHuberReportNotiType;
+
+      if (isNeedRelatedEntityId && !data.relatedEntityId) {
+        this.logger.warn(
+          `Notification skipped: Related entity ID is required for type ${type.name}`,
+        );
+        return null;
+      }
+
+      if (data.relatedEntityId) {
+        await this.verifyRelatedEntityId(type.name, data.relatedEntityId);
+      }
+
+      return this.prisma.notification.create({
+        data: {
+          recipientId: data.recipientId,
+          senderId: data.senderId,
+          typeId: type.id,
+          relatedEntityId: isNeedRelatedEntityId ? data.relatedEntityId : null,
+          extraNote: data.extraNote,
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Notification creation failed: ${error.message}`);
+      return null;
     }
-    const type = await this.prisma.notificationType.findUnique({
-      where: {
-        name: data.type,
-      },
-    });
-
-    if (!type) {
-      throw new BadRequestException('Invalid Notification Type');
-    }
-
-    const isStoryNotificationType = this.storyRelatedNotificationTypes.includes(
-      type.name,
-    );
-
-    const isReadingSessionRelatedNotiType =
-      this.readingSessionRelatedNotiTypes.includes(type.name);
-
-    const isOtherNotificationType = type.name === NotificationTypeEnum.other;
-
-    const isHuberReportNotiType =
-      type.name === NotificationTypeEnum.huberReported;
-
-    const isNeedRelatedEntityId =
-      isStoryNotificationType ||
-      isReadingSessionRelatedNotiType ||
-      isHuberReportNotiType ||
-      isOtherNotificationType;
-
-    if (isNeedRelatedEntityId && !data.relatedEntityId) {
-      throw new BadRequestException('Related entity ID is required');
-    }
-
-    if (data.relatedEntityId) {
-      await this.verifyRelatedEntityId(type.name, data.relatedEntityId);
-    }
-
-    return this.prisma.notification.create({
-      data: {
-        recipientId: data.recipientId,
-        senderId: data.senderId,
-        typeId: type.id,
-        relatedEntityId: isNeedRelatedEntityId ? data.relatedEntityId : null,
-      },
-    });
   }
 
   private async verifyRelatedEntityId(

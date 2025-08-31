@@ -28,7 +28,7 @@ export class WebRtcService {
     const startSeconds = Math.floor(sessionData.startedAt.getTime() / 1000);
 
     // Token expiry = meeting start + 30 minutes
-    const privilegeExpiredTs = startSeconds + 30 * 60;
+    const privilegeExpiredTs = startSeconds + 60 * 60;
 
     const token = RtcTokenBuilder.buildTokenWithUid(
       appId,
@@ -39,6 +39,6 @@ export class WebRtcService {
       privilegeExpiredTs, // RTC privilege expiry
       privilegeExpiredTs, // join privilege expiry (same as above)
     );
-    return { token };
+    return { token, expireAt: privilegeExpiredTs };
   }
 }

@@ -73,6 +73,13 @@ export class ReadingSession {
   note?: string;
 
   @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'I am busy these day',
+  })
+  rejectReason?: string;
+
+  @ApiProperty({
     type: Number,
     example: 5,
   })
