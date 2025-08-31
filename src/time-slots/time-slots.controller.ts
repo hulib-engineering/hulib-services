@@ -38,10 +38,7 @@ export class TimeSlotController {
   @ApiCreatedResponse({
     type: TimeSlot,
   })
-  create(
-    @Body() createTimeSlotsDto: CreateTimeSlotsDto,
-    @Request() request: any,
-  ) {
+  create(@Body() createTimeSlotsDto: CreateTimeSlotsDto, @Request() request) {
     return this.timeSlotService.createMany(createTimeSlotsDto, request.user.id);
   }
 

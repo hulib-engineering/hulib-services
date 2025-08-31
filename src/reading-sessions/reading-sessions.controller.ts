@@ -109,7 +109,7 @@ export class ReadingSessionsController {
   async updateSession(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateReadingSessionDto,
-  ): Promise<ReadingSessionResponseDto> {
+  ) {
     return this.readingSessionsService.updateSession(id, dto);
   }
 

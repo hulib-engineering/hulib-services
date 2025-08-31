@@ -29,7 +29,6 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from '@prisma-client/prisma-client.service';
-import { MailService } from '@mail/mail.service';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -44,10 +43,9 @@ export class ReadingSessionsService {
     private readonly storyReviewsService: StoryReviewsService,
     private readonly webRtcService: WebRtcService,
     private readonly notificationService: NotificationsService,
-    private readonly mailService: MailService,
+    private prisma: PrismaService,
     private readonly configService: ConfigService<AllConfigType>,
     @InjectQueue('reminder') private readonly reminderQueue: Queue,
-    private prisma: PrismaService,
   ) {}
 
   async createSession(dto: CreateReadingSessionDto): Promise<ReadingSession> {
@@ -218,41 +216,8 @@ export class ReadingSessionsService {
     return session;
   }
 
-  async updateSession(
-    id: number,
-    dto: UpdateReadingSessionDto,
-  ): Promise<ReadingSession> {
+  async updateSession(id: number, dto: UpdateReadingSessionDto): Promise<void> {
     const session = await this.findOneSession(id);
-
-    if (dto.sessionStatus === 'approved') {
-      const registeredMeeting = this.webRtcService.generateToken(session);
-      session.sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=session-${session.id}&token=${registeredMeeting.token}`;
-
-      await this.notificationService.pushNoti({
-        senderId: session.humanBookId,
-        recipientId: session.readerId,
-        type: NotificationTypeEnum.approveReadingSession,
-        relatedEntityId: session.id,
-      });
-    }
-
-    if (dto.sessionStatus === 'rejected') {
-      await this.notificationService.pushNoti({
-        senderId: session.humanBookId,
-        recipientId: session.readerId,
-        type: NotificationTypeEnum.rejectReadingSession,
-        relatedEntityId: session.id,
-      });
-    }
-
-    if (dto.sessionStatus === 'canceled') {
-      await this.notificationService.pushNoti({
-        senderId: session.readerId,
-        recipientId: session.humanBookId,
-        type: NotificationTypeEnum.cancelReadingSession,
-        relatedEntityId: session.id,
-      });
-    }
 
     if (
       session.sessionStatus === ReadingSessionStatus.APPROVED &&
@@ -320,7 +285,34 @@ export class ReadingSessionsService {
       }
     }
     Object.assign(session, dto);
-    return this.readingSessionRepository.update(id, session);
+    await this.readingSessionRepository.update(id, session);
+
+    if (dto.sessionStatus === 'approved') {
+      await this.notificationService.pushNoti({
+        senderId: session.humanBookId,
+        recipientId: session.readerId,
+        type: NotificationTypeEnum.approveReadingSession,
+        relatedEntityId: session.id,
+      });
+    }
+
+    if (dto.sessionStatus === 'rejected') {
+      await this.notificationService.pushNoti({
+        senderId: session.humanBookId,
+        recipientId: session.readerId,
+        type: NotificationTypeEnum.rejectReadingSession,
+        relatedEntityId: session.id,
+      });
+    }
+
+    if (dto.sessionStatus === 'canceled') {
+      await this.notificationService.pushNoti({
+        senderId: session.readerId,
+        recipientId: session.humanBookId,
+        type: NotificationTypeEnum.cancelReadingSession,
+        relatedEntityId: session.id,
+      });
+    }
   }
 
   async deleteSession(id: number): Promise<void> {
@@ -407,7 +399,13 @@ export class ReadingSessionsService {
     // console.log('matched', sessions);
 
     for (const session of sessions) {
-      const delay = 15 * 60 * 1000; // Delay = 15 minutes
+      const detailedSession = await this.findOneSession(session.id);
+      const registeredSession =
+        this.webRtcService.generateToken(detailedSession);
+      const sessionUrl = `${this.configService.get('app.frontendDomain', { infer: true })}/reading?channel=session-${session.id}&token=${registeredSession.token}&expireAt=${registeredSession.expireAt}`;
+      await this.updateSession(session.id, { sessionUrl });
+
+      const delay = 60 * 1000; // Delay = 1 minutes
 
       await this.reminderQueue.add(
         'send-email-and-notify-user',
