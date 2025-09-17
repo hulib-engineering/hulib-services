@@ -23,10 +23,72 @@ export class TimeSlotService {
     private readonly userService: UsersService,
   ) {}
 
+  private getDayName(dayOfWeek: number): string {
+    const days = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    return days[dayOfWeek] || `Day ${dayOfWeek}`;
+  }
+
+  private checkForDuplicatesInRequest(timeSlots: CreateTimeSlotDto[]): void {
+    const seenTimeSlots = new Set<string>();
+
+    for (const timeSlot of timeSlots) {
+      const timeSlotKey = `${timeSlot.dayOfWeek}-${timeSlot.startTime}`;
+
+      if (seenTimeSlots.has(timeSlotKey)) {
+        throw new ConflictException(
+          `Duplicate time slot found: ${this.getDayName(timeSlot.dayOfWeek)} at ${timeSlot.startTime}`,
+        );
+      }
+
+      seenTimeSlots.add(timeSlotKey);
+    }
+  }
+
+  private checkForConflictsWithExisting(
+    newTimeSlots: CreateTimeSlotDto[],
+    existingTimeSlots: TimeSlot[],
+  ): void {
+    const existingKeys = new Set<string>();
+    for (const existing of existingTimeSlots) {
+      existingKeys.add(`${existing.dayOfWeek}-${existing.startTime}`);
+    }
+
+    for (const newTimeSlot of newTimeSlots) {
+      const newKey = `${newTimeSlot.dayOfWeek}-${newTimeSlot.startTime}`;
+
+      if (existingKeys.has(newKey)) {
+        throw new ConflictException(
+          `Time slot already exists for user: ${this.getDayName(newTimeSlot.dayOfWeek)} at ${newTimeSlot.startTime}`,
+        );
+      }
+    }
+  }
+
   async create(createTimeSlotDto: CreateTimeSlotDto, userId: number) {
     const user = await this.userService.findById(userId);
     if (!user || user.role?.id != RoleEnum.humanBook) {
       throw new NotFoundException(`Huber with id ${userId} not found`);
+    }
+
+    const existingTimeSlots = await this.timeSlotRepository.findByUser(userId);
+    const conflictingSlot = existingTimeSlots.find(
+      (slot) =>
+        slot.dayOfWeek === createTimeSlotDto.dayOfWeek &&
+        slot.startTime === createTimeSlotDto.startTime,
+    );
+
+    if (conflictingSlot) {
+      throw new ConflictException(
+        `Time slot already exists for user: ${this.getDayName(createTimeSlotDto.dayOfWeek)} at ${createTimeSlotDto.startTime}`,
+      );
     }
 
     const timeSlot = new TimeSlot(createTimeSlotDto);
@@ -47,6 +109,15 @@ export class TimeSlotService {
     if (!acceptableRole) {
       throw new ForbiddenException();
     }
+
+    this.checkForDuplicatesInRequest(createTimeSlotsDto.timeSlots);
+
+    const existingTimeSlots = await this.timeSlotRepository.findByUser(userId);
+    this.checkForConflictsWithExisting(
+      createTimeSlotsDto.timeSlots,
+      existingTimeSlots,
+    );
+
     const timeSlots = createTimeSlotsDto.timeSlots.map((createTimeSlotDto) => {
       const timeSlot = new TimeSlot(createTimeSlotDto);
       timeSlot.huberId = userId;
@@ -98,7 +169,7 @@ export class TimeSlotService {
     );
     if (existingTimeSlot && existingTimeSlot.id !== id) {
       throw new ConflictException(
-        `Time slot with dayOfWeek ${updateTimeSlotDto.dayOfWeek} and startTime ${updateTimeSlotDto.startTime} already exists`,
+        `Time slot with ${this.getDayName(updateTimeSlotDto.dayOfWeek)} at ${updateTimeSlotDto.startTime} already exists`,
       );
     }
 
