@@ -79,6 +79,8 @@ export class ReadingSessionRepository {
       where.sessionStatus = In([
         ReadingSessionStatus.PENDING,
         ReadingSessionStatus.APPROVED,
+        ReadingSessionStatus.MISSED,
+        ReadingSessionStatus.FINISHED,
       ]);
     }
 
