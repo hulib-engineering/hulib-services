@@ -22,8 +22,6 @@ import { TimeSlot } from './domain/time-slot';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Time slots')
-// @ApiBearerAuth()
-// @UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'time-slots',
   version: '1',
@@ -82,36 +80,4 @@ export class TimeSlotController {
   findOne(@Param('id') id: TimeSlot['id']) {
     return this.timeSlotService.findOne(id);
   }
-
-  // @Put(':id')
-  // @ApiOperation({ summary: 'Update a specific time slot' })
-  // @ApiParam({
-  //   name: 'id',
-  //   type: Number,
-  //   required: true,
-  // })
-  // @ApiCreatedResponse({
-  //   type: TimeSlot,
-  // })
-  // update(
-  //   @Param('id') id: TimeSlot['id'],
-  //   @Body() updateTimeSlotDto: CreateTimeSlotDto,
-  // ) {
-  //   return this.timeSlotService.update(id, updateTimeSlotDto);
-  // }
-
-  // @Get('day-of-week/:dayOfWeek')
-  // @ApiOperation({ summary: 'Get time slots by day of week' })
-  // @ApiParam({
-  //   name: 'dayOfWeek',
-  //   type: Number,
-  //   required: true,
-  // })
-  // @ApiOkResponse({
-  //   type: TimeSlot,
-  //   isArray: true,
-  // })
-  // findByDayOfWeek(@Param('dayOfWeek') dayOfWeek: TimeSlot['dayOfWeek']) {
-  //   return this.timeSlotService.findByDayOfWeek(dayOfWeek);
-  // }
 }
