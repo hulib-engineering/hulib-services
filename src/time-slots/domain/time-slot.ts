@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '@users/domain/user';
 import { CreateTimeSlotDto } from '../dto/create-time-slot.dto';
+import { Exclude } from 'class-transformer';
 
 const idType = Number;
 
@@ -22,19 +23,23 @@ export class TimeSlot {
   })
   startTime: string;
 
+  @Exclude({ toPlainOnly: true })
   @ApiProperty({
     type: Number,
   })
   huberId: number;
 
+  @Exclude({ toPlainOnly: true })
   @ApiProperty({
     type: () => User,
   })
   huber: User;
 
+  @Exclude({ toPlainOnly: true })
   @ApiProperty()
   createdAt: Date;
 
+  @Exclude({ toPlainOnly: true })
   @ApiProperty()
   updatedAt: Date;
 
