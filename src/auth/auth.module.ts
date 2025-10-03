@@ -11,6 +11,8 @@ import { SessionModule } from '@session/session.module';
 import { UsersModule } from '@users/users.module';
 import { TopicsModule } from '@topics/topics.module';
 import { CaslModule } from '@casl/casl.module';
+import { FavStoriesModule } from '@fav-stories/fav-stories.module';
+import { FilesModule } from '@files/files.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { CaslModule } from '@casl/casl.module';
     CaslModule,
     MailModule,
     TopicsModule,
+    FavStoriesModule,
+    FilesModule,
     JwtModule.register({}),
   ],
   controllers: [AuthController],

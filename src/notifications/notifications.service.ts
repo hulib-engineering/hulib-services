@@ -160,6 +160,14 @@ export class NotificationsService {
       }),
       this.prisma.report.findMany({
         where: { id: { in: reportIds } },
+        include: {
+          reportedUser: {
+            select: {
+              id: true,
+              fullName: true,
+            },
+          },
+        },
       }),
     ]);
 
@@ -203,6 +211,10 @@ export class NotificationsService {
           reporterId: rs.reporterId,
           reportedUserId: rs.reportedUserId,
           markAsResolved: rs.markAsResolved,
+          reportee: {
+            id: rs.reportedUser.id,
+            fullName: rs.reportedUser.fullName,
+          },
         },
       ]),
     );

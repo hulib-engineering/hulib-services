@@ -12,6 +12,7 @@ import {
 } from '@stories/dto/find-all-stories.dto';
 import { NullableType } from '@utils/types/nullable.type';
 import { IPaginationOptions } from '@utils/types/pagination-options';
+import { Topic } from '@topics/domain/topics';
 
 @Injectable()
 export class StoriesRelationalRepository implements StoryRepository {
@@ -70,20 +71,7 @@ export class StoriesRelationalRepository implements StoryRepository {
       ),
     });
 
-    const stories = entities.map((entity) => StoryMapper.toDomain(entity));
-    // add field countTopics to each story
-    for (const story of stories) {
-      const storyTopics = await this.storiesRepository.findOne({
-        where: { id: story.id },
-        relations: {
-          topics: true,
-        },
-      });
-
-      story.topics = storyTopics?.topics;
-    }
-
-    return stories;
+    return entities.map((entity) => StoryMapper.toDomain(entity));
   }
 
   async findById(id: Story['id']): Promise<NullableType<Story>> {
@@ -92,6 +80,14 @@ export class StoriesRelationalRepository implements StoryRepository {
     });
 
     return entity ? StoryMapper.toDomain(entity) : null;
+  }
+
+  async findRelatedTopics(id: Story['id']): Promise<Topic[]> {
+    const story = await this.storiesRepository.findOne({
+      where: { id },
+      relations: ['topics'],
+    });
+    return story?.topics ?? [];
   }
 
   async update(id: Story['id'], payload: Partial<Story>): Promise<Story> {

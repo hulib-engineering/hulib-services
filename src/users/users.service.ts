@@ -34,7 +34,8 @@ import appConfig from '@config/app.config';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { AppConfig } from '@config/app-config.type';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { ReadingSessionStatus } from '../reading-sessions/domain';
+import { ReadingSessionStatus } from '@reading-sessions/domain';
+import { omit } from 'lodash';
 
 @Injectable()
 export class UsersService {
@@ -173,6 +174,21 @@ export class UsersService {
             },
           },
         },
+        feedbackTos: {
+          select: {
+            feedbackBy: {
+              select: {
+                id: true,
+                fullName: true,
+                file: true,
+              },
+            },
+            id: true,
+            rating: true,
+            content: true,
+            createdAt: true,
+          },
+        },
         gender: true,
         role: true,
         status: true,
@@ -202,6 +218,16 @@ export class UsersService {
       ? user.topicsOfInterest.map((item) => item.topic)
       : [];
 
+    const mappedFeedbackBys = user.topicsOfInterest
+      ? user.feedbackTos.map((item) => ({
+          ...item,
+          feedbackBy: {
+            ...omit(item.feedbackBy, ['file']),
+            photo: item.feedbackBy?.file?.path,
+          },
+        }))
+      : [];
+
     const isLiber = user.role?.id === RoleEnum.reader;
 
     if (isLiber) {
@@ -220,36 +246,23 @@ export class UsersService {
         },
       });
       return {
-        ...user,
+        ...omit(user, ['feedbackTos', 'file']),
         photo: this.transformFileUrl(user.file),
         sharingTopics: mappedHumanBookTopic,
         topicsOfInterest: mappedTopicsOfInterest,
+        feedbackBys: mappedFeedbackBys,
         firstStory,
       };
     }
 
     return {
-      ...user,
+      ...omit(user, ['feedbackTos', 'file']),
       photo: this.transformFileUrl(user.file),
       sharingTopics: mappedHumanBookTopic,
       topicsOfInterest: mappedTopicsOfInterest,
+      feedbackBys: mappedFeedbackBys,
     };
   }
-
-  // async findHumanBookById(id: User['id']): Promise<NullableType<User>> {
-  //   const humanBook = await this.usersRepository.findHumanBookById(id);
-  //
-  //   if (!humanBook) {
-  //     throw new UnprocessableEntityException({
-  //       status: HttpStatus.UNPROCESSABLE_ENTITY,
-  //       errors: {
-  //         user: 'humanBookNotFound',
-  //       },
-  //     });
-  //   }
-  //
-  //   return humanBook;
-  // }
 
   findByEmail(email: User['email']): Promise<NullableType<User>> {
     return this.usersRepository.findByEmail(email);
@@ -297,20 +310,20 @@ export class UsersService {
       }
     }
 
-    // if (clonedPayload.photo?.id) {
-    //   const fileObject = await this.filesService.findById(
-    //     clonedPayload.photo.id,
-    //   );
-    //   if (!fileObject) {
-    //     throw new UnprocessableEntityException({
-    //       status: HttpStatus.UNPROCESSABLE_ENTITY,
-    //       errors: {
-    //         photo: 'imageNotExists',
-    //       },
-    //     });
-    //   }
-    //   clonedPayload.photo = fileObject;
-    // }
+    if (clonedPayload.photo?.id) {
+      const fileObject = await this.filesService.findById(
+        clonedPayload.photo.id,
+      );
+      if (!fileObject) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            photo: 'imageNotExists',
+          },
+        });
+      }
+      clonedPayload.photo = fileObject;
+    }
 
     if (!!clonedPayload.role) {
       const roleObject = Object.values(RoleEnum)

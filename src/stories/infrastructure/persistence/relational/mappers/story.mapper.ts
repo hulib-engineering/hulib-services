@@ -51,6 +51,9 @@ export class StoryMapper {
         domainEntity.humanBook,
       );
     }
+    if (domainEntity.cover) {
+      persistenceEntity.cover = FileMapper.toPersistence(domainEntity.cover);
+    }
     if (domainEntity.topics) {
       persistenceEntity.topics = domainEntity.topics.map((topic) =>
         TopicsMapper.toPersistence(topic),

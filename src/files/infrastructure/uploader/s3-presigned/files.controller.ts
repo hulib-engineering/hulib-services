@@ -11,7 +11,9 @@ import { FileResponseDto } from './dto/file-response.dto';
   version: '1',
 })
 export class FilesS3PresignedController {
-  constructor(private readonly filesService: FilesS3PresignedService) {}
+  constructor(
+    private readonly filesS3PresignedService: FilesS3PresignedService,
+  ) {}
 
   @ApiCreatedResponse({
     type: FileResponseDto,
@@ -20,6 +22,6 @@ export class FilesS3PresignedController {
   @UseGuards(AuthGuard('jwt'))
   @Post('upload')
   async uploadFile(@Body() file: FileUploadDto) {
-    return this.filesService.create(file);
+    return this.filesS3PresignedService.create(file);
   }
 }

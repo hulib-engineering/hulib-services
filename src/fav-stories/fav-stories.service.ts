@@ -1,13 +1,46 @@
 import {
   HttpStatus,
   Injectable,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { User } from '@users/domain/user';
+import { Story } from '@stories/domain/story';
+import { PublishStatus } from '@stories/status.enum';
 
 @Injectable()
 export class FavStoriesService {
   constructor(private prisma: PrismaService) {}
+
+  async addToFavorites(userId: User['id'], storyId: Story['id']) {
+    const story = await this.prisma.story.findUnique({
+      where: { id: Number(storyId) },
+    });
+    if (!story) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        errors: {
+          story: 'storyNotFound',
+        },
+      });
+    }
+
+    return this.prisma.storyFavorite.create({
+      data: {
+        userId: Number(userId),
+        storyId: Number(storyId),
+      },
+    });
+  }
+
+  removeFromFavorites(userId: User['id'], storyId: User['id']) {
+    return this.prisma.storyFavorite.delete({
+      where: {
+        userId_storyId: { userId: Number(userId), storyId: Number(storyId) },
+      },
+    });
+  }
 
   async getFavoriteStories(userId: number) {
     const favorites = await this.prisma.storyFavorite.findMany({
@@ -42,8 +75,12 @@ export class FavStoriesService {
     }
 
     return favorites.map((favorite) => {
-      const { id, ...rest } = favorite.story;
-      return { storyId: id, ...rest };
+      const { id, publishStatus, ...rest } = favorite.story;
+      return {
+        storyId: id,
+        publishStatus: PublishStatus[publishStatus],
+        ...rest,
+      };
     });
   }
 
@@ -61,9 +98,9 @@ export class FavStoriesService {
     };
   }
 
-  async removeAllFavoriteStories(userId: number) {
+  async removeAllFavoriteStories(userId: User['id']) {
     const deleteAllFavorites = await this.prisma.storyFavorite.deleteMany({
-      where: { userId },
+      where: { userId: Number(userId) },
     });
 
     return {
