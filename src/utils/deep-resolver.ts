@@ -1,6 +1,7 @@
 async function deepResolvePromises(input) {
   if (input instanceof Promise) {
-    return await input;
+    const resolved = await input;
+    return deepResolvePromises(resolved); // <- recurse again
   }
 
   if (Array.isArray(input)) {

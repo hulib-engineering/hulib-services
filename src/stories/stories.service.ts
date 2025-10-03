@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpStatus,
   Injectable,
   UnprocessableEntityException,
@@ -23,6 +24,12 @@ import { PublishStatus } from './status.enum';
 
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
+import { FileDto } from '@files/dto/file.dto';
+import fileConfig from '@files/config/file.config';
+import { FileConfig, FileDriver } from '@files/config/file-config.type';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { FileType } from '@files/domain/file';
 
 @Injectable()
 export class StoriesService {
@@ -129,20 +136,24 @@ export class StoriesService {
       select: { storyId: true, rating: true },
     });
 
-    return result.map((story) => {
-      const storyReviews = reviews.filter(
-        (review) => review.storyId === story.id,
-      );
-      const avgRating =
-        storyReviews.reduce((sum, review) => sum + review.rating, 0) /
-        (storyReviews.length || 1);
+    return await Promise.all(
+      result.map(async (story) => {
+        const storyReviews = reviews.filter(
+          (review) => review.storyId === story.id,
+        );
 
-      return {
-        ...story,
-        rating: avgRating ? Number(avgRating.toFixed(1)) : 0,
-        countReviews: storyReviews?.length || 0,
-      };
-    });
+        const avgRating =
+          storyReviews.reduce((sum, review) => sum + review.rating, 0) /
+          (storyReviews.length || 1);
+
+        return {
+          ...story,
+          cover: await this.transformFileUrl(story.cover),
+          rating: avgRating ? Number(avgRating.toFixed(1)) : 0,
+          countReviews: storyReviews?.length || 0,
+        };
+      }),
+    );
   }
 
   async findOne(id: Story['id']) {
@@ -197,10 +208,7 @@ export class StoriesService {
     );
 
     const coverWithUrl = result.cover
-      ? {
-          id: result.cover.id,
-          path: (appConfig() as AppConfig).backendDomain + result.cover.path,
-        }
+      ? await this.transformFileUrl(result.cover)
       : null;
 
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
@@ -234,7 +242,17 @@ export class StoriesService {
       });
     }
 
-    const updated = await this.storiesRepository.update(id, updateStoriesDto);
+    let topicsEntities: Topic[] = [];
+    if (updateStoriesDto.topics) {
+      topicsEntities = await this.topicsRepository.findByIds(
+        updateStoriesDto.topics.map((t) => t.id),
+      );
+    }
+
+    const updated = await this.storiesRepository.update(id, {
+      ...updateStoriesDto,
+      ...(topicsEntities.length > 0 ? { topics: topicsEntities } : {}),
+    });
 
     if (
       !!updateStoriesDto.publishStatus &&
@@ -282,5 +300,52 @@ export class StoriesService {
     }
 
     return story;
+  }
+
+  async getTopics(storyId: number) {
+    const topics = await this.storiesRepository.findRelatedTopics(storyId);
+    if (!topics) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: { story: 'storyNotFound' },
+      });
+    }
+    return topics;
+  }
+
+  // For Prisma pipe only
+  private async transformFileUrl(
+    file?: FileType | null,
+  ): Promise<FileDto | null | undefined> {
+    if (!file) return file;
+
+    const config = fileConfig() as FileConfig;
+
+    if (config.driver === FileDriver.LOCAL) {
+      file.path = (appConfig() as AppConfig).backendDomain + file.path;
+    } else if (
+      [FileDriver.S3, FileDriver.S3_PRESIGNED].includes(config.driver)
+    ) {
+      if (!file.path) {
+        throw new BadRequestException('Missing file path for S3 object.');
+      }
+
+      const s3 = new S3Client({
+        region: config.awsS3Region ?? '',
+        credentials: {
+          accessKeyId: config.accessKeyId ?? '',
+          secretAccessKey: config.secretAccessKey ?? '',
+        },
+      });
+
+      const command = new GetObjectCommand({
+        Bucket: config.awsDefaultS3Bucket,
+        Key: file.path,
+      });
+
+      file.path = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    }
+
+    return file;
   }
 }

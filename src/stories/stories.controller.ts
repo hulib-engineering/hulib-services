@@ -111,6 +111,19 @@ export class StoriesController {
     return this.storiesService.findOne(id);
   }
 
+  @Get(':id/topics')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Story,
+  })
+  findRelatedTopics(@Param('id') id: Story['id']) {
+    return this.storiesService.getTopics(id);
+  }
+
   @Patch(':id')
   @Roles(RoleEnum.humanBook, RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)

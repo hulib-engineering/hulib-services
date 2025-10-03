@@ -39,6 +39,8 @@ import { JwtRefreshPayloadType } from './strategies/types/jwt-refresh-payload.ty
 import { JwtPayloadType } from './strategies/types/jwt-payload.type';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
+import { FilesService } from '@files/files.service';
+import { FileType } from '@files/domain/file';
 
 @Injectable()
 export class AuthService {
@@ -50,6 +52,7 @@ export class AuthService {
     private configService: ConfigService<AllConfigType>,
     private topicsService: TopicsService,
     private prisma: PrismaService,
+    private readonly filesService: FilesService,
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
@@ -377,6 +380,23 @@ export class AuthService {
 
   async me(userJwtPayload: JwtPayloadType): Promise<NullableType<User>> {
     return this.usersService.findById(userJwtPayload.id);
+  }
+
+  async getMyAvatar(
+    userJwtPayload: JwtPayloadType,
+  ): Promise<NullableType<FileType>> {
+    const user = await this.usersService.findById(userJwtPayload.id);
+
+    if (!user) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          user: 'userNotFound',
+        },
+      });
+    }
+
+    return this.filesService.findById(user.photoId);
   }
 
   async update(

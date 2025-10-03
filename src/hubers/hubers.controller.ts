@@ -167,11 +167,14 @@ export class HubersController {
     if (limit > 50) {
       limit = 50;
     }
-
-    return infinityPagination(await this.hubersService.getStories(id), {
-      page,
-      limit,
-    });
+    const publishedOnly = query?.publishedOnly ?? false;
+    return infinityPagination(
+      await this.hubersService.getStories(id, publishedOnly),
+      {
+        page,
+        limit,
+      },
+    );
   }
 
   @Post(':id/reports')
