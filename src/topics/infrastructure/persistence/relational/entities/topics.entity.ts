@@ -53,10 +53,12 @@ export class TopicsEntity extends EntityRelationalHelper {
   @JoinTable({
     name: 'storyTopic',
     joinColumn: {
-      name: 'storyId',
+      name: 'topicId',
+      referencedColumnName: 'id',
     },
     inverseJoinColumn: {
-      name: 'topicId',
+      name: 'storyId',
+      referencedColumnName: 'id',
     },
   })
   stories?: StoryEntity[];

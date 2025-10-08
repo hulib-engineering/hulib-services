@@ -14,12 +14,14 @@ import appConfig from '@config/app.config';
 import { AppConfig } from '@config/app-config.type';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { omit } from 'lodash';
+import { HuberWithRelations } from './dto/query-hubers-response.dto';
 
 @Injectable()
 export class HubersService {
   constructor(private prisma: PrismaService) {}
 
-  queryHubers({
+  async queryHubers({
     filterOptions,
     sortOptions,
     paginationOptions,
@@ -27,8 +29,8 @@ export class HubersService {
     filterOptions?: FilterUserDto;
     sortOptions?: ISortOptions[];
     paginationOptions: IPaginationOptions;
-  }) {
-    return this.prisma.$transaction([
+  }): Promise<[HuberWithRelations[], number]> {
+    const [hubers, count] = await this.prisma.$transaction([
       this.prisma.user.findMany({
         where: {
           roleId: RoleEnum.humanBook,
@@ -56,7 +58,11 @@ export class HubersService {
             [sortOption.sortBy]: sortOption.order,
           })),
         include: {
-          humanBookTopic: true,
+          humanBookTopic: {
+            include: {
+              topic: true,
+            },
+          },
           file: {
             select: {
               id: true,
@@ -90,6 +96,19 @@ export class HubersService {
         },
       }),
     ]);
+
+    return [
+      await Promise.all(
+        hubers.map(async (huber) => ({
+          ...huber,
+          file: await this.transformFileUrl(huber.file),
+          sharingTopics: huber.humanBookTopic.map((topic) => ({
+            ...topic.topic,
+          })),
+        })),
+      ),
+      count,
+    ];
   }
 
   findOne(id: Huber['id']) {
@@ -171,6 +190,70 @@ export class HubersService {
         publishStatus: PublishStatus[publishStatus],
       };
     });
+  }
+
+  async findRecommendedHubers({
+    filterOptions,
+    paginationOptions,
+  }: {
+    filterOptions?: FilterUserDto;
+    paginationOptions: IPaginationOptions;
+  }): Promise<[HuberWithRelations[], number]> {
+    // 1️⃣ Fetch hubers with optional topic filters and include related files and topics
+    const hubers = await this.prisma.user.findMany({
+      where: {
+        roleId: RoleEnum.humanBook,
+        humanBookTopic: filterOptions?.userTopicsOfInterest?.length
+          ? {
+              some: {
+                topicId: { in: filterOptions.userTopicsOfInterest },
+              },
+            }
+          : undefined,
+      },
+      include: {
+        humanBookTopic: true,
+        file: {
+          select: {
+            id: true,
+            path: true,
+          },
+        },
+        feedbackBys: true,
+        feedbackTos: true, // 👈 fetch feedback given to the huber
+      },
+    });
+
+    // 2️⃣ Calculate huber rating from feedback
+    const hubersWithRating = await Promise.all(
+      hubers.map(async (huber) => {
+        const allFeedback = huber.feedbackTos ?? [];
+        const avgRating =
+          allFeedback.length > 0
+            ? allFeedback.reduce((acc, f) => acc + f.rating, 0) /
+              allFeedback.length
+            : 0;
+
+        const rating = Math.round(avgRating * 10) / 10; // 👉 round to 1 decimal
+
+        return {
+          ...omit(huber, ['feedbackTos', 'feedbackBys']),
+          file: await this.transformFileUrl(huber.file),
+          rating,
+        };
+      }),
+    );
+
+    // 3️⃣ Sort by rating descending
+    hubersWithRating.sort((a, b) => b.rating - a.rating);
+
+    // 4️⃣ Pagination
+    const totalCount = hubersWithRating.length;
+    const start = (paginationOptions.page - 1) * paginationOptions.limit;
+    const end = start + paginationOptions.limit;
+    const pagedHubers = hubersWithRating.slice(start, end);
+
+    return [pagedHubers, totalCount];
   }
 
   // For Prisma pipe only

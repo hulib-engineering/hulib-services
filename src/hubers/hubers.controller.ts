@@ -1,15 +1,17 @@
+// TO - DO: update normal pagination response dto
+
 import {
+  Body,
   Controller,
   Get,
-  UseGuards,
-  Query,
-  Request,
-  Post,
   HttpCode,
   HttpStatus,
-  Body,
   Param,
   ParseIntPipe,
+  Post,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -37,6 +39,7 @@ import { ReportHuberDto } from './dto/report-huber.dto';
 import { FindAllHubersDto } from './dto/find-all-hubers.dto';
 import { CheckSessionAvailabilityDto } from './dto/check-session-availability.dto';
 import { HubersService } from './hubers.service';
+import { HuberQueryTypeEnum } from './huber-query-type.enum';
 
 @ApiTags('Hubers')
 @ApiBearerAuth()
@@ -59,16 +62,41 @@ export class HubersController {
   async findAll(@Request() request, @Query() query: FindAllHubersDto) {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
-    const user = await this.userService.findById(request.user.id);
-    const sharingTopics = query?.topicIds ?? [];
     if (limit > 50) {
       limit = 50;
     }
 
+    const user = await this.userService.findById(request.user.id);
+    const userTopicsOfInterest = user?.topics?.map((topic) => topic.id);
+
+    if (query.type === HuberQueryTypeEnum.RECOMMENDED) {
+      const [data, count] = await this.hubersService.findRecommendedHubers({
+        filterOptions: { userTopicsOfInterest },
+        paginationOptions: {
+          page,
+          limit,
+        },
+      });
+
+      const sanitizedData = data.map((user) => {
+        const { file, ...rest } = user;
+        return omit(
+          {
+            ...rest,
+            photo: file,
+          },
+          ['password'],
+        );
+      });
+
+      return pagination(sanitizedData, count, { page, limit });
+    }
+
+    const sharingTopics = query?.topicIds ?? [];
     const [data, count] = await this.hubersService.queryHubers({
       filterOptions: {
         sharingTopics,
-        userTopicsOfInterest: user?.topics?.map((topic) => topic.id),
+        userTopicsOfInterest,
       },
       paginationOptions: {
         page,

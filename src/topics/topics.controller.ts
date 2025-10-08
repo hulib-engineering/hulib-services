@@ -27,6 +27,7 @@ import { FindAllTopicsDto } from './dto/find-all-topics.dto';
 import { CreateTopicsDto } from './dto/create-topics.dto';
 import { TopicDto } from './dto/topic.dto';
 import { UpdateTopicsDto } from './dto/update-topics.dto';
+import { TopicQueryTypeEnum } from '@topics/topic-query-type.enum';
 
 @ApiTags('Topics')
 @Controller({
@@ -52,6 +53,13 @@ export class TopicsController {
   async findAll(
     @Query() query: FindAllTopicsDto,
   ): Promise<InfinityPaginationResponseDto<Topics>> {
+    if (query?.type === TopicQueryTypeEnum.MOST_POPULAR) {
+      return infinityPagination(await this.topicsService.findTop3Popular(), {
+        page: 1,
+        limit: 3,
+      });
+    }
+
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {

@@ -1,3 +1,5 @@
+// TO-DO: update endpoint with story relation
+
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { StoryReviewsService } from './story-reviews.service';
 import { CreateStoryReviewDto } from './dto/create-story-review.dto';
