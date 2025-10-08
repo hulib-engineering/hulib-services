@@ -16,6 +16,8 @@ export abstract class TopicsRepository {
     name?: string;
   }): Promise<Topics[]>;
 
+  abstract findTop3PopularTopics(): Promise<Topics[]>;
+
   abstract findById(id: Topics['id']): Promise<NullableType<Topics>>;
 
   abstract update(

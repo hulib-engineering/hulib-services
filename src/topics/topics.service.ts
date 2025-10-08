@@ -29,6 +29,10 @@ export class TopicsService {
     });
   }
 
+  findTop3Popular() {
+    return this.topicsRepository.findTop3PopularTopics();
+  }
+
   async findOne(id: Topics['id']): Promise<Topics | null> {
     const topic = await this.topicsRepository.findById(id);
 

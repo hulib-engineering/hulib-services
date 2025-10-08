@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsOptional } from 'class-validator';
+import { IsArray, IsEnum, IsNumber, IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { HuberQueryTypeEnum } from '../huber-query-type.enum';
+import { PublishStatus } from '@stories/status.enum';
 
 export class FindAllHubersDto {
   @ApiPropertyOptional()
@@ -26,4 +28,17 @@ export class FindAllHubersDto {
   )
   @IsOptional()
   topicIds?: number[];
+
+  @IsOptional()
+  @IsEnum(PublishStatus)
+  publishStatus?: PublishStatus;
+
+  @ApiPropertyOptional({
+    type: HuberQueryTypeEnum,
+    enum: HuberQueryTypeEnum,
+    description: 'Filter hubers by query type',
+  })
+  @IsOptional()
+  @IsEnum(HuberQueryTypeEnum)
+  type?: HuberQueryTypeEnum;
 }

@@ -1,11 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { FileConfig, FileDriver } from '@files/config/file-config.type';
 
 import { IPaginationOptions } from '@utils/types/pagination-options';
 
 import { CreateStoryReviewDto } from './dto/create-story-review.dto';
 import { UpdateStoryReviewDto } from './dto/update-story-review.dto';
 import { StoryReviewOverview } from './entities/story-review-overview';
+import { FileType } from '@files/domain/file';
+import { FileDto } from '@files/dto/file.dto';
+import fileConfig from '@files/config/file.config';
+import appConfig from '@config/app.config';
+import { AppConfig } from '@config/app-config.type';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class StoryReviewsService {
@@ -27,11 +35,10 @@ export class StoryReviewsService {
   }
 
   async updateById(id: number, updateStoryReviewDto: UpdateStoryReviewDto) {
-    const updated = await this.prisma.storyReview.update({
+    return this.prisma.storyReview.update({
       where: { id },
       data: updateStoryReviewDto,
     });
-    return updated;
   }
 
   async updateByStoryId(
@@ -90,7 +97,7 @@ export class StoryReviewsService {
 
   async getReviewsOverview(storyId: number): Promise<StoryReviewOverview> {
     const reviews = await this.prisma.storyReview.findMany({
-      where: { storyId: parseInt(storyId as any, 10) },
+      where: { storyId: parseInt(`${storyId}`, 10) },
     });
 
     const numberOfReviews = reviews.length;
@@ -118,6 +125,24 @@ export class StoryReviewsService {
       return acc;
     }, reviews[0]);
 
+    const outStandingReviewReviewer = await this.prisma.user.findUnique({
+      where: { id: outstandingReview.userId },
+      include: {
+        file: {
+          select: {
+            id: true,
+            path: true,
+          },
+        },
+      },
+    });
+    // @ts-expect-error exist
+    const { file, ...rest } = outStandingReviewReviewer;
+    const outStandingReview = {
+      ...outstandingReview,
+      user: { ...rest, photo: await this.transformFileUrl(file) },
+    };
+
     return {
       rating: averageRating,
       numberOfReviews,
@@ -125,13 +150,44 @@ export class StoryReviewsService {
         rating: parseInt(rating, 10),
         count,
       })),
-      outStanding: {
-        ...outstandingReview,
-        // @ts-expect-error this always exists
-        user: await this.prisma.user.findUnique({
-          where: { id: outstandingReview.userId },
-        }),
-      },
+      // @ts-expect-error exist
+      outStanding: outStandingReview,
     };
+  }
+
+  // For Prisma pipe only
+  private async transformFileUrl(
+    file: FileType | null,
+  ): Promise<FileDto | null> {
+    if (!file) return file;
+
+    const config = fileConfig() as FileConfig;
+
+    if (config.driver === FileDriver.LOCAL) {
+      file.path = (appConfig() as AppConfig).backendDomain + file.path;
+    } else if (
+      [FileDriver.S3, FileDriver.S3_PRESIGNED].includes(config.driver)
+    ) {
+      if (!file.path) {
+        throw new BadRequestException('Missing file path for S3 object.');
+      }
+
+      const s3 = new S3Client({
+        region: config.awsS3Region ?? '',
+        credentials: {
+          accessKeyId: config.accessKeyId ?? '',
+          secretAccessKey: config.secretAccessKey ?? '',
+        },
+      });
+
+      const command = new GetObjectCommand({
+        Bucket: config.awsDefaultS3Bucket,
+        Key: file.path,
+      });
+
+      file.path = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    }
+
+    return file;
   }
 }

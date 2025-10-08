@@ -92,7 +92,9 @@ export class StoriesController {
           humanBookId: query.humanBookId,
           topicIds: query.topicIds,
           publishStatus: query.publishStatus || defaultPublishStatus,
+          type: query.type,
         },
+        sortOptions: query?.sort ?? undefined,
       }),
       { page, limit },
     );

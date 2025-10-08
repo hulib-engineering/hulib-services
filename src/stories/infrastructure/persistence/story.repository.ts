@@ -23,6 +23,12 @@ export abstract class StoryRepository {
     sortOptions?: SortStoryDto[];
   }): Promise<Story[]>;
 
+  abstract findMostPopularWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }): Promise<Story[]>;
+
   abstract findById(id: Story['id']): Promise<NullableType<Story>>;
 
   abstract findRelatedTopics(id: Story['id']): Promise<Topic[]>;

@@ -30,6 +30,7 @@ import { FileConfig, FileDriver } from '@files/config/file-config.type';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { FileType } from '@files/domain/file';
+import { StoryQueryTypeEnum } from '@stories/story-query-type.enum';
 
 @Injectable()
 export class StoriesService {
@@ -122,14 +123,27 @@ export class StoriesService {
     filterOptions?: FilterStoryDto;
     sortOptions?: SortStoryDto[];
   }) {
-    const result = await this.storiesRepository.findAllWithPagination({
-      paginationOptions: {
-        page: paginationOptions.page,
-        limit: paginationOptions.limit,
-      },
-      filterOptions,
-      sortOptions,
-    });
+    let result: Story[];
+    if (
+      filterOptions &&
+      filterOptions.type === StoryQueryTypeEnum.MOST_POPULAR
+    ) {
+      result = await this.storiesRepository.findMostPopularWithPagination({
+        paginationOptions: {
+          page: paginationOptions.page,
+          limit: paginationOptions.limit,
+        },
+      });
+    } else {
+      result = await this.storiesRepository.findAllWithPagination({
+        paginationOptions: {
+          page: paginationOptions.page,
+          limit: paginationOptions.limit,
+        },
+        filterOptions,
+        sortOptions,
+      });
+    }
 
     const reviews = await this.prisma.storyReview.findMany({
       where: { storyId: { in: result.map((story) => story.id) } },

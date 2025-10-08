@@ -63,9 +63,11 @@ export class StoryEntity extends EntityRelationalHelper {
     name: 'storyTopic',
     joinColumn: {
       name: 'storyId',
+      referencedColumnName: 'id',
     },
     inverseJoinColumn: {
       name: 'topicId',
+      referencedColumnName: 'id',
     },
   })
   topics?: TopicsEntity[];
