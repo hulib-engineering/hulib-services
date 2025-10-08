@@ -1,0 +1,27 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: 'Executing remote ssh and deploy script'
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DOTENV_FILE: ${{ secrets.DOTENV_FILE }}
+          DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: hulib-engineering
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          envs: DOTENV_FILE,DOTENV_PRIVATE_KEY_PRODUCTION
+          script: |
+            curl -sfS https://dotenvx.sh | sudo sh
+            cd hulib-services
+            dotenvx run --strict --env-file=${DOTENV_FILE} -- ./deploy.sh
