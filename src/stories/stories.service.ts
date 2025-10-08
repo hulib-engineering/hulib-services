@@ -123,7 +123,7 @@ export class StoriesService {
     filterOptions?: FilterStoryDto;
     sortOptions?: SortStoryDto[];
   }) {
-    let result: Story[] = [];
+    let result: Story[];
     if (
       filterOptions &&
       filterOptions.type === StoryQueryTypeEnum.MOST_POPULAR

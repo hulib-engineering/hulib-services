@@ -5,9 +5,9 @@ import { StoryReviewsService } from './story-reviews.service';
 import { CreateStoryReviewDto } from './dto/create-story-review.dto';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { QueryStoryReviewDto } from './dto/query-story-review.dto';
-import { DEFAULT_PAGE, DEFAULT_LIMIT } from '../utils/dto/pagination-input.dto';
+import { DEFAULT_PAGE, DEFAULT_LIMIT } from '@utils/dto/pagination-input.dto';
 import { infinityPagination } from '@utils/infinity-pagination';
-import { InfinityPaginationResponse } from '../utils/dto/infinity-pagination-response.dto';
+import { InfinityPaginationResponse } from '@utils/dto/infinity-pagination-response.dto';
 import { StoryReview } from './entities/story-review.entity';
 
 @ApiTags('Story Reviews')

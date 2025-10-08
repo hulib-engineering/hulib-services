@@ -5,7 +5,7 @@ import { PrismaService } from '@prisma-client/prisma-client.service';
 import { RoleEnum } from '@roles/roles.enum';
 import { ISortOptions } from '@utils/types/sort-options';
 import { Huber } from './domain/huber';
-import { PublishStatus } from '../stories/status.enum';
+import { PublishStatus } from '@stories/status.enum';
 import { FileType } from '@files/domain/file';
 import { FileDto } from '@files/dto/file.dto';
 import fileConfig from '@files/config/file.config';
