@@ -1,4 +1,4 @@
-import { IsOptional, IsNumber } from 'class-validator';
+import { IsOptional, IsNumber, IsBoolean } from 'class-validator';
 import { IPaginationOptionInput } from '../types/pagination-options';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
@@ -18,4 +18,14 @@ export class PaginationInputDto implements IPaginationOptionInput {
   @IsNumber()
   @IsOptional()
   limit?: number;
+
+  @ApiPropertyOptional({
+    required: false,
+    description: 'Get only published stories',
+    default: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  @IsBoolean()
+  publishedOnly?: boolean;
 }

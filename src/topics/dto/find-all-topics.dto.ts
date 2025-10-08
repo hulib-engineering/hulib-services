@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
+
+import { TopicQueryTypeEnum } from '@topics/topic-query-type.enum';
 
 export class FindAllTopicsDto {
   @ApiPropertyOptional()
@@ -19,4 +21,13 @@ export class FindAllTopicsDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @ApiPropertyOptional({
+    type: TopicQueryTypeEnum,
+    enum: TopicQueryTypeEnum,
+    description: 'Filter topics by query type',
+  })
+  @IsOptional()
+  @IsEnum(TopicQueryTypeEnum)
+  type?: TopicQueryTypeEnum;
 }

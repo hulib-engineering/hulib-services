@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 import { Story } from '@stories/domain/story';
@@ -12,6 +12,8 @@ import {
 } from '@stories/dto/find-all-stories.dto';
 import { NullableType } from '@utils/types/nullable.type';
 import { IPaginationOptions } from '@utils/types/pagination-options';
+import { Topic } from '@topics/domain/topics';
+import { PublishStatus } from '@stories/status.enum';
 
 @Injectable()
 export class StoriesRelationalRepository implements StoryRepository {
@@ -31,7 +33,7 @@ export class StoriesRelationalRepository implements StoryRepository {
   async findAllWithPagination({
     paginationOptions,
     filterOptions,
-    sortOptions,
+    // sortOptions,
   }: {
     paginationOptions: IPaginationOptions;
     filterOptions?: FilterStoryDto;
@@ -61,29 +63,57 @@ export class StoriesRelationalRepository implements StoryRepository {
         cover: true,
         humanBook: true,
       },
-      order: sortOptions?.reduce(
-        (accumulator, sort) => ({
-          ...accumulator,
-          [sort.orderBy]: sort.order,
-        }),
-        {},
-      ),
+      // order: sortOptions?.reduce(
+      //   (accumulator, sort) => ({
+      //     ...accumulator,
+      //     [sort.orderBy]: sort.order,
+      //   }),
+      //   {},
+      // ),
     });
 
-    const stories = entities.map((entity) => StoryMapper.toDomain(entity));
-    // add field countTopics to each story
-    for (const story of stories) {
-      const storyTopics = await this.storiesRepository.findOne({
-        where: { id: story.id },
-        relations: {
-          topics: true,
-        },
-      });
+    return entities.map((entity) => StoryMapper.toDomain(entity));
+  }
 
-      story.topics = storyTopics?.topics;
-    }
+  async findMostPopularWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }): Promise<Story[]> {
+    console.log('paginationOptions', paginationOptions);
 
-    return stories;
+    const rawCounts = await this.storiesRepository
+      .createQueryBuilder('story')
+      .leftJoin('story.readingSessions', 'rs')
+      .where('story.publishStatus = :status', {
+        status: PublishStatus.published,
+      })
+      .select('story.id', 'storyId')
+      .addSelect('COUNT(rs.id)::int', 'readingSessionsCount') // ✅ cast to integer
+      .groupBy('story.id')
+      .orderBy('"readingSessionsCount"', 'DESC')
+      .getRawMany();
+
+    // Manual pagination
+    const start = (paginationOptions.page - 1) * paginationOptions.limit;
+    const end = start + paginationOptions.limit;
+    const pagedCounts = rawCounts.slice(start, end);
+
+    const storyIds = pagedCounts.map((r) => r.storyId);
+    if (!storyIds.length) return [];
+
+    const entities = await this.storiesRepository.find({
+      where: { id: In(storyIds) },
+      relations: {
+        topics: true,
+        cover: true,
+        humanBook: true,
+      },
+    });
+
+    // Optional: preserve the readingSessionsCount for client use
+    const entitiesMap = new Map(entities.map((e) => [e.id, e]));
+    return storyIds.map((id) => StoryMapper.toDomain(entitiesMap.get(id)!));
   }
 
   async findById(id: Story['id']): Promise<NullableType<Story>> {
@@ -92,6 +122,14 @@ export class StoriesRelationalRepository implements StoryRepository {
     });
 
     return entity ? StoryMapper.toDomain(entity) : null;
+  }
+
+  async findRelatedTopics(id: Story['id']): Promise<Topic[]> {
+    const story = await this.storiesRepository.findOne({
+      where: { id },
+      relations: ['topics'],
+    });
+    return story?.topics ?? [];
   }
 
   async update(id: Story['id'], payload: Partial<Story>): Promise<Story> {

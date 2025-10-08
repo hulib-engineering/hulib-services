@@ -6,6 +6,7 @@ import {
   FilterStoryDto,
   SortStoryDto,
 } from '@stories/dto/find-all-stories.dto';
+import { Topic } from '@topics/domain/topics';
 
 export abstract class StoryRepository {
   abstract create(
@@ -22,7 +23,15 @@ export abstract class StoryRepository {
     sortOptions?: SortStoryDto[];
   }): Promise<Story[]>;
 
+  abstract findMostPopularWithPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }): Promise<Story[]>;
+
   abstract findById(id: Story['id']): Promise<NullableType<Story>>;
+
+  abstract findRelatedTopics(id: Story['id']): Promise<Topic[]>;
 
   abstract update(
     id: Story['id'],

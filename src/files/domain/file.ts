@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Allow } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { FileConfig, FileDriver } from '@files/config/file-config.type';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -21,10 +21,10 @@ export class FileType {
     type: String,
     example: 'https://example.com/path/to/file.jpg',
   })
+  @Expose()
   @Transform(
     ({ value }) => {
-      if (!value) return value;
-
+      if (value.startsWith('http')) return value; // already resolved
       if ((fileConfig() as FileConfig).driver === FileDriver.LOCAL) {
         return (appConfig() as AppConfig).backendDomain + value;
       } else if (

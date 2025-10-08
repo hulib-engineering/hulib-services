@@ -1,10 +1,8 @@
 import { ReadingSession } from '@reading-sessions/domain';
 import { ReadingSessionEntity } from '@reading-sessions/infrastructure/persistence/relational/entities';
-
 import { UserMapper } from '@users/infrastructure/persistence/relational/mappers/user.mapper';
-import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
-
 import { StoryMapper } from '@stories/infrastructure/persistence/relational/mappers/story.mapper';
+
 import { FeedbackMapper } from './feedbacks.mapper';
 import { MessageMapper } from './messages.mapper';
 
@@ -29,10 +27,10 @@ export class ReadingSessionMapper {
     domain.deletedAt = entity.deletedAt;
 
     if (entity.humanBook) {
-      domain.humanBook = UserMapper.toDomain(entity.humanBook as UserEntity);
+      domain.humanBook = UserMapper.toDomain(entity.humanBook);
     }
     if (entity.reader) {
-      domain.reader = UserMapper.toDomain(entity.reader as UserEntity);
+      domain.reader = UserMapper.toDomain(entity.reader);
     }
     if (entity.story) {
       domain.story = StoryMapper.toDomain(entity.story);

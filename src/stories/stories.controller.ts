@@ -92,7 +92,9 @@ export class StoriesController {
           humanBookId: query.humanBookId,
           topicIds: query.topicIds,
           publishStatus: query.publishStatus || defaultPublishStatus,
+          type: query.type,
         },
+        sortOptions: query?.sort ?? undefined,
       }),
       { page, limit },
     );
@@ -109,6 +111,19 @@ export class StoriesController {
   })
   findOne(@Param('id') id: Story['id']) {
     return this.storiesService.findOne(id);
+  }
+
+  @Get(':id/topics')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Story,
+  })
+  findRelatedTopics(@Param('id') id: Story['id']) {
+    return this.storiesService.getTopics(id);
   }
 
   @Patch(':id')

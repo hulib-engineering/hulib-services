@@ -6,6 +6,8 @@ import {
   Query,
   Delete,
   Param,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -64,6 +66,7 @@ export class FavStoriesController {
     description: 'Remove a favorite story',
     type: Story,
   })
+  @HttpCode(HttpStatus.NO_CONTENT)
   async removeFavoriteStory(
     @Param('storyId') storyId: number,
     @Query('userId') userId: number,

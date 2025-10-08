@@ -9,17 +9,17 @@ import {
   UseGuards,
   Patch,
   SerializeOptions,
+  Delete,
+  Param,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-
-import { CheckAbilities } from '@casl/decorators/casl.decorator';
-import { Action } from '@casl/ability.factory';
-import { CaslGuard } from '@casl/guards/casl.guard';
-import { NullableType } from '@utils/types/nullable.type';
-import { User } from '@users/domain/user';
-
 import { AuthService } from './auth.service';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
+
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto';
 import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
@@ -33,13 +33,30 @@ import { RegisterResponseDto } from './dto/register-response.dto';
 import { AuthValidateEmailDto } from './dto/auth-validate-email.dto';
 import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
 
+import { CheckAbilities } from '@casl/decorators/casl.decorator';
+import { Action } from '@casl/ability.factory';
+import { CaslGuard } from '@casl/guards/casl.guard';
+import { Roles } from '@roles/roles.decorator';
+import { RoleEnum } from '@roles/roles.enum';
+import { RolesGuard } from '@roles/roles.guard';
+import { Story } from '@stories/domain/story';
+import { FavStoriesService } from '@fav-stories/fav-stories.service';
+import { InfinityPaginationResponse } from '@utils/dto/infinity-pagination-response.dto';
+import { FileType } from '@files/domain/file';
+import { AuthGuard } from '@nestjs/passport';
+import { User } from '@users/domain/user';
+import { NullableType } from '@utils/types/nullable.type';
+
 @ApiTags('Auth')
 @Controller({
   path: 'auth',
   version: '1',
 })
 export class AuthController {
-  constructor(private readonly service: AuthService) {}
+  constructor(
+    private readonly service: AuthService,
+    private readonly favStoriesService: FavStoriesService,
+  ) {}
 
   @SerializeOptions({
     groups: ['me'],
@@ -128,6 +145,67 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   public me(@Request() request): Promise<NullableType<User>> {
     return this.service.me(request.user);
+  }
+
+  @ApiBearerAuth()
+  @Get('me/avatar')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOkResponse({
+    type: FileType,
+  })
+  @HttpCode(HttpStatus.OK)
+  public getAvatar(@Request() request): Promise<NullableType<FileType>> {
+    return this.service.getMyAvatar(request.user.id);
+  }
+
+  @Get('me/favorites')
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(Story),
+  })
+  getFavorites(@Request() reqest) {
+    return this.favStoriesService.getFavoriteStories(reqest.user.id);
+  }
+
+  @Post('me/favorites')
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOkResponse({
+    type: Story,
+  })
+  addToFavorites(
+    @Request() request,
+    @Body() storyToAddDto: { storyId: Story['id'] },
+  ) {
+    return this.favStoriesService.addToFavorites(
+      request.user.id,
+      storyToAddDto.storyId,
+    );
+  }
+
+  @Delete('me/favorites')
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeAllFavorites(@Request() request) {
+    return this.favStoriesService.removeAllFavoriteStories(request.user.id);
+  }
+
+  @Delete('me/favorites/:storyId')
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiParam({
+    name: 'storyId',
+    type: String,
+    required: true,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeFromFavorites(
+    @Request() request,
+    @Param('storyId') storyId: Story['id'],
+  ) {
+    return this.favStoriesService.removeFromFavorites(request.user.id, storyId);
   }
 
   @ApiBearerAuth()
