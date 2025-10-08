@@ -35,11 +35,10 @@ export class StoryReviewsService {
   }
 
   async updateById(id: number, updateStoryReviewDto: UpdateStoryReviewDto) {
-    const updated = await this.prisma.storyReview.update({
+    return this.prisma.storyReview.update({
       where: { id },
       data: updateStoryReviewDto,
     });
-    return updated;
   }
 
   async updateByStoryId(

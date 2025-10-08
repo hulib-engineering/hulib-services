@@ -19,6 +19,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthForgotPasswordDto } from './dto/auth-forgot-password.dto';
 import { AuthConfirmEmailDto } from './dto/auth-confirm-email.dto';
@@ -31,6 +32,7 @@ import { AuthChangePasswordDto } from './dto/auth-change-password.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { AuthValidateEmailDto } from './dto/auth-validate-email.dto';
 import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
+
 import { CheckAbilities } from '@casl/decorators/casl.decorator';
 import { Action } from '@casl/ability.factory';
 import { CaslGuard } from '@casl/guards/casl.guard';
@@ -41,6 +43,9 @@ import { Story } from '@stories/domain/story';
 import { FavStoriesService } from '@fav-stories/fav-stories.service';
 import { InfinityPaginationResponse } from '@utils/dto/infinity-pagination-response.dto';
 import { FileType } from '@files/domain/file';
+import { AuthGuard } from '@nestjs/passport';
+import { User } from '@users/domain/user';
+import { NullableType } from '@utils/types/nullable.type';
 
 @ApiTags('Auth')
 @Controller({
