@@ -73,4 +73,15 @@ export class FavStoriesController {
   ) {
     return this.FavStoriesService.removeFavoriteStory(storyId, userId);
   }
+
+  // sort stories favorites by createdAt latest
+  @Get('stories')
+  @ApiOperation({ summary: 'Get stories prioritizing user favorites' })
+  @ApiOkResponse({
+    description: 'List of stories with user favorites prioritized',
+    type: [Story],
+  })
+  async getFavoriteStoriesSortedByCreatedAt(@Query('userId') userId: number) {
+    return this.FavStoriesService.sortFavoriteStoriesByCreatedAt(userId);
+  }
 }
