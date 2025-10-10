@@ -84,6 +84,72 @@ export class FavStoriesService {
     });
   }
 
+  async sortFavoriteStoriesByCreatedAt(userId: number) {
+    const [userFavorites, allStories] = await Promise.all([
+      this.prisma.storyFavorite.findMany({
+        where: { userId },
+        select: { storyId: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.story.findMany({
+        where: {
+          publishStatus: PublishStatus.published,
+        },
+        include: {
+          humanBook: {
+            include: {
+              gender: true,
+              role: true,
+              status: true,
+            },
+            omit: {
+              deletedAt: true,
+              genderId: true,
+              roleId: true,
+              statusId: true,
+              photoId: true,
+              password: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    if (allStories.length === 0) {
+      return [];
+    }
+
+    const favoriteStoryIds = new Set(userFavorites.map((fav) => fav.storyId));
+
+    const { favoriteStories, nonFavoriteStories } = allStories.reduce(
+      (acc, story) => {
+        const storyWithFavoriteFlag = {
+          ...story,
+          isFavorite: favoriteStoryIds.has(story.id),
+        };
+
+        if (favoriteStoryIds.has(story.id)) {
+          acc.favoriteStories.push(storyWithFavoriteFlag);
+        } else {
+          acc.nonFavoriteStories.push(storyWithFavoriteFlag);
+        }
+
+        return acc;
+      },
+      {
+        favoriteStories: [] as Array<
+          (typeof allStories)[number] & { isFavorite: boolean }
+        >,
+        nonFavoriteStories: [] as Array<
+          (typeof allStories)[number] & { isFavorite: boolean }
+        >,
+      },
+    );
+
+    return [...favoriteStories, ...nonFavoriteStories];
+  }
+
   async removeFavoriteStory(storyId: number, userId: number) {
     const deleteFavorite = await this.prisma.storyFavorite.deleteMany({
       where: { storyId, userId },
