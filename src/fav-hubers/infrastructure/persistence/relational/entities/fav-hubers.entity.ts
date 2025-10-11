@@ -1,4 +1,9 @@
-import { Entity, CreateDateColumn, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  CreateDateColumn,
+  PrimaryColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('fav_hubers')
 export class FavoriteHubersEntity {

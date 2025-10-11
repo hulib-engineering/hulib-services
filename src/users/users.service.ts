@@ -25,7 +25,7 @@ import { user as PrismaUser } from '@prisma/client';
 import { UpgradeDto } from '@users/dto/upgrade.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
-import { pagination } from '@utils/types/pagination';
+import { pagination } from '@utils/pagination';
 import { PublishStatus } from '@stories/status.enum';
 import { FileDto } from '@files/dto/file.dto';
 import fileConfig from '@files/config/file.config';

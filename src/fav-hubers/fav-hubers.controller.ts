@@ -47,7 +47,7 @@ export class UserFavoriteHuberController {
     description: 'Get list of favorite hubers',
     type: [FavoriteHubersEntity],
   })
-  async getFavoriteHubers(@Param('userId') userId: number) {
+  getFavoriteHubers(@Param('userId') userId: number) {
     return this.userFavoriteHuberService.getFavoriteHubers(userId);
   }
 
@@ -57,7 +57,7 @@ export class UserFavoriteHuberController {
     description: 'Remove all favorite hubers',
     type: [FavoriteHubersEntity],
   })
-  async removeAllFavoriteHubers(@Query('userId') userId: number) {
+  removeAllFavoriteHubers(@Query('userId') userId: number) {
     return this.userFavoriteHuberService.removeAll(userId);
   }
 
