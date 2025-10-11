@@ -142,6 +142,9 @@ model user {
 
   reportsGiven    report[] @relation("UserReports")
   reportsReceived report[] @relation("UserReported")
+
+  favoriteHubers    huberFavorite[] @relation("UserFavorites")
+  favoritedByUsers  huberFavorite[] @relation("HuberFavorites") 
 }
 
 model story {
@@ -375,4 +378,16 @@ enum chatStatus {
   delivered
   read
   deleted
+}
+
+model huberFavorite {
+  userId    Int
+  huberId   Int
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+
+  user  user @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  huber user @relation("HuberFavorites", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([userId, huberId])
 }

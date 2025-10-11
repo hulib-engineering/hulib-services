@@ -41,3 +41,5 @@ lerna-debug.log*
 /ormconfig.json
 /docker-volumes
 .env.keys
+
+staging_backup.sql
