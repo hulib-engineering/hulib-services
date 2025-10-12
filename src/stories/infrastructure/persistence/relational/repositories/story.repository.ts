@@ -33,7 +33,7 @@ export class StoriesRelationalRepository implements StoryRepository {
   async findAllWithPagination({
     paginationOptions,
     filterOptions,
-    // sortOptions,
+    sortOptions,
   }: {
     paginationOptions: IPaginationOptions;
     filterOptions?: FilterStoryDto;
@@ -63,13 +63,15 @@ export class StoriesRelationalRepository implements StoryRepository {
         cover: true,
         humanBook: true,
       },
-      // order: sortOptions?.reduce(
-      //   (accumulator, sort) => ({
-      //     ...accumulator,
-      //     [sort.orderBy]: sort.order,
-      //   }),
-      //   {},
-      // ),
+      order: sortOptions
+        ?.filter((sort) => sort.orderBy !== 'favorite')
+        .reduce(
+          (accumulator, sort) => ({
+            ...accumulator,
+            [sort.orderBy]: sort.order,
+          }),
+          {},
+        ),
     });
 
     return entities.map((entity) => StoryMapper.toDomain(entity));
