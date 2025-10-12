@@ -138,36 +138,11 @@ export class StoriesService {
       });
     } else {
       result = await this.storiesRepository.findAllWithPagination({
-        paginationOptions: {
-          page: paginationOptions.page,
-          limit: paginationOptions.limit,
-        },
+        paginationOptions,
         filterOptions,
         sortOptions,
+        currentUserId: currentUserId ? Number(currentUserId) : undefined,
       });
-    }
-
-    const hasFavoriteSort = sortOptions?.some(
-      (sort) => sort.orderBy === 'favorite',
-    );
-    if (hasFavoriteSort && currentUserId && sortOptions) {
-      const userFavorites = await this.prisma.storyFavorite.findMany({
-        where: { userId: Number(currentUserId) },
-        select: { storyId: true },
-      });
-
-      const favoriteIds = new Set(userFavorites.map((f) => f.storyId));
-      const favoriteSort = sortOptions.find((s) => s.orderBy === 'favorite');
-
-      if (favoriteSort) {
-        result.sort((a, b) => {
-          const aIsFav = favoriteIds.has(a.id) ? 1 : 0;
-          const bIsFav = favoriteIds.has(b.id) ? 1 : 0;
-          return favoriteSort.order === 'DESC'
-            ? bIsFav - aIsFav
-            : aIsFav - bIsFav;
-        });
-      }
     }
 
     return await Promise.all(
