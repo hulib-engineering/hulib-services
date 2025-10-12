@@ -15,6 +15,7 @@ import {
 import { AuthService } from './auth.service';
 import {
   ApiBearerAuth,
+  ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
   ApiTags,
@@ -46,6 +47,9 @@ import { FileType } from '@files/domain/file';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from '@users/domain/user';
 import { NullableType } from '@utils/types/nullable.type';
+import { UserFavoriteHuberService } from '../fav-hubers/fav-hubers.service';
+import { AddStoryToFavListDto } from '@fav-stories/dto/add-story-to-fav-list.dto';
+import { AddHuberToFavListDto } from '../fav-hubers/dto/add-huber-to-fav-list.dto';
 
 @ApiTags('Auth')
 @Controller({
@@ -56,6 +60,7 @@ export class AuthController {
   constructor(
     private readonly service: AuthService,
     private readonly favStoriesService: FavStoriesService,
+    private readonly userFavoriteHuberService: UserFavoriteHuberService,
   ) {}
 
   @SerializeOptions({
@@ -168,6 +173,16 @@ export class AuthController {
     return this.favStoriesService.getFavoriteStories(reqest.user.id);
   }
 
+  @Get('me/fav-hubers')
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(User),
+  })
+  getFavHubers(@Request() reqest) {
+    return this.userFavoriteHuberService.getFavoriteHubers(reqest.user.id);
+  }
+
   @Post('me/favorites')
   @Roles(RoleEnum.humanBook, RoleEnum.reader)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -176,11 +191,27 @@ export class AuthController {
   })
   addToFavorites(
     @Request() request,
-    @Body() storyToAddDto: { storyId: Story['id'] },
+    @Body() storyToAddDto: AddStoryToFavListDto,
   ) {
     return this.favStoriesService.addToFavorites(
       request.user.id,
       storyToAddDto.storyId,
+    );
+  }
+
+  @Post('me/fav-hubers')
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiCreatedResponse({
+    type: User,
+  })
+  addToFavoriteHubers(
+    @Request() request,
+    @Body() saveFavHuberDto: AddHuberToFavListDto,
+  ) {
+    return this.userFavoriteHuberService.add(
+      request.user.id,
+      saveFavHuberDto.huberId,
     );
   }
 
@@ -190,6 +221,14 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   removeAllFavorites(@Request() request) {
     return this.favStoriesService.removeAllFavoriteStories(request.user.id);
+  }
+
+  @Delete('me/fav-hubers')
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeAllFavHubers(@Request() request) {
+    return this.userFavoriteHuberService.removeAll(request.user.id);
   }
 
   @Delete('me/favorites/:storyId')
@@ -206,6 +245,22 @@ export class AuthController {
     @Param('storyId') storyId: Story['id'],
   ) {
     return this.favStoriesService.removeFromFavorites(request.user.id, storyId);
+  }
+
+  @Delete('me/fav-hubers/:id')
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeFromFavHubers(@Request() request, @Param('id') id: User['id']) {
+    return this.userFavoriteHuberService.removeFavorite(
+      request.user.id,
+      Number(id),
+    );
   }
 
   @ApiBearerAuth()
