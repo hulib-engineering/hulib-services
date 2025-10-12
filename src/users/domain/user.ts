@@ -64,6 +64,12 @@ export class User {
   photo?: FileType | null;
 
   @ApiProperty({
+    type: () => FileType,
+    description: 'Profile cover image',
+  })
+  coverImage?: FileType | null;
+
+  @ApiProperty({
     type: () => Role,
   })
   role?: Role | null;

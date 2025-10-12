@@ -50,6 +50,10 @@ export class AuthUpdateDto {
   @IsOptional()
   photo?: FileDto | null;
 
+  @ApiPropertyOptional({ type: () => FileDto })
+  @IsOptional()
+  coverImage?: FileDto | null;
+
   @ApiPropertyOptional({ type: () => RoleDto })
   @IsOptional()
   @Type(() => RoleDto)
