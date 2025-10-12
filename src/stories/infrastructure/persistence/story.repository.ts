@@ -17,10 +17,12 @@ export abstract class StoryRepository {
     paginationOptions,
     filterOptions,
     sortOptions,
+    currentUserId,
   }: {
     paginationOptions: IPaginationOptions;
     filterOptions?: FilterStoryDto;
     sortOptions?: SortStoryDto[];
+    currentUserId?: number;
   }): Promise<Story[]>;
 
   abstract findMostPopularWithPagination({
