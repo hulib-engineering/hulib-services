@@ -15,7 +15,7 @@ export class UserFavoriteHuberService {
     const huber = await this.prisma.user.findUnique({
       where: { id: Number(huberId) },
     });
-    
+
     if (!huber) {
       throw new NotFoundException({
         status: HttpStatus.NOT_FOUND,
@@ -49,7 +49,7 @@ export class UserFavoriteHuberService {
     });
   }
 
-  async getFavoriteHubers(userId: User['id']) {
+  getFavoriteHubers(userId: User['id']) {
     return this.prisma.huberFavorite.findMany({
       where: { userId: Number(userId) },
       include: {
@@ -63,8 +63,8 @@ export class UserFavoriteHuberService {
       where: {
         userId_huberId: {
           userId: Number(userId),
-          huberId: Number(huberId)
-        }
+          huberId: Number(huberId),
+        },
       },
     });
 
@@ -81,16 +81,16 @@ export class UserFavoriteHuberService {
       where: {
         userId_huberId: {
           userId: Number(userId),
-          huberId: Number(huberId)
-        }
+          huberId: Number(huberId),
+        },
       },
     });
   }
 
-  async removeAll(userId: User['id']) {
+  removeAll(userId: User['id']) {
     return this.prisma.huberFavorite.deleteMany({
-      where: { 
-        userId: Number(userId) 
+      where: {
+        userId: Number(userId),
       },
     });
   }

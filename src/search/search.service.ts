@@ -77,6 +77,7 @@ export class SearchService {
     const stories = await this.prisma.story.findMany({
       where: {
         id: { in: ids },
+        publishStatus: { equals: 2 },
       },
       include: {
         humanBook: {

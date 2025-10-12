@@ -61,7 +61,7 @@ export class StoriesService {
     let topicsEntities: any[] = [];
     if (topics && topics.length > 0) {
       topicsEntities = await this.topicsRepository.findByIds(
-        topics.map((t) => t.id),
+        topics.map((t: Topic) => t.id),
       );
     }
 
@@ -96,7 +96,7 @@ export class StoriesService {
     let topicsEntities: Topic[] = [];
     if (createStoriesDto.topics && createStoriesDto.topics.length > 0) {
       topicsEntities = await this.topicsRepository.findByIds(
-        createStoriesDto.topics.map((t) => t.id),
+        createStoriesDto.topics.map((t: Topic) => t.id),
       );
     }
     const newStory = await this.storiesRepository.create({
@@ -145,26 +145,16 @@ export class StoriesService {
       });
     }
 
-    const reviews = await this.prisma.storyReview.findMany({
-      where: { storyId: { in: result.map((story) => story.id) } },
-      select: { storyId: true, rating: true },
-    });
-
     return await Promise.all(
       result.map(async (story) => {
-        const storyReviews = reviews.filter(
-          (review) => review.storyId === story.id,
+        const storyReview = await this.storyReviewService.getReviewsOverview(
+          story.id,
         );
-
-        const avgRating =
-          storyReviews.reduce((sum, review) => sum + review.rating, 0) /
-          (storyReviews.length || 1);
 
         return {
           ...story,
           cover: await this.transformFileUrl(story.cover),
-          rating: avgRating ? Number(avgRating.toFixed(1)) : 0,
-          countReviews: storyReviews?.length || 0,
+          storyReview,
         };
       }),
     );
@@ -259,7 +249,7 @@ export class StoriesService {
     let topicsEntities: Topic[] = [];
     if (updateStoriesDto.topics) {
       topicsEntities = await this.topicsRepository.findByIds(
-        updateStoriesDto.topics.map((t) => t.id),
+        updateStoriesDto.topics.map((t: Topic) => t.id),
       );
     }
 

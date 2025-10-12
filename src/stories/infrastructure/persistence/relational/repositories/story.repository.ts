@@ -80,8 +80,6 @@ export class StoriesRelationalRepository implements StoryRepository {
   }: {
     paginationOptions: IPaginationOptions;
   }): Promise<Story[]> {
-    console.log('paginationOptions', paginationOptions);
-
     const rawCounts = await this.storiesRepository
       .createQueryBuilder('story')
       .leftJoin('story.readingSessions', 'rs')
