@@ -13,6 +13,7 @@ import { TopicsModule } from '@topics/topics.module';
 import { CaslModule } from '@casl/casl.module';
 import { FavStoriesModule } from '@fav-stories/fav-stories.module';
 import { FilesModule } from '@files/files.module';
+import { FavHubersModule } from '../fav-hubers/fav-hubers.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { FilesModule } from '@files/files.module';
     MailModule,
     TopicsModule,
     FavStoriesModule,
+    FavHubersModule,
     FilesModule,
     JwtModule.register({}),
   ],
