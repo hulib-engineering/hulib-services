@@ -6,9 +6,9 @@ import { CreateStoryReviewDto } from './dto/create-story-review.dto';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { QueryStoryReviewDto } from './dto/query-story-review.dto';
 import { DEFAULT_PAGE, DEFAULT_LIMIT } from '@utils/dto/pagination-input.dto';
-import { infinityPagination } from '@utils/infinity-pagination';
 import { InfinityPaginationResponse } from '@utils/dto/infinity-pagination-response.dto';
 import { StoryReview } from './entities/story-review.entity';
+import { pagination } from '@utils/pagination';
 
 @ApiTags('Story Reviews')
 @Controller({
@@ -28,8 +28,8 @@ export class StoryReviewsController {
     type: InfinityPaginationResponse(StoryReview),
   })
   async findAll(@Query() query: QueryStoryReviewDto) {
-    return infinityPagination(
-      await this.storyReviewsService.findManyWithPagination({
+    const [data, count] = await this.storyReviewsService.findManyWithPagination(
+      {
         paginationOptions: {
           page: query?.page ?? DEFAULT_PAGE,
           limit: query?.limit ?? DEFAULT_LIMIT,
@@ -37,12 +37,13 @@ export class StoryReviewsController {
         filterOptions: {
           storyId: query?.storyId,
         },
-      }),
-      {
-        page: query?.page ?? DEFAULT_PAGE,
-        limit: query?.limit ?? DEFAULT_LIMIT,
       },
     );
+
+    return pagination(data, count, {
+      page: query?.page ?? DEFAULT_PAGE,
+      limit: query?.limit ?? DEFAULT_LIMIT,
+    });
   }
 
   @Get(':id')

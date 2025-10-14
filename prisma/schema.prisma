@@ -15,6 +15,7 @@ model file {
   path String @db.VarChar
 
   user     user[]
+  userCoverImages user[]  @relation("UserCoverImage")
   stories  story[]
   stickers sticker[]
 }
@@ -106,6 +107,7 @@ model user {
   statusId              Int?
   approval              String?                @db.VarChar
   photoId               String?                @db.Uuid
+  coverImageId          String?                @db.Uuid
   address               String?                @db.VarChar
   parentPhoneNumber     String?                @db.VarChar
   phoneNumber           String?                @db.VarChar
@@ -130,6 +132,7 @@ model user {
   timeSlots timeSlot[]
   gender    gender?    @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file      file?      @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  coverImage file?     @relation("UserCoverImage", fields: [coverImageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   role      role?      @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   status    status?    @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -142,6 +145,9 @@ model user {
 
   reportsGiven    report[] @relation("UserReports")
   reportsReceived report[] @relation("UserReported")
+
+  favoriteHubers    huberFavorite[] @relation("UserFavorites")
+  favoritedByUsers  huberFavorite[] @relation("HuberFavorites") 
 }
 
 model story {
@@ -375,4 +381,16 @@ enum chatStatus {
   delivered
   read
   deleted
+}
+
+model huberFavorite {
+  userId    Int
+  huberId   Int
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+
+  user  user @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  huber user @relation("HuberFavorites", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([userId, huberId])
 }

@@ -62,12 +62,6 @@ export class StoryReviewsService {
     });
   }
 
-  remove(id: number) {
-    return this.prisma.storyReview.delete({
-      where: { id },
-    });
-  }
-
   async findManyWithPagination({
     filterOptions,
     paginationOptions,
@@ -77,7 +71,6 @@ export class StoryReviewsService {
     };
     paginationOptions: IPaginationOptions;
   }) {
-    const skip = (paginationOptions.page - 1) * paginationOptions.limit;
     const where = filterOptions
       ? {
           ...filterOptions,
@@ -85,14 +78,18 @@ export class StoryReviewsService {
         }
       : undefined;
 
-    return this.prisma.storyReview.findMany({
-      where,
-      skip,
-      take: paginationOptions.limit,
-      include: {
-        user: true,
-      },
-    });
+    return this.prisma.$transaction([
+      this.prisma.storyReview.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: true,
+        },
+        skip: (paginationOptions.page - 1) * paginationOptions.limit,
+        take: paginationOptions.limit,
+      }),
+      this.prisma.storyReview.count({ where }),
+    ]);
   }
 
   async getReviewsOverview(storyId: number): Promise<StoryReviewOverview> {

@@ -25,7 +25,7 @@ import { user as PrismaUser } from '@prisma/client';
 import { UpgradeDto } from '@users/dto/upgrade.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
-import { pagination } from '@utils/types/pagination';
+import { pagination } from '@utils/pagination';
 import { PublishStatus } from '@stories/status.enum';
 import { FileDto } from '@files/dto/file.dto';
 import fileConfig from '@files/config/file.config';
@@ -193,6 +193,7 @@ export class UsersService {
         role: true,
         status: true,
         file: true,
+        coverImage: true,
       },
       omit: {
         deletedAt: true,
@@ -200,6 +201,7 @@ export class UsersService {
         roleId: true,
         statusId: true,
         photoId: true,
+        coverImageId: true,
         password: true,
         createdAt: true,
         updatedAt: true,
@@ -246,8 +248,9 @@ export class UsersService {
         },
       });
       return {
-        ...omit(user, ['feedbackTos', 'file']),
+        ...omit(user, ['feedbackTos', 'file', 'coverImage']),
         photo: this.transformFileUrl(user.file),
+        coverImage: this.transformFileUrl(user.coverImage),
         sharingTopics: mappedHumanBookTopic,
         topicsOfInterest: mappedTopicsOfInterest,
         feedbackBys: mappedFeedbackBys,
@@ -256,8 +259,9 @@ export class UsersService {
     }
 
     return {
-      ...omit(user, ['feedbackTos', 'file']),
+      ...omit(user, ['feedbackTos', 'file', 'coverImage']),
       photo: this.transformFileUrl(user.file),
+      coverImage: this.transformFileUrl(user.coverImage),
       sharingTopics: mappedHumanBookTopic,
       topicsOfInterest: mappedTopicsOfInterest,
       feedbackBys: mappedFeedbackBys,
@@ -323,6 +327,21 @@ export class UsersService {
         });
       }
       clonedPayload.photo = fileObject;
+    }
+
+    if (clonedPayload.coverImage?.id) {
+      const fileObject = await this.filesService.findById(
+        clonedPayload.coverImage.id,
+      );
+      if (!fileObject) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            coverImage: 'imageNotExists',
+          },
+        });
+      }
+      clonedPayload.coverImage = fileObject;
     }
 
     if (!!clonedPayload.role) {

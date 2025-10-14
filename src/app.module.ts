@@ -54,6 +54,7 @@ import { AgoraModule } from '@agora/agora.module';
 import { StickersModule } from './stickers/stickers.module';
 import { ChatGateway } from '@chats/chat.gateway';
 import { ReportsModule } from './reports/reports.module';
+import { FavHubersModule } from './fav-hubers/fav-hubers.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -73,6 +74,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     HealthcheckModule,
     StoriesModule,
     FavStoriesModule,
+    FavHubersModule,
     TopicsModule,
     ConfigModule.forRoot({
       isGlobal: true,

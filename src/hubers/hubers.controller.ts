@@ -24,7 +24,7 @@ import { omit } from 'lodash';
 
 import { InfinityPaginationResponse } from '@utils/dto/infinity-pagination-response.dto';
 import { User } from '@users/domain/user';
-import { pagination } from '@utils/types/pagination';
+import { pagination } from '@utils/pagination';
 import { UsersService } from '@users/users.service';
 import { Story } from '@stories/domain/story';
 import { Roles } from '@roles/roles.decorator';
@@ -40,6 +40,7 @@ import { FindAllHubersDto } from './dto/find-all-hubers.dto';
 import { CheckSessionAvailabilityDto } from './dto/check-session-availability.dto';
 import { HubersService } from './hubers.service';
 import { HuberQueryTypeEnum } from './huber-query-type.enum';
+import { Topic } from '@topics/domain/topics';
 
 @ApiTags('Hubers')
 @ApiBearerAuth()
@@ -67,7 +68,7 @@ export class HubersController {
     }
 
     const user = await this.userService.findById(request.user.id);
-    const userTopicsOfInterest = user?.topics?.map((topic) => topic.id);
+    const userTopicsOfInterest = user?.topics?.map((topic: Topic) => topic.id);
 
     if (query.type === HuberQueryTypeEnum.RECOMMENDED) {
       const [data, count] = await this.hubersService.findRecommendedHubers({
