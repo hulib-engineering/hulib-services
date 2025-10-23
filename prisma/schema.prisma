@@ -15,6 +15,7 @@ model file {
   path String @db.VarChar
 
   user     user[]
+  userCoverImages user[]  @relation("UserCoverImage")
   stories  story[]
   stickers sticker[]
 }
@@ -106,6 +107,7 @@ model user {
   statusId              Int?
   approval              String?                @db.VarChar
   photoId               String?                @db.Uuid
+  coverImageId          String?                @db.Uuid
   address               String?                @db.VarChar
   parentPhoneNumber     String?                @db.VarChar
   phoneNumber           String?                @db.VarChar
@@ -130,6 +132,7 @@ model user {
   timeSlots timeSlot[]
   gender    gender?    @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file      file?      @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  coverImage file?     @relation("UserCoverImage", fields: [coverImageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   role      role?      @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   status    status?    @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 

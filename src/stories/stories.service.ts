@@ -118,10 +118,12 @@ export class StoriesService {
     paginationOptions,
     filterOptions,
     sortOptions,
+    currentUserId,
   }: {
     paginationOptions: IPaginationOptions;
     filterOptions?: FilterStoryDto;
     sortOptions?: SortStoryDto[];
+    currentUserId?: User['id'];
   }) {
     let result: Story[];
     if (
@@ -136,12 +138,10 @@ export class StoriesService {
       });
     } else {
       result = await this.storiesRepository.findAllWithPagination({
-        paginationOptions: {
-          page: paginationOptions.page,
-          limit: paginationOptions.limit,
-        },
+        paginationOptions,
         filterOptions,
         sortOptions,
+        currentUserId: currentUserId ? Number(currentUserId) : undefined,
       });
     }
 

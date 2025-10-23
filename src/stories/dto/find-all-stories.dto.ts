@@ -19,7 +19,7 @@ export class SortStoryDto {
   @ApiProperty()
   @Type(() => String)
   @IsString()
-  orderBy: keyof Story;
+  orderBy: keyof Story | 'favorite';
 
   @ApiProperty()
   @IsString()

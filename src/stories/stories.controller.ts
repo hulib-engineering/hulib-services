@@ -114,6 +114,7 @@ export class StoriesController {
           type: query.type,
         },
         sortOptions: query?.sort ?? undefined,
+        currentUserId: request.user?.id,
       }),
       { page, limit },
     );

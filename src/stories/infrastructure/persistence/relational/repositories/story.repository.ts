@@ -53,31 +53,115 @@ export class StoriesRelationalRepository implements StoryRepository {
   async findAllWithPagination({
     paginationOptions,
     filterOptions,
-    // sortOptions,
+    sortOptions,
+    currentUserId,
   }: {
     paginationOptions: IPaginationOptions;
     filterOptions?: FilterStoryDto;
     sortOptions?: SortStoryDto[];
+    currentUserId?: number;
   }): Promise<Story[]> {
-    const entities = await this.storiesRepository.find({
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-      where: this.buildWhere(filterOptions),
-      relations: {
-        topics: true,
-        cover: true,
-        humanBook: true,
-      },
-      // order: sortOptions?.reduce(
-      //   (accumulator, sort) => ({
-      //     ...accumulator,
-      //     [sort.orderBy]: sort.order,
-      //   }),
-      //   {},
-      // ),
-    });
+    const hasFavoriteSort = sortOptions?.some(
+      (sort) => sort.orderBy === 'favorite',
+    );
 
-    return entities.map((entity) => StoryMapper.toDomain(entity));
+    if (hasFavoriteSort && currentUserId) {
+      const queryBuilder = this.storiesRepository
+        .createQueryBuilder('story')
+        .leftJoinAndSelect('story.topics', 'topics')
+        .leftJoinAndSelect('story.cover', 'cover')
+        .leftJoinAndSelect('story.humanBook', 'humanBook')
+        .leftJoin(
+          'storyFavorite',
+          'favorite',
+          'favorite."storyId" = story.id AND favorite."userId" = :userId',
+          { userId: currentUserId },
+        )
+        .addSelect(
+          'CASE WHEN favorite."userId" IS NOT NULL THEN 1 ELSE 0 END',
+          'is_favorite',
+        );
+
+      if (filterOptions?.humanBookId) {
+        queryBuilder.andWhere('story.humanBookId = :humanBookId', {
+          humanBookId: filterOptions.humanBookId,
+        });
+      }
+
+      if (filterOptions?.topicIds && filterOptions.topicIds.length) {
+        queryBuilder.andWhere('topics.id IN (:...topicIds)', {
+          topicIds: filterOptions.topicIds,
+        });
+      }
+
+      if (filterOptions?.publishStatus) {
+        queryBuilder.andWhere('story.publishStatus = :publishStatus', {
+          publishStatus: filterOptions.publishStatus,
+        });
+      }
+
+      let isFirstSort = true;
+      sortOptions?.forEach((sort) => {
+        if (sort.orderBy === 'favorite') {
+          if (isFirstSort) {
+            queryBuilder.orderBy('is_favorite', sort.order);
+            isFirstSort = false;
+          } else {
+            queryBuilder.addOrderBy('is_favorite', sort.order);
+          }
+        } else {
+          const columnName = `story.${sort.orderBy}`;
+          if (isFirstSort) {
+            queryBuilder.orderBy(columnName, sort.order);
+            isFirstSort = false;
+          } else {
+            queryBuilder.addOrderBy(columnName, sort.order);
+          }
+        }
+      });
+
+      queryBuilder
+        .skip((paginationOptions.page - 1) * paginationOptions.limit)
+        .take(paginationOptions.limit);
+
+      const entities = await queryBuilder.getMany();
+      return entities.map((entity) => StoryMapper.toDomain(entity));
+    } else {
+      const where: FindOptionsWhere<StoryEntity> = {};
+      if (!!filterOptions?.humanBookId) {
+        where.humanBook = { id: Number(filterOptions?.humanBookId) };
+      }
+
+      if (!!filterOptions?.topicIds && filterOptions?.topicIds.length) {
+        where.topics = filterOptions.topicIds.map((topicId) => ({
+          id: topicId,
+        }));
+      }
+
+      if (!!filterOptions?.publishStatus) {
+        where.publishStatus = filterOptions.publishStatus;
+      }
+
+      const entities = await this.storiesRepository.find({
+        skip: (paginationOptions.page - 1) * paginationOptions.limit,
+        take: paginationOptions.limit,
+        where,
+        relations: {
+          topics: true,
+          cover: true,
+          humanBook: true,
+        },
+        order: sortOptions?.reduce(
+          (accumulator, sort) => ({
+            ...accumulator,
+            [sort.orderBy]: sort.order,
+          }),
+          {},
+        ),
+      });
+
+      return entities.map((entity) => StoryMapper.toDomain(entity));
+    }
   }
 
   async findAllWithCountAndPagination({
