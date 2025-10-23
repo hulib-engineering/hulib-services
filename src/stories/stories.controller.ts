@@ -35,6 +35,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
 import { RolesGuard } from '@roles/roles.guard';
+import { pagination } from '@utils/pagination';
+import { PaginationResponseDto } from '@utils/dto/pagination-response.dto';
 
 @ApiTags('Stories')
 @ApiBearerAuth()
@@ -73,14 +75,31 @@ export class StoriesController {
   async findAll(
     @Request() request,
     @Query() query: FindAllStoriesDto,
-  ): Promise<InfinityPaginationResponseDto<Story>> {
+  ): Promise<
+    InfinityPaginationResponseDto<Story> | PaginationResponseDto<Story>
+  > {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
 
     const isAdmin = request.user.role.id === RoleEnum.admin;
-    const defaultPublishStatus = isAdmin
-      ? PublishStatus.draft
-      : PublishStatus.published;
+
+    if (isAdmin) {
+      const { data, count } =
+        await this.storiesService.findAllWithCountAndPagination({
+          paginationOptions: {
+            page,
+            limit,
+          },
+          filterOptions: {
+            humanBookId: query.humanBookId,
+            topicIds: query.topicIds,
+            publishStatus: query.publishStatus || PublishStatus.draft,
+            type: query.type,
+          },
+          sortOptions: query?.sort ?? undefined,
+        });
+      return pagination(data, count, { page, limit });
+    }
 
     return infinityPagination(
       await this.storiesService.findAllWithPagination({
@@ -91,7 +110,7 @@ export class StoriesController {
         filterOptions: {
           humanBookId: query.humanBookId,
           topicIds: query.topicIds,
-          publishStatus: query.publishStatus || defaultPublishStatus,
+          publishStatus: query.publishStatus || PublishStatus.published,
           type: query.type,
         },
         sortOptions: query?.sort ?? undefined,

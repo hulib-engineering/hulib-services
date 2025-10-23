@@ -38,7 +38,7 @@ export class UsersRelationalRepository implements UserRepository {
     filterOptions?: (FilterUserDto & Pick<QueryUserDto, 'role'>) | null;
     sortOptions?: SortUserDto[] | null;
     paginationOptions: IPaginationOptions;
-  }): Promise<User[]> {
+  }): Promise<{ data: User[]; count: number }> {
     const queryBuilder = this.usersRepository.createQueryBuilder('user');
     queryBuilder
       .leftJoinAndSelect('user.role', 'role')
@@ -87,8 +87,14 @@ export class UsersRelationalRepository implements UserRepository {
     queryBuilder.skip((paginationOptions.page - 1) * paginationOptions.limit);
     queryBuilder.take(paginationOptions.limit);
 
-    const entities = await queryBuilder.getMany();
-    return entities.map((user) => UserMapper.toDomain(user));
+    const [entities, total] = await queryBuilder.getManyAndCount();
+
+    const data = entities.map((user) => UserMapper.toDomain(user));
+
+    return {
+      data,
+      count: total,
+    };
   }
 
   async findById(id: User['id']): Promise<NullableType<User>> {

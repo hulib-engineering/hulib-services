@@ -27,9 +27,6 @@ import { User } from '@users/domain/user';
 import { pagination } from '@utils/pagination';
 import { UsersService } from '@users/users.service';
 import { Story } from '@stories/domain/story';
-import { Roles } from '@roles/roles.decorator';
-import { RoleEnum } from '@roles/roles.enum';
-import { RolesGuard } from '@roles/roles.guard';
 import { PaginationInputDto } from '@utils/dto/pagination-input.dto';
 import { infinityPagination } from '@utils/infinity-pagination';
 
@@ -176,8 +173,7 @@ export class HubersController {
   }
 
   @Get(':id/stories')
-  @Roles(RoleEnum.humanBook)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({
     type: InfinityPaginationResponse(Story),
   })

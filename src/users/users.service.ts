@@ -140,7 +140,7 @@ export class UsersService {
     filterOptions?: (FilterUserDto & Pick<QueryUserDto, 'role'>) | null;
     sortOptions?: SortUserDto[] | null;
     paginationOptions: IPaginationOptions;
-  }): Promise<User[]> {
+  }): Promise<{ data: User[]; count: number }> {
     return this.usersRepository.findManyWithPagination({
       filterOptions,
       sortOptions,

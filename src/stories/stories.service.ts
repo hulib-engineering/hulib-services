@@ -160,6 +160,42 @@ export class StoriesService {
     );
   }
 
+  async findAllWithCountAndPagination({
+    paginationOptions,
+    filterOptions,
+    sortOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+    filterOptions?: FilterStoryDto;
+    sortOptions?: SortStoryDto[];
+  }) {
+    const result = await this.storiesRepository.findAllWithCountAndPagination({
+      paginationOptions: {
+        page: paginationOptions.page,
+        limit: paginationOptions.limit,
+      },
+      filterOptions,
+      sortOptions,
+    });
+
+    return {
+      data: await Promise.all(
+        result?.data.map(async (story) => {
+          const storyReview = await this.storyReviewService.getReviewsOverview(
+            story.id,
+          );
+
+          return {
+            ...story,
+            cover: await this.transformFileUrl(story.cover),
+            storyReview,
+          };
+        }),
+      ),
+      count: result?.count,
+    };
+  }
+
   async findOne(id: Story['id']) {
     const result = await this.prisma.story.findUnique({
       where: { id: Number(id) },

@@ -24,6 +24,7 @@ export class FileType {
   @Expose()
   @Transform(
     ({ value }) => {
+      if (!value) return null;
       if (value.startsWith('http')) return value; // already resolved
       if ((fileConfig() as FileConfig).driver === FileDriver.LOCAL) {
         return (appConfig() as AppConfig).backendDomain + value;
