@@ -31,19 +31,51 @@ export class MailSchedulerService {
     for (const liber of libers) {
       try {
         if (liber.email) {
-          await this.mailService.sendUploadStoryReminderEmail({
+          await this.mailService.sendUploadStoryReminderEmailLiber({
             to: liber.email,
             data: {
               fullName: liber.fullName || 'Liber',
             },
           });
-          this.logger.log(`Upload story reminder sent to Liber ID: ${liber.id}, Email: ${liber.email}`);
+          this.logger.log(`Upload story reminder sent to Email: ${liber.email}`);
         }
       } catch (error) {
-        this.logger.error(`Failed to send upload story reminder to Liber ID: ${liber.id}, Email: ${liber.email}`, error.stack);
+        this.logger.error(`Failed to send upload story reminder to Email: ${liber.email}`, error.stack);
       }
     }
 
     this.logger.log('Finished sending upload story reminders to Libers.');
+  }
+
+  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
+  async sendUploadStoryRemiderHubers() {
+    this.logger.log('Starting to send upload story reminders to Hubers...');
+    const hubers = await this.prisma.user.findMany({
+      where: {
+        roleId: RoleEnum.humanBook,
+        statusId: StatusEnum.active,
+        email: { 
+          not: null,
+        },
+      },
+    });
+
+    for (const huber of hubers) {
+      try {
+        if (huber.email) {
+          await this.mailService.sendUploadStoryReminderEmailHuber({
+            to: huber.email,
+            data: {
+              fullName: huber.fullName || 'Huber',
+            },
+          });
+          this.logger.log(`Upload story reminder sent to Email: ${huber.email}`);
+        }
+      } catch (error) {
+        this.logger.error(`Failed to send upload story reminder to Email: ${huber.email}`, error.stack);
+      }
+    }
+
+    this.logger.log('Finished sending upload story reminders to Hubers.');
   }
 }
