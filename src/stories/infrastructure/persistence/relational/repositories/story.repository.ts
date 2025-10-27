@@ -30,6 +30,37 @@ export class StoriesRelationalRepository implements StoryRepository {
     return StoryMapper.toDomain(newEntity);
   }
 
+  private buildWhere(
+    filterOptions?: FilterStoryDto,
+  ): FindOptionsWhere<StoryEntity> {
+    const where: FindOptionsWhere<StoryEntity> = {};
+
+    if (filterOptions?.humanBookId) {
+      where.humanBook = {
+        id: Number(filterOptions.humanBookId),
+        role: {
+          id: In([1, 2]),
+        },
+      };
+    } else {
+      where.humanBook = {
+        role: {
+          id: In([1, 2]),
+        },
+      };
+    }
+
+    if (filterOptions?.topicIds?.length) {
+      where.topics = filterOptions.topicIds.map((id) => ({ id }));
+    }
+
+    if (filterOptions?.publishStatus) {
+      where.publishStatus = filterOptions.publishStatus;
+    }
+
+    return where;
+  }
+
   async findAllWithPagination({
     paginationOptions,
     filterOptions,
@@ -129,7 +160,9 @@ export class StoriesRelationalRepository implements StoryRepository {
         relations: {
           topics: true,
           cover: true,
-          humanBook: true,
+          humanBook: {
+            role: true,
+          },
         },
         order: sortOptions?.reduce(
           (accumulator, sort) => ({
@@ -142,6 +175,41 @@ export class StoriesRelationalRepository implements StoryRepository {
 
       return entities.map((entity) => StoryMapper.toDomain(entity));
     }
+  }
+
+  async findAllWithCountAndPagination({
+    paginationOptions,
+    filterOptions,
+    // sortOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+    filterOptions?: FilterStoryDto;
+    sortOptions?: SortStoryDto[];
+  }): Promise<{ data: Story[]; count: number }> {
+    const [entities, total] = await this.storiesRepository.findAndCount({
+      skip: (paginationOptions.page - 1) * paginationOptions.limit,
+      take: paginationOptions.limit,
+      where: this.buildWhere(filterOptions),
+      relations: {
+        topics: true,
+        cover: true,
+        humanBook: {
+          role: true,
+        },
+      },
+      // order: sortOptions?.reduce(
+      //   (accumulator, sort) => ({
+      //     ...accumulator,
+      //     [sort.orderBy]: sort.order,
+      //   }),
+      //   {},
+      // ),
+    });
+
+    return {
+      data: entities.map((entity) => StoryMapper.toDomain(entity)),
+      count: total,
+    };
   }
 
   async findMostPopularWithPagination({

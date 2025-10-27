@@ -25,11 +25,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 
 import { RolesGuard } from '@roles/roles.guard';
-import {
-  InfinityPaginationResponse,
-  InfinityPaginationResponseDto,
-} from '@utils/dto/infinity-pagination-response.dto';
-import { infinityPagination } from '@utils/infinity-pagination';
+import { InfinityPaginationResponse } from '@utils/dto/infinity-pagination-response.dto';
 import { NullableType } from '@utils/types/nullable.type';
 import { User } from './domain/user';
 import { QueryUserDto } from './dto/query-user.dto';
@@ -41,6 +37,8 @@ import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
 import { GetUserReadingSessionsQueryDto } from './dto/get-user-reading-sessions-query.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { PaginationResponseDto } from '@utils/dto/pagination-response.dto';
+import { pagination } from '@utils/pagination';
 
 @ApiBearerAuth()
 @ApiTags('Users')
@@ -78,21 +76,19 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   async findAll(
     @Query() query: QueryUserDto,
-  ): Promise<InfinityPaginationResponseDto<User>> {
+  ): Promise<PaginationResponseDto<User>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
       limit = 50;
     }
 
-    return infinityPagination(
-      await this.usersService.findManyWithPagination({
-        filterOptions: { role: query.role },
-        sortOptions: query?.sort,
-        paginationOptions: { page, limit },
-      }),
-      { page, limit },
-    );
+    const { data, count } = await this.usersService.findManyWithPagination({
+      filterOptions: { role: query.role },
+      sortOptions: query?.sort,
+      paginationOptions: { page, limit },
+    });
+    return pagination(data, count, { page, limit });
   }
 
   @ApiOkResponse({

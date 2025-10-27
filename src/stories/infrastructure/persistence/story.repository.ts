@@ -25,6 +25,16 @@ export abstract class StoryRepository {
     currentUserId?: number;
   }): Promise<Story[]>;
 
+  abstract findAllWithCountAndPagination({
+    paginationOptions,
+    filterOptions,
+    sortOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+    filterOptions?: FilterStoryDto;
+    sortOptions?: SortStoryDto[];
+  }): Promise<{ data: Story[]; count: number }>;
+
   abstract findMostPopularWithPagination({
     paginationOptions,
   }: {
