@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpStatus,
   Injectable,
   NotFoundException,
@@ -189,6 +190,40 @@ export class UsersService {
             createdAt: true,
           },
         },
+        educations: {
+          where: {
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            major: true,
+            institution: true,
+            startedAt: true,
+            endedAt: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          orderBy: {
+            startedAt: 'desc',
+          },
+        },
+        works: {
+          where: {
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            position: true,
+            company: true,
+            startedAt: true,
+            endedAt: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          orderBy: {
+            startedAt: 'desc',
+          },
+        },
         gender: true,
         role: true,
         status: true,
@@ -254,6 +289,8 @@ export class UsersService {
         sharingTopics: mappedHumanBookTopic,
         topicsOfInterest: mappedTopicsOfInterest,
         feedbackBys: mappedFeedbackBys,
+        educations: user.educations || [],
+        works: user.works || [],
         firstStory,
       };
     }
@@ -265,6 +302,8 @@ export class UsersService {
       sharingTopics: mappedHumanBookTopic,
       topicsOfInterest: mappedTopicsOfInterest,
       feedbackBys: mappedFeedbackBys,
+      educations: user.educations || [],
+      works: user.works || [],
     };
   }
 
@@ -633,6 +672,92 @@ export class UsersService {
     return pagination(data, totalItems, {
       page: paginationOptions.page,
       limit: paginationOptions.limit,
+    });
+  }
+
+  async addEducation(
+    userId: User['id'],
+    educationData: {
+      major: string;
+      institution: string;
+      startedAt: string;
+      endedAt?: string;
+    },
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: Number(userId) },
+      select: { id: true, roleId: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        errors: {
+          user: 'userNotFound',
+        },
+      });
+    }
+
+    if (user.roleId !== RoleEnum.humanBook) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        errors: {
+          role: 'onlyHumanBooksCanAddEducation',
+        },
+      });
+    }
+
+    return this.prisma.education.create({
+      data: {
+        major: educationData.major,
+        institution: educationData.institution,
+        startedAt: new Date(educationData.startedAt),
+        endedAt: educationData.endedAt ? new Date(educationData.endedAt) : null,
+        huberId: Number(userId),
+      },
+    });
+  }
+
+  async addWork(
+    userId: User['id'],
+    workData: {
+      position: string;
+      company: string;
+      startedAt: string;
+      endedAt?: string;
+    },
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: Number(userId) },
+      select: { id: true, roleId: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        errors: {
+          user: 'userNotFound',
+        },
+      });
+    }
+
+    if (user.roleId !== RoleEnum.humanBook) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        errors: {
+          role: 'onlyHumanBooksCanAddWork',
+        },
+      });
+    }
+
+    return this.prisma.work.create({
+      data: {
+        position: workData.position,
+        company: workData.company,
+        startedAt: new Date(workData.startedAt),
+        endedAt: workData.endedAt ? new Date(workData.endedAt) : null,
+        huberId: Number(userId),
+      },
     });
   }
 

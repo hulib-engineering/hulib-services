@@ -50,6 +50,9 @@ import { NullableType } from '@utils/types/nullable.type';
 import { UserFavoriteHuberService } from '../fav-hubers/fav-hubers.service';
 import { AddStoryToFavListDto } from '@fav-stories/dto/add-story-to-fav-list.dto';
 import { AddHuberToFavListDto } from '../fav-hubers/dto/add-huber-to-fav-list.dto';
+import { AddEducationDto } from './dto/add-education.dto';
+import { AddWorkDto } from './dto/add-work.dto';
+import { UsersService } from '@users/users.service';
 
 @ApiTags('Auth')
 @Controller({
@@ -61,6 +64,7 @@ export class AuthController {
     private readonly service: AuthService,
     private readonly favStoriesService: FavStoriesService,
     private readonly userFavoriteHuberService: UserFavoriteHuberService,
+    private readonly usersService: UsersService,
   ) {}
 
   @SerializeOptions({
@@ -261,6 +265,28 @@ export class AuthController {
       request.user.id,
       Number(id),
     );
+  }
+
+  @ApiBearerAuth()
+  @Post('me/educations')
+  @Roles(RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiCreatedResponse({
+    description: 'Education added successfully',
+  })
+  addEducation(@Request() request, @Body() addEducationDto: AddEducationDto) {
+    return this.usersService.addEducation(request.user.id, addEducationDto);
+  }
+
+  @ApiBearerAuth()
+  @Post('me/works')
+  @Roles(RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiCreatedResponse({
+    description: 'Work experience added successfully',
+  })
+  addWork(@Request() request, @Body() addWorkDto: AddWorkDto) {
+    return this.usersService.addWork(request.user.id, addWorkDto);
   }
 
   @ApiBearerAuth()

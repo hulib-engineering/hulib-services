@@ -14,10 +14,10 @@ model file {
   id   String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   path String @db.VarChar
 
-  user     user[]
-  userCoverImages user[]  @relation("UserCoverImage")
-  stories  story[]
-  stickers sticker[]
+  user            user[]
+  userCoverImages user[]    @relation("UserCoverImage")
+  stories         story[]
+  stickers        sticker[]
 }
 
 model gender {
@@ -129,12 +129,12 @@ model user {
 
   huberReadingSessions readingSession[] @relation("HumanBookRelation")
 
-  timeSlots timeSlot[]
-  gender    gender?    @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  file      file?      @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  coverImage file?     @relation("UserCoverImage", fields: [coverImageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  role      role?      @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  status    status?    @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  timeSlots  timeSlot[]
+  gender     gender?    @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  file       file?      @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  coverImage file?      @relation("UserCoverImage", fields: [coverImageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  role       role?      @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status     status?    @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   messagesAsHumanBook message[] @relation("HumanBookRelation")
   messagesAsReader    message[] @relation("ReaderRelation")
@@ -146,8 +146,11 @@ model user {
   reportsGiven    report[] @relation("UserReports")
   reportsReceived report[] @relation("UserReported")
 
-  favoriteHubers    huberFavorite[] @relation("UserFavorites")
-  favoritedByUsers  huberFavorite[] @relation("HuberFavorites") 
+  favoriteHubers   huberFavorite[] @relation("UserFavorites")
+  favoritedByUsers huberFavorite[] @relation("HuberFavorites")
+
+  educations education[] @relation("HuberEducation")
+  works      work[]      @relation("HuberWork")
 }
 
 model story {
@@ -393,4 +396,32 @@ model huberFavorite {
   huber user @relation("HuberFavorites", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@id([userId, huberId])
+}
+
+model education {
+  id          Int       @id @default(autoincrement())
+  major       String    @db.VarChar()
+  institution String    @db.VarChar()
+  startedAt   DateTime  @db.Date
+  endedAt     DateTime? @db.Date
+  huberId     Int
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt   DateTime?
+
+  huber user @relation("HuberEducation", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model work {
+  id        Int       @id @default(autoincrement())
+  position  String    @db.VarChar()
+  company   String    @db.VarChar()
+  startedAt DateTime  @db.Date
+  endedAt   DateTime? @db.Date
+  huberId   Int
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt DateTime?
+
+  huber user @relation("HuberWork", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }

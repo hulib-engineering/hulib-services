@@ -36,7 +36,18 @@ export class StoriesRelationalRepository implements StoryRepository {
     const where: FindOptionsWhere<StoryEntity> = {};
 
     if (filterOptions?.humanBookId) {
-      where.humanBook = { id: Number(filterOptions.humanBookId) };
+      where.humanBook = {
+        id: Number(filterOptions.humanBookId),
+        role: {
+          id: In([1, 2]),
+        },
+      };
+    } else {
+      where.humanBook = {
+        role: {
+          id: In([1, 2]),
+        },
+      };
     }
 
     if (filterOptions?.topicIds?.length) {
@@ -149,7 +160,9 @@ export class StoriesRelationalRepository implements StoryRepository {
         relations: {
           topics: true,
           cover: true,
-          humanBook: true,
+          humanBook: {
+            role: true,
+          },
         },
         order: sortOptions?.reduce(
           (accumulator, sort) => ({
@@ -180,7 +193,9 @@ export class StoriesRelationalRepository implements StoryRepository {
       relations: {
         topics: true,
         cover: true,
-        humanBook: true,
+        humanBook: {
+          role: true,
+        },
       },
       // order: sortOptions?.reduce(
       //   (accumulator, sort) => ({
