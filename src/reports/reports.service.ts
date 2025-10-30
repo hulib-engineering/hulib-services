@@ -4,8 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateReportDto } from './dto/create-report.dto';
+import { Report } from './domain/report';
 import { PrismaService } from '@prisma-client/prisma-client.service';
-import { RoleEnum } from '../roles/roles.enum';
+import { RoleEnum } from '@roles/roles.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
@@ -17,7 +18,7 @@ export class ReportsService {
   ) {}
 
   async create(reporterId: number, createReportDto: CreateReportDto) {
-    const { reportedUserId, reason } = createReportDto;
+    const { reportedUserId, reason, customReason } = createReportDto;
 
     if (reporterId === reportedUserId) {
       throw new BadRequestException('You cannot report yourself');
@@ -49,6 +50,7 @@ export class ReportsService {
         reporterId,
         reportedUserId,
         reason,
+        customReason,
       },
       include: {
         reporter: {
@@ -72,5 +74,14 @@ export class ReportsService {
     });
 
     return report;
+  }
+
+  update(id: Report['id'], payload: Partial<Omit<Report, 'id'>>) {
+    return this.prisma.report.update({
+      where: {
+        id: Number(id),
+      },
+      data: payload,
+    });
   }
 }

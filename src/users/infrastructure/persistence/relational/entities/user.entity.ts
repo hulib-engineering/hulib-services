@@ -47,7 +47,7 @@ export class UserEntity extends EntityRelationalHelper {
     type: String,
     example: 'john.doe@example.com',
   })
-  // For "string | null" we need to use String type.
+  // For "string | null" we need to use a String type.
   // More info: https://github.com/typeorm/typeorm/issues/2567
   @Column({ type: String, unique: true, nullable: true })
   @Expose({ groups: ['me', 'admin'] })

@@ -13,9 +13,14 @@ export class ReportMapper {
 
   static toPersistence(domainEntity: Report): ReportEntity {
     const persistenceEntity = new ReportEntity();
-    if (domainEntity.id) {
+    if (domainEntity.id && typeof domainEntity.id === 'number') {
       persistenceEntity.id = domainEntity.id;
     }
+    persistenceEntity.reason = domainEntity.reason;
+    persistenceEntity.customReason = domainEntity.customReason;
+    persistenceEntity.markAsResolved = domainEntity.markAsResolved;
+    persistenceEntity.rejectedReason = domainEntity.rejectedReason;
+    persistenceEntity.rejectedCustomReason = domainEntity.rejectedCustomReason;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 
