@@ -55,6 +55,7 @@ import { StickersModule } from './stickers/stickers.module';
 import { ChatGateway } from '@chats/chat.gateway';
 import { ReportsModule } from './reports/reports.module';
 import { FavHubersModule } from './fav-hubers/fav-hubers.module';
+import { ModerationsModule } from '@moderations/moderations.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -156,6 +157,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     ChatModule,
     AgoraModule,
     StickersModule,
+    ModerationsModule,
   ],
   providers: [
     SocketGateway,
