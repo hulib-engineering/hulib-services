@@ -30,9 +30,17 @@ jobs:
           npx prisma generate
           npm run build --if-present
 
+      - name: Create startup script
+        run: |
+          echo '#!/bin/sh' > startup.sh
+          echo 'cd /home/site/wwwroot' >> startup.sh
+          echo 'export PATH=/home/site/wwwroot/node_modules/.bin:$PATH' >> startup.sh
+          echo 'node dist/main' >> startup.sh
+          chmod +x startup.sh
+
       - name: Zip artifact for deployment
         run: |
-          zip -r release.zip dist node_modules package.json package-lock.json prisma Procfile
+          zip -r release.zip dist node_modules package.json package-lock.json prisma startup.sh
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -70,3 +78,7 @@ jobs:
           app-name: 'hulibvietnam'
           slot-name: 'Production'
           package: .
+
+      - name: Set startup command
+        run: |
+          az webapp config set --resource-group hulibvietnam_group --name hulibvietnam --startup-file "node /home/site/wwwroot/dist/main.js"
