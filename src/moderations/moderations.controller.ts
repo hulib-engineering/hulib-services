@@ -21,8 +21,9 @@ import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
 import { RolesGuard } from '@roles/roles.guard';
 
-@ApiBearerAuth()
 @ApiTags('Moderations')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'moderations',
   version: '1',
@@ -33,7 +34,7 @@ export class ModerationsController {
   @ApiOperation({
     summary: 'Ban a user (Admin only)',
     description:
-      'Sets user status to inactive. Optional reportId links the ban to a specific report. User cannot login after being banned.',
+      'Sets user status to inactive.',
   })
   @ApiOkResponse({
     type: Moderation,
@@ -41,7 +42,7 @@ export class ModerationsController {
   })
   @Post('ban')
   @Roles(RoleEnum.admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @HttpCode(HttpStatus.OK)
   banUser(@Body() dto: BanUserDto): Promise<Moderation> {
     return this.moderationsService.banUser(dto);
@@ -50,7 +51,7 @@ export class ModerationsController {
   @ApiOperation({
     summary: 'Unban a user (Admin only)',
     description:
-      'Resets warn count to 0 and sets user status to active. Optional reportId links the unban to a specific report. Reverses the active ban moderation.',
+      'Resets warn count to 0 and sets user status to active.',
   })
   @ApiOkResponse({
     type: Moderation,
@@ -58,7 +59,7 @@ export class ModerationsController {
   })
   @Post('unban')
   @Roles(RoleEnum.admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @HttpCode(HttpStatus.OK)
   unbanUser(@Body() dto: UnbanUserDto): Promise<Moderation> {
     return this.moderationsService.unbanUser(dto);
