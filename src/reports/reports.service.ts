@@ -9,6 +9,7 @@ import { PrismaService } from '@prisma-client/prisma-client.service';
 import { RoleEnum } from '@roles/roles.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
+import { UpdateReportDto } from './dto/update-report.dto';
 
 @Injectable()
 export class ReportsService {
@@ -76,7 +77,7 @@ export class ReportsService {
     return report;
   }
 
-  update(id: Report['id'], payload: Partial<Omit<Report, 'id'>>) {
+  update(id: Report['id'], payload: UpdateReportDto) {
     return this.prisma.report.update({
       where: {
         id: Number(id),

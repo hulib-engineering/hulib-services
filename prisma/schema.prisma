@@ -153,7 +153,7 @@ model user {
   educations education[] @relation("HuberEducation")
   works      work[]      @relation("HuberWork")
 
-  moderations  moderation[] @relation("UserModerations")
+  moderations moderation[] @relation("UserModerations")
 }
 
 model story {
@@ -368,19 +368,19 @@ model chat {
 }
 
 model report {
-  id             Int      @id @default(autoincrement())
-  reason         String
+  id                   Int      @id @default(autoincrement())
+  reason               String
   customReason         String?
-  rejectedReason         String?
-  rejectedCustomReason         String?
-  markAsResolved Boolean  @default(false)
-  createdAt      DateTime @default(now()) @db.Timestamp(6)
+  rejectedReason       String?
+  rejectedCustomReason String?
+  markAsResolved       Boolean  @default(false)
+  createdAt            DateTime @default(now()) @db.Timestamp(6)
 
   reporterId     Int
   reportedUserId Int
 
-  reporter     user @relation("UserReports", fields: [reporterId], references: [id])
-  reportedUser user @relation("UserReported", fields: [reportedUserId], references: [id])
+  reporter     user         @relation("UserReports", fields: [reporterId], references: [id])
+  reportedUser user         @relation("UserReported", fields: [reportedUserId], references: [id])
   moderations  moderation[]
 
   @@unique([reporterId, reportedUserId])
