@@ -38,7 +38,7 @@ export class ReportRelationalRepository implements ReportRepository {
 
   async findById(id: Report['id']): Promise<NullableType<Report>> {
     const entity = await this.reportRepository.findOne({
-      where: { id },
+      where: { id: Number(id) },
     });
 
     return entity ? ReportMapper.toDomain(entity) : null;
@@ -46,7 +46,7 @@ export class ReportRelationalRepository implements ReportRepository {
 
   async update(id: Report['id'], payload: Partial<Report>): Promise<Report> {
     const entity = await this.reportRepository.findOne({
-      where: { id },
+      where: { id: Number(id) },
     });
 
     if (!entity) {

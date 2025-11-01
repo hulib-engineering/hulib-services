@@ -136,7 +136,9 @@ export class NotificationsService {
           sessionStatus: true,
           startedAt: true,
           startTime: true,
+          endedAt: true,
           endTime: true,
+          note: true,
           rejectReason: true,
           sessionUrl: true,
           story: {
@@ -163,8 +165,14 @@ export class NotificationsService {
         include: {
           reportedUser: {
             select: {
-              id: true,
               fullName: true,
+              file: true,
+            },
+          },
+          reporter: {
+            select: {
+              fullName: true,
+              file: true,
             },
           },
         },
@@ -192,7 +200,9 @@ export class NotificationsService {
           sessionStatus: rs.sessionStatus,
           startedAt: rs.startedAt,
           startTime: rs.startTime,
+          endedAt: rs.endedAt,
           endTime: rs.endTime,
+          note: rs.note,
           rejectReason: rs.rejectReason,
           storyTitle: rs.story.title,
           humanBook: rs.humanBook,
@@ -208,13 +218,19 @@ export class NotificationsService {
         {
           id: rs.id,
           reason: rs.reason,
+          customReason: rs.customReason,
           reporterId: rs.reporterId,
           reportedUserId: rs.reportedUserId,
           markAsResolved: rs.markAsResolved,
           reportee: {
-            id: rs.reportedUser.id,
             fullName: rs.reportedUser.fullName,
+            photo: rs.reportedUser.file,
           },
+          reporter: {
+            fullName: rs.reporter.fullName,
+            photo: rs.reporter.file,
+          },
+          createdAt: rs.createdAt,
         },
       ]),
     );
