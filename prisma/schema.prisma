@@ -1,22 +1,23 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
-  unaccent        = "true"
+  unaccent        = true
 }
 
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [unaccent, uuid_ossp(map: "uuid-ossp")]
+  extensions = [uuid_ossp(map: "uuid-ossp"), unaccent]
 }
 
 model file {
-  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  path            String    @db.VarChar
-  stickers        sticker[]
-  stories         story[]
-  userCoverImages user[]    @relation("UserCoverImage")
+  id   String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  path String @db.VarChar
+
   user            user[]
+  userCoverImages user[]    @relation("UserCoverImage")
+  stories         story[]
+  stickers        sticker[]
 }
 
 model gender {
@@ -72,10 +73,12 @@ model session {
 }
 
 model status {
-  id       Int       @id
-  name     String    @db.VarChar
-  stickers sticker[]
+  id   Int    @id
+  name String @db.VarChar
+
+  // Optional back relation
   user     user[]
+  stickers sticker[]
 }
 
 model topics {
@@ -104,69 +107,79 @@ model user {
   statusId              Int?
   approval              String?                @db.VarChar
   photoId               String?                @db.Uuid
+  coverImageId          String?                @db.Uuid
   address               String?                @db.VarChar
   parentPhoneNumber     String?                @db.VarChar
   phoneNumber           String?                @db.VarChar
   bio                   String?                @db.VarChar
   videoUrl              String?                @db.VarChar
   education             String?                @db.VarChar
+  warnCount             Int                    @default(0)
   educationStart        DateTime?              @db.Date
   educationEnd          DateTime?              @db.Date
-  coverImageId          String?                @db.Uuid
-  warnCount             Int                    @default(0)
-  
-  chatsReceived         chat[]                 @relation("ChatRecipient")
-  chatsSent             chat[]                 @relation("ChatSender")
-  feedbackBys           feedback[]             @relation("UserFeedbackBy")
-  feedbackTos           feedback[]             @relation("UserFeedbackTo")
-  favoritedByUsers      huberFavorite[]        @relation("HuberFavorites")
-  favoriteHubers        huberFavorite[]        @relation("UserFavorites")
   humanBookTopic        humanBookTopic[]
-  humanBooks            humanBooks[]
   topicsOfInterest      liberTopicOfInterest[]
-  messagesAsHumanBook   message[]              @relation("HumanBookRelation")
-  messagesAsReader      message[]              @relation("ReaderRelation")
-  notificationsReceived notification[]         @relation("RecipientNotification")
-  notificationsSent     notification[]         @relation("SenderNotification")
-  huberReadingSessions  readingSession[]       @relation("HumanBookRelation")
-  readingSession        readingSession[]       @relation("ReaderRelation")
-  reportsReceived       report[]               @relation("UserReported")
-  reportsGiven          report[]               @relation("UserReports")
+  humanBooks            humanBooks[]
+  storyReview           storyReview[]
   stories               story[]
   storyFavorite         storyFavorite[]
-  storyReview           storyReview[]
-  timeSlots             timeSlot[]
-  coverImage            file?                  @relation("UserCoverImage", fields: [coverImageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  gender                gender?                @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  file                  file?                  @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  role                  role?                  @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  status                status?                @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  moderations           moderation[]           @relation("UserModerations")
+  notificationsReceived notification[]         @relation("RecipientNotification")
+  notificationsSent     notification[]         @relation("SenderNotification")
+  chatsSent             chat[]                 @relation("ChatSender")
+  chatsReceived         chat[]                 @relation("ChatRecipient")
+
+  huberReadingSessions readingSession[] @relation("HumanBookRelation")
+
+  timeSlots  timeSlot[]
+  gender     gender?    @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  file       file?      @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  coverImage file?      @relation("UserCoverImage", fields: [coverImageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  role       role?      @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status     status?    @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  messagesAsHumanBook message[] @relation("HumanBookRelation")
+  messagesAsReader    message[] @relation("ReaderRelation")
+
+  readingSession readingSession[] @relation(name: "ReaderRelation")
+  feedbackBys    feedback[]       @relation(name: "UserFeedbackBy")
+  feedbackTos    feedback[]       @relation(name: "UserFeedbackTo")
+
+  reportsGiven    report[] @relation("UserReports")
+  reportsReceived report[] @relation("UserReported")
+
+  favoriteHubers   huberFavorite[] @relation("UserFavorites")
+  favoritedByUsers huberFavorite[] @relation("HuberFavorites")
+
+  educations education[] @relation("HuberEducation")
+  works      work[]      @relation("HuberWork")
+
+  moderations  moderation[] @relation("UserModerations")
 }
 
 model story {
-  id              Int              @id @default(autoincrement())
-  title           String           @db.VarChar
-  abstract        String?          @db.VarChar
-  coverId         String?          @db.Uuid
-  humanBookId     Int
-  createdAt       DateTime         @default(now()) @db.Timestamp(6)
-  updatedAt       DateTime         @default(now()) @db.Timestamp(6)
-  publishStatus   Int              @default(1)
-  rejectionReason String?
+  id            Int             @id @default(autoincrement())
+  title         String          @db.VarChar
+  abstract      String?         @db.VarChar
+  coverId       String?         @db.Uuid
+  humanBookId   Int
+  publishStatus Int             @default(1)
+  createdAt     DateTime        @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime        @default(now()) @db.Timestamp(6)
+  cover         file?           @relation(fields: [coverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  humanBook     user            @relation(fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  storyFavorite storyFavorite[]
+  storyReview   storyReview[]
+  topics        storyTopic[]
+
   readingSession  readingSession[]
-  cover           file?            @relation(fields: [coverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  humanBook       user             @relation(fields: [humanBookId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  storyFavorite   storyFavorite[]
-  storyReview     storyReview[]
-  topics          storyTopic[]
+  rejectionReason String?
 }
 
 model storyTopic {
   storyId Int
   topicId Int
-  story   story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
-  topic   topics @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  story   story  @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  topic   topics @relation(fields: [topicId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@id([storyId, topicId])
 }
@@ -176,13 +189,13 @@ model storyReview {
   rating    Int
   title     String   @db.VarChar
   comment   String   @db.VarChar
+  preRating Int?
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
   userId    Int
   storyId   Int
-  preRating Int?
-  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_story_review_user")
   story     story    @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_story_review_user")
 }
 
 model storyFavorite {
@@ -190,89 +203,116 @@ model storyFavorite {
   storyId   Int
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
-  story     story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
-  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user  user  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  story story @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@id([userId, storyId])
 }
 
 model timeSlot {
   id        Int      @id @default(autoincrement())
+  huberId   Int
   dayOfWeek Int
   startTime String   @db.VarChar
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
-  huberId   Int
-  huber     user     @relation(fields: [huberId], references: [id])
+  huber     user?    @relation(fields: [huberId], references: [id])
+}
+
+enum ReadingSessionStatus {
+  finished
+  canceled
+  pending
+  rejected
+  approved
+  unInitialized
+  missed
 }
 
 model readingSession {
-  id            Int                  @id @default(autoincrement())
-  humanBookId   Int
-  readerId      Int
-  storyId       Int
-  note          String?              @db.VarChar(4000)
+  id Int @id @default(autoincrement())
+
+  humanBookId Int
+  humanBook   user @relation(name: "HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade)
+
+  readerId Int
+  reader   user @relation(name: "ReaderRelation", fields: [readerId], references: [id], onDelete: Cascade)
+
+  storyId Int
+  story   story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  note          String?              @db.VarChar(4000) // Mentee requests for session (if yes)
   preRating     Int                  @default(0)
   rating        Int                  @default(0)
-  sessionUrl    String               @db.VarChar(1000)
-  recordingUrl  String?              @db.VarChar(500)
+  sessionUrl    String               @db.VarChar(1000) // Meeting URL
+  recordingUrl  String?              @db.VarChar(500) // Meeting recording URL
   sessionStatus ReadingSessionStatus @default(pending)
-  startedAt     DateTime             @default(now()) @db.Timestamp(6)
-  startTime     String               @db.VarChar(40)
-  endedAt       DateTime             @db.Timestamp(6)
-  endTime       String               @db.VarChar(40)
-  createdAt     DateTime             @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime             @default(now()) @db.Timestamp(6)
-  deletedAt     DateTime?
-  rejectReason  String?
-  messages      message[]            @relation("ReadingSessionMessage")
-  humanBook     user                 @relation("HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade)
-  reader        user                 @relation("ReaderRelation", fields: [readerId], references: [id], onDelete: Cascade)
-  story         story                @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  startedAt DateTime @default(now()) @db.Timestamp(6)
+  startTime String   @db.VarChar(40)
+  endedAt   DateTime @db.Timestamp(6)
+  endTime   String   @db.VarChar(40)
+
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt DateTime?
+
+  rejectReason String?
+  // feedbacks feedback[] @relation("ReadingSessionFeedback")
+  messages     message[] @relation("ReadingSessionMessage")
+  // feedback  feedback[]
 }
 
 model feedback {
-  id           Int       @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   feedbackById Int?
+  feedbackBy   user? @relation(name: "UserFeedbackBy", fields: [feedbackById], references: [id], onDelete: Cascade)
+
   feedbackToId Int?
-  rating       Float
-  preRating    Int?
-  content      String?   @db.VarChar(4000)
-  createdAt    DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt    DateTime  @default(now()) @db.Timestamp(6)
-  deletedAt    DateTime?
-  feedbackBy   user?     @relation("UserFeedbackBy", fields: [feedbackById], references: [id], onDelete: Cascade)
-  feedbackTo   user?     @relation("UserFeedbackTo", fields: [feedbackToId], references: [id], onDelete: Cascade)
+  feedbackTo   user? @relation(name: "UserFeedbackTo", fields: [feedbackToId], references: [id], onDelete: Cascade)
+
+  rating    Float
+  preRating Int?
+  content   String?   @db.VarChar(4000)
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt DateTime?
 }
 
 model message {
-  id               Int            @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   readingSessionId Int
-  humanBookId      Int
-  readerId         Int
-  content          String         @db.VarChar(4000)
-  createdAt        DateTime       @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime       @default(now()) @db.Timestamp(6)
-  deletedAt        DateTime?
-  humanBook        user           @relation("HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade)
-  reader           user           @relation("ReaderRelation", fields: [readerId], references: [id], onDelete: Cascade)
-  readingSession   readingSession @relation("ReadingSessionMessage", fields: [readingSessionId], references: [id], onDelete: Cascade)
+  readingSession   readingSession @relation(name: "ReadingSessionMessage", fields: [readingSessionId], references: [id], onDelete: Cascade)
+
+  humanBookId Int
+  humanBook   user @relation(name: "HumanBookRelation", fields: [humanBookId], references: [id], onDelete: Cascade)
+
+  readerId Int
+  reader   user @relation(name: "ReaderRelation", fields: [readerId], references: [id], onDelete: Cascade)
+
+  content   String    @db.VarChar(4000)
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt DateTime?
 }
 
 model notification {
   id              Int              @id @default(autoincrement())
   recipientId     Int
+  recipient       user             @relation("RecipientNotification", fields: [recipientId], references: [id])
   senderId        Int
+  sender          user             @relation("SenderNotification", fields: [senderId], references: [id])
   typeId          Int
+  type            notificationType @relation(fields: [typeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   seen            Boolean          @default(false)
   relatedEntityId Int?
+  extraNote       String?
   createdAt       DateTime         @default(now()) @db.Timestamp(6)
   updatedAt       DateTime         @default(now()) @db.Timestamp(6)
   deletedAt       DateTime?
-  extraNote       String?
-  recipient       user             @relation("RecipientNotification", fields: [recipientId], references: [id])
-  sender          user             @relation("SenderNotification", fields: [senderId], references: [id])
-  type            notificationType @relation(fields: [typeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model notificationType {
@@ -288,34 +328,41 @@ model chatType {
 }
 
 model sticker {
-  id        Int      @id @default(autoincrement())
-  name      String
-  imageId   String?  @db.Uuid
-  category  String?
-  statusId  Int?
+  id       Int     @id @default(autoincrement())
+  name     String
+  imageId  String? @db.Uuid
+  category String?
+  statusId Int?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  chat      chat[]
-  image     file?    @relation(fields: [imageId], references: [id])
-  status    status?  @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  image  file?   @relation(fields: [imageId], references: [id])
+  status status? @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  // Optional back relation
+  chat chat[]
 }
 
 model chat {
-  id          Int        @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   senderId    Int
   recipientId Int
   message     String?    @db.VarChar(4000)
   status      chatStatus @default(sent)
-  createdAt   DateTime   @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime   @default(now()) @db.Timestamp(6)
-  deletedAt   DateTime?
-  readAt      DateTime?
-  stickerId   Int?
   chatTypeId  Int?       @default(1)
-  chatType    chatType?  @relation(fields: [chatTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  recipient   user       @relation("ChatRecipient", fields: [recipientId], references: [id])
-  sender      user       @relation("ChatSender", fields: [senderId], references: [id])
-  sticker     sticker?   @relation(fields: [stickerId], references: [id])
+  stickerId   Int?
+
+  sticker   sticker?  @relation(fields: [stickerId], references: [id])
+  sender    user      @relation("ChatSender", fields: [senderId], references: [id])
+  recipient user      @relation("ChatRecipient", fields: [recipientId], references: [id])
+  chatType  chatType? @relation(fields: [chatTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  readAt    DateTime?
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt DateTime?
 
   @@index([recipientId, readAt])
 }
@@ -323,36 +370,20 @@ model chat {
 model report {
   id             Int      @id @default(autoincrement())
   reason         String
+  customReason         String?
+  rejectedReason         String?
+  rejectedCustomReason         String?
   markAsResolved Boolean  @default(false)
   createdAt      DateTime @default(now()) @db.Timestamp(6)
+
   reporterId     Int
   reportedUserId Int
-  reportedUser   user     @relation("UserReported", fields: [reportedUserId], references: [id])
-  reporter       user     @relation("UserReports", fields: [reporterId], references: [id])
-  moderations    moderation[]
-  
+
+  reporter     user @relation("UserReports", fields: [reporterId], references: [id])
+  reportedUser user @relation("UserReported", fields: [reportedUserId], references: [id])
+  moderations  moderation[]
+
   @@unique([reporterId, reportedUserId])
-}
-
-model huberFavorite {
-  userId    Int
-  huberId   Int
-  createdAt DateTime @default(now()) @db.Timestamp(6)
-  updatedAt DateTime @default(now()) @db.Timestamp(6)
-  huber     user     @relation("HuberFavorites", fields: [huberId], references: [id], onDelete: Cascade)
-  user      user     @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([userId, huberId])
-}
-
-enum ReadingSessionStatus {
-  finished
-  canceled
-  pending
-  rejected
-  approved
-  unInitialized
-  missed
 }
 
 enum chatStatus {
@@ -360,6 +391,46 @@ enum chatStatus {
   delivered
   read
   deleted
+}
+
+model huberFavorite {
+  userId    Int
+  huberId   Int
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+
+  user  user @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  huber user @relation("HuberFavorites", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([userId, huberId])
+}
+
+model education {
+  id          Int       @id @default(autoincrement())
+  major       String    @db.VarChar()
+  institution String    @db.VarChar()
+  startedAt   DateTime  @db.Date
+  endedAt     DateTime? @db.Date
+  huberId     Int
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt   DateTime?
+
+  huber user @relation("HuberEducation", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model work {
+  id        Int       @id @default(autoincrement())
+  position  String    @db.VarChar()
+  company   String    @db.VarChar()
+  startedAt DateTime  @db.Date
+  endedAt   DateTime? @db.Date
+  huberId   Int
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt DateTime?
+
+  huber user @relation("HuberWork", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 enum ModerationActionType {
