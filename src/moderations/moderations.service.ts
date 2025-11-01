@@ -3,132 +3,208 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { ModerationRepository } from './infrastructure/persistence/moderation.repository';
 import { UsersService } from '@users/users.service';
 import { BanUserDto } from './dto/ban-user.dto';
 import { UnbanUserDto } from './dto/unban-user.dto';
-import { Moderation, ModerationActionType } from './domain/moderation';
+import { Moderation, ModerationActionType, ModerationStatus } from './domain/moderation';
 import { StatusEnum } from '@statuses/statuses.enum';
 
 @Injectable()
 export class ModerationsService {
+  private readonly logger = new Logger(ModerationsService.name);
+
   constructor(
     private readonly moderationRepository: ModerationRepository,
     private readonly usersService: UsersService,
   ) {}
 
-  /**
-   * Ban a user
-   * - Validates reportId if provided
-   * - Sets user status to inactive
-   * - Creates moderation record (ban)
-   * - Links to report if reportId provided
-   */
   async banUser(dto: BanUserDto): Promise<Moderation> {
-    // Validate user exists
-    const user = await this.usersService.findById(dto.userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    // Check if already banned
-    if (user.status?.id === StatusEnum.inactive) {
-      throw new ConflictException('User is already banned');
-    }
-
-    // Validate reportId if provided
-    if (dto.reportId) {
-      const report = await this.moderationRepository.findReportById(dto.reportId);
-      if (!report) {
-        throw new NotFoundException('Report not found');
+    try {
+      const user = await this.usersService.findById(dto.userId);
+      if (!user) {
+        throw new NotFoundException(`User with ID ${dto.userId} not found`);
       }
 
-      // Validate report is for the correct user
-      if (report.reportedUserId !== dto.userId) {
-        throw new BadRequestException(
-          'Report does not belong to the specified user',
+      if (user.status?.id === StatusEnum.inactive) {
+        throw new ConflictException(
+          `User ${dto.userId} is already banned`,
         );
       }
+
+      if (dto.reportId) {
+        const report = await this.moderationRepository.findReportById(
+          dto.reportId,
+        );
+
+        if (!report) {
+          throw new NotFoundException(
+            `Report with ID ${dto.reportId} not found`,
+          );
+        }
+
+        // Validate report belongs to the user being banned
+        if (report.reportedUserId !== dto.userId) {
+          throw new BadRequestException(
+            `Report ${dto.reportId} is not associated with user ${dto.userId}`,
+          );
+        }
+
+        if (report.markAsResolved) {
+          this.logger.warn(
+            `Report ${dto.reportId} is already marked as resolved`,
+          );
+        }
+      }
+
+      const existingBan = await this.moderationRepository.find({
+        where: {
+          userId: dto.userId,
+          actionType: ModerationActionType.ban,
+          status: ModerationStatus.active,
+        },
+        take: 1,
+      });
+
+      if (existingBan.length > 0) {
+        throw new ConflictException(
+          `User ${dto.userId} already has an active ban`,
+        );
+      }
+
+      await this.usersService.update(dto.userId, {
+        status: { id: StatusEnum.inactive },
+      });
+
+      this.logger.log(`User ${dto.userId} status set to inactive`);
+
+      const moderation = await this.moderationRepository.create({
+        userId: dto.userId,
+        actionType: ModerationActionType.ban,
+        reportId: dto.reportId,
+      });
+
+      this.logger.log(
+        `Ban moderation ${moderation.id} created for user ${dto.userId}`,
+      );
+
+      return moderation;
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException ||
+        error instanceof ConflictException
+      ) {
+        throw error;
+      }
+
+      this.logger.error(
+        `Failed to ban user ${dto.userId}: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to ban user. Please try again later.',
+      );
     }
-
-    // Update user status to inactive
-    await this.usersService.update(dto.userId, {
-      status: { id: StatusEnum.inactive },
-    });
-
-    // Create moderation record
-    const moderation = await this.moderationRepository.createModeration({
-      userId: dto.userId,
-      actionType: ModerationActionType.ban,
-      reportId: dto.reportId,
-    });
-
-    return moderation;
   }
 
-  /**
-   * Unban a user
-   * - Validates reportId if provided
-   * - Resets warn count to 0
-   * - Sets user status to active
-   * - Reverses the active ban moderation
-   * - Creates moderation record (unban)
-   */
   async unbanUser(dto: UnbanUserDto): Promise<Moderation> {
-    // Validate user exists
-    const user = await this.usersService.findById(dto.userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    this.logger.log(`Attempting to unban user ${dto.userId}`);
 
-    // Check if user is actually banned
-    if (user.status?.id !== StatusEnum.inactive) {
-      throw new BadRequestException('User is not banned');
-    }
-
-    // Validate reportId if provided
-    if (dto.reportId) {
-      const report = await this.moderationRepository.findReportById(dto.reportId);
-      if (!report) {
-        throw new NotFoundException('Report not found');
+    try {
+      const user = await this.usersService.findById(dto.userId);
+      if (!user) {
+        throw new NotFoundException(`User with ID ${dto.userId} not found`);
       }
 
-      // Validate report is for the correct user
-      if (report.reportedUserId !== dto.userId) {
+      if (user.status?.id !== StatusEnum.inactive) {
         throw new BadRequestException(
-          'Report does not belong to the specified user',
+          `User ${dto.userId} is not currently banned`,
         );
       }
+
+      if (dto.reportId) {
+        const report = await this.moderationRepository.findReportById(
+          dto.reportId,
+        );
+
+        if (!report) {
+          throw new NotFoundException(
+            `Report with ID ${dto.reportId} not found`,
+          );
+        }
+
+        // Validate report belongs to the user being unbanned
+        if (report.reportedUserId !== dto.userId) {
+          this.logger.warn(
+            `Unban failed: Report ${dto.reportId} does not belong to user ${dto.userId}`,
+          );
+          throw new BadRequestException(
+            `Report ${dto.reportId} is not associated with user ${dto.userId}`,
+          );
+        }
+      }
+
+      const activeBans = await this.moderationRepository.find({
+        where: {
+          userId: dto.userId,
+          actionType: ModerationActionType.ban,
+          status: ModerationStatus.active,
+        },
+        order: {
+          createdAt: 'DESC',
+        },
+        take: 1,
+      });
+
+      const activeBan = activeBans[0];
+
+      if (activeBan) {
+        await this.moderationRepository.update(activeBan.id, {
+          status: ModerationStatus.reversed,
+        });
+
+        this.logger.log(
+          `Ban moderation ${activeBan.id} reversed for user ${dto.userId}`,
+        );
+      }
+
+      await this.usersService.update(dto.userId, {
+        status: { id: StatusEnum.active },
+        warnCount: 0,
+      });
+
+      this.logger.log(`User ${dto.userId} status set to active`);
+
+      const moderation = await this.moderationRepository.create({
+        userId: dto.userId,
+        actionType: ModerationActionType.unban,
+        reportId: dto.reportId,
+      });
+
+      this.logger.log(
+        `Unban moderation ${moderation.id} created for user ${dto.userId}`,
+      );
+
+      return moderation;
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+
+      this.logger.error(
+        `Failed to unban user ${dto.userId}: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to unban user. Please try again later.',
+      );
     }
-
-    // Find active ban moderation
-    const activeBan = await this.moderationRepository.findActiveBanByUserId(
-      dto.userId,
-    );
-
-    // Reset warn count
-    await this.usersService.update(dto.userId, {
-      warnCount: 0,
-    });
-
-    // Set status to active
-    await this.usersService.update(dto.userId, {
-      status: { id: StatusEnum.active },
-    });
-
-    // Reverse the active ban if found
-    if (activeBan) {
-      await this.moderationRepository.reverseModerationById(activeBan.id);
-    }
-
-    // Create unban moderation record
-    const moderation = await this.moderationRepository.createModeration({
-      userId: dto.userId,
-      actionType: ModerationActionType.unban,
-      reportId: dto.reportId,
-    });
-
-    return moderation;
   }
 }

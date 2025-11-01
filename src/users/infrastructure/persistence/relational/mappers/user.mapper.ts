@@ -46,6 +46,7 @@ export class UserMapper {
     domainEntity.education = raw.education;
     domainEntity.educationStart = raw.educationStart;
     domainEntity.educationEnd = raw.educationEnd;
+    domainEntity.warnCount = raw.warnCount ?? 0;
     domainEntity.topics = raw.topics;
     domainEntity.countTopics = raw.countTopics;
     domainEntity.approval = raw.approval;
@@ -130,6 +131,7 @@ export class UserMapper {
     persistenceEntity.education = domainEntity.education;
     persistenceEntity.educationStart = domainEntity.educationStart;
     persistenceEntity.educationEnd = domainEntity.educationEnd;
+    persistenceEntity.warnCount = domainEntity.warnCount ?? 0;
     persistenceEntity.topics = topics;
     return persistenceEntity;
   }

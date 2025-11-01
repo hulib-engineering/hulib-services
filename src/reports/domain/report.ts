@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { IsBoolean } from 'class-validator';
+import { User } from '@users/domain/user';
 
 const idType = Number;
 
@@ -40,6 +41,22 @@ export class Report {
     example: 'Custom rejected reason:...',
   })
   rejectedCustomReason?: string | null;
+
+  @ApiProperty()
+  @Expose()
+  reporterId: number;
+
+  @ApiProperty()
+  @Expose()
+  reportedUserId: number;
+
+  @ApiProperty({ type: () => User, required: false })
+  @Expose()
+  reporter?: User;
+
+  @ApiProperty({ type: () => User, required: false })
+  @Expose()
+  reportedUser?: User;
 
   @ApiProperty()
   @Exclude({ toPlainOnly: true })
