@@ -7,7 +7,7 @@ export class ReportMapper {
     const domainEntity = new Report();
     domainEntity.id = raw.id;
     domainEntity.createdAt = raw.createdAt;
-    domainEntity.updatedAt = raw.updatedAt;
+    // domainEntity.updatedAt = raw.updatedAt;
 
     domainEntity.reason = raw.reason;
     domainEntity.customReason = raw.customReason;
@@ -44,7 +44,7 @@ export class ReportMapper {
     persistenceEntity.reportedUserId = domainEntity.reportedUserId;
 
     persistenceEntity.createdAt = domainEntity.createdAt;
-    persistenceEntity.updatedAt = domainEntity.updatedAt;
+    // persistenceEntity.updatedAt = domainEntity.updatedAt;
 
     return persistenceEntity;
   }

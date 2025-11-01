@@ -87,7 +87,7 @@ export class ReportEntity extends EntityRelationalHelper {
   @CreateDateColumn()
   createdAt: Date;
 
-  @ApiProperty()
-  @UpdateDateColumn()
-  updatedAt: Date;
+  // @ApiProperty()
+  // @UpdateDateColumn()
+  // updatedAt: Date;
 }

@@ -62,7 +62,7 @@ export class Report {
   @Exclude({ toPlainOnly: true })
   createdAt: Date;
 
-  @ApiProperty()
-  @Exclude({ toPlainOnly: true })
-  updatedAt: Date;
+  // @ApiProperty()
+  // @Exclude({ toPlainOnly: true })
+  // updatedAt: Date;
 }
