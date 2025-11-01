@@ -26,7 +26,7 @@ jobs:
       - name: npm install, build, and test
         run: |
           npm ci --only=production
-          npm install --save-dev @nestjs/cli
+          npm install @nestjs/cli
           npx prisma generate
           npm run build --if-present
 
