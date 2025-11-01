@@ -113,6 +113,8 @@ model user {
   educationStart        DateTime?              @db.Date
   educationEnd          DateTime?              @db.Date
   coverImageId          String?                @db.Uuid
+  warnCount             Int                    @default(0)
+  
   chatsReceived         chat[]                 @relation("ChatRecipient")
   chatsSent             chat[]                 @relation("ChatSender")
   feedbackBys           feedback[]             @relation("UserFeedbackBy")
@@ -139,6 +141,7 @@ model user {
   file                  file?                  @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   role                  role?                  @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   status                status?                @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  moderations           moderation[]           @relation("UserModerations")
 }
 
 model story {
@@ -326,7 +329,8 @@ model report {
   reportedUserId Int
   reportedUser   user     @relation("UserReported", fields: [reportedUserId], references: [id])
   reporter       user     @relation("UserReports", fields: [reporterId], references: [id])
-
+  moderations    moderation[]
+  
   @@unique([reporterId, reportedUserId])
 }
 
@@ -356,4 +360,35 @@ enum chatStatus {
   delivered
   read
   deleted
+}
+
+enum ModerationActionType {
+  warn
+  unwarn
+  ban
+  unban
+}
+
+enum ModerationStatus {
+  active
+  reversed
+}
+
+model moderation {
+  id         Int                  @id @default(autoincrement())
+  actionType ModerationActionType
+  status     ModerationStatus     @default(active)
+  userId     Int
+  reportId   Int?
+  createdAt  DateTime             @default(now()) @db.Timestamp(6)
+  updatedAt  DateTime             @default(now()) @updatedAt @db.Timestamp(6)
+
+  // Relations
+  user   user    @relation("UserModerations", fields: [userId], references: [id])
+  report report? @relation(fields: [reportId], references: [id])
+
+  @@index([userId])
+  @@index([reportId])
+  @@index([userId, actionType, status])
+  @@index([createdAt])
 }
