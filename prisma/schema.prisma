@@ -113,10 +113,7 @@ model user {
   phoneNumber           String?                @db.VarChar
   bio                   String?                @db.VarChar
   videoUrl              String?                @db.VarChar
-  education             String?                @db.VarChar
   warnCount             Int                    @default(0)
-  educationStart        DateTime?              @db.Date
-  educationEnd          DateTime?              @db.Date
   humanBookTopic        humanBookTopic[]
   topicsOfInterest      liberTopicOfInterest[]
   humanBooks            humanBooks[]
