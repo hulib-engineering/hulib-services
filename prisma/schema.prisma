@@ -114,6 +114,7 @@ model user {
   bio                   String?                @db.VarChar
   videoUrl              String?                @db.VarChar
   education             String?                @db.VarChar
+  warnCount             Int                    @default(0)
   educationStart        DateTime?              @db.Date
   educationEnd          DateTime?              @db.Date
   humanBookTopic        humanBookTopic[]
@@ -151,6 +152,8 @@ model user {
 
   educations education[] @relation("HuberEducation")
   works      work[]      @relation("HuberWork")
+
+  moderations moderation[] @relation("UserModerations")
 }
 
 model story {
@@ -365,19 +368,20 @@ model chat {
 }
 
 model report {
-  id             Int      @id @default(autoincrement())
-  reason         String
+  id                   Int      @id @default(autoincrement())
+  reason               String
   customReason         String?
-  rejectedReason         String?
-  rejectedCustomReason         String?
-  markAsResolved Boolean  @default(false)
-  createdAt      DateTime @default(now()) @db.Timestamp(6)
+  rejectedReason       String?
+  rejectedCustomReason String?
+  markAsResolved       Boolean  @default(false)
+  createdAt            DateTime @default(now()) @db.Timestamp(6)
 
   reporterId     Int
   reportedUserId Int
 
-  reporter     user @relation("UserReports", fields: [reporterId], references: [id])
-  reportedUser user @relation("UserReported", fields: [reportedUserId], references: [id])
+  reporter     user         @relation("UserReports", fields: [reporterId], references: [id])
+  reportedUser user         @relation("UserReported", fields: [reportedUserId], references: [id])
+  moderations  moderation[]
 
   @@unique([reporterId, reportedUserId])
 }
@@ -427,4 +431,35 @@ model work {
   deletedAt DateTime?
 
   huber user @relation("HuberWork", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+enum ModerationActionType {
+  warn
+  unwarn
+  ban
+  unban
+}
+
+enum ModerationStatus {
+  active
+  reversed
+}
+
+model moderation {
+  id         Int                  @id @default(autoincrement())
+  actionType ModerationActionType
+  status     ModerationStatus     @default(active)
+  userId     Int
+  reportId   Int?
+  createdAt  DateTime             @default(now()) @db.Timestamp(6)
+  updatedAt  DateTime             @default(now()) @updatedAt @db.Timestamp(6)
+
+  // Relations
+  user   user    @relation("UserModerations", fields: [userId], references: [id])
+  report report? @relation(fields: [reportId], references: [id])
+
+  @@index([userId])
+  @@index([reportId])
+  @@index([userId, actionType, status])
+  @@index([createdAt])
 }

@@ -50,7 +50,9 @@
       "@time-slots/*": ["src/time-slots/*"],
       "@schedules/*": ["src/schedules/*"],
       "@reading-sessions/*": ["src/reading-sessions/*"],
-      "@agora/*": ["src/agora/*"]
+      "@agora/*": ["src/agora/*"],
+      "@reports/*": ["src/reports/*"],
+      "@moderations/*": ["src/moderations/*"]
     }
   }
 }

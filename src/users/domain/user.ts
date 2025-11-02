@@ -133,6 +133,12 @@ export class User {
   educationEnd?: Date | null;
 
   @ApiProperty({
+    type: Number,
+    example: 0,
+  })
+  warnCount?: number;
+
+  @ApiProperty({
     type: () => [Topics],
   })
   topics?: Topics[];
