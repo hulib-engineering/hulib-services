@@ -115,24 +115,6 @@ export class User {
   videoUrl?: string | null;
 
   @ApiProperty({
-    type: String,
-    example: 'Lorem ipsum dolor sit amet',
-  })
-  education?: string | null;
-
-  @ApiProperty({
-    type: Date,
-    example: '2011-10-05T14:48:00.000Z',
-  })
-  educationStart?: Date | null;
-
-  @ApiProperty({
-    type: Date,
-    example: '2011-10-05T14:48:00.000Z',
-  })
-  educationEnd?: Date | null;
-
-  @ApiProperty({
     type: Number,
     example: 0,
   })

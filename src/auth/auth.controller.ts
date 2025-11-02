@@ -52,6 +52,8 @@ import { AddStoryToFavListDto } from '@fav-stories/dto/add-story-to-fav-list.dto
 import { AddHuberToFavListDto } from '../fav-hubers/dto/add-huber-to-fav-list.dto';
 import { AddEducationDto } from './dto/add-education.dto';
 import { AddWorkDto } from './dto/add-work.dto';
+import { UpdateEducationDto } from './dto/update-education.dto';
+import { UpdateWorkDto } from './dto/update-work.dto';
 import { UsersService } from '@users/users.service';
 
 @ApiTags('Auth')
@@ -287,6 +289,86 @@ export class AuthController {
   })
   addWork(@Request() request, @Body() addWorkDto: AddWorkDto) {
     return this.usersService.addWork(request.user.id, addWorkDto);
+  }
+
+  @ApiBearerAuth()
+  @Patch('me/educations/:id')
+  @Roles(RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+    description: 'Education ID',
+  })
+  @ApiOkResponse({
+    description: 'Education updated successfully',
+  })
+  updateEducation(
+    @Request() request,
+    @Param('id') id: string,
+    @Body() updateEducationDto: UpdateEducationDto,
+  ) {
+    return this.usersService.updateEducation(
+      request.user.id,
+      Number(id),
+      updateEducationDto,
+    );
+  }
+
+  @ApiBearerAuth()
+  @Patch('me/works/:id')
+  @Roles(RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+    description: 'Work ID',
+  })
+  @ApiOkResponse({
+    description: 'Work experience updated successfully',
+  })
+  updateWork(
+    @Request() request,
+    @Param('id') id: string,
+    @Body() updateWorkDto: UpdateWorkDto,
+  ) {
+    return this.usersService.updateWork(
+      request.user.id,
+      Number(id),
+      updateWorkDto,
+    );
+  }
+
+  @ApiBearerAuth()
+  @Delete('me/educations/:id')
+  @Roles(RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+    description: 'Education ID',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteEducation(@Request() request, @Param('id') id: string) {
+    return this.usersService.deleteEducation(request.user.id, Number(id));
+  }
+
+  @ApiBearerAuth()
+  @Delete('me/works/:id')
+  @Roles(RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+    description: 'Work ID',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteWork(@Request() request, @Param('id') id: string) {
+    return this.usersService.deleteWork(request.user.id, Number(id));
   }
 
   @ApiBearerAuth()

@@ -168,18 +168,6 @@ export class UserEntity extends EntityRelationalHelper {
   @Column({ type: String, nullable: true })
   videoUrl?: string | null;
 
-  @ApiProperty()
-  @Column({ type: String, nullable: true })
-  education?: string | null;
-
-  @ApiProperty()
-  @Column({ type: Date, nullable: true })
-  educationStart?: Date | null;
-
-  @ApiProperty()
-  @Column({ type: Date, nullable: true })
-  educationEnd?: Date | null;
-
   @ManyToMany(() => TopicsEntity)
   @JoinTable({
     name: 'humanBookTopic',
