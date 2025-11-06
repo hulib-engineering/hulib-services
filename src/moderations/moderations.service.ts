@@ -10,7 +10,11 @@ import { ModerationRepository } from './infrastructure/persistence/moderation.re
 import { UsersService } from '@users/users.service';
 import { BanUserDto } from './dto/ban-user.dto';
 import { UnbanUserDto } from './dto/unban-user.dto';
-import { Moderation, ModerationActionType, ModerationStatus } from './domain/moderation';
+import {
+  Moderation,
+  ModerationActionType,
+  ModerationStatus,
+} from './domain/moderation';
 import { StatusEnum } from '@statuses/statuses.enum';
 
 @Injectable()
@@ -30,9 +34,7 @@ export class ModerationsService {
       }
 
       if (user.status?.id === StatusEnum.inactive) {
-        throw new ConflictException(
-          `User ${dto.userId} is already banned`,
-        );
+        throw new ConflictException(`User ${dto.userId} is already banned`);
       }
 
       if (dto.reportId) {

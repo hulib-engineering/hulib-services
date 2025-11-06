@@ -33,8 +33,7 @@ export class ModerationsController {
 
   @ApiOperation({
     summary: 'Ban a user (Admin only)',
-    description:
-      'Sets user status to inactive.',
+    description: 'Sets user status to inactive.',
   })
   @ApiOkResponse({
     type: Moderation,
@@ -50,8 +49,7 @@ export class ModerationsController {
 
   @ApiOperation({
     summary: 'Unban a user (Admin only)',
-    description:
-      'Resets warn count to 0 and sets user status to active.',
+    description: 'Resets warn count to 0 and sets user status to active.',
   })
   @ApiOkResponse({
     type: Moderation,

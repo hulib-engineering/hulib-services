@@ -11,9 +11,9 @@ import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { ReportEntity } from '@reports/infrastructure/persistence/relational/entities/report.entity';
-import { 
+import {
   ModerationActionType,
-  ModerationStatus 
+  ModerationStatus,
 } from '@moderations/domain/moderation';
 
 @Entity({

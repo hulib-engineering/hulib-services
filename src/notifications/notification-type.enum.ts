@@ -11,5 +11,8 @@ export enum NotificationTypeEnum {
   rejectReadingSession = 'rejectReadingSession',
   cancelReadingSession = 'cancelReadingSession',
   missReadingSession = 'missReadingSession',
+  huberWarning = 'huberWarning',
+  userAppeal = 'userAppeal',
+  appealResponse = 'appealResponse',
   other = 'other',
 }

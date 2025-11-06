@@ -1,4 +1,7 @@
-import { Moderation, ModerationActionType } from '@moderations/domain/moderation';
+import {
+  Moderation,
+  ModerationActionType,
+} from '@moderations/domain/moderation';
 import { Report } from '@reports/domain/report';
 import { NullableType } from '@utils/types/nullable.type';
 import { IPaginationOptions } from '@utils/types/pagination-options';

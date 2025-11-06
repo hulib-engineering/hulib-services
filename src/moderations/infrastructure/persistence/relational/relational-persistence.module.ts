@@ -6,10 +6,7 @@ import { ModerationEntity } from './entities/moderation.entity';
 import { ReportEntity } from '@reports/infrastructure/persistence/relational/entities/report.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([
-    ModerationEntity,
-    ReportEntity,
-  ])],
+  imports: [TypeOrmModule.forFeature([ModerationEntity, ReportEntity])],
   providers: [
     {
       provide: ModerationRepository,

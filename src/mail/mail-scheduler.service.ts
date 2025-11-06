@@ -1,10 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@prisma-client/prisma-client.service';
-import { MailService } from "./mail.service";
-import { Cron, CronExpression } from "@nestjs/schedule";
-import { RoleEnum } from "../roles/roles.enum";
-import { StatusEnum } from "../statuses/statuses.enum";
-
+import { MailService } from './mail.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { RoleEnum } from '../roles/roles.enum';
+import { StatusEnum } from '../statuses/statuses.enum';
 
 @Injectable()
 export class MailSchedulerService {
@@ -22,7 +21,7 @@ export class MailSchedulerService {
       where: {
         roleId: RoleEnum.reader,
         statusId: StatusEnum.active,
-        email: { 
+        email: {
           not: null,
         },
       },
@@ -37,10 +36,15 @@ export class MailSchedulerService {
               fullName: liber.fullName || 'Liber',
             },
           });
-          this.logger.log(`Upload story reminder sent to Email: ${liber.email}`);
+          this.logger.log(
+            `Upload story reminder sent to Email: ${liber.email}`,
+          );
         }
       } catch (error) {
-        this.logger.error(`Failed to send upload story reminder to Email: ${liber.email}`, error.stack);
+        this.logger.error(
+          `Failed to send upload story reminder to Email: ${liber.email}`,
+          error.stack,
+        );
       }
     }
 
@@ -54,7 +58,7 @@ export class MailSchedulerService {
       where: {
         roleId: RoleEnum.humanBook,
         statusId: StatusEnum.active,
-        email: { 
+        email: {
           not: null,
         },
       },
@@ -69,10 +73,15 @@ export class MailSchedulerService {
               fullName: huber.fullName || 'Huber',
             },
           });
-          this.logger.log(`Upload story reminder sent to Email: ${huber.email}`);
+          this.logger.log(
+            `Upload story reminder sent to Email: ${huber.email}`,
+          );
         }
       } catch (error) {
-        this.logger.error(`Failed to send upload story reminder to Email: ${huber.email}`, error.stack);
+        this.logger.error(
+          `Failed to send upload story reminder to Email: ${huber.email}`,
+          error.stack,
+        );
       }
     }
 
