@@ -151,6 +151,7 @@ model user {
   works      work[]      @relation("HuberWork")
 
   moderations moderation[] @relation("UserModerations")
+  appeals     appeal[]     @relation("UserAppeals")
 }
 
 model story {
@@ -442,6 +443,12 @@ enum ModerationStatus {
   reversed
 }
 
+enum AppealStatus {
+  pending
+  accepted
+  rejected
+}
+
 model moderation {
   id         Int                  @id @default(autoincrement())
   actionType ModerationActionType
@@ -452,11 +459,31 @@ model moderation {
   updatedAt  DateTime             @default(now()) @updatedAt @db.Timestamp(6)
 
   // Relations
-  user   user    @relation("UserModerations", fields: [userId], references: [id])
-  report report? @relation(fields: [reportId], references: [id])
+  user    user     @relation("UserModerations", fields: [userId], references: [id])
+  report  report?  @relation(fields: [reportId], references: [id])
+  appeals appeal[] @relation("ModerationAppeals")
 
   @@index([userId])
   @@index([reportId])
   @@index([userId, actionType, status])
+  @@index([createdAt])
+}
+
+model appeal {
+  id           Int          @id @default(autoincrement())
+  moderationId Int
+  userId       Int
+  message      String       @db.VarChar()
+  status       AppealStatus @default(pending)
+  createdAt    DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime     @default(now()) @db.Timestamp(6)
+  deletedAt    DateTime?
+
+  moderation moderation @relation("ModerationAppeals", fields: [moderationId], references: [id], onDelete: Cascade)
+  user       user       @relation("UserAppeals", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([moderationId])
+  @@index([userId])
+  @@index([status])
   @@index([createdAt])
 }

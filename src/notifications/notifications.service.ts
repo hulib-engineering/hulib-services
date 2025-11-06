@@ -27,6 +27,10 @@ export class NotificationsService {
     NotificationTypeEnum.missReadingSession,
     NotificationTypeEnum.other,
   ];
+  private readonly appealRelatedNotiTypes: string[] = [
+    NotificationTypeEnum.userAppeal,
+    NotificationTypeEnum.appealResponse,
+  ];
 
   constructor(
     private prisma: PrismaService,
@@ -118,7 +122,16 @@ export class NotificationsService {
       .map((n) => n.relatedEntityId)
       .filter((id): id is number => id !== null);
 
-    const [stories, readingSessions, reports] = await Promise.all([
+    const appealIds = notifications
+      .filter(
+        (n) =>
+          this.appealRelatedNotiTypes.includes(n.type.name) &&
+          n.relatedEntityId !== null,
+      )
+      .map((n) => n.relatedEntityId)
+      .filter((id): id is number => id !== null);
+
+    const [stories, readingSessions, reports, appeals] = await Promise.all([
       this.prisma.story.findMany({
         where: { id: { in: storyIds } },
         include: {
@@ -177,6 +190,9 @@ export class NotificationsService {
           },
         },
       }),
+      this.prisma.appeal.findMany({
+        where: { id: { in: appealIds } },
+      }),
     ]);
 
     const storyMap = new Map(
@@ -213,24 +229,37 @@ export class NotificationsService {
     );
 
     const reportMap = new Map(
-      reports.map((rs) => [
-        rs.id,
+      reports.map((rp) => [
+        rp.id,
         {
-          id: rs.id,
-          reason: rs.reason,
-          customReason: rs.customReason,
-          reporterId: rs.reporterId,
-          reportedUserId: rs.reportedUserId,
-          markAsResolved: rs.markAsResolved,
+          id: rp.id,
+          reason: rp.reason,
+          customReason: rp.customReason,
+          reporterId: rp.reporterId,
+          reportedUserId: rp.reportedUserId,
+          markAsResolved: rp.markAsResolved,
           reportee: {
-            fullName: rs.reportedUser.fullName,
-            photo: rs.reportedUser.file,
+            fullName: rp.reportedUser.fullName,
+            photo: rp.reportedUser.file,
           },
           reporter: {
-            fullName: rs.reporter.fullName,
-            photo: rs.reporter.file,
+            fullName: rp.reporter.fullName,
+            photo: rp.reporter.file,
           },
-          createdAt: rs.createdAt,
+          createdAt: rp.createdAt,
+        },
+      ]),
+    );
+
+    const appealMap = new Map(
+      appeals.map((ap) => [
+        ap.id,
+        {
+          id: ap.id,
+          message: ap.message,
+          messages: ap.moderationId,
+          status: ap.status,
+          userId: ap.userId,
         },
       ]),
     );
@@ -255,6 +284,11 @@ export class NotificationsService {
         relatedEntity =
           n.relatedEntityId !== null
             ? reportMap.get(n.relatedEntityId) || null
+            : null;
+      } else if (this.appealRelatedNotiTypes.includes(n.type.name)) {
+        relatedEntity =
+          n.relatedEntityId !== null
+            ? appealMap.get(n.relatedEntityId) || null
             : null;
       }
 
@@ -301,12 +335,16 @@ export class NotificationsService {
         this.storyRelatedNotificationTypes.includes(type.name);
       const isReadingSessionRelatedNotiType =
         this.readingSessionRelatedNotiTypes.includes(type.name);
+      const isAppealRelatedNotiType = this.appealRelatedNotiTypes.includes(
+        type.name,
+      );
       const isHuberReportNotiType =
         type.name === NotificationTypeEnum.huberReported;
 
       const isNeedRelatedEntityId =
         isStoryNotificationType ||
         isReadingSessionRelatedNotiType ||
+        isAppealRelatedNotiType ||
         isHuberReportNotiType;
 
       if (isNeedRelatedEntityId && !data.relatedEntityId) {
@@ -360,6 +398,18 @@ export class NotificationsService {
 
       if (!readingSession) {
         throw new BadRequestException('Invalid reading session ID');
+      }
+    }
+    if (this.appealRelatedNotiTypes.includes(notificationType)) {
+      const appeal = await this.prisma.appeal.findUnique({
+        where: {
+          id: relatedEntityId,
+          deletedAt: null,
+        },
+      });
+
+      if (!appeal) {
+        throw new BadRequestException('Invalid appeal ID');
       }
     }
     if (notificationType === NotificationTypeEnum.huberReported) {

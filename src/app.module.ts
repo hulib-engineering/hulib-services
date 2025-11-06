@@ -56,6 +56,7 @@ import { ChatGateway } from '@chats/chat.gateway';
 import { ReportsModule } from './reports/reports.module';
 import { FavHubersModule } from './fav-hubers/fav-hubers.module';
 import { ModerationsModule } from '@moderations/moderations.module';
+import { AppealsModule } from './appeals/appeals.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -66,6 +67,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
 
 @Module({
   imports: [
+    AppealsModule,
     ReportsModule,
     SocketModule,
     NotificationsModule,

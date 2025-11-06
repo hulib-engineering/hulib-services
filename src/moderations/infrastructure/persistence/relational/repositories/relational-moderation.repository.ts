@@ -2,9 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 
-import { 
-  ModerationRepository 
-} from '@moderations/infrastructure/persistence/moderation.repository';
+import { ModerationRepository } from '@moderations/infrastructure/persistence/moderation.repository';
 import {
   Moderation,
   ModerationActionType,
@@ -61,7 +59,14 @@ export class ModerationRelationalRepository implements ModerationRepository {
     // Load relations after save
     const entityWithRelations = await this.repository.findOne({
       where: { id: entity.id },
-      relations: ['user', 'user.status', 'user.role', 'report', 'report.reporter', 'report.reportedUser'],
+      relations: [
+        'user',
+        'user.status',
+        'user.role',
+        'report',
+        'report.reporter',
+        'report.reportedUser',
+      ],
     });
 
     return ModerationMapper.toDomain(entityWithRelations!);
@@ -70,9 +75,16 @@ export class ModerationRelationalRepository implements ModerationRepository {
   async findById(id: number): Promise<Moderation | null> {
     const entity = await this.repository.findOne({
       where: { id },
-      relations: ['user', 'user.status', 'user.role', 'report', 'report.reporter', 'report.reportedUser'],
+      relations: [
+        'user',
+        'user.status',
+        'user.role',
+        'report',
+        'report.reporter',
+        'report.reportedUser',
+      ],
     });
-    
+
     return entity ? ModerationMapper.toDomain(entity) : null;
   }
 
@@ -91,7 +103,7 @@ export class ModerationRelationalRepository implements ModerationRepository {
       skip: options.skip,
       take: options.take,
     });
-    
+
     return entities.map((entity) => ModerationMapper.toDomain(entity));
   }
 
@@ -132,7 +144,14 @@ export class ModerationRelationalRepository implements ModerationRepository {
       order: {
         createdAt: 'DESC',
       },
-      relations: ['user', 'user.status', 'user.role', 'report', 'report.reporter', 'report.reportedUser'],
+      relations: [
+        'user',
+        'user.status',
+        'user.role',
+        'report',
+        'report.reporter',
+        'report.reportedUser',
+      ],
     });
 
     return entities.map((entity) => ModerationMapper.toDomain(entity));
@@ -162,7 +181,14 @@ export class ModerationRelationalRepository implements ModerationRepository {
     // Load relations after update
     const entityWithRelations = await this.repository.findOne({
       where: { id: updatedEntity.id },
-      relations: ['user', 'user.status', 'user.role', 'report', 'report.reporter', 'report.reportedUser'],
+      relations: [
+        'user',
+        'user.status',
+        'user.role',
+        'report',
+        'report.reporter',
+        'report.reportedUser',
+      ],
     });
 
     return ModerationMapper.toDomain(entityWithRelations!);
