@@ -20,6 +20,8 @@ import { Moderation } from './domain/moderation';
 import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
 import { RolesGuard } from '@roles/roles.guard';
+import { WarnUserDto } from './dto/warn-user.dto';
+import { UnwarnUserDto } from './dto/unwarn-user.dto';
 
 @ApiTags('Moderations')
 @ApiBearerAuth()
@@ -61,5 +63,37 @@ export class ModerationsController {
   @HttpCode(HttpStatus.OK)
   unbanUser(@Body() dto: UnbanUserDto): Promise<Moderation> {
     return this.moderationsService.unbanUser(dto);
+  }
+
+  @ApiOperation({
+    summary: 'Warn a user (Admin only)',
+    description:
+      'Increments user warning count. Auto-bans after 3 warnings.',
+  })
+  @ApiOkResponse({
+    type: Moderation,
+    description: 'User successfully warned',
+  })
+  @Post('warn')
+  @Roles(RoleEnum.admin)
+  @HttpCode(HttpStatus.OK)
+  warnUser(@Body() dto: WarnUserDto): Promise<Moderation> {
+    return this.moderationsService.warnUser(dto);
+  }
+
+  @ApiOperation({
+    summary: 'Remove a warning from a user (Admin only)',
+    description:
+      'Decrements user warning count and reverses the most recent warning.',
+  })
+  @ApiOkResponse({
+    type: Moderation,
+    description: 'Warning successfully removed',
+  })
+  @Post('unwarn')
+  @Roles(RoleEnum.admin)
+  @HttpCode(HttpStatus.OK)
+  unwarnUser(@Body() dto: UnwarnUserDto): Promise<Moderation> {
+    return this.moderationsService.unwarnUser(dto);
   }
 }
