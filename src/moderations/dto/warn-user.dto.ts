@@ -18,13 +18,4 @@ export class WarnUserDto {
   @IsInt()
   @IsOptional()
   reportId?: number;
-
-  @ApiProperty({
-    description: 'Custom reason for the warning',
-    example: 'User violated community guidelines',
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  reason?: string;
 }

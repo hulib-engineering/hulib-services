@@ -18,13 +18,4 @@ export class UnwarnUserDto {
   @IsInt()
   @IsOptional()
   reportId?: number;
-
-  @ApiProperty({
-    description: 'Reason for removing the warning',
-    example: 'Warning was issued in error',
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  reason?: string;
 }
