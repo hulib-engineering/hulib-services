@@ -3,9 +3,14 @@ import { RelationalReportPersistenceModule } from './infrastructure/persistence/
 import { ModerationsController } from './moderations.controller';
 import { ModerationsService } from './moderations.service';
 import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [RelationalReportPersistenceModule, UsersModule],
+  imports: [
+    RelationalReportPersistenceModule,
+    UsersModule,
+    NotificationsModule,
+  ],
   controllers: [ModerationsController],
   providers: [ModerationsService],
   exports: [ModerationsService, RelationalReportPersistenceModule],

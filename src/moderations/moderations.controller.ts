@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -22,6 +24,7 @@ import { RoleEnum } from '@roles/roles.enum';
 import { RolesGuard } from '@roles/roles.guard';
 import { WarnUserDto } from './dto/warn-user.dto';
 import { UnwarnUserDto } from './dto/unwarn-user.dto';
+import { QueryModerationDto } from './dto/query-moderation.dto';
 
 @ApiTags('Moderations')
 @ApiBearerAuth()
@@ -32,6 +35,24 @@ import { UnwarnUserDto } from './dto/unwarn-user.dto';
 })
 export class ModerationsController {
   constructor(private readonly moderationsService: ModerationsService) {}
+
+  @Get()
+  @Roles(RoleEnum.admin)
+  @UseGuards(RolesGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get moderation records (Admin only)',
+    description:
+      'Retrieve moderation records with optional filters. Returns both warnings and bans.',
+  })
+  @ApiOkResponse({
+    type: Moderation,
+    isArray: true,
+    description: 'List of moderation records',
+  })
+  getModerations(@Query() query: QueryModerationDto): Promise<Moderation[]> {
+    return this.moderationsService.findModerations(query);
+  }
 
   @ApiOperation({
     summary: 'Ban a user (Admin only)',
@@ -67,8 +88,7 @@ export class ModerationsController {
 
   @ApiOperation({
     summary: 'Warn a user (Admin only)',
-    description:
-      'Increments user warning count. Auto-bans after 3 warnings.',
+    description: 'Increments user warning count. Auto-bans after 3 warnings.',
   })
   @ApiOkResponse({
     type: Moderation,

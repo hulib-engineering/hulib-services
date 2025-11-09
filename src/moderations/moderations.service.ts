@@ -18,6 +18,10 @@ import {
 import { StatusEnum } from '@statuses/statuses.enum';
 import { WarnUserDto } from './dto/warn-user.dto';
 import { UnwarnUserDto } from './dto/unwarn-user.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
+import { QueryModerationDto } from './dto/query-moderation.dto';
+import { PrismaService } from '@prisma-client/prisma-client.service';
 
 @Injectable()
 export class ModerationsService {
@@ -26,6 +30,8 @@ export class ModerationsService {
   constructor(
     private readonly moderationRepository: ModerationRepository,
     private readonly usersService: UsersService,
+    private notificationsService: NotificationsService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async banUser(dto: BanUserDto): Promise<Moderation> {
@@ -270,6 +276,13 @@ export class ModerationsService {
         reportId: dto.reportId,
       });
 
+      await this.notificationsService.pushNoti({
+        senderId: 1,
+        recipientId: dto.userId,
+        type: NotificationTypeEnum.huberWarning,
+        relatedEntityId: moderation.id,
+      });
+
       return moderation;
     } catch (error) {
       if (
@@ -388,6 +401,49 @@ export class ModerationsService {
       );
       throw new InternalServerErrorException(
         'Failed to remove warning. Please try again later.',
+      );
+    }
+  }
+
+  async findModerations(query: QueryModerationDto): Promise<Moderation[]> {
+    try {
+      const page = query.page || 1;
+      const limit = query.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const where: any = {
+        userId: query.userId,
+      };
+
+      if (query.actionType) {
+        where.actionType = query.actionType;
+      }
+
+      if (query.status) {
+        where.status = query.status;
+      }
+
+      if (query.reportId) {
+        where.reportId = query.reportId;
+      }
+
+      const moderations = await this.prisma.moderation.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return moderations as unknown as Moderation[];
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch moderations: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Failed to fetch moderations. Please try again later.',
       );
     }
   }
