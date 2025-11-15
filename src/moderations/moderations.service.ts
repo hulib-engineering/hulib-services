@@ -67,6 +67,18 @@ export class ModerationsService {
           this.logger.warn(
             `Report ${dto.reportId} is already marked as resolved`,
           );
+        } else {
+          await this.prisma.report.update({
+            where: {
+              id: dto.reportId,
+            },
+            data: {
+              markAsResolved: true,
+            }
+          });
+          this.logger.log(
+            `Report ${dto.reportId} marked as resolved`,
+          );
         }
       }
 
@@ -255,6 +267,18 @@ export class ModerationsService {
         if (report.markAsResolved) {
           this.logger.warn(
             `Report ${dto.reportId} is already marked as resolved`,
+          );
+        } else {
+          await this.prisma.report.update({
+            where: {
+              id: dto.reportId,
+            },
+            data: {
+              markAsResolved: true,
+            }
+          });
+          this.logger.log(
+            `Report ${dto.reportId} marked as resolved`,
           );
         }
       }
