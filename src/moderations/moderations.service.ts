@@ -97,9 +97,7 @@ export class ModerationsService {
         );
       }
 
-      await this.usersService.update(dto.userId, {
-        status: { id: StatusEnum.inactive },
-      });
+      await this.usersService.updateStatus(dto.userId, 'inactive');
 
       this.logger.log(`User ${dto.userId} status set to inactive`);
 
