@@ -515,4 +515,64 @@ export class MailService {
       },
     });
   }
+
+  async userBanned(mailData: {
+    to: string;
+    data: {
+      fullName: string;
+      locale?: string;
+    };
+  }): Promise<void> {
+    
+    const locale = mailData.data.locale || 'vi';
+
+    const [title, subTitle, dear, p1, p2, p3, p4, p5] = await Promise.all([
+      this.i18n.t('user-banned.title', { lang: locale }),
+      this.i18n.t('user-banned.subTitle', { lang: locale }),
+      this.i18n.t('common.dear', { lang: locale }),
+      this.i18n.t('user-banned.p1', { lang: locale }),
+      this.i18n.t('user-banned.p2', { lang: locale }),
+      this.i18n.t('user-banned.p3', { lang: locale }),
+      this.i18n.t('user-banned.p4', { lang: locale }),
+      this.i18n.t('user-banned.p5', { lang: locale }),
+    ]);
+
+    const frontendDomain = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+    const webAppLink = frontendDomain;
+    const facebookUrl = 'https://www.facebook.com/hulibvietnam';
+    const instagramUrl =
+      'https://www.instagram.com/hulibofficial?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==';
+    const tiktokUrl =
+      'https://www.tiktok.com/@hulibvn?is_from_webapp=1&sender_device=pc';
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `${dear} ${mailData.data.fullName}, ${p1}`,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', { infer: true }),
+        'src',
+        'mail',
+        'mail-templates',
+        'ban.hbs',
+      ),
+      context: {
+        dear,
+        huberFullName: mailData.data.fullName,
+        title,
+        subTitle,
+        p1,
+        p2,
+        p3,
+        p4,
+        p5,
+        webAppLink,
+        facebookUrl,
+        instagramUrl,
+        tiktokUrl,
+      },
+    });
+  }
 }

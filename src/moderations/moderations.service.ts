@@ -22,6 +22,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { QueryModerationDto } from './dto/query-moderation.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ModerationsService {
@@ -32,6 +33,7 @@ export class ModerationsService {
     private readonly usersService: UsersService,
     private notificationsService: NotificationsService,
     private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
   ) {}
 
   async banUser(dto: BanUserDto): Promise<Moderation> {
@@ -110,6 +112,13 @@ export class ModerationsService {
       this.logger.log(
         `Ban moderation ${moderation.id} created for user ${dto.userId}`,
       );
+
+      await this.mailService.userBanned({
+        to: user.email,
+        data: {
+          fullName: user.fullName || 'Huber',
+        },
+      });
 
       return moderation;
     } catch (error) {
