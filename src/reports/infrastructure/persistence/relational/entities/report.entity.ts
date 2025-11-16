@@ -7,7 +7,6 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';

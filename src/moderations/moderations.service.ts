@@ -465,6 +465,14 @@ export class ModerationsService {
         orderBy: {
           createdAt: 'desc',
         },
+        include: {
+          report: {
+            select: {
+              reason: true,
+              customReason: true,
+            },
+          },
+        },
       });
 
       return moderations as unknown as Moderation[];

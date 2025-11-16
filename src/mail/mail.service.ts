@@ -411,10 +411,9 @@ export class MailService {
       this.i18n.t('upload-story-liber.p6', { lang: locale }),
     ]);
 
-    const frontendDomain = this.configService.getOrThrow('app.frontendDomain', {
+    const webAppLink = this.configService.getOrThrow('app.frontendDomain', {
       infer: true,
     });
-    const webAppLink = frontendDomain;
     const facebookUrl = 'https://www.facebook.com/hulibvietnam';
     const instagramUrl =
       'https://www.instagram.com/hulibofficial?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==';

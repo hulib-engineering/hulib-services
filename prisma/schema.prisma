@@ -455,6 +455,7 @@ model moderation {
   status     ModerationStatus     @default(active)
   userId     Int
   reportId   Int?
+  manualReason String?
   createdAt  DateTime             @default(now()) @db.Timestamp(6)
   updatedAt  DateTime             @default(now()) @updatedAt @db.Timestamp(6)
 

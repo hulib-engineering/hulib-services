@@ -202,9 +202,30 @@ export class NotificationsService {
         }),
         this.prisma.appeal.findMany({
           where: { id: { in: appealIds } },
+          include: {
+            moderation: {
+              select: {
+                report: {
+                  select: {
+                    id: true,
+                    reason: true,
+                    customReason: true,
+                  },
+                },
+              },
+            },
+          },
         }),
         this.prisma.moderation.findMany({
           where: { id: { in: moderationIds } },
+          include: {
+            report: {
+              select: {
+                reason: true,
+                customReason: true,
+              },
+            },
+          },
         }),
       ]);
 
@@ -252,10 +273,12 @@ export class NotificationsService {
           reportedUserId: rp.reportedUserId,
           markAsResolved: rp.markAsResolved,
           reportee: {
+            id: rp.reportedUserId,
             fullName: rp.reportedUser.fullName,
             photo: rp.reportedUser.file,
           },
           reporter: {
+            id: rp.reporterId,
             fullName: rp.reporter.fullName,
             photo: rp.reporter.file,
           },
@@ -270,7 +293,7 @@ export class NotificationsService {
         {
           id: ap.id,
           message: ap.message,
-          messages: ap.moderationId,
+          moderationRelatedReport: ap.moderation?.report,
           status: ap.status,
           userId: ap.userId,
         },
@@ -285,7 +308,11 @@ export class NotificationsService {
           status: m.status,
           userId: m.userId,
           actionType: m.actionType,
-          reportId: m.reportId,
+          report: {
+            id: m.reportId,
+            reason: m.report?.reason,
+            customReason: m.report?.customReason,
+          },
         },
       ]),
     );
