@@ -32,6 +32,8 @@ import {
 } from '@reading-sessions/infrastructure/persistence/relational/entities';
 import { TimeSlotEntity } from '@time-slots/infrastructure/persistence/relational/entities/tims-slot.entity';
 import { ChatEntity } from '../../../../../chats/infrastructure/persistence/relational/entities/chat.entity';
+import { ModerationEntity } from '@moderations/infrastructure/persistence/relational/entities/moderation.entity';
+import { ReportEntity } from '@reports/infrastructure/persistence/relational/entities/report.entity';
 
 @Entity({
   name: 'user',
@@ -166,18 +168,6 @@ export class UserEntity extends EntityRelationalHelper {
   @Column({ type: String, nullable: true })
   videoUrl?: string | null;
 
-  @ApiProperty()
-  @Column({ type: String, nullable: true })
-  education?: string | null;
-
-  @ApiProperty()
-  @Column({ type: Date, nullable: true })
-  educationStart?: Date | null;
-
-  @ApiProperty()
-  @Column({ type: Date, nullable: true })
-  educationEnd?: Date | null;
-
   @ManyToMany(() => TopicsEntity)
   @JoinTable({
     name: 'humanBookTopic',
@@ -191,6 +181,15 @@ export class UserEntity extends EntityRelationalHelper {
     },
   })
   topics?: TopicsEntity[];
+
+  @ApiProperty({
+    type: Number,
+    example: 0,
+    description: 'Number of warnings received by the user',
+    default: 0,
+  })
+  @Column({ type: 'int', default: 0 })
+  warnCount: number;
 
   @ApiProperty()
   @Expose()
@@ -235,4 +234,13 @@ export class UserEntity extends EntityRelationalHelper {
 
   @OneToMany(() => ChatEntity, (chat) => chat.recipient)
   chatsAsRecipient: ChatEntity[];
+
+  @OneToMany(() => ReportEntity, (report) => report.reporter)
+  reportsGiven?: ReportEntity[];
+
+  @OneToMany(() => ReportEntity, (report) => report.reportedUser)
+  reportsReceived?: ReportEntity[];
+
+  @OneToMany(() => ModerationEntity, (moderation) => moderation.user)
+  moderations?: ModerationEntity[];
 }

@@ -200,8 +200,6 @@ export class UsersService {
             institution: true,
             startedAt: true,
             endedAt: true,
-            createdAt: true,
-            updatedAt: true,
           },
           orderBy: {
             startedAt: 'desc',
@@ -217,8 +215,6 @@ export class UsersService {
             company: true,
             startedAt: true,
             endedAt: true,
-            createdAt: true,
-            updatedAt: true,
           },
           orderBy: {
             startedAt: 'desc',
@@ -715,6 +711,59 @@ export class UsersService {
         endedAt: educationData.endedAt ? new Date(educationData.endedAt) : null,
         huberId: Number(userId),
       },
+      omit: {
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async updateEducation(
+    userId: User['id'],
+    educationId: number,
+    educationData: {
+      major?: string;
+      institution?: string;
+      startedAt?: string;
+      endedAt?: string;
+    },
+  ) {
+    const education = await this.prisma.education.findUnique({
+      where: { id: educationId, huberId: Number(userId) },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!education || education.deletedAt) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        errors: {
+          education: 'educationNotFound',
+        },
+      });
+    }
+
+    return this.prisma.education.update({
+      where: { id: educationId },
+      data: {
+        ...(educationData.major && { major: educationData.major }),
+        ...(educationData.institution && {
+          institution: educationData.institution,
+        }),
+        ...(educationData.startedAt && {
+          startedAt: new Date(educationData.startedAt),
+        }),
+        ...(educationData.endedAt !== undefined && {
+          endedAt: educationData.endedAt
+            ? new Date(educationData.endedAt)
+            : null,
+        }),
+      },
+      omit: {
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
   }
 
@@ -757,6 +806,104 @@ export class UsersService {
         startedAt: new Date(workData.startedAt),
         endedAt: workData.endedAt ? new Date(workData.endedAt) : null,
         huberId: Number(userId),
+      },
+      omit: {
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async updateWork(
+    userId: User['id'],
+    workId: number,
+    workData: {
+      position?: string;
+      company?: string;
+      startedAt?: string;
+      endedAt?: string;
+    },
+  ) {
+    const work = await this.prisma.work.findUnique({
+      where: { id: workId, huberId: Number(userId) },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!work || work.deletedAt) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        errors: {
+          work: 'workNotFound',
+        },
+      });
+    }
+
+    return this.prisma.work.update({
+      where: { id: workId },
+      data: {
+        ...(workData.position && { position: workData.position }),
+        ...(workData.company && { company: workData.company }),
+        ...(workData.startedAt && {
+          startedAt: new Date(workData.startedAt),
+        }),
+        ...(workData.endedAt !== undefined && {
+          endedAt: workData.endedAt ? new Date(workData.endedAt) : null,
+        }),
+      },
+      omit: {
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async deleteEducation(
+    userId: User['id'],
+    educationId: number,
+  ): Promise<void> {
+    const education = await this.prisma.education.findUnique({
+      where: { id: educationId, huberId: Number(userId) },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!education || education.deletedAt) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        errors: {
+          education: 'educationNotFound',
+        },
+      });
+    }
+
+    await this.prisma.education.update({
+      where: { id: educationId },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
+
+  async deleteWork(userId: User['id'], workId: number): Promise<void> {
+    const work = await this.prisma.work.findUnique({
+      where: { id: workId, huberId: Number(userId) },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!work || work.deletedAt) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        errors: {
+          work: 'workNotFound',
+        },
+      });
+    }
+
+    await this.prisma.work.update({
+      where: { id: workId },
+      data: {
+        deletedAt: new Date(),
       },
     });
   }

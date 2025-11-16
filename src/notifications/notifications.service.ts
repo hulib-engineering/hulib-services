@@ -27,6 +27,10 @@ export class NotificationsService {
     NotificationTypeEnum.missReadingSession,
     NotificationTypeEnum.other,
   ];
+  private readonly appealRelatedNotiTypes: string[] = [
+    NotificationTypeEnum.userAppeal,
+    NotificationTypeEnum.appealResponse,
+  ];
 
   constructor(
     private prisma: PrismaService,
@@ -118,66 +122,112 @@ export class NotificationsService {
       .map((n) => n.relatedEntityId)
       .filter((id): id is number => id !== null);
 
-    const [stories, readingSessions, reports] = await Promise.all([
-      this.prisma.story.findMany({
-        where: { id: { in: storyIds } },
-        include: {
-          storyReview: {
-            where: {
-              rating: { gt: 0 },
+    const appealIds = notifications
+      .filter(
+        (n) =>
+          this.appealRelatedNotiTypes.includes(n.type.name) &&
+          n.relatedEntityId !== null,
+      )
+      .map((n) => n.relatedEntityId)
+      .filter((id): id is number => id !== null);
+
+    const moderationIds = notifications
+      .filter(
+        (n) =>
+          n.type.name === NotificationTypeEnum.huberWarning &&
+          n.relatedEntityId !== null,
+      )
+      .map((n) => n.relatedEntityId)
+      .filter((id): id is number => id !== null);
+
+    const [stories, readingSessions, reports, appeals, moderations] =
+      await Promise.all([
+        this.prisma.story.findMany({
+          where: { id: { in: storyIds } },
+          include: {
+            storyReview: {
+              where: {
+                rating: { gt: 0 },
+              },
             },
           },
-        },
-      }),
-      this.prisma.readingSession.findMany({
-        where: { id: { in: readingSessionIds } },
-        select: {
-          id: true,
-          sessionStatus: true,
-          startedAt: true,
-          startTime: true,
-          endedAt: true,
-          endTime: true,
-          note: true,
-          rejectReason: true,
-          sessionUrl: true,
-          story: {
-            select: {
-              title: true,
+        }),
+        this.prisma.readingSession.findMany({
+          where: { id: { in: readingSessionIds } },
+          select: {
+            id: true,
+            sessionStatus: true,
+            startedAt: true,
+            startTime: true,
+            endedAt: true,
+            endTime: true,
+            note: true,
+            rejectReason: true,
+            sessionUrl: true,
+            story: {
+              select: {
+                title: true,
+              },
+            },
+            humanBook: {
+              select: {
+                id: true,
+                fullName: true,
+              },
+            },
+            reader: {
+              select: {
+                id: true,
+                fullName: true,
+              },
             },
           },
-          humanBook: {
-            select: {
-              id: true,
-              fullName: true,
+        }),
+        this.prisma.report.findMany({
+          where: { id: { in: reportIds } },
+          include: {
+            reportedUser: {
+              select: {
+                fullName: true,
+                file: true,
+              },
+            },
+            reporter: {
+              select: {
+                fullName: true,
+                file: true,
+              },
             },
           },
-          reader: {
-            select: {
-              id: true,
-              fullName: true,
+        }),
+        this.prisma.appeal.findMany({
+          where: { id: { in: appealIds } },
+          include: {
+            moderation: {
+              select: {
+                report: {
+                  select: {
+                    id: true,
+                    reason: true,
+                    customReason: true,
+                  },
+                },
+              },
             },
           },
-        },
-      }),
-      this.prisma.report.findMany({
-        where: { id: { in: reportIds } },
-        include: {
-          reportedUser: {
-            select: {
-              fullName: true,
-              file: true,
+        }),
+        this.prisma.moderation.findMany({
+          where: { id: { in: moderationIds } },
+          include: {
+            report: {
+              select: {
+                reason: true,
+                customReason: true,
+              },
             },
           },
-          reporter: {
-            select: {
-              fullName: true,
-              file: true,
-            },
-          },
-        },
-      }),
-    ]);
+        }),
+      ]);
 
     const storyMap = new Map(
       stories.map((s) => [
@@ -213,24 +263,56 @@ export class NotificationsService {
     );
 
     const reportMap = new Map(
-      reports.map((rs) => [
-        rs.id,
+      reports.map((rp) => [
+        rp.id,
         {
-          id: rs.id,
-          reason: rs.reason,
-          customReason: rs.customReason,
-          reporterId: rs.reporterId,
-          reportedUserId: rs.reportedUserId,
-          markAsResolved: rs.markAsResolved,
+          id: rp.id,
+          reason: rp.reason,
+          customReason: rp.customReason,
+          reporterId: rp.reporterId,
+          reportedUserId: rp.reportedUserId,
+          markAsResolved: rp.markAsResolved,
           reportee: {
-            fullName: rs.reportedUser.fullName,
-            photo: rs.reportedUser.file,
+            id: rp.reportedUserId,
+            fullName: rp.reportedUser.fullName,
+            photo: rp.reportedUser.file,
           },
           reporter: {
-            fullName: rs.reporter.fullName,
-            photo: rs.reporter.file,
+            id: rp.reporterId,
+            fullName: rp.reporter.fullName,
+            photo: rp.reporter.file,
           },
-          createdAt: rs.createdAt,
+          createdAt: rp.createdAt,
+        },
+      ]),
+    );
+
+    const appealMap = new Map(
+      appeals.map((ap) => [
+        ap.id,
+        {
+          id: ap.id,
+          message: ap.message,
+          moderationRelatedReport: ap.moderation?.report,
+          status: ap.status,
+          userId: ap.userId,
+        },
+      ]),
+    );
+
+    const moderationMap = new Map(
+      moderations.map((m) => [
+        m.id,
+        {
+          id: m.id,
+          status: m.status,
+          userId: m.userId,
+          actionType: m.actionType,
+          report: {
+            id: m.reportId,
+            reason: m.report?.reason,
+            customReason: m.report?.customReason,
+          },
         },
       ]),
     );
@@ -255,6 +337,16 @@ export class NotificationsService {
         relatedEntity =
           n.relatedEntityId !== null
             ? reportMap.get(n.relatedEntityId) || null
+            : null;
+      } else if (this.appealRelatedNotiTypes.includes(n.type.name)) {
+        relatedEntity =
+          n.relatedEntityId !== null
+            ? appealMap.get(n.relatedEntityId) || null
+            : null;
+      } else if (n.type.name === NotificationTypeEnum.huberWarning) {
+        relatedEntity =
+          n.relatedEntityId !== null
+            ? moderationMap.get(n.relatedEntityId) || null
             : null;
       }
 
@@ -301,13 +393,20 @@ export class NotificationsService {
         this.storyRelatedNotificationTypes.includes(type.name);
       const isReadingSessionRelatedNotiType =
         this.readingSessionRelatedNotiTypes.includes(type.name);
+      const isAppealRelatedNotiType = this.appealRelatedNotiTypes.includes(
+        type.name,
+      );
       const isHuberReportNotiType =
         type.name === NotificationTypeEnum.huberReported;
+      const isHuberWarningNotiType =
+        type.name === NotificationTypeEnum.huberWarning;
 
       const isNeedRelatedEntityId =
         isStoryNotificationType ||
         isReadingSessionRelatedNotiType ||
-        isHuberReportNotiType;
+        isAppealRelatedNotiType ||
+        isHuberReportNotiType ||
+        isHuberWarningNotiType;
 
       if (isNeedRelatedEntityId && !data.relatedEntityId) {
         this.logger.warn(
@@ -362,6 +461,18 @@ export class NotificationsService {
         throw new BadRequestException('Invalid reading session ID');
       }
     }
+    if (this.appealRelatedNotiTypes.includes(notificationType)) {
+      const appeal = await this.prisma.appeal.findUnique({
+        where: {
+          id: relatedEntityId,
+          deletedAt: null,
+        },
+      });
+
+      if (!appeal) {
+        throw new BadRequestException('Invalid appeal ID');
+      }
+    }
     if (notificationType === NotificationTypeEnum.huberReported) {
       const report = await this.prisma.report.findUnique({
         where: {
@@ -371,6 +482,17 @@ export class NotificationsService {
 
       if (!report) {
         throw new BadRequestException('Invalid report ID');
+      }
+    }
+    if (notificationType === NotificationTypeEnum.huberWarning) {
+      const moderation = await this.prisma.moderation.findUnique({
+        where: {
+          id: relatedEntityId,
+        },
+      });
+
+      if (!moderation) {
+        throw new BadRequestException('Invalid moderation ID');
       }
     }
   }
