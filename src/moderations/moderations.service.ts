@@ -76,11 +76,9 @@ export class ModerationsService {
             },
             data: {
               markAsResolved: true,
-            }
+            },
           });
-          this.logger.log(
-            `Report ${dto.reportId} marked as resolved`,
-          );
+          this.logger.log(`Report ${dto.reportId} marked as resolved`);
         }
       }
 
@@ -272,7 +270,7 @@ export class ModerationsService {
         }
 
         if (report.markAsResolved) {
-          this.logger.warn(
+          throw new BadRequestException(
             `Report ${dto.reportId} is already marked as resolved`,
           );
         } else {
@@ -282,11 +280,9 @@ export class ModerationsService {
             },
             data: {
               markAsResolved: true,
-            }
+            },
           });
-          this.logger.log(
-            `Report ${dto.reportId} marked as resolved`,
-          );
+          this.logger.log(`Report ${dto.reportId} marked as resolved`);
         }
       }
 
