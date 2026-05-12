@@ -1,2 +1,2 @@
 [build]
-dockerfilePath = "Dockerfile.prod"
+dockerfilePath = "Dockerfile.railway-dev"
