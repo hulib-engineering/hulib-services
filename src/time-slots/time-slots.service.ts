@@ -1,6 +1,8 @@
 import {
   ConflictException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -52,26 +54,6 @@ export class TimeSlotService {
     }
   }
 
-  private checkForConflictsWithExisting(
-    newTimeSlots: CreateTimeSlotDto[],
-    existingTimeSlots: TimeSlot[],
-  ): void {
-    const existingKeys = new Set<string>();
-    for (const existing of existingTimeSlots) {
-      existingKeys.add(`${existing.dayOfWeek}-${existing.startTime}`);
-    }
-
-    for (const newTimeSlot of newTimeSlots) {
-      const newKey = `${newTimeSlot.dayOfWeek}-${newTimeSlot.startTime}`;
-
-      if (existingKeys.has(newKey)) {
-        throw new ConflictException(
-          `Time slot already exists for user: ${this.getDayName(newTimeSlot.dayOfWeek)} at ${newTimeSlot.startTime}`,
-        );
-      }
-    }
-  }
-
   async create(createTimeSlotDto: CreateTimeSlotDto, userId: number) {
     const user = await this.userService.findById(userId);
     if (!user || user.role?.id != RoleEnum.humanBook) {
@@ -112,11 +94,23 @@ export class TimeSlotService {
 
     this.checkForDuplicatesInRequest(createTimeSlotsDto.timeSlots);
 
-    const existingTimeSlots = await this.timeSlotRepository.findByUser(userId);
-    this.checkForConflictsWithExisting(
-      createTimeSlotsDto.timeSlots,
-      existingTimeSlots,
+    const incomingTimeSlots = new Set(
+      createTimeSlotsDto.timeSlots.map(
+        (timeSlot) => `${timeSlot.dayOfWeek}-${timeSlot.startTime}`,
+      ),
     );
+    const existingTimeSlots = await this.timeSlotRepository.findByUser(userId);
+    const existingTimeSlotsKeys = new Set(
+      existingTimeSlots.map(
+        (timeSlot) => `${timeSlot.dayOfWeek}-${timeSlot.startTime}`,
+      ),
+    );
+    if (
+      incomingTimeSlots.size === existingTimeSlotsKeys.size &&
+      [...incomingTimeSlots].every((key) => existingTimeSlotsKeys.has(key))
+    ) {
+      throw new HttpException('Not Modified', HttpStatus.NOT_MODIFIED);
+    }
 
     const timeSlots = createTimeSlotsDto.timeSlots.map((createTimeSlotDto) => {
       const timeSlot = new TimeSlot(createTimeSlotDto);
