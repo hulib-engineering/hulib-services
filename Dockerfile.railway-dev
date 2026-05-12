@@ -5,6 +5,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
 COPY . /app
+RUN if [ -f .env.railway-plain ]; then cp .env.railway-plain .env; fi
 RUN npx prisma generate && npm run build
 
 CMD npm run migration:run && npm run start:prod
