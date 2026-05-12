@@ -9,4 +9,4 @@ RUN npm ci --ignore-scripts
 COPY . /app
 RUN npx prisma generate && npm run build
 
-CMD npm run migration:run && npm run start:prod
+CMD npx dotenvx run -f .env.staging -- sh -c "npm run migration:run && npm run start:prod"
