@@ -1,4 +1,4 @@
-FROM node:20.17.0-alpine
+FROM node:20.17.0-alpine AS builder
 
 RUN apk add --no-cache bash curl
 
@@ -9,4 +9,16 @@ RUN npm ci --ignore-scripts
 COPY . /app
 RUN npx prisma generate && npm run build
 
-CMD npx dotenvx run -f .env.staging -o -- sh -c "npm run migration:run && npm run start:prod"
+
+FROM node:20.17.0-alpine
+
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/.env.staging ./
+
+COPY entrypoint.railway-dev.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+CMD ["/app/entrypoint.sh"]
