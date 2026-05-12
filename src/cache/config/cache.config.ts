@@ -6,13 +6,16 @@ import { RedisConfig } from './cache-config.type';
 
 class EnvironmentVariablesValidator {
   @IsString()
-  REDIS_HOST: string;
+  @IsOptional()
+  REDIS_HOST?: string;
 
   @IsString()
-  REDIS_PASSWORD: string;
+  @IsOptional()
+  REDIS_PASSWORD?: string;
 
   @IsString()
-  REDIS_PORT: string;
+  @IsOptional()
+  REDIS_PORT?: string;
 
   @IsString()
   @IsOptional()
@@ -37,14 +40,54 @@ class EnvironmentVariablesValidator {
   @IsOptional()
   @IsString()
   REDIS_CERT?: string;
+
+  @IsOptional()
+  @IsString()
+  REDIS_URL?: string;
+
+  @IsOptional()
+  REDIS_TLS_ENABLED?: string;
+}
+
+function parseRedisUrl(url: string): {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+} {
+  try {
+    const parsed = new URL(url);
+    return {
+      host: parsed.hostname,
+      port: parseInt(parsed.port || '6379', 10),
+      username: decodeURIComponent(parsed.username || 'default'),
+      password: decodeURIComponent(parsed.password || ''),
+    };
+  } catch {
+    return { host: '', port: 6379, username: 'default', password: '' };
+  }
 }
 
 export function getConfig(): RedisConfig {
+  if (process.env.REDIS_URL) {
+    const parsed = parseRedisUrl(process.env.REDIS_URL);
+    const tlsEnabled =
+      process.env.REDIS_TLS_ENABLED === 'true' ||
+      parsed.port === 6380;
+    return {
+      host: parsed.host,
+      port: parsed.port,
+      username: parsed.username,
+      password: parsed.password,
+      tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
+    };
+  }
+
   return {
-    host: process.env.REDIS_HOST,
+    host: process.env.REDIS_HOST ?? '',
     port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
     username: process.env.REDIS_USERNAME ?? 'default',
-    password: process.env.REDIS_PASSWORD,
+    password: process.env.REDIS_PASSWORD ?? '',
     tls:
       process.env.REDIS_TLS === 'true'
         ? {
