@@ -30,6 +30,7 @@ import { FileConfig, FileDriver } from '@files/config/file-config.type';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { FileType } from '@files/domain/file';
+import { RoleEnum } from '@roles/roles.enum';
 import { StoryQueryTypeEnum } from '@stories/story-query-type.enum';
 
 @Injectable()
@@ -105,11 +106,18 @@ export class StoriesService {
       topics: topicsEntities,
     });
 
-    await this.notifsService.pushNoti({
-      senderId: Number(userId),
-      recipientId: 1,
-      type: NotificationTypeEnum.account,
+    const admin = await this.prisma.user.findFirst({
+      where: { role: { id: RoleEnum.admin } },
+      select: { id: true },
     });
+
+    if (admin) {
+      await this.notifsService.pushNoti({
+        senderId: Number(userId),
+        recipientId: admin.id,
+        type: NotificationTypeEnum.account,
+      });
+    }
 
     return newStory;
   }
