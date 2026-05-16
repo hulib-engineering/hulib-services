@@ -53,10 +53,11 @@ export class HubersService {
               : undefined,
         },
         orderBy:
-          sortOptions &&
-          sortOptions.map((sortOption) => ({
-            [sortOption.sortBy]: sortOption.order,
-          })),
+          sortOptions && sortOptions.length > 0
+            ? sortOptions.map((sortOption) => ({
+                [sortOption.sortBy]: sortOption.order,
+              }))
+            : [{ createdAt: 'desc' }],
         include: {
           humanBookTopic: {
             include: {
