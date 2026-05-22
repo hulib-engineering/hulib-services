@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Like, Repository } from 'typeorm';
+import { FindOptionsWhere, In, Like, Repository } from 'typeorm';
 import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
 import { NullableType } from '@utils/types/nullable.type';
 import { Topics } from '@topics/domain/topics';
@@ -33,17 +33,29 @@ export class TopicsRelationalRepository implements TopicsRepository {
     paginationOptions: IPaginationOptions;
     name?: string;
     status?: Topics['status'];
-  }): Promise<Topics[]> {
-    const entities = await this.topicsRepository.find({
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-      where: {
-        name: name ? Like(`%${name}%`) : undefined,
-        status: status ?? undefined,
-      },
-    });
+  }): Promise<{ data: Topics[]; total: number }> {
+    const where: FindOptionsWhere<TopicsEntity> = {};
 
-    return entities.map((entity) => TopicsMapper.toDomain(entity));
+    if (name) {
+      where.name = Like(`%${name}%`);
+    }
+    if (status) {
+      where.status = status;
+    }
+
+    const [entities, total] = await Promise.all([
+      this.topicsRepository.find({
+        skip: (paginationOptions.page - 1) * paginationOptions.limit,
+        take: paginationOptions.limit,
+        where,
+      }),
+      this.topicsRepository.count({ where }),
+    ]);
+
+    return {
+      data: entities.map((entity) => TopicsMapper.toDomain(entity)),
+      total,
+    };
   }
 
   async findTop3PopularTopics(): Promise<Topics[]> {
