@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { CreateTopicsDto } from './dto/create-topics.dto';
 import { UpdateTopicsDto } from './dto/update-topics.dto';
 import { TopicsRepository } from './infrastructure/persistence/topics.repository';
@@ -10,6 +11,7 @@ import { IPaginationOptions } from '@utils/types/pagination-options';
 import { Topics } from './domain/topics';
 import { TopicColor } from './topic-color.enum';
 import { TopicStatus } from './topic-status.enum';
+
 import { PermissionService } from '@casl/services/permission.service';
 import { User } from '@users/domain/user';
 
@@ -37,7 +39,7 @@ export class TopicsService {
     });
   }
 
-  findAllWithPagination({
+  async findAllWithPagination({
     paginationOptions,
     name,
     user,
@@ -45,7 +47,7 @@ export class TopicsService {
     paginationOptions: IPaginationOptions;
     name?: string;
     user: User;
-  }) {
+  }): Promise<{ data: Topics[]; total: number }> {
     const status = this.permissionService.canManageTopics(user)
       ? undefined
       : TopicStatus.active;
