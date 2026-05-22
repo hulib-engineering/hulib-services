@@ -39,18 +39,21 @@ export class ReadingSessionsProcessor {
       });
     }
 
-    await this.notificationsService.pushNoti({
-      senderId: 1,
-      recipientId: session.humanBookId,
-      type: NotificationTypeEnum.other,
-      relatedEntityId: sessionId,
-    });
-    await this.notificationsService.pushNoti({
-      senderId: 1,
-      recipientId: session.readerId,
-      type: NotificationTypeEnum.other,
-      relatedEntityId: sessionId,
-    });
+    const adminId = await this.notificationsService.getAdminId();
+    if (adminId) {
+      await this.notificationsService.pushNoti({
+        senderId: adminId,
+        recipientId: session.humanBookId,
+        type: NotificationTypeEnum.other,
+        relatedEntityId: sessionId,
+      });
+      await this.notificationsService.pushNoti({
+        senderId: adminId,
+        recipientId: session.readerId,
+        type: NotificationTypeEnum.other,
+        relatedEntityId: sessionId,
+      });
+    }
   }
 
   @Process('send-booking-email')

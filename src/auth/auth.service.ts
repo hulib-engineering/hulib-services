@@ -693,7 +693,7 @@ export class AuthService {
       throw new NotFoundException();
     }
     createHumanBooksDto.topics?.forEach(async (topic) => {
-      await this.topicsService.findOne(topic.id);
+      await this.topicsService.findOne(topic.id, user);
     });
 
     // TODO: check if user has already a human book

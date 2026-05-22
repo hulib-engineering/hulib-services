@@ -71,12 +71,15 @@ export class StoriesService {
       topics: topicsEntities,
     });
 
-    await this.notifsService.pushNoti({
-      senderId: Number(humanBook.id),
-      recipientId: 1,
-      type: NotificationTypeEnum.publishStory,
-      relatedEntityId: newStory.id,
-    });
+    const adminId = await this.notifsService.getAdminId();
+    if (adminId) {
+      await this.notifsService.pushNoti({
+        senderId: Number(humanBook.id),
+        recipientId: adminId,
+        type: NotificationTypeEnum.publishStory,
+        relatedEntityId: newStory.id,
+      });
+    }
 
     return newStory;
   }
@@ -105,11 +108,15 @@ export class StoriesService {
       topics: topicsEntities,
     });
 
-    await this.notifsService.pushNoti({
-      senderId: Number(userId),
-      recipientId: 1,
-      type: NotificationTypeEnum.account,
-    });
+    const adminId = await this.notifsService.getAdminId();
+
+    if (adminId) {
+      await this.notifsService.pushNoti({
+        senderId: Number(userId),
+        recipientId: adminId,
+        type: NotificationTypeEnum.account,
+      });
+    }
 
     return newStory;
   }
@@ -298,24 +305,30 @@ export class StoriesService {
       !!updateStoriesDto.publishStatus &&
       updateStoriesDto.publishStatus === 'published'
     ) {
-      await this.notifsService.pushNoti({
-        senderId: 1,
-        recipientId: story.humanBookId,
-        type: NotificationTypeEnum.publishStory,
-        relatedEntityId: story.id,
-      });
+      const adminId = await this.notifsService.getAdminId();
+      if (adminId) {
+        await this.notifsService.pushNoti({
+          senderId: adminId,
+          recipientId: story.humanBookId,
+          type: NotificationTypeEnum.publishStory,
+          relatedEntityId: story.id,
+        });
+      }
     }
 
     if (
       !!updateStoriesDto.publishStatus &&
       updateStoriesDto.publishStatus === 'rejected'
     ) {
-      await this.notifsService.pushNoti({
-        senderId: 1,
-        recipientId: story.humanBookId,
-        type: NotificationTypeEnum.rejectStory,
-        relatedEntityId: story.id,
-      });
+      const adminId = await this.notifsService.getAdminId();
+      if (adminId) {
+        await this.notifsService.pushNoti({
+          senderId: adminId,
+          recipientId: story.humanBookId,
+          type: NotificationTypeEnum.rejectStory,
+          relatedEntityId: story.id,
+        });
+      }
     }
 
     return updated;

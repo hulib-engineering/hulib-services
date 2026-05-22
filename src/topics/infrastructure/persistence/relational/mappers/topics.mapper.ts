@@ -1,11 +1,15 @@
 import { Topics } from '@topics/domain/topics';
 import { TopicsEntity } from '@topics/infrastructure/persistence/relational/entities/topics.entity';
+import { TopicColor } from '@topics/topic-color.enum';
+import { TopicStatus } from '@topics/topic-status.enum';
 
 export class TopicsMapper {
   static toDomain(raw: TopicsEntity): Topics {
     const domainEntity = new Topics();
     domainEntity.id = raw.id;
     domainEntity.name = raw.name;
+    domainEntity.color = raw.color;
+    domainEntity.status = raw.status;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -20,6 +24,8 @@ export class TopicsMapper {
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
     persistenceEntity.name = domainEntity.name;
+    persistenceEntity.color = domainEntity.color ?? TopicColor.primary;
+    persistenceEntity.status = domainEntity.status ?? TopicStatus.inactive;
     return persistenceEntity;
   }
 }

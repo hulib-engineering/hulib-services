@@ -514,6 +514,8 @@ export class UsersService {
   }
 
   async upgrade(id: User['id'], upgradeDto: UpgradeDto) {
+    const adminId = await this.notificationsService.getAdminId();
+
     if (upgradeDto.action === Action.accept) {
       await this.usersRepository.update(id, {
         role: {
@@ -521,11 +523,14 @@ export class UsersService {
         },
         approval: Approval.approved,
       });
-      await this.notificationsService.pushNoti({
-        senderId: 1,
-        recipientId: Number(id),
-        type: NotificationTypeEnum.account,
-      });
+
+      if (adminId) {
+        await this.notificationsService.pushNoti({
+          senderId: adminId,
+          recipientId: Number(id),
+          type: NotificationTypeEnum.account,
+        });
+      }
 
       // change status for the first story when becoming a human book
       await this.prisma.story.updateMany({
@@ -541,12 +546,14 @@ export class UsersService {
         approval: Approval.rejected,
       });
 
-      await this.notificationsService.pushNoti({
-        senderId: 1,
-        recipientId: Number(id),
-        type: NotificationTypeEnum.rejectHuber,
-        extraNote: upgradeDto.reason,
-      });
+      if (adminId) {
+        await this.notificationsService.pushNoti({
+          senderId: adminId,
+          recipientId: Number(id),
+          type: NotificationTypeEnum.rejectHuber,
+          extraNote: upgradeDto.reason,
+        });
+      }
 
       return {
         message: 'Reject request to become huber!',
