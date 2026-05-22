@@ -78,12 +78,15 @@ export class AppealsService {
       },
     });
 
-    await this.notificationsService.pushNoti({
-      senderId: userId,
-      recipientId: 1,
-      type: NotificationTypeEnum.userAppeal,
-      relatedEntityId: appeal.id,
-    });
+    const adminId = await this.notificationsService.getAdminId();
+    if (adminId) {
+      await this.notificationsService.pushNoti({
+        senderId: userId,
+        recipientId: adminId,
+        type: NotificationTypeEnum.userAppeal,
+        relatedEntityId: appeal.id,
+      });
+    }
 
     return appeal;
   }
@@ -134,12 +137,15 @@ export class AppealsService {
       });
     }
 
-    await this.notificationsService.pushNoti({
-      senderId: 1,
-      recipientId: appeal.userId,
-      type: NotificationTypeEnum.appealResponse,
-      relatedEntityId: appealId,
-    });
+    const adminId = await this.notificationsService.getAdminId();
+    if (adminId) {
+      await this.notificationsService.pushNoti({
+        senderId: adminId,
+        recipientId: appeal.userId,
+        type: NotificationTypeEnum.appealResponse,
+        relatedEntityId: appealId,
+      });
+    }
 
     return updatedAppeal;
   }

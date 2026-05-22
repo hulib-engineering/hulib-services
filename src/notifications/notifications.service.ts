@@ -1,9 +1,10 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { infinityPagination } from '@utils/infinity-pagination';
 import { IPaginationOptions } from '@utils/types/pagination-options';
+import { RoleEnum } from '@roles/roles.enum';
 
 import { FindQueryNotificationsDto } from './dto/find-all-notifications-query.dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
@@ -519,22 +520,39 @@ export class NotificationsService {
     };
   }
 
-  async pushNoti(createNotificationDto: CreateNotificationDto) {
-    const notification = await this.create(createNotificationDto);
+  async getAdminId(): Promise<number | null> {
+    const admin = await this.prisma.user.findFirst({
+      where: { role: { id: RoleEnum.admin } },
+      select: { id: true },
+    });
+    return admin?.id ?? null;
+  }
 
-    if (notification) {
-      const refetchedNotifs = await this.findAllWithPagination({
-        filterOptions: { recipientId: notification.recipientId },
-        paginationOptions: { page: 1, limit: 5 },
-      });
+  pushNoti(createNotificationDto: CreateNotificationDto): void {
+    this.eventEmitter.emit('notification.create', createNotificationDto);
+  }
 
-      this.eventEmitter.emit('notification.list.fetch', {
-        userId: notification.recipientId,
-        notifications: {
-          ...refetchedNotifs,
-          ...infinityPagination(refetchedNotifs.data, { page: 1, limit: 5 }),
-        },
-      });
+  @OnEvent('notification.create')
+  async handleNotificationCreate(payload: CreateNotificationDto) {
+    try {
+      const notification = await this.create(payload);
+
+      if (notification) {
+        const refetchedNotifs = await this.findAllWithPagination({
+          filterOptions: { recipientId: notification.recipientId },
+          paginationOptions: { page: 1, limit: 5 },
+        });
+
+        this.eventEmitter.emit('notification.list.fetch', {
+          userId: notification.recipientId,
+          notifications: {
+            ...refetchedNotifs,
+            ...infinityPagination(refetchedNotifs.data, { page: 1, limit: 5 }),
+          },
+        });
+      }
+    } catch (error) {
+      this.logger.error(`Notification creation failed: ${error.message}`);
     }
   }
 }

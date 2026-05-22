@@ -81,9 +81,26 @@ model status {
   stickers sticker[]
 }
 
+enum TopicColor {
+  yellow
+  orange
+  pink
+  lavender
+  green
+  blue
+  primary
+}
+
+enum TopicStatus {
+  active
+  inactive
+}
+
 model topics {
   id        Int                    @id @default(autoincrement())
   name      String                 @unique @db.VarChar
+  color     TopicColor             @default(primary)
+  status    TopicStatus            @default(inactive)
   createdAt DateTime               @default(now()) @db.Timestamp(6)
   updatedAt DateTime               @default(now()) @db.Timestamp(6)
   hubers    humanBookTopic[]

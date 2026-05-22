@@ -30,7 +30,6 @@ import { FileConfig, FileDriver } from '@files/config/file-config.type';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { FileType } from '@files/domain/file';
-import { RoleEnum } from '@roles/roles.enum';
 import { StoryQueryTypeEnum } from '@stories/story-query-type.enum';
 
 @Injectable()
@@ -72,12 +71,15 @@ export class StoriesService {
       topics: topicsEntities,
     });
 
-    await this.notifsService.pushNoti({
-      senderId: Number(humanBook.id),
-      recipientId: 1,
-      type: NotificationTypeEnum.publishStory,
-      relatedEntityId: newStory.id,
-    });
+    const adminId = await this.notifsService.getAdminId();
+    if (adminId) {
+      await this.notifsService.pushNoti({
+        senderId: Number(humanBook.id),
+        recipientId: adminId,
+        type: NotificationTypeEnum.publishStory,
+        relatedEntityId: newStory.id,
+      });
+    }
 
     return newStory;
   }
@@ -106,15 +108,12 @@ export class StoriesService {
       topics: topicsEntities,
     });
 
-    const admin = await this.prisma.user.findFirst({
-      where: { role: { id: RoleEnum.admin } },
-      select: { id: true },
-    });
+    const adminId = await this.notifsService.getAdminId();
 
-    if (admin) {
+    if (adminId) {
       await this.notifsService.pushNoti({
         senderId: Number(userId),
-        recipientId: admin.id,
+        recipientId: adminId,
         type: NotificationTypeEnum.account,
       });
     }
@@ -306,24 +305,30 @@ export class StoriesService {
       !!updateStoriesDto.publishStatus &&
       updateStoriesDto.publishStatus === 'published'
     ) {
-      await this.notifsService.pushNoti({
-        senderId: 1,
-        recipientId: story.humanBookId,
-        type: NotificationTypeEnum.publishStory,
-        relatedEntityId: story.id,
-      });
+      const adminId = await this.notifsService.getAdminId();
+      if (adminId) {
+        await this.notifsService.pushNoti({
+          senderId: adminId,
+          recipientId: story.humanBookId,
+          type: NotificationTypeEnum.publishStory,
+          relatedEntityId: story.id,
+        });
+      }
     }
 
     if (
       !!updateStoriesDto.publishStatus &&
       updateStoriesDto.publishStatus === 'rejected'
     ) {
-      await this.notifsService.pushNoti({
-        senderId: 1,
-        recipientId: story.humanBookId,
-        type: NotificationTypeEnum.rejectStory,
-        relatedEntityId: story.id,
-      });
+      const adminId = await this.notifsService.getAdminId();
+      if (adminId) {
+        await this.notifsService.pushNoti({
+          senderId: adminId,
+          recipientId: story.humanBookId,
+          type: NotificationTypeEnum.rejectStory,
+          relatedEntityId: story.id,
+        });
+      }
     }
 
     return updated;

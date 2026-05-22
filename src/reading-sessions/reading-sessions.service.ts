@@ -245,12 +245,15 @@ export class ReadingSessionsService {
     }
 
     if (dto.sessionStatus === 'finished') {
-      await this.notificationService.pushNoti({
-        senderId: 1,
-        recipientId: session.readerId,
-        type: NotificationTypeEnum.sessionFinish,
-        relatedEntityId: session.id,
-      });
+      const adminId = await this.notificationService.getAdminId();
+      if (adminId) {
+        await this.notificationService.pushNoti({
+          senderId: adminId,
+          recipientId: session.readerId,
+          type: NotificationTypeEnum.sessionFinish,
+          relatedEntityId: session.id,
+        });
+      }
     }
 
     if (session.sessionStatus === ReadingSessionStatus.FINISHED) {
@@ -450,12 +453,15 @@ export class ReadingSessionsService {
           data: { sessionStatus: ReadingSessionStatus.MISSED },
         });
 
-        await this.notificationService.pushNoti({
-          senderId: 1,
-          recipientId: session.readerId,
-          type: NotificationTypeEnum.missReadingSession,
-          relatedEntityId: session.id,
-        });
+        const adminId = await this.notificationService.getAdminId();
+        if (adminId) {
+          await this.notificationService.pushNoti({
+            senderId: adminId,
+            recipientId: session.readerId,
+            type: NotificationTypeEnum.missReadingSession,
+            relatedEntityId: session.id,
+          });
+        }
 
         this.logger.log(`[CRON] Marked session ${session.id} as MISSED`);
       }

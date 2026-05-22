@@ -67,12 +67,15 @@ export class ReportsService {
       },
     });
 
-    await this.notificationsService.pushNoti({
-      senderId: reporterId,
-      recipientId: 1,
-      type: NotificationTypeEnum.huberReported,
-      relatedEntityId: report.id,
-    });
+    const adminId = await this.notificationsService.getAdminId();
+    if (adminId) {
+      await this.notificationsService.pushNoti({
+        senderId: reporterId,
+        recipientId: adminId,
+        type: NotificationTypeEnum.huberReported,
+        relatedEntityId: report.id,
+      });
+    }
 
     return report;
   }

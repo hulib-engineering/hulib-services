@@ -303,12 +303,15 @@ export class ModerationsService {
         reportId: dto.reportId,
       });
 
-      await this.notificationsService.pushNoti({
-        senderId: 1,
-        recipientId: dto.userId,
-        type: NotificationTypeEnum.huberWarning,
-        relatedEntityId: moderation.id,
-      });
+      const adminId = await this.notificationsService.getAdminId();
+      if (adminId) {
+        await this.notificationsService.pushNoti({
+          senderId: adminId,
+          recipientId: dto.userId,
+          type: NotificationTypeEnum.huberWarning,
+          relatedEntityId: moderation.id,
+        });
+      }
 
       return moderation;
     } catch (error) {
