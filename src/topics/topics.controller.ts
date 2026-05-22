@@ -35,6 +35,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { CheckAbilities } from '@casl/decorators/casl.decorator';
 import { Action } from '@casl/ability.factory';
 import { CaslGuard } from '@casl/guards/casl.guard';
+import { pagination } from '@utils/pagination';
+import { RoleEnum } from '@roles/roles.enum';
 
 @ApiTags('Topics')
 @ApiBearerAuth()
@@ -65,7 +67,9 @@ export class TopicsController {
   async findAll(
     @Request() request,
     @Query() query: FindAllTopicsDto,
-  ): Promise<InfinityPaginationResponseDto<Topics>> {
+  ): Promise<
+    InfinityPaginationResponseDto<Topics> | { data: Topics[]; meta: object }
+  > {
     if (query?.type === TopicQueryTypeEnum.MOST_POPULAR) {
       return infinityPagination(await this.topicsService.findTop3Popular(), {
         page: 1,
@@ -80,18 +84,22 @@ export class TopicsController {
     }
 
     const name = query?.name;
+    const isAdmin = request.user.role.id === RoleEnum.admin;
 
-    return infinityPagination(
-      await this.topicsService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
-        name,
-        user: request.user,
-      }),
-      { page, limit },
-    );
+    const { data, total } = await this.topicsService.findAllWithPagination({
+      paginationOptions: {
+        page,
+        limit,
+      },
+      name,
+      user: request.user,
+    });
+
+    if (isAdmin) {
+      return pagination(data, total, { page, limit });
+    }
+
+    return infinityPagination(data, { page, limit });
   }
 
   @Get(':id')

@@ -16,7 +16,7 @@ export abstract class TopicsRepository {
     paginationOptions: IPaginationOptions;
     name?: string;
     status?: Topics['status'];
-  }): Promise<Topics[]>;
+  }): Promise<{ data: Topics[]; total: number }>;
 
   abstract findTop3PopularTopics(): Promise<Topics[]>;
 
