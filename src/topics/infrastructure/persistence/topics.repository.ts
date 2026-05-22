@@ -11,14 +11,21 @@ export abstract class TopicsRepository {
   abstract findAllWithPagination({
     paginationOptions,
     name,
+    status,
   }: {
     paginationOptions: IPaginationOptions;
     name?: string;
+    status?: Topics['status'];
   }): Promise<Topics[]>;
 
   abstract findTop3PopularTopics(): Promise<Topics[]>;
 
   abstract findById(id: Topics['id']): Promise<NullableType<Topics>>;
+
+  abstract findByName(
+    name: string,
+    excludeId?: Topics['id'],
+  ): Promise<NullableType<Topics>>;
 
   abstract update(
     id: Topics['id'],

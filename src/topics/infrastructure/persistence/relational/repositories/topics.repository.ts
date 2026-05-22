@@ -8,6 +8,7 @@ import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repo
 import { TopicsMapper } from '@topics/infrastructure/persistence/relational/mappers/topics.mapper';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { PublishStatus } from '@stories/status.enum';
+import { TopicStatus } from '@topics/topic-status.enum';
 
 @Injectable()
 export class TopicsRelationalRepository implements TopicsRepository {
@@ -27,15 +28,18 @@ export class TopicsRelationalRepository implements TopicsRepository {
   async findAllWithPagination({
     paginationOptions,
     name,
+    status,
   }: {
     paginationOptions: IPaginationOptions;
     name?: string;
+    status?: Topics['status'];
   }): Promise<Topics[]> {
     const entities = await this.topicsRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
       where: {
         name: name ? Like(`%${name}%`) : undefined,
+        status: status ?? undefined,
       },
     });
 
@@ -47,7 +51,10 @@ export class TopicsRelationalRepository implements TopicsRepository {
       .createQueryBuilder('topic')
       .leftJoin('topic.stories', 'story') // join through storyTopic
       .leftJoin('story.readingSessions', 'rs') // join reading sessions
-      .where('story.publishStatus = :status', {
+      .where('topic.status = :topicStatus', {
+        topicStatus: TopicStatus.active,
+      })
+      .andWhere('story.publishStatus = :status', {
         status: PublishStatus.published,
       })
       .select('topic.id', 'id')
@@ -73,6 +80,23 @@ export class TopicsRelationalRepository implements TopicsRepository {
       where: { id },
     });
 
+    return entity ? TopicsMapper.toDomain(entity) : null;
+  }
+
+  async findByName(
+    name: string,
+    excludeId?: Topics['id'],
+  ): Promise<NullableType<Topics>> {
+    const trimmedName = name.trim();
+    const queryBuilder = this.topicsRepository
+      .createQueryBuilder('topic')
+      .where('LOWER(topic.name) = LOWER(:name)', { name: trimmedName });
+
+    if (excludeId !== undefined) {
+      queryBuilder.andWhere('topic.id != :excludeId', { excludeId });
+    }
+
+    const entity = await queryBuilder.getOne();
     return entity ? TopicsMapper.toDomain(entity) : null;
   }
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CaslAbilityFactory, Action } from '../ability.factory';
 import { User } from '@users/domain/user';
+import { TopicStatus } from '@topics/topic-status.enum';
 
 @Injectable()
 export class PermissionService {
@@ -69,6 +70,21 @@ export class PermissionService {
    */
   isAdmin(user: User): boolean {
     return user.role?.id === 1; // RoleEnum.admin
+  }
+
+  canManageTopics(user: User): boolean {
+    const ability = this.abilityFactory.defineAbilitiesFor(user);
+    return (
+      ability.can(Action.Manage, 'all') || ability.can(Action.Manage, 'Topic')
+    );
+  }
+
+  canReadTopic(user: User, topic: { status: TopicStatus }): boolean {
+    if (this.canManageTopics(user)) {
+      return true;
+    }
+
+    return topic.status === TopicStatus.active;
   }
 
   /**

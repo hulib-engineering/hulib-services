@@ -9,6 +9,7 @@ import {
 import { Injectable } from '@nestjs/common';
 
 import { RoleEnum } from '@roles/roles.enum';
+import { TopicStatus } from '@topics/topic-status.enum';
 import { User } from '@users/domain/user';
 
 export enum Action {
@@ -116,8 +117,8 @@ export class CaslAbilityFactory {
       (subject: any) => subject.humanBookId === user.id,
     );
 
-    // Topics
-    can(Action.Read, 'Topic');
+    // Topics (active only)
+    can(Action.Read, 'Topic', { status: TopicStatus.active });
 
     // Time slots
     can([Action.Create, Action.Read, Action.Update, Action.Delete], 'TimeSlot');
@@ -160,8 +161,8 @@ export class CaslAbilityFactory {
     // Stories (read only)
     can(Action.Read, 'Story');
 
-    // Topics
-    can(Action.Read, 'Topic');
+    // Topics (active only)
+    can(Action.Read, 'Topic', { status: TopicStatus.active });
 
     // Story reviews
     can(
@@ -201,8 +202,8 @@ export class CaslAbilityFactory {
       'topics',
     ]);
 
-    // Topics
-    can(Action.Read, 'Topic');
+    // Topics (active only)
+    can(Action.Read, 'Topic', { status: TopicStatus.active });
 
     // Cannot update user
     cannot(Action.Update, 'User');

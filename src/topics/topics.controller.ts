@@ -8,9 +8,12 @@ import {
   Patch,
   Post,
   Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { TopicsService } from './topics.service';
 import {
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
@@ -28,8 +31,13 @@ import { CreateTopicsDto } from './dto/create-topics.dto';
 import { TopicDto } from './dto/topic.dto';
 import { UpdateTopicsDto } from './dto/update-topics.dto';
 import { TopicQueryTypeEnum } from '@topics/topic-query-type.enum';
+import { AuthGuard } from '@nestjs/passport';
+import { CheckAbilities } from '@casl/decorators/casl.decorator';
+import { Action } from '@casl/ability.factory';
+import { CaslGuard } from '@casl/guards/casl.guard';
 
 @ApiTags('Topics')
+@ApiBearerAuth()
 @Controller({
   path: 'topics',
   version: '1',
@@ -38,6 +46,8 @@ export class TopicsController {
   constructor(private readonly topicsService: TopicsService) {}
 
   @Post()
+  @CheckAbilities((ability) => ability.can(Action.Manage, 'Topic'))
+  @UseGuards(AuthGuard('jwt'), CaslGuard)
   @ApiOperation({ summary: 'Create a new topic' })
   @ApiCreatedResponse({
     type: TopicDto,
@@ -47,10 +57,13 @@ export class TopicsController {
   }
 
   @Get()
+  @CheckAbilities((ability) => ability.can(Action.Read, 'Topic'))
+  @UseGuards(AuthGuard('jwt'), CaslGuard)
   @ApiOkResponse({
     type: InfinityPaginationResponse(Topics),
   })
   async findAll(
+    @Request() request,
     @Query() query: FindAllTopicsDto,
   ): Promise<InfinityPaginationResponseDto<Topics>> {
     if (query?.type === TopicQueryTypeEnum.MOST_POPULAR) {
@@ -75,12 +88,15 @@ export class TopicsController {
           limit,
         },
         name,
+        user: request.user,
       }),
       { page, limit },
     );
   }
 
   @Get(':id')
+  @CheckAbilities((ability) => ability.can(Action.Read, 'Topic'))
+  @UseGuards(AuthGuard('jwt'), CaslGuard)
   @ApiParam({
     name: 'id',
     type: Number,
@@ -89,11 +105,16 @@ export class TopicsController {
   @ApiOkResponse({
     type: TopicDto,
   })
-  async findOne(@Param('id') id: number): Promise<Topics | null> {
-    return await this.topicsService.findOne(id);
+  async findOne(
+    @Request() request,
+    @Param('id') id: number,
+  ): Promise<Topics | null> {
+    return await this.topicsService.findOne(id, request.user);
   }
 
   @Patch(':id')
+  @CheckAbilities((ability) => ability.can(Action.Manage, 'Topic'))
+  @UseGuards(AuthGuard('jwt'), CaslGuard)
   @ApiParam({
     name: 'id',
     type: Number,
@@ -107,6 +128,8 @@ export class TopicsController {
   }
 
   @Delete(':id')
+  @CheckAbilities((ability) => ability.can(Action.Manage, 'Topic'))
+  @UseGuards(AuthGuard('jwt'), CaslGuard)
   @ApiOperation({ summary: 'Delete a topic' })
   @ApiParam({
     name: 'id',

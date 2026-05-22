@@ -522,7 +522,6 @@ export class MailService {
       locale?: string;
     };
   }): Promise<void> {
-    
     const locale = mailData.data.locale || 'vi';
 
     const [title, subTitle, dear, p1, p2, p3, p4, p5] = await Promise.all([
