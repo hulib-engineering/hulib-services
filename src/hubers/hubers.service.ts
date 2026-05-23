@@ -15,6 +15,7 @@ import { AppConfig } from '@config/app-config.type';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { omit } from 'lodash';
+import { TopicStatus } from '@topics/topic-status.enum';
 import { HuberWithRelations } from './dto/query-hubers-response.dto';
 
 @Injectable()
@@ -59,6 +60,11 @@ export class HubersService {
           })),
         include: {
           humanBookTopic: {
+            where: {
+              topic: {
+                status: TopicStatus.active,
+              },
+            },
             include: {
               topic: true,
             },
@@ -212,7 +218,16 @@ export class HubersService {
           : undefined,
       },
       include: {
-        humanBookTopic: true,
+        humanBookTopic: {
+          where: {
+            topic: {
+              status: TopicStatus.active,
+            },
+          },
+          include: {
+            topic: true,
+          },
+        },
         file: {
           select: {
             id: true,
@@ -239,6 +254,9 @@ export class HubersService {
         return {
           ...omit(huber, ['feedbackTos', 'feedbackBys']),
           file: await this.transformFileUrl(huber.file),
+          sharingTopics: huber.humanBookTopic.map((topic) => ({
+            ...topic.topic,
+          })),
           rating,
         };
       }),
