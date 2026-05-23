@@ -36,6 +36,7 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { AppConfig } from '@config/app-config.type';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ReadingSessionStatus } from '@reading-sessions/domain';
+import { TopicStatus } from '@topics/topic-status.enum';
 import { omit } from 'lodash';
 
 @Injectable()
@@ -156,6 +157,11 @@ export class UsersService {
       },
       include: {
         humanBookTopic: {
+          where: {
+            topic: {
+              status: TopicStatus.active,
+            },
+          },
           include: {
             topic: {
               select: {
