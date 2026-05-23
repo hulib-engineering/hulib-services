@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { RoleEnum } from '@roles/roles.enum';
+import { TopicStatus } from '@topics/topic-status.enum';
 
 import { SearchDto } from './dto/search.dto';
 
@@ -50,7 +51,16 @@ export class SearchService {
         },
       },
       include: {
-        humanBookTopic: true,
+        humanBookTopic: {
+          where: {
+            topic: {
+              status: TopicStatus.active,
+            },
+          },
+          include: {
+            topic: true,
+          },
+        },
       },
     });
 
