@@ -167,6 +167,7 @@ export class UsersService {
               select: {
                 id: true,
                 name: true,
+                color: true,
               },
             },
           },
@@ -177,6 +178,7 @@ export class UsersService {
               select: {
                 id: true,
                 name: true,
+                color: true,
               },
             },
           },
