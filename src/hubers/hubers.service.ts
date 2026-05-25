@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { FilterUserDto } from '@users/dto/query-user.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
@@ -14,8 +15,8 @@ import appConfig from '@config/app.config';
 import { AppConfig } from '@config/app-config.type';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { omit } from 'lodash';
 import { TopicStatus } from '@topics/topic-status.enum';
+
 import { HuberWithRelations } from './dto/query-hubers-response.dto';
 
 @Injectable()
@@ -31,33 +32,11 @@ export class HubersService {
     sortOptions?: ISortOptions[];
     paginationOptions: IPaginationOptions;
   }): Promise<[HuberWithRelations[], number]> {
+    const where = this.buildHubersWhereClause(filterOptions);
+
     const [hubers, count] = await this.prisma.$transaction([
       this.prisma.user.findMany({
-        where: {
-          roleId: RoleEnum.humanBook,
-          humanBookTopic:
-            (filterOptions?.sharingTopics &&
-              filterOptions?.sharingTopics.length &&
-              filterOptions?.sharingTopics.length > 0) ||
-            (filterOptions?.userTopicsOfInterest &&
-              filterOptions?.userTopicsOfInterest.length &&
-              filterOptions?.userTopicsOfInterest.length > 0)
-              ? {
-                  some: {
-                    topicId:
-                      filterOptions?.sharingTopics &&
-                      filterOptions?.sharingTopics?.length > 0
-                        ? { in: filterOptions?.sharingTopics }
-                        : { in: filterOptions?.userTopicsOfInterest },
-                  },
-                }
-              : undefined,
-        },
-        orderBy:
-          sortOptions &&
-          sortOptions.map((sortOption) => ({
-            [sortOption.sortBy]: sortOption.order,
-          })),
+        where,
         include: {
           humanBookTopic: {
             where: {
@@ -75,46 +54,40 @@ export class HubersService {
               path: true,
             },
           },
-        },
-        skip: (paginationOptions.page - 1) * paginationOptions.limit,
-        take: paginationOptions.limit,
-      }),
-      this.prisma.user.count({
-        where: {
-          roleId: RoleEnum.humanBook,
-          humanBookTopic:
-            (filterOptions?.sharingTopics &&
-              filterOptions?.sharingTopics.length &&
-              filterOptions?.sharingTopics.length > 0) ||
-            (filterOptions?.userTopicsOfInterest &&
-              filterOptions?.userTopicsOfInterest.length &&
-              filterOptions?.userTopicsOfInterest.length > 0)
-              ? {
-                  some: {
-                    topicId:
-                      filterOptions?.sharingTopics &&
-                      filterOptions?.sharingTopics?.length > 0
-                        ? { in: filterOptions?.sharingTopics }
-                        : { in: filterOptions?.userTopicsOfInterest },
-                  },
-                }
-              : undefined,
+          feedbackTos: true,
         },
       }),
+      this.prisma.user.count({ where }),
     ]);
 
-    return [
-      await Promise.all(
-        hubers.map(async (huber) => ({
-          ...huber,
-          file: await this.transformFileUrl(huber.file),
-          sharingTopics: huber.humanBookTopic.map((topic) => ({
-            ...topic.topic,
-          })),
+    const hubersWithOnlyFieldsToSort = hubers.map((huber) => ({
+      huber,
+      ...this.computFieldsToSort(huber),
+    }));
+
+    hubersWithOnlyFieldsToSort.sort((left, right) =>
+      this.compareHubersByFieldsToSort(left, right, sortOptions),
+    );
+
+    const startIndex = (paginationOptions.page - 1) * paginationOptions.limit;
+    const paged = hubersWithOnlyFieldsToSort.slice(
+      startIndex,
+      startIndex + paginationOptions.limit,
+    );
+
+    const result = await Promise.all(
+      paged.map(async ({ huber, rating }) => ({
+        ...huber,
+        feedbackTos: undefined,
+        rating,
+        file: await this.transformFileUrl(huber.file),
+        sharingTopics: huber.humanBookTopic.map((topic) => ({
+          ...topic.topic,
         })),
-      ),
-      count,
-    ];
+      })),
+    );
+
+    return [result as HuberWithRelations[], count];
   }
 
   findOne(id: Huber['id']) {
@@ -205,73 +178,90 @@ export class HubersService {
     filterOptions?: FilterUserDto;
     paginationOptions: IPaginationOptions;
   }): Promise<[HuberWithRelations[], number]> {
-    // 1️⃣ Fetch hubers with optional topic filters and include related files and topics
-    const hubers = await this.prisma.user.findMany({
-      where: {
-        roleId: RoleEnum.humanBook,
-        humanBookTopic: filterOptions?.userTopicsOfInterest?.length
-          ? {
-              some: {
-                topicId: { in: filterOptions.userTopicsOfInterest },
-              },
-            }
-          : undefined,
+    return this.queryHubers({
+      filterOptions: {
+        userTopicsOfInterest: filterOptions?.userTopicsOfInterest,
       },
-      include: {
-        humanBookTopic: {
-          where: {
-            topic: {
-              status: TopicStatus.active,
-            },
-          },
-          include: {
-            topic: true,
-          },
-        },
-        file: {
-          select: {
-            id: true,
-            path: true,
-          },
-        },
-        feedbackBys: true,
-        feedbackTos: true, // 👈 fetch feedback given to the huber
-      },
+      paginationOptions,
     });
+  }
 
-    // 2️⃣ Calculate huber rating from feedback
-    const hubersWithRating = await Promise.all(
-      hubers.map(async (huber) => {
-        const allFeedback = huber.feedbackTos ?? [];
-        const avgRating =
-          allFeedback.length > 0
-            ? allFeedback.reduce((acc, f) => acc + f.rating, 0) /
-              allFeedback.length
-            : 0;
+  private buildHubersWhereClause(filterOptions?: FilterUserDto) {
+    const topicIds =
+      filterOptions?.sharingTopics && filterOptions.sharingTopics.length > 0
+        ? filterOptions.sharingTopics
+        : filterOptions?.userTopicsOfInterest &&
+            filterOptions.userTopicsOfInterest.length > 0
+          ? filterOptions.userTopicsOfInterest
+          : null;
 
-        const rating = Math.round(avgRating * 10) / 10; // 👉 round to 1 decimal
+    return {
+      roleId: RoleEnum.humanBook,
+      humanBookTopic: topicIds
+        ? { some: { topicId: { in: topicIds } } }
+        : undefined,
+    };
+  }
 
-        return {
-          ...omit(huber, ['feedbackTos', 'feedbackBys']),
-          file: await this.transformFileUrl(huber.file),
-          sharingTopics: huber.humanBookTopic.map((topic) => ({
-            ...topic.topic,
-          })),
-          rating,
-        };
-      }),
-    );
+  private computFieldsToSort(huber: Record<string, any>) {
+    const allFeedback = (huber.feedbackTos as any[]) ?? [];
+    const avgRating =
+      allFeedback.length > 0
+        ? allFeedback.reduce((acc, f) => acc + f.rating, 0) / allFeedback.length
+        : 0;
+    const rating = Math.round(avgRating * 10) / 10;
+    const fullName = huber.fullName ?? '';
 
-    // 3️⃣ Sort by rating descending
-    hubersWithRating.sort((a, b) => b.rating - a.rating);
+    return { rating, fullName };
+  }
 
-    // 4️⃣ Pagination
-    const totalCount = hubersWithRating.length;
-    const start = (paginationOptions.page - 1) * paginationOptions.limit;
-    const end = start + paginationOptions.limit;
-    const pagedHubers = hubersWithRating.slice(start, end);
+  private compareHubersByFieldsToSort(
+    left: {
+      huber: Record<string, any>;
+      rating: number;
+      fullName: string;
+    },
+    right: {
+      huber: Record<string, any>;
+      rating: number;
+      fullName: string;
+    },
+    sortOptions?: ISortOptions[],
+  ) {
+    for (const sortOption of sortOptions ?? []) {
+      const leftValue = (left.huber as any)[sortOption.sortBy];
+      const rightValue = (right.huber as any)[sortOption.sortBy];
+      const diff = this.compareFieldValues(
+        leftValue,
+        rightValue,
+        sortOption.order,
+      );
+      if (diff !== 0) return diff;
+    }
 
-    return [pagedHubers, totalCount];
+    const ratingDiff = right.rating - left.rating;
+    if (ratingDiff !== 0) return ratingDiff;
+    return left.fullName.localeCompare(right.fullName);
+  }
+
+  private compareFieldValues(a: unknown, b: unknown, order: 'asc' | 'desc') {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+
+    let diff: number;
+
+    if (typeof a === 'string' && typeof b === 'string') {
+      diff = a.localeCompare(b);
+    } else if (typeof a === 'number' && typeof b === 'number') {
+      diff = a - b;
+    } else if (a instanceof Date && b instanceof Date) {
+      diff = a.getTime() - b.getTime();
+    } else {
+      diff = String(a).localeCompare(String(b));
+    }
+
+    return order === 'desc' ? -diff : diff;
   }
 
   // For Prisma pipe only
