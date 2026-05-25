@@ -52,11 +52,13 @@ export class NotificationsService {
         where: {
           recipientId: filterOptions.recipientId,
           seen: false,
+          deletedAt: null,
         },
       }),
       this.prisma.notification.findMany({
         where: {
           ...filterOptions,
+          deletedAt: null,
         },
         orderBy: {
           createdAt: 'desc',
@@ -526,6 +528,21 @@ export class NotificationsService {
       select: { id: true },
     });
     return admin?.id ?? null;
+  }
+
+  async softDeleteSessionReminderNotification(
+    sessionId: number,
+  ): Promise<void> {
+    await this.prisma.notification.updateMany({
+      where: {
+        relatedEntityId: sessionId,
+        type: { name: 'other' },
+        deletedAt: null,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
   }
 
   pushNoti(createNotificationDto: CreateNotificationDto): void {

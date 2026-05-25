@@ -254,6 +254,7 @@ export class ReadingSessionsService {
           relatedEntityId: session.id,
         });
       }
+      await this.notificationService.softDeleteSessionReminderNotification(id);
     }
 
     if (session.sessionStatus === ReadingSessionStatus.FINISHED) {
@@ -452,6 +453,10 @@ export class ReadingSessionsService {
           where: { id: session.id },
           data: { sessionStatus: ReadingSessionStatus.MISSED },
         });
+
+        await this.notificationService.softDeleteSessionReminderNotification(
+          session.id,
+        );
 
         const adminId = await this.notificationService.getAdminId();
         if (adminId) {
