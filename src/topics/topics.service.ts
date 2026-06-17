@@ -46,9 +46,9 @@ export class TopicsService {
   }: {
     paginationOptions: IPaginationOptions;
     name?: string;
-    user: User;
+    user?: User;
   }): Promise<{ data: Topics[]; total: number }> {
-    const status = this.permissionService.canManageTopics(user)
+    const status = user && this.permissionService.canManageTopics(user)
       ? undefined
       : TopicStatus.active;
 

@@ -37,7 +37,6 @@ import { Topic } from '@topics/domain/topics';
 
 @ApiTags('Hubers')
 @ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'hubers',
   version: '1',
@@ -59,7 +58,9 @@ export class HubersController {
       limit = 50;
     }
 
-    const user = await this.userService.findById(request.user.id);
+    const user = request.user?.id
+      ? await this.userService.findById(request.user.id)
+      : null;
     const userTopicsOfInterest = user?.topics?.map((topic: Topic) => topic.id);
 
     if (query.type === HuberQueryTypeEnum.RECOMMENDED) {
