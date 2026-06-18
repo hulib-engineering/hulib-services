@@ -153,7 +153,7 @@ export class StoriesService {
     }
 
     return await Promise.all(
-      result.map(async (story) => {
+      (await this.attachViewAndLikeCounts(result)).map(async (story) => {
         const storyReview = await this.storyReviewService.getReviewsOverview(
           story.id,
         );
@@ -187,7 +187,7 @@ export class StoriesService {
 
     return {
       data: await Promise.all(
-        result?.data.map(async (story) => {
+        (await this.attachViewAndLikeCounts(result?.data ?? [])).map(async (story) => {
           const storyReview = await this.storyReviewService.getReviewsOverview(
             story.id,
           );
@@ -203,7 +203,7 @@ export class StoriesService {
     };
   }
 
-  async findOne(id: Story['id']) {
+  async findOne(id: Story['id'], incrementView = true) {
     const result = await this.prisma.story.findUnique({
       where: { id: Number(id) },
       include: {
@@ -233,6 +233,11 @@ export class StoriesService {
           },
         },
         cover: true,
+        _count: {
+          select: {
+            storyFavorite: true,
+          },
+        },
       },
     });
 
@@ -259,26 +264,52 @@ export class StoriesService {
       : null;
 
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
+    const viewCount = incrementView
+      ? (
+          await this.prisma.story.update({
+            where: { id: Number(id) },
+            data: {
+              viewCount: {
+                increment: 1,
+              },
+            },
+            select: {
+              viewCount: true,
+            },
+          })
+        ).viewCount
+      : result.viewCount;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { feedbackTos, _count, ...humanBookWithoutFeedback } =
-      result.humanBook;
+    const {
+      feedbackTos,
+      _count: humanBookCount,
+      ...humanBookWithoutFeedback
+    } = result.humanBook;
+
+    const {
+      _count: storyCount,
+      viewCount: _storedViewCount,
+      ...storyWithoutInternalCount
+    } = result;
 
     return {
-      ...result,
+      ...storyWithoutInternalCount,
       storyReview,
+      viewCount,
+      totalLikes: storyCount.storyFavorite,
       topics: result.topics?.map((nestedTopic) => nestedTopic.topic) || [],
       cover: coverWithUrl,
       humanBook: {
         ...humanBookWithoutFeedback,
-        countTopics: result.humanBook._count.humanBookTopic,
+        countTopics: humanBookCount.humanBookTopic,
         rating: humanBookRating,
       },
     };
   }
 
   async update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {
-    const story = await this.findOne(id);
+    const story = await this.findOne(id, false);
 
     if (!story) {
       throw new UnprocessableEntityException({
@@ -400,5 +431,44 @@ export class StoriesService {
     }
 
     return file;
+  }
+
+  private async attachViewAndLikeCounts(stories: Story[]): Promise<Story[]> {
+    const storyIds = stories.map((story) => story.id);
+    if (!storyIds.length) return stories;
+
+    const storyStats = await this.prisma.story.findMany({
+      where: {
+        id: {
+          in: storyIds,
+        },
+      },
+      select: {
+        id: true,
+        viewCount: true,
+        _count: {
+          select: {
+            storyFavorite: true,
+          },
+        },
+      },
+    });
+
+    const viewCountByStoryId = new Map(
+      storyStats.map((item) => [item.id, item.viewCount]),
+    );
+    const totalLikesByStoryId = new Map(
+      storyStats.map((item) => [item.id, item._count.storyFavorite]),
+    );
+
+    return stories.map((story) => {
+      const { viewCount, ...storyWithoutInternalCount } = story;
+
+      return {
+        ...storyWithoutInternalCount,
+        viewCount: Number(viewCountByStoryId.get(story.id) ?? 0),
+        totalLikes: Number(totalLikesByStoryId.get(story.id) ?? 0),
+      };
+    });
   }
 }

@@ -68,7 +68,6 @@ export class StoriesController {
     excludePrefixes: ['__'],
   })
   @Get()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({
     type: InfinityPaginationResponse(Story),
   })
@@ -81,7 +80,8 @@ export class StoriesController {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
 
-    const isAdmin = request.user.role.id === RoleEnum.admin;
+    const currentUser = request.user;
+    const isAdmin = currentUser?.role?.id === RoleEnum.admin;
 
     if (isAdmin) {
       const { data, count } =
@@ -114,7 +114,7 @@ export class StoriesController {
           type: query.type,
         },
         sortOptions: query?.sort ?? undefined,
-        currentUserId: request.user?.id,
+        currentUserId: currentUser?.id,
       }),
       { page, limit },
     );
