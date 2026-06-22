@@ -131,6 +131,7 @@ model user {
   bio                   String?                @db.VarChar
   videoUrl              String?                @db.VarChar
   warnCount             Int                    @default(0)
+  huberSince            DateTime?              @db.Timestamp(6)
   humanBookTopic        humanBookTopic[]
   topicsOfInterest      liberTopicOfInterest[]
   humanBooks            humanBooks[]
