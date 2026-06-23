@@ -191,6 +191,9 @@ export class UserEntity extends EntityRelationalHelper {
   @Column({ type: 'int', default: 0 })
   warnCount: number;
 
+  @Column({ type: 'timestamp', nullable: true })
+  huberSince?: Date | null;
+
   @ApiProperty()
   @Expose()
   get countTopics(): number {

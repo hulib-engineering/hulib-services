@@ -530,6 +530,7 @@ export class UsersService {
           id: RoleEnum.humanBook,
         },
         approval: Approval.approved,
+        huberSince: new Date(),
       });
 
       if (adminId) {

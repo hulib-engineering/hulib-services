@@ -44,6 +44,7 @@ export class UserMapper {
     domainEntity.bio = raw.bio;
     domainEntity.videoUrl = raw.videoUrl;
     domainEntity.warnCount = raw.warnCount ?? 0;
+    domainEntity.huberSince = raw.huberSince;
     domainEntity.topics = raw.topics;
     domainEntity.countTopics = raw.countTopics;
     domainEntity.approval = raw.approval;
@@ -126,6 +127,7 @@ export class UserMapper {
     persistenceEntity.bio = domainEntity.bio;
     persistenceEntity.videoUrl = domainEntity.videoUrl;
     persistenceEntity.warnCount = domainEntity.warnCount ?? 0;
+    persistenceEntity.huberSince = domainEntity.huberSince;
     persistenceEntity.topics = topics;
     return persistenceEntity;
   }
