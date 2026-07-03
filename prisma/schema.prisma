@@ -132,6 +132,7 @@ model user {
   videoUrl              String?                @db.VarChar
   warnCount             Int                    @default(0)
   huberSince            DateTime?              @db.Timestamp(6)
+  hasSeenHuberOnboarding Boolean               @default(false)
   humanBookTopic        humanBookTopic[]
   topicsOfInterest      liberTopicOfInterest[]
   humanBooks            humanBooks[]

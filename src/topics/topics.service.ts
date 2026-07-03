@@ -48,9 +48,10 @@ export class TopicsService {
     name?: string;
     user?: User;
   }): Promise<{ data: Topics[]; total: number }> {
-    const status = user && this.permissionService.canManageTopics(user)
-      ? undefined
-      : TopicStatus.active;
+    const status =
+      user && this.permissionService.canManageTopics(user)
+        ? undefined
+        : TopicStatus.active;
 
     return this.topicsRepository.findAllWithPagination({
       paginationOptions: {
