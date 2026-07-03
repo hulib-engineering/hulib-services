@@ -128,6 +128,12 @@ export class User {
   huberSince?: Date | null;
 
   @ApiProperty({
+    type: Boolean,
+    example: false,
+  })
+  hasSeenHuberOnboarding?: boolean;
+
+  @ApiProperty({
     type: () => [Topics],
   })
   topics?: Topics[];

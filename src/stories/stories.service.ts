@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpStatus,
   Injectable,
   UnprocessableEntityException,
@@ -31,6 +32,8 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { FileType } from '@files/domain/file';
 import { StoryQueryTypeEnum } from '@stories/story-query-type.enum';
+import { omit } from 'lodash';
+import { RoleEnum } from '@roles/roles.enum';
 
 @Injectable()
 export class StoriesService {
@@ -67,6 +70,8 @@ export class StoriesService {
 
     const newStory = await this.storiesRepository.create({
       ...createStoriesDto,
+      publishStatus:
+        createStoriesDto.publishStatus ?? PublishStatus[PublishStatus.pending],
       humanBook,
       topics: topicsEntities,
     });
@@ -104,6 +109,8 @@ export class StoriesService {
     }
     const newStory = await this.storiesRepository.create({
       ...createStoriesDto,
+      publishStatus:
+        createStoriesDto.publishStatus ?? PublishStatus[PublishStatus.pending],
       humanBook: user,
       topics: topicsEntities,
     });
@@ -187,17 +194,18 @@ export class StoriesService {
 
     return {
       data: await Promise.all(
-        (await this.attachViewAndLikeCounts(result?.data ?? [])).map(async (story) => {
-          const storyReview = await this.storyReviewService.getReviewsOverview(
-            story.id,
-          );
+        (await this.attachViewAndLikeCounts(result?.data ?? [])).map(
+          async (story) => {
+            const storyReview =
+              await this.storyReviewService.getReviewsOverview(story.id);
 
-          return {
-            ...story,
-            cover: await this.transformFileUrl(story.cover),
-            storyReview,
-          };
-        }),
+            return {
+              ...story,
+              cover: await this.transformFileUrl(story.cover),
+              storyReview,
+            };
+          },
+        ),
       ),
       count: result?.count,
     };
@@ -280,18 +288,14 @@ export class StoriesService {
         ).viewCount
       : result.viewCount;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {
-      feedbackTos,
-      _count: humanBookCount,
-      ...humanBookWithoutFeedback
-    } = result.humanBook;
+    const humanBookCount = result.humanBook._count;
+    const humanBookWithoutFeedback = omit(result.humanBook, [
+      'feedbackTos',
+      '_count',
+    ]);
 
-    const {
-      _count: storyCount,
-      viewCount: _storedViewCount,
-      ...storyWithoutInternalCount
-    } = result;
+    const storyCount = result._count;
+    const storyWithoutInternalCount = omit(result, ['_count', 'viewCount']);
 
     return {
       ...storyWithoutInternalCount,
@@ -308,7 +312,11 @@ export class StoriesService {
     };
   }
 
-  async update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {
+  async update(
+    id: Story['id'],
+    updateStoriesDto: UpdateStoryDto,
+    currentUser?: User,
+  ) {
     const story = await this.findOne(id, false);
 
     if (!story) {
@@ -316,6 +324,18 @@ export class StoriesService {
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
           story: 'storyNotFound',
+        },
+      });
+    }
+
+    if (
+      currentUser?.role?.id !== RoleEnum.admin &&
+      Number(story.humanBookId) !== Number(currentUser?.id)
+    ) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        errors: {
+          story: 'onlyOwnerCanUpdateStory',
         },
       });
     }
@@ -345,6 +365,14 @@ export class StoriesService {
           relatedEntityId: story.id,
         });
       }
+
+      await this.prisma.$executeRaw`
+        UPDATE "user"
+        SET "roleId" = 2,
+            "approval" = 'Approved',
+            "huberSince" = COALESCE("huberSince", CURRENT_TIMESTAMP)
+        WHERE "id" = ${Number(story.humanBookId)}
+      `;
     }
 
     if (
@@ -462,7 +490,7 @@ export class StoriesService {
     );
 
     return stories.map((story) => {
-      const { viewCount, ...storyWithoutInternalCount } = story;
+      const storyWithoutInternalCount = omit(story, ['viewCount']);
 
       return {
         ...storyWithoutInternalCount,

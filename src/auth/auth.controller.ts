@@ -417,6 +417,14 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
+  @Patch('me/huber-onboarding/seen')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  public markHuberOnboardingSeen(@Request() request) {
+    return this.usersService.markHuberOnboardingSeen(request.user.id);
+  }
+
+  @ApiBearerAuth()
   @Patch('upgrade/me')
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)

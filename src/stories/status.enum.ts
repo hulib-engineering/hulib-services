@@ -3,4 +3,5 @@ export enum PublishStatus {
   published = 2,
   deleted = 3,
   rejected = 4,
+  pending = 5,
 }

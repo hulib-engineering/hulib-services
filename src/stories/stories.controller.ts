@@ -93,7 +93,7 @@ export class StoriesController {
           filterOptions: {
             humanBookId: query.humanBookId,
             topicIds: query.topicIds,
-            publishStatus: query.publishStatus || PublishStatus.draft,
+            publishStatus: query.publishStatus || PublishStatus.pending,
             type: query.type,
           },
           sortOptions: query?.sort ?? undefined,
@@ -147,7 +147,7 @@ export class StoriesController {
   }
 
   @Patch(':id')
-  @Roles(RoleEnum.humanBook, RoleEnum.admin)
+  @Roles(RoleEnum.humanBook, RoleEnum.reader, RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
@@ -158,10 +158,11 @@ export class StoriesController {
     type: Story,
   })
   update(
+    @Request() request,
     @Param('id') id: Story['id'],
     @Body() updateStoriesDto: UpdateStoryDto,
   ) {
-    return this.storiesService.update(id, updateStoriesDto);
+    return this.storiesService.update(id, updateStoriesDto, request.user);
   }
 
   @Delete(':id')
