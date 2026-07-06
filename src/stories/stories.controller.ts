@@ -68,7 +68,6 @@ export class StoriesController {
     excludePrefixes: ['__'],
   })
   @Get()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOkResponse({
     type: InfinityPaginationResponse(Story),
   })
@@ -81,7 +80,8 @@ export class StoriesController {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
 
-    const isAdmin = request.user.role.id === RoleEnum.admin;
+    const currentUser = request.user;
+    const isAdmin = currentUser?.role?.id === RoleEnum.admin;
 
     if (isAdmin) {
       const { data, count } =
@@ -93,7 +93,7 @@ export class StoriesController {
           filterOptions: {
             humanBookId: query.humanBookId,
             topicIds: query.topicIds,
-            publishStatus: query.publishStatus || PublishStatus.draft,
+            publishStatus: query.publishStatus || PublishStatus.pending,
             type: query.type,
           },
           sortOptions: query?.sort ?? undefined,
@@ -114,7 +114,7 @@ export class StoriesController {
           type: query.type,
         },
         sortOptions: query?.sort ?? undefined,
-        currentUserId: request.user?.id,
+        currentUserId: currentUser?.id,
       }),
       { page, limit },
     );
@@ -147,7 +147,7 @@ export class StoriesController {
   }
 
   @Patch(':id')
-  @Roles(RoleEnum.humanBook, RoleEnum.admin)
+  @Roles(RoleEnum.humanBook, RoleEnum.reader, RoleEnum.admin)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
@@ -158,10 +158,11 @@ export class StoriesController {
     type: Story,
   })
   update(
+    @Request() request,
     @Param('id') id: Story['id'],
     @Body() updateStoriesDto: UpdateStoryDto,
   ) {
-    return this.storiesService.update(id, updateStoriesDto);
+    return this.storiesService.update(id, updateStoriesDto, request.user);
   }
 
   @Delete(':id')

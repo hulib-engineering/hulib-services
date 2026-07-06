@@ -59,8 +59,6 @@ export class TopicsController {
   }
 
   @Get()
-  @CheckAbilities((ability) => ability.can(Action.Read, 'Topic'))
-  @UseGuards(AuthGuard('jwt'), CaslGuard)
   @ApiOkResponse({
     type: InfinityPaginationResponse(Topics),
   })
@@ -84,7 +82,8 @@ export class TopicsController {
     }
 
     const name = query?.name;
-    const isAdmin = request.user.role.id === RoleEnum.admin;
+    const currentUser = request.user;
+    const isAdmin = currentUser?.role?.id === RoleEnum.admin;
 
     const { data, total } = await this.topicsService.findAllWithPagination({
       paginationOptions: {
@@ -92,7 +91,7 @@ export class TopicsController {
         limit,
       },
       name,
-      user: request.user,
+      user: currentUser,
     });
 
     if (isAdmin) {

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpStatus,
   Injectable,
   UnprocessableEntityException,
@@ -31,6 +32,8 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { FileType } from '@files/domain/file';
 import { StoryQueryTypeEnum } from '@stories/story-query-type.enum';
+import { omit } from 'lodash';
+import { RoleEnum } from '@roles/roles.enum';
 
 @Injectable()
 export class StoriesService {
@@ -67,6 +70,8 @@ export class StoriesService {
 
     const newStory = await this.storiesRepository.create({
       ...createStoriesDto,
+      publishStatus:
+        createStoriesDto.publishStatus ?? PublishStatus[PublishStatus.pending],
       humanBook,
       topics: topicsEntities,
     });
@@ -104,6 +109,8 @@ export class StoriesService {
     }
     const newStory = await this.storiesRepository.create({
       ...createStoriesDto,
+      publishStatus:
+        createStoriesDto.publishStatus ?? PublishStatus[PublishStatus.pending],
       humanBook: user,
       topics: topicsEntities,
     });
@@ -153,7 +160,7 @@ export class StoriesService {
     }
 
     return await Promise.all(
-      result.map(async (story) => {
+      (await this.attachViewAndLikeCounts(result)).map(async (story) => {
         const storyReview = await this.storyReviewService.getReviewsOverview(
           story.id,
         );
@@ -187,23 +194,24 @@ export class StoriesService {
 
     return {
       data: await Promise.all(
-        result?.data.map(async (story) => {
-          const storyReview = await this.storyReviewService.getReviewsOverview(
-            story.id,
-          );
+        (await this.attachViewAndLikeCounts(result?.data ?? [])).map(
+          async (story) => {
+            const storyReview =
+              await this.storyReviewService.getReviewsOverview(story.id);
 
-          return {
-            ...story,
-            cover: await this.transformFileUrl(story.cover),
-            storyReview,
-          };
-        }),
+            return {
+              ...story,
+              cover: await this.transformFileUrl(story.cover),
+              storyReview,
+            };
+          },
+        ),
       ),
       count: result?.count,
     };
   }
 
-  async findOne(id: Story['id']) {
+  async findOne(id: Story['id'], incrementView = true) {
     const result = await this.prisma.story.findUnique({
       where: { id: Number(id) },
       include: {
@@ -233,6 +241,11 @@ export class StoriesService {
           },
         },
         cover: true,
+        _count: {
+          select: {
+            storyFavorite: true,
+          },
+        },
       },
     });
 
@@ -259,32 +272,70 @@ export class StoriesService {
       : null;
 
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
+    const viewCount = incrementView
+      ? (
+          await this.prisma.story.update({
+            where: { id: Number(id) },
+            data: {
+              viewCount: {
+                increment: 1,
+              },
+            },
+            select: {
+              viewCount: true,
+            },
+          })
+        ).viewCount
+      : result.viewCount;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { feedbackTos, _count, ...humanBookWithoutFeedback } =
-      result.humanBook;
+    const humanBookCount = result.humanBook._count;
+    const humanBookWithoutFeedback = omit(result.humanBook, [
+      'feedbackTos',
+      '_count',
+    ]);
+
+    const storyCount = result._count;
+    const storyWithoutInternalCount = omit(result, ['_count', 'viewCount']);
 
     return {
-      ...result,
+      ...storyWithoutInternalCount,
       storyReview,
+      viewCount,
+      totalLikes: storyCount.storyFavorite,
       topics: result.topics?.map((nestedTopic) => nestedTopic.topic) || [],
       cover: coverWithUrl,
       humanBook: {
         ...humanBookWithoutFeedback,
-        countTopics: result.humanBook._count.humanBookTopic,
+        countTopics: humanBookCount.humanBookTopic,
         rating: humanBookRating,
       },
     };
   }
 
-  async update(id: Story['id'], updateStoriesDto: UpdateStoryDto) {
-    const story = await this.findOne(id);
+  async update(
+    id: Story['id'],
+    updateStoriesDto: UpdateStoryDto,
+    currentUser?: User,
+  ) {
+    const story = await this.findOne(id, false);
 
     if (!story) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
           story: 'storyNotFound',
+        },
+      });
+    }
+
+    if (
+      currentUser?.role?.id !== RoleEnum.admin &&
+      Number(story.humanBookId) !== Number(currentUser?.id)
+    ) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        errors: {
+          story: 'onlyOwnerCanUpdateStory',
         },
       });
     }
@@ -314,6 +365,14 @@ export class StoriesService {
           relatedEntityId: story.id,
         });
       }
+
+      await this.prisma.$executeRaw`
+        UPDATE "user"
+        SET "roleId" = 2,
+            "approval" = 'Approved',
+            "huberSince" = COALESCE("huberSince", CURRENT_TIMESTAMP)
+        WHERE "id" = ${Number(story.humanBookId)}
+      `;
     }
 
     if (
@@ -400,5 +459,44 @@ export class StoriesService {
     }
 
     return file;
+  }
+
+  private async attachViewAndLikeCounts(stories: Story[]): Promise<Story[]> {
+    const storyIds = stories.map((story) => story.id);
+    if (!storyIds.length) return stories;
+
+    const storyStats = await this.prisma.story.findMany({
+      where: {
+        id: {
+          in: storyIds,
+        },
+      },
+      select: {
+        id: true,
+        viewCount: true,
+        _count: {
+          select: {
+            storyFavorite: true,
+          },
+        },
+      },
+    });
+
+    const viewCountByStoryId = new Map(
+      storyStats.map((item) => [item.id, item.viewCount]),
+    );
+    const totalLikesByStoryId = new Map(
+      storyStats.map((item) => [item.id, item._count.storyFavorite]),
+    );
+
+    return stories.map((story) => {
+      const storyWithoutInternalCount = omit(story, ['viewCount']);
+
+      return {
+        ...storyWithoutInternalCount,
+        viewCount: Number(viewCountByStoryId.get(story.id) ?? 0),
+        totalLikes: Number(totalLikesByStoryId.get(story.id) ?? 0),
+      };
+    });
   }
 }

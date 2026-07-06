@@ -121,6 +121,19 @@ export class User {
   warnCount?: number;
 
   @ApiProperty({
+    type: Date,
+    nullable: true,
+    description: 'Date when the current 7-day Huber challenge started',
+  })
+  huberSince?: Date | null;
+
+  @ApiProperty({
+    type: Boolean,
+    example: false,
+  })
+  hasSeenHuberOnboarding?: boolean;
+
+  @ApiProperty({
     type: () => [Topics],
   })
   topics?: Topics[];

@@ -41,6 +41,18 @@ export class Story {
   storyReview?: StoryReviewOverview | null;
 
   @ApiProperty({
+    type: Number,
+    example: 5,
+  })
+  totalLikes?: number;
+
+  @ApiProperty({
+    type: Number,
+    example: 10,
+  })
+  viewCount?: number;
+
+  @ApiProperty({
     type: () => [Topic],
   })
   topics?: Topic[] | null;

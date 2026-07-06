@@ -131,6 +131,8 @@ model user {
   bio                   String?                @db.VarChar
   videoUrl              String?                @db.VarChar
   warnCount             Int                    @default(0)
+  huberSince            DateTime?              @db.Timestamp(6)
+  hasSeenHuberOnboarding Boolean               @default(false)
   humanBookTopic        humanBookTopic[]
   topicsOfInterest      liberTopicOfInterest[]
   humanBooks            humanBooks[]
@@ -178,6 +180,7 @@ model story {
   coverId       String?         @db.Uuid
   humanBookId   Int
   publishStatus Int             @default(1)
+  viewCount     Int             @default(0)
   createdAt     DateTime        @default(now()) @db.Timestamp(6)
   updatedAt     DateTime        @default(now()) @db.Timestamp(6)
   cover         file?           @relation(fields: [coverId], references: [id], onDelete: NoAction, onUpdate: NoAction)

@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { FilterUserDto } from '@users/dto/query-user.dto';
@@ -17,10 +18,19 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { TopicStatus } from '@topics/topic-status.enum';
 
-import { HuberWithRelations } from './dto/query-hubers-response.dto';
+import {
+  HuberVerificationStatus,
+  HuberWithRelations,
+} from './dto/query-hubers-response.dto';
+import { Approval } from '@users/approval.enum';
+import { omit } from 'lodash';
+
+const HUBER_CHALLENGE_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class HubersService {
+  private readonly logger = new Logger(HubersService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async queryHubers({
@@ -55,6 +65,28 @@ export class HubersService {
             },
           },
           feedbackTos: true,
+          stories: {
+            where: {
+              publishStatus: PublishStatus.published,
+            },
+            select: {
+              topics: {
+                include: {
+                  topic: true,
+                },
+              },
+            },
+          },
+          _count: {
+            select: {
+              stories: {
+                where: {
+                  publishStatus: PublishStatus.published,
+                },
+              },
+              favoritedByUsers: true,
+            },
+          },
         },
       }),
       this.prisma.user.count({ where }),
@@ -76,15 +108,45 @@ export class HubersService {
     );
 
     const result = await Promise.all(
-      paged.map(async ({ huber, rating }) => ({
-        ...huber,
-        feedbackTos: undefined,
-        rating,
-        file: await this.transformFileUrl(huber.file),
-        sharingTopics: huber.humanBookTopic.map((topic) => ({
-          ...topic.topic,
-        })),
-      })),
+      paged.map(async ({ huber, rating }) => {
+        const storyTopics = new Map<
+          number,
+          { id: number; name: string; color: string }
+        >();
+
+        for (const story of huber.stories) {
+          for (const { topic } of story.topics) {
+            storyTopics.set(topic.id, {
+              id: topic.id,
+              name: topic.name,
+              color: topic.color,
+            });
+          }
+        }
+
+        const bookCount = huber._count.stories;
+        const challengeEndsAt = huber.huberSince
+          ? new Date(huber.huberSince.getTime() + HUBER_CHALLENGE_DURATION_MS)
+          : null;
+        const huberData = omit(huber, ['stories', '_count', 'feedbackTos']);
+
+        return {
+          ...huberData,
+          rating,
+          file: await this.transformFileUrl(huber.file),
+          sharingTopics: huber.humanBookTopic.map((topic) => ({
+            ...topic.topic,
+          })),
+          verificationStatus:
+            bookCount > 0
+              ? HuberVerificationStatus.verified
+              : HuberVerificationStatus.challenge,
+          challengeEndsAt: bookCount > 0 ? null : challengeEndsAt,
+          storyTopics: Array.from(storyTopics.values()),
+          bookCount,
+          followerCount: huber._count.favoritedByUsers,
+        };
+      }),
     );
 
     return [result as HuberWithRelations[], count];
@@ -184,6 +246,37 @@ export class HubersService {
       },
       paginationOptions,
     });
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async downgradeExpiredChallengeHubers() {
+    const challengeStartedBefore = new Date(
+      Date.now() - HUBER_CHALLENGE_DURATION_MS,
+    );
+    const result = await this.prisma.user.updateMany({
+      where: {
+        roleId: RoleEnum.humanBook,
+        huberSince: {
+          lt: challengeStartedBefore,
+        },
+        stories: {
+          none: {
+            publishStatus: PublishStatus.published,
+          },
+        },
+      },
+      data: {
+        roleId: RoleEnum.reader,
+        approval: Approval.notRequested,
+        huberSince: null,
+      },
+    });
+
+    if (result.count > 0) {
+      this.logger.log(
+        `Downgraded ${result.count} expired Huber challenge(s) to Liber.`,
+      );
+    }
   }
 
   private buildHubersWhereClause(filterOptions?: FilterUserDto) {

@@ -76,8 +76,11 @@ export class StoryEntity extends EntityRelationalHelper {
     type: Number,
     example: PublishStatus.draft,
   })
-  @Column({ type: Number, default: PublishStatus.draft })
+  @Column({ type: Number, default: PublishStatus.pending })
   publishStatus: PublishStatus;
+
+  @Column({ type: Number, default: 0 })
+  viewCount: number;
 
   // @ApiProperty({
   //   type: Number,

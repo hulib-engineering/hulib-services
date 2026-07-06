@@ -233,6 +233,14 @@ export class UsersService {
         status: true,
         file: true,
         coverImage: true,
+        _count: {
+          select: {
+            feedbackTos: true,
+            storyFavorite: true,
+            timeSlots: true,
+            topicsOfInterest: true,
+          },
+        },
       },
       omit: {
         deletedAt: true,
@@ -250,6 +258,17 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException();
     }
+
+    const [huberMeta] = await this.prisma.$queryRaw<
+      {
+        huberSince: Date | null;
+        hasSeenHuberOnboarding: boolean;
+      }[]
+    >`
+      SELECT "huberSince", "hasSeenHuberOnboarding"
+      FROM "user"
+      WHERE "id" = ${Number(id)}
+    `;
 
     const mappedHumanBookTopic = user.humanBookTopic
       ? user.humanBookTopic.map((item) => item.topic)
@@ -270,6 +289,23 @@ export class UsersService {
       : [];
 
     const isLiber = user.role?.id === RoleEnum.reader;
+    const publishedStoriesCount = await this.prisma.story.count({
+      where: {
+        humanBookId: Number(id),
+        publishStatus: PublishStatus.published,
+      },
+    });
+    const profileState = this.buildHuberProfileState({
+      isHuber: user.role?.id === RoleEnum.humanBook,
+      bio: user.bio,
+      videoUrl: user.videoUrl,
+      sharingTopicsCount: mappedHumanBookTopic.length,
+      publishedStoriesCount,
+      favoriteStoriesCount: user._count.storyFavorite,
+      feedbacksCount: user._count.feedbackTos,
+      timeSlotsCount: user._count.timeSlots,
+      hasSeenHuberOnboarding: huberMeta?.hasSeenHuberOnboarding,
+    });
 
     if (isLiber) {
       const firstStory = await this.prisma.story.findFirst({
@@ -295,7 +331,10 @@ export class UsersService {
         feedbackBys: mappedFeedbackBys,
         educations: user.educations || [],
         works: user.works || [],
+        huberSince: huberMeta?.huberSince ?? null,
+        hasSeenHuberOnboarding: huberMeta?.hasSeenHuberOnboarding ?? false,
         firstStory,
+        profileState,
       };
     }
 
@@ -308,6 +347,9 @@ export class UsersService {
       feedbackBys: mappedFeedbackBys,
       educations: user.educations || [],
       works: user.works || [],
+      huberSince: huberMeta?.huberSince ?? null,
+      hasSeenHuberOnboarding: huberMeta?.hasSeenHuberOnboarding ?? false,
+      profileState,
     };
   }
 
@@ -521,6 +563,19 @@ export class UsersService {
     await this.usersRepository.update(userId, { password: newPassword });
   }
 
+  async markHuberOnboardingSeen(userId: User['id']) {
+    await this.prisma.$executeRaw`
+      UPDATE "user"
+      SET "hasSeenHuberOnboarding" = true
+      WHERE "id" = ${Number(userId)}
+    `;
+
+    return {
+      id: Number(userId),
+      hasSeenHuberOnboarding: true,
+    };
+  }
+
   async upgrade(id: User['id'], upgradeDto: UpgradeDto) {
     const adminId = await this.notificationsService.getAdminId();
 
@@ -530,6 +585,7 @@ export class UsersService {
           id: RoleEnum.humanBook,
         },
         approval: Approval.approved,
+        huberSince: new Date(),
       });
 
       if (adminId) {
@@ -956,5 +1012,59 @@ export class UsersService {
     }
 
     return file;
+  }
+
+  private buildHuberProfileState({
+    isHuber,
+    bio,
+    videoUrl,
+    sharingTopicsCount,
+    publishedStoriesCount,
+    favoriteStoriesCount,
+    feedbacksCount,
+    timeSlotsCount,
+    hasSeenHuberOnboarding,
+  }: {
+    isHuber: boolean;
+    bio?: string | null;
+    videoUrl?: string | null;
+    sharingTopicsCount: number;
+    publishedStoriesCount: number;
+    favoriteStoriesCount: number;
+    feedbacksCount: number;
+    timeSlotsCount: number;
+    hasSeenHuberOnboarding?: boolean | null;
+  }) {
+    const completedItems = {
+      introduction: Boolean(
+        bio?.trim() || videoUrl?.trim() || sharingTopicsCount > 0,
+      ),
+      schedule: timeSlotsCount > 0,
+      myBooks: publishedStoriesCount > 0,
+      favoriteBooks: favoriteStoriesCount > 0,
+      reviewsAboutMe: feedbacksCount > 0,
+    };
+    const completedCount = Object.values(completedItems).filter(Boolean).length;
+
+    return {
+      roleLabel: isHuber ? 'Huber' : 'Liber',
+      canCreateBook: !isHuber,
+      shouldShowHuberOnboarding: isHuber && !hasSeenHuberOnboarding,
+      menuItems: isHuber
+        ? [
+            'introduction',
+            'schedule',
+            'myBooks',
+            'favoriteBooks',
+            'reviewsAboutMe',
+          ]
+        : ['introduction', 'myBooks', 'favoriteBooks'],
+      huberStar: {
+        completedCount,
+        totalCount: 5,
+        completedItems,
+        isUnlocked: isHuber && completedCount === 5,
+      },
+    };
   }
 }
