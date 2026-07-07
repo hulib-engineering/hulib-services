@@ -32,6 +32,7 @@ export class StoryMapper {
     // domainEntity.rating = raw.rating;
     domainEntity.publishStatus = PublishStatus[raw.publishStatus];
     domainEntity.viewCount = raw.viewCount ?? 0;
+    domainEntity.shareCount = raw.shareCount ?? 0;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -67,6 +68,7 @@ export class StoryMapper {
     persistenceEntity.publishStatus =
       PublishStatus[domainEntity.publishStatus as keyof typeof PublishStatus];
     persistenceEntity.viewCount = domainEntity.viewCount ?? 0;
+    persistenceEntity.shareCount = domainEntity.shareCount ?? 0;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 

@@ -53,6 +53,12 @@ export class Story {
   viewCount?: number;
 
   @ApiProperty({
+    type: Number,
+    example: 3,
+  })
+  shareCount?: number;
+
+  @ApiProperty({
     type: () => [Topic],
   })
   topics?: Topic[] | null;

@@ -82,6 +82,9 @@ export class StoryEntity extends EntityRelationalHelper {
   @Column({ type: Number, default: 0 })
   viewCount: number;
 
+  @Column({ type: Number, default: 0 })
+  shareCount: number;
+
   // @ApiProperty({
   //   type: Number,
   //   example: 4,
