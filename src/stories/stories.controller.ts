@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -18,6 +19,7 @@ import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
@@ -131,6 +133,27 @@ export class StoriesController {
   })
   findOne(@Param('id') id: Story['id']) {
     return this.storiesService.findOne(id);
+  }
+
+  @Post(':id/share')
+  @ApiOperation({
+    summary: 'Increase story share count',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        id: 1,
+        shareCount: 3,
+      },
+    },
+  })
+  share(@Param('id', ParseIntPipe) id: Story['id']) {
+    return this.storiesService.share(id);
   }
 
   @Get(':id/topics')
