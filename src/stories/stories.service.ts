@@ -34,6 +34,7 @@ import { FileType } from '@files/domain/file';
 import { StoryQueryTypeEnum } from '@stories/story-query-type.enum';
 import { omit } from 'lodash';
 import { RoleEnum } from '@roles/roles.enum';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class StoriesService {
@@ -160,7 +161,7 @@ export class StoriesService {
     }
 
     return await Promise.all(
-      (await this.attachViewAndLikeCounts(result)).map(async (story) => {
+      (await this.attachStoryStats(result)).map(async (story) => {
         const storyReview = await this.storyReviewService.getReviewsOverview(
           story.id,
         );
@@ -194,7 +195,7 @@ export class StoriesService {
 
     return {
       data: await Promise.all(
-        (await this.attachViewAndLikeCounts(result?.data ?? [])).map(
+        (await this.attachStoryStats(result?.data ?? [])).map(
           async (story) => {
             const storyReview =
               await this.storyReviewService.getReviewsOverview(story.id);
@@ -272,6 +273,13 @@ export class StoriesService {
       : null;
 
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
+    const [shareCountRecord] = await this.prisma.$queryRaw<
+      { shareCount: number }[]
+    >`
+      SELECT "shareCount"
+      FROM "story"
+      WHERE "id" = ${Number(id)}
+    `;
     const viewCount = incrementView
       ? (
           await this.prisma.story.update({
@@ -295,12 +303,17 @@ export class StoriesService {
     ]);
 
     const storyCount = result._count;
-    const storyWithoutInternalCount = omit(result, ['_count', 'viewCount']);
+    const storyWithoutInternalCount = omit(result, [
+      '_count',
+      'viewCount',
+      'shareCount',
+    ]);
 
     return {
       ...storyWithoutInternalCount,
       storyReview,
       viewCount,
+      shareCount: Number(shareCountRecord?.shareCount ?? 0),
       totalLikes: storyCount.storyFavorite,
       topics: result.topics?.map((nestedTopic) => nestedTopic.topic) || [],
       cover: coverWithUrl,
@@ -360,7 +373,7 @@ export class StoriesService {
       if (adminId) {
         await this.notifsService.pushNoti({
           senderId: adminId,
-          recipientId: story.humanBookId,
+          recipientId: Number(story.humanBookId),
           type: NotificationTypeEnum.publishStory,
           relatedEntityId: story.id,
         });
@@ -383,7 +396,7 @@ export class StoriesService {
       if (adminId) {
         await this.notifsService.pushNoti({
           senderId: adminId,
-          recipientId: story.humanBookId,
+          recipientId: Number(story.humanBookId),
           type: NotificationTypeEnum.rejectStory,
           relatedEntityId: story.id,
         });
@@ -425,6 +438,33 @@ export class StoriesService {
     return topics;
   }
 
+  async share(id: Story['id']) {
+    const [updatedStory] = await this.prisma.$queryRaw<
+      { id: number; shareCount: number }[]
+    >`
+      UPDATE "story"
+      SET "shareCount" = "shareCount" + 1,
+          "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = ${Number(id)}
+        AND "publishStatus" <> ${PublishStatus.deleted}
+      RETURNING "id", "shareCount"
+    `;
+
+    if (!updatedStory) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          story: 'storyNotFound',
+        },
+      });
+    }
+
+    return {
+      id: updatedStory.id,
+      shareCount: Number(updatedStory.shareCount),
+    };
+  }
+
   // For Prisma pipe only
   private async transformFileUrl(
     file?: FileType | null,
@@ -461,7 +501,7 @@ export class StoriesService {
     return file;
   }
 
-  private async attachViewAndLikeCounts(stories: Story[]): Promise<Story[]> {
+  private async attachStoryStats(stories: Story[]): Promise<Story[]> {
     const storyIds = stories.map((story) => story.id);
     if (!storyIds.length) return stories;
 
@@ -488,13 +528,27 @@ export class StoriesService {
     const totalLikesByStoryId = new Map(
       storyStats.map((item) => [item.id, item._count.storyFavorite]),
     );
+    const shareCountRows = await this.prisma.$queryRaw<
+      { id: number; shareCount: number }[]
+    >`
+      SELECT "id", "shareCount"
+      FROM "story"
+      WHERE "id" IN (${Prisma.join(storyIds)})
+    `;
+    const shareCountByStoryId = new Map(
+      shareCountRows.map((item) => [item.id, item.shareCount]),
+    );
 
     return stories.map((story) => {
-      const storyWithoutInternalCount = omit(story, ['viewCount']);
+      const storyWithoutInternalCount = omit(story, [
+        'viewCount',
+        'shareCount',
+      ]);
 
       return {
         ...storyWithoutInternalCount,
         viewCount: Number(viewCountByStoryId.get(story.id) ?? 0),
+        shareCount: Number(shareCountByStoryId.get(story.id) ?? 0),
         totalLikes: Number(totalLikesByStoryId.get(story.id) ?? 0),
       };
     });
