@@ -10,7 +10,6 @@ import {
   Query,
   Request,
   SerializeOptions,
-  UseGuards,
 } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -33,10 +32,7 @@ import { FindAllStoriesDto } from './dto/find-all-stories.dto';
 import { DEFAULT_LIMIT, DEFAULT_PAGE } from '@utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { PublishStatus } from './status.enum';
-import { AuthGuard } from '@nestjs/passport';
-import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
-import { RolesGuard } from '@roles/roles.guard';
 import { pagination } from '@utils/pagination';
 import { PaginationResponseDto } from '@utils/dto/pagination-response.dto';
 
@@ -53,13 +49,11 @@ export class StoriesController {
   ) {}
 
   @Post()
-  @Roles(RoleEnum.humanBook, RoleEnum.reader)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiCreatedResponse({
     type: Story,
   })
   create(@Request() request, @Body() createStoriesDto: CreateStoryDto) {
-    if (request.user.role.id === RoleEnum.reader) {
+    if (request.user?.role?.id === RoleEnum.reader) {
       return this.storiesService.createFirst(request.user.id, createStoriesDto);
     }
     return this.storiesService.create(createStoriesDto);
@@ -156,6 +150,27 @@ export class StoriesController {
     return this.storiesService.share(id);
   }
 
+  @Post(':id/like')
+  @ApiOperation({
+    summary: 'Increase story like count',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        id: 1,
+        likeCount: 8,
+      },
+    },
+  })
+  like(@Param('id', ParseIntPipe) id: Story['id']) {
+    return this.storiesService.like(id);
+  }
+
   @Get(':id/topics')
   @ApiParam({
     name: 'id',
@@ -170,8 +185,6 @@ export class StoriesController {
   }
 
   @Patch(':id')
-  @Roles(RoleEnum.humanBook, RoleEnum.reader, RoleEnum.admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
     type: String,
@@ -181,11 +194,10 @@ export class StoriesController {
     type: Story,
   })
   update(
-    @Request() request,
     @Param('id') id: Story['id'],
     @Body() updateStoriesDto: UpdateStoryDto,
   ) {
-    return this.storiesService.update(id, updateStoriesDto, request.user);
+    return this.storiesService.update(id, updateStoriesDto);
   }
 
   @Delete(':id')

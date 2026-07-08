@@ -16,6 +16,7 @@ import { AppModule } from './app.module';
 import validationOptions from './utils/validation-options';
 import { AllConfigType } from '@config/config.type';
 import { ResolvePromisesInterceptor } from '@utils/serializer.interceptor';
+import { RedisIoAdapter } from './socket/redis.adapter';
 
 async function bootstrap() {
   const filesDir = path.join(__dirname, '..', 'files');
@@ -39,6 +40,8 @@ async function bootstrap() {
   });
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   const configService = app.get(ConfigService<AllConfigType>);
+
+  app.useWebSocketAdapter(new RedisIoAdapter(app));
 
   app.enableShutdownHooks();
   app.setGlobalPrefix(

@@ -182,6 +182,7 @@ model story {
   publishStatus Int             @default(1)
   viewCount     Int             @default(0)
   shareCount    Int             @default(0)
+  likeCount     Int             @default(0)
   createdAt     DateTime        @default(now()) @db.Timestamp(6)
   updatedAt     DateTime        @default(now()) @db.Timestamp(6)
   cover         file?           @relation(fields: [coverId], references: [id], onDelete: NoAction, onUpdate: NoAction)

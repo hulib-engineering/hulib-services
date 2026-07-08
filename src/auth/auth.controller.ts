@@ -11,6 +11,7 @@ import {
   SerializeOptions,
   Delete,
   Param,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -91,10 +92,32 @@ export class AuthController {
   }
 
   @Post('email/validate')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOkResponse({
+    schema: {
+      example: {
+        emailAvailable: true,
+      },
+    },
+  })
+  @HttpCode(HttpStatus.OK)
   async validateEmail(
     @Body() validateEmailDto: AuthValidateEmailDto,
-  ): Promise<void> {
+  ): Promise<{ emailAvailable: boolean }> {
+    return this.service.checkEmailExisted(validateEmailDto.email);
+  }
+
+  @Get('email/validate')
+  @ApiOkResponse({
+    schema: {
+      example: {
+        emailAvailable: false,
+      },
+    },
+  })
+  @HttpCode(HttpStatus.OK)
+  async validateEmailByQuery(
+    @Query() validateEmailDto: AuthValidateEmailDto,
+  ): Promise<{ emailAvailable: boolean }> {
     return this.service.checkEmailExisted(validateEmailDto.email);
   }
 
