@@ -260,16 +260,10 @@ export class AuthService {
     await this.usersService.update(user.id, user);
   }
 
-  async checkEmailExisted(email: string): Promise<void> {
+  async checkEmailExisted(email: string): Promise<{ emailAvailable: boolean }> {
     const userObject = await this.usersService.findByEmail(email);
-    if (userObject) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          email: 'emailAlreadyExists',
-        },
-      });
-    }
+
+    return { emailAvailable: !userObject };
   }
 
   async resendOTP(id: string | number): Promise<RegisterResponseDto> {

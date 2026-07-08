@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   HttpStatus,
   Injectable,
   UnprocessableEntityException,
@@ -33,7 +32,6 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { FileType } from '@files/domain/file';
 import { StoryQueryTypeEnum } from '@stories/story-query-type.enum';
 import { omit } from 'lodash';
-import { RoleEnum } from '@roles/roles.enum';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -195,18 +193,17 @@ export class StoriesService {
 
     return {
       data: await Promise.all(
-        (await this.attachStoryStats(result?.data ?? [])).map(
-          async (story) => {
-            const storyReview =
-              await this.storyReviewService.getReviewsOverview(story.id);
+        (await this.attachStoryStats(result?.data ?? [])).map(async (story) => {
+          const storyReview = await this.storyReviewService.getReviewsOverview(
+            story.id,
+          );
 
-            return {
-              ...story,
-              cover: await this.transformFileUrl(story.cover),
-              storyReview,
-            };
-          },
-        ),
+          return {
+            ...story,
+            cover: await this.transformFileUrl(story.cover),
+            storyReview,
+          };
+        }),
       ),
       count: result?.count,
     };
@@ -273,10 +270,10 @@ export class StoriesService {
       : null;
 
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
-    const [shareCountRecord] = await this.prisma.$queryRaw<
-      { shareCount: number }[]
+    const [storyCounterRecord] = await this.prisma.$queryRaw<
+      { shareCount: number; likeCount: number }[]
     >`
-      SELECT "shareCount"
+      SELECT "shareCount", "likeCount"
       FROM "story"
       WHERE "id" = ${Number(id)}
     `;
@@ -307,13 +304,15 @@ export class StoriesService {
       '_count',
       'viewCount',
       'shareCount',
+      'likeCount',
     ]);
 
     return {
       ...storyWithoutInternalCount,
       storyReview,
       viewCount,
-      shareCount: Number(shareCountRecord?.shareCount ?? 0),
+      shareCount: Number(storyCounterRecord?.shareCount ?? 0),
+      likeCount: Number(storyCounterRecord?.likeCount ?? 0),
       totalLikes: storyCount.storyFavorite,
       topics: result.topics?.map((nestedTopic) => nestedTopic.topic) || [],
       cover: coverWithUrl,
@@ -328,7 +327,7 @@ export class StoriesService {
   async update(
     id: Story['id'],
     updateStoriesDto: UpdateStoryDto,
-    currentUser?: User,
+    // currentUser?: User,
   ) {
     const story = await this.findOne(id, false);
 
@@ -341,17 +340,17 @@ export class StoriesService {
       });
     }
 
-    if (
-      currentUser?.role?.id !== RoleEnum.admin &&
-      Number(story.humanBookId) !== Number(currentUser?.id)
-    ) {
-      throw new ForbiddenException({
-        status: HttpStatus.FORBIDDEN,
-        errors: {
-          story: 'onlyOwnerCanUpdateStory',
-        },
-      });
-    }
+    // if (
+    //   currentUser?.role?.id !== RoleEnum.admin &&
+    //   Number(story.humanBookId) !== Number(currentUser?.id)
+    // ) {
+    //   throw new ForbiddenException({
+    //     status: HttpStatus.FORBIDDEN,
+    //     errors: {
+    //       story: 'onlyOwnerCanUpdateStory',
+    //     },
+    //   });
+    // }
 
     let topicsEntities: Topic[] = [];
     if (updateStoriesDto.topics) {
@@ -465,6 +464,33 @@ export class StoriesService {
     };
   }
 
+  async like(id: Story['id']) {
+    const [updatedStory] = await this.prisma.$queryRaw<
+      { id: number; likeCount: number }[]
+    >`
+      UPDATE "story"
+      SET "likeCount" = "likeCount" + 1,
+          "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = ${Number(id)}
+        AND "publishStatus" <> ${PublishStatus.deleted}
+      RETURNING "id", "likeCount"
+    `;
+
+    if (!updatedStory) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          story: 'storyNotFound',
+        },
+      });
+    }
+
+    return {
+      id: updatedStory.id,
+      likeCount: Number(updatedStory.likeCount),
+    };
+  }
+
   // For Prisma pipe only
   private async transformFileUrl(
     file?: FileType | null,
@@ -528,27 +554,32 @@ export class StoriesService {
     const totalLikesByStoryId = new Map(
       storyStats.map((item) => [item.id, item._count.storyFavorite]),
     );
-    const shareCountRows = await this.prisma.$queryRaw<
-      { id: number; shareCount: number }[]
+    const storyCounterRows = await this.prisma.$queryRaw<
+      { id: number; shareCount: number; likeCount: number }[]
     >`
-      SELECT "id", "shareCount"
+      SELECT "id", "shareCount", "likeCount"
       FROM "story"
       WHERE "id" IN (${Prisma.join(storyIds)})
     `;
     const shareCountByStoryId = new Map(
-      shareCountRows.map((item) => [item.id, item.shareCount]),
+      storyCounterRows.map((item) => [item.id, item.shareCount]),
+    );
+    const likeCountByStoryId = new Map(
+      storyCounterRows.map((item) => [item.id, item.likeCount]),
     );
 
     return stories.map((story) => {
       const storyWithoutInternalCount = omit(story, [
         'viewCount',
         'shareCount',
+        'likeCount',
       ]);
 
       return {
         ...storyWithoutInternalCount,
         viewCount: Number(viewCountByStoryId.get(story.id) ?? 0),
         shareCount: Number(shareCountByStoryId.get(story.id) ?? 0),
+        likeCount: Number(likeCountByStoryId.get(story.id) ?? 0),
         totalLikes: Number(totalLikesByStoryId.get(story.id) ?? 0),
       };
     });

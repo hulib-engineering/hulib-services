@@ -38,6 +38,34 @@ export interface SocketWithSession extends Socket {
   };
 }
 
+export function getSocketToken(socket: Socket): string | undefined {
+  const headerToken = socket.handshake.headers['authorization'];
+  if (Array.isArray(headerToken)) {
+    return headerToken[0];
+  }
+  if (headerToken) {
+    return headerToken;
+  }
+
+  const authToken = socket.handshake.auth?.token;
+  if (typeof authToken === 'string') {
+    return authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+  }
+
+  const queryToken = socket.handshake.query?.token;
+  if (Array.isArray(queryToken)) {
+    const [token] = queryToken;
+    return token?.startsWith('Bearer ') ? token : `Bearer ${token}`;
+  }
+  if (typeof queryToken === 'string') {
+    return queryToken.startsWith('Bearer ')
+      ? queryToken
+      : `Bearer ${queryToken}`;
+  }
+
+  return undefined;
+}
+
 export abstract class BaseSocketGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
@@ -58,7 +86,7 @@ export abstract class BaseSocketGateway
   protected setupAuthMiddleware(): void {
     this.server.use(async (socket: Socket, next) => {
       try {
-        const token = socket.handshake.headers['authorization'];
+        const token = getSocketToken(socket);
         const session = await this.authService.getSession(token);
         if (!session) {
           throw new Error();
