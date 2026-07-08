@@ -3,6 +3,7 @@ import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 
 import { AuthService } from '@auth/auth.service';
+import { getSocketToken } from './base-socket.gateway';
 
 @Injectable()
 export class SocketGuard implements CanActivate {
@@ -15,9 +16,7 @@ export class SocketGuard implements CanActivate {
     const socket = context.switchToWs().getClient<Socket>();
     try {
       const currentSession = socket['session'];
-      const session = await this.authService.getSession(
-        socket?.handshake?.headers['authorization'],
-      );
+      const session = await this.authService.getSession(getSocketToken(socket));
       socket['session'] = currentSession ?? session;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {

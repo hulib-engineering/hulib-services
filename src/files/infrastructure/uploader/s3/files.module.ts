@@ -37,7 +37,11 @@ const infrastructurePersistenceModule = RelationalFilePersistenceModule;
 
         return {
           fileFilter: (request, file, callback) => {
-            if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+            if (
+              !file.originalname.match(
+                /\.(jpg|jpeg|png|gif|webp|avif|heic|heif|bmp)$/i,
+              )
+            ) {
               return callback(
                 new UnprocessableEntityException({
                   status: HttpStatus.UNPROCESSABLE_ENTITY,

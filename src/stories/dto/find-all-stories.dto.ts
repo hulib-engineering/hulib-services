@@ -46,6 +46,13 @@ export class FilterStoryDto {
   @IsOptional()
   topicIds?: number[];
 
+  // @IsOptional()
+  // @IsEnum(PublishStatus)
+  // publishStatus?: PublishStatus;
+  @ApiPropertyOptional({
+    type: PublishStatus,
+    description: 'Filter stories by publish status',
+  })
   @IsOptional()
   @IsEnum(PublishStatus)
   publishStatus?: PublishStatus;

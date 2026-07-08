@@ -2,18 +2,15 @@ import {
   Controller,
   Post,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { FilesS3Service } from './files.service';
 import { FileResponseDto } from './dto/file-response.dto';
 
@@ -28,8 +25,6 @@ export class FilesS3Controller {
   @ApiCreatedResponse({
     type: FileResponseDto,
   })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
   @Post('upload')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
