@@ -16,6 +16,7 @@ import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
@@ -131,7 +132,20 @@ export class StoriesController {
 
   @Post(':id/share')
   @ApiOperation({
-    summary: 'Increase story share count',
+    summary: 'Update story share count',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        type: {
+          type: 'string',
+          enum: ['up', 'down'],
+          example: 'up',
+        },
+      },
+    },
+    required: false,
   })
   @ApiParam({
     name: 'id',
@@ -146,13 +160,29 @@ export class StoriesController {
       },
     },
   })
-  share(@Param('id', ParseIntPipe) id: Story['id']) {
-    return this.storiesService.share(id);
+  share(
+    @Param('id', ParseIntPipe) id: Story['id'],
+    @Body() body?: { type?: 'up' | 'down' },
+  ) {
+    return this.storiesService.share(id, body?.type);
   }
 
   @Post(':id/like')
   @ApiOperation({
-    summary: 'Increase story like count',
+    summary: 'Update story like count',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        type: {
+          type: 'string',
+          enum: ['up', 'down'],
+          example: 'up',
+        },
+      },
+    },
+    required: false,
   })
   @ApiParam({
     name: 'id',
@@ -167,8 +197,11 @@ export class StoriesController {
       },
     },
   })
-  like(@Param('id', ParseIntPipe) id: Story['id']) {
-    return this.storiesService.like(id);
+  like(
+    @Param('id', ParseIntPipe) id: Story['id'],
+    @Body() body?: { type?: 'up' | 'down' },
+  ) {
+    return this.storiesService.like(id, body?.type);
   }
 
   @Get(':id/topics')

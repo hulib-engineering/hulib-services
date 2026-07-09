@@ -1,8 +1,4 @@
-import {
-  HttpStatus,
-  Module,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { FilesS3Controller } from './files.controller';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -36,25 +32,6 @@ const infrastructurePersistenceModule = RelationalFilePersistenceModule;
         });
 
         return {
-          fileFilter: (request, file, callback) => {
-            if (
-              !file.originalname.match(
-                /\.(jpg|jpeg|png|gif|webp|avif|heic|heif|bmp)$/i,
-              )
-            ) {
-              return callback(
-                new UnprocessableEntityException({
-                  status: HttpStatus.UNPROCESSABLE_ENTITY,
-                  errors: {
-                    file: `cantUploadFileType`,
-                  },
-                }),
-                false,
-              );
-            }
-
-            callback(null, true);
-          },
           storage: multerS3({
             s3: s3,
             bucket: configService.getOrThrow('file.awsDefaultS3Bucket', {
@@ -71,9 +48,6 @@ const infrastructurePersistenceModule = RelationalFilePersistenceModule;
               );
             },
           }),
-          limits: {
-            fileSize: configService.get('file.maxFileSize', { infer: true }),
-          },
         };
       },
     }),
