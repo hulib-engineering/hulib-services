@@ -437,12 +437,13 @@ export class StoriesService {
     return topics;
   }
 
-  async share(id: Story['id']) {
+  async share(id: Story['id'], type: 'up' | 'down' = 'up') {
+    const delta = type === 'down' ? -1 : 1;
     const [updatedStory] = await this.prisma.$queryRaw<
       { id: number; shareCount: number }[]
     >`
       UPDATE "story"
-      SET "shareCount" = "shareCount" + 1,
+      SET "shareCount" = GREATEST("shareCount" + ${delta}, 0),
           "updatedAt" = CURRENT_TIMESTAMP
       WHERE "id" = ${Number(id)}
         AND "publishStatus" <> ${PublishStatus.deleted}
@@ -464,12 +465,13 @@ export class StoriesService {
     };
   }
 
-  async like(id: Story['id']) {
+  async like(id: Story['id'], type: 'up' | 'down' = 'up') {
+    const delta = type === 'down' ? -1 : 1;
     const [updatedStory] = await this.prisma.$queryRaw<
       { id: number; likeCount: number }[]
     >`
       UPDATE "story"
-      SET "likeCount" = "likeCount" + 1,
+      SET "likeCount" = GREATEST("likeCount" + ${delta}, 0),
           "updatedAt" = CURRENT_TIMESTAMP
       WHERE "id" = ${Number(id)}
         AND "publishStatus" <> ${PublishStatus.deleted}
