@@ -1,12 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Allow } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 
 export class FileUploadDto {
   @ApiProperty({ example: 'image.jpg' })
-  @Allow()
+  @IsString()
+  @IsNotEmpty()
   fileName: string;
 
   @ApiProperty({ example: 138723 })
-  @Allow()
+  @IsInt()
+  @Min(1)
   fileSize: number;
 }
