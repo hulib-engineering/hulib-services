@@ -1,7 +1,6 @@
 import {
   HttpStatus,
   Injectable,
-  PayloadTooLargeException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { FileRepository } from '@files/infrastructure/persistence/file.repository';
@@ -43,30 +42,6 @@ export class FilesS3PresignedService {
         errors: {
           file: 'selectFile',
         },
-      });
-    }
-
-    if (
-      !file.fileName.match(/\.(jpg|jpeg|png|gif|webp|avif|heic|heif|bmp)$/i)
-    ) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          file: `cantUploadFileType`,
-        },
-      });
-    }
-
-    if (
-      file.fileSize >
-      (this.configService.get('file.maxFileSize', {
-        infer: true,
-      }) || 0)
-    ) {
-      throw new PayloadTooLargeException({
-        statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
-        error: 'Payload Too Large',
-        message: 'File too large',
       });
     }
 
