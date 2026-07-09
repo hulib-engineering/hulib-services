@@ -8,11 +8,14 @@ import { FilesS3Module } from './infrastructure/uploader/s3/files.module';
 import { FilesS3PresignedModule } from './infrastructure/uploader/s3-presigned/files.module';
 
 const infrastructurePersistenceModule = RelationalFilePersistenceModule;
+const fileConfiguration = fileConfig() as FileConfig;
 
 const infrastructureUploaderModule =
-  (fileConfig() as FileConfig).driver === FileDriver.LOCAL
+  fileConfiguration.driver === FileDriver.LOCAL
     ? FilesLocalModule
-    : (fileConfig() as FileConfig).driver === FileDriver.S3
+    : [FileDriver.S3, FileDriver.S3_PRESIGNED].includes(
+        fileConfiguration.driver,
+      )
       ? FilesS3Module
       : FilesS3PresignedModule;
 
