@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { FileConfig, FileDriver } from '@files/config/file-config.type';
 
@@ -19,18 +24,88 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 export class StoryReviewsService {
   constructor(private prisma: PrismaService) {}
 
-  create(createStoryReviewDto: CreateStoryReviewDto) {
+  private readonly storyReviewSelect = {
+    id: true,
+    rating: true,
+    title: true,
+    comment: true,
+    preRating: true,
+    createdAt: true,
+    updatedAt: true,
+    userId: true,
+    storyId: true,
+    story: {
+      select: {
+        id: true,
+        title: true,
+        abstract: true,
+        coverId: true,
+        humanBookId: true,
+        publishStatus: true,
+        viewCount: true,
+        shareCount: true,
+        createdAt: true,
+        updatedAt: true,
+        rejectionReason: true,
+      },
+    },
+    user: {
+      select: {
+        id: true,
+        fullName: true,
+        file: {
+          select: {
+            id: true,
+            path: true,
+          },
+        },
+      },
+    },
+  };
+
+  async create(createStoryReviewDto: CreateStoryReviewDto) {
+    const [story, user] = await this.prisma.$transaction([
+      this.prisma.story.findUnique({
+        where: { id: Number(createStoryReviewDto.storyId) },
+        select: { id: true },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: Number(createStoryReviewDto.userId) },
+        select: { id: true },
+      }),
+    ]);
+
+    if (!story) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          storyId: 'storyNotFound',
+        },
+      });
+    }
+
+    if (!user) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          userId: 'userNotFound',
+        },
+      });
+    }
+
     return this.prisma.storyReview.create({
-      data: createStoryReviewDto,
+      data: {
+        ...createStoryReviewDto,
+        preRating: createStoryReviewDto.preRating ?? null,
+      },
+      select: this.storyReviewSelect,
     });
   }
 
   findOne(id: number) {
     return this.prisma.storyReview.findUnique({
       where: { id },
-      include: {
-        user: true,
-      },
+      select: this.storyReviewSelect,
     });
   }
 
@@ -82,14 +157,18 @@ export class StoryReviewsService {
       this.prisma.storyReview.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        include: {
-          user: true,
-        },
+        select: this.storyReviewSelect,
         skip: (paginationOptions.page - 1) * paginationOptions.limit,
         take: paginationOptions.limit,
       }),
       this.prisma.storyReview.count({ where }),
     ]);
+  }
+
+  remove(id: number) {
+    return this.prisma.storyReview.delete({
+      where: { id },
+    });
   }
 
   async getReviewsOverview(storyId: number): Promise<StoryReviewOverview> {

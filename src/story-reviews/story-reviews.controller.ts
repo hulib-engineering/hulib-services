@@ -1,9 +1,22 @@
 // TO-DO: update endpoint with story relation
 
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { StoryReviewsService } from './story-reviews.service';
 import { CreateStoryReviewDto } from './dto/create-story-review.dto';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { QueryStoryReviewDto } from './dto/query-story-review.dto';
 import { DEFAULT_PAGE, DEFAULT_LIMIT } from '@utils/dto/pagination-input.dto';
 import { InfinityPaginationResponse } from '@utils/dto/infinity-pagination-response.dto';
@@ -19,6 +32,9 @@ export class StoryReviewsController {
   constructor(private readonly storyReviewsService: StoryReviewsService) {}
 
   @Post()
+  @ApiCreatedResponse({
+    type: StoryReview,
+  })
   create(@Body() createStoryReviewDto: CreateStoryReviewDto) {
     return this.storyReviewsService.create(createStoryReviewDto);
   }
@@ -47,6 +63,14 @@ export class StoryReviewsController {
   }
 
   @Get(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: StoryReview,
+  })
   findOne(@Param('id') id: string) {
     return this.storyReviewsService.findOne(+id);
   }
@@ -56,8 +80,13 @@ export class StoryReviewsController {
   //   return this.storyReviewsService.update(+id, updateStoryReviewDto);
   // }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.storyReviewsService.remove(+id);
-  // }
+  @Delete(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    required: true,
+  })
+  remove(@Param('id') id: string) {
+    return this.storyReviewsService.remove(+id);
+  }
 }
