@@ -17,7 +17,7 @@ export class FilesLocalService {
   ) {}
 
   async create(file: Express.Multer.File): Promise<{ file: FileType }> {
-    if (!file) {
+    if (!file?.path) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
