@@ -53,6 +53,14 @@ export class FilterStoryDto {
     type: PublishStatus,
     description: 'Filter stories by publish status',
   })
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return value;
+
+    const numericValue = Number(value);
+    if (!Number.isNaN(numericValue)) return numericValue;
+
+    return PublishStatus[value as keyof typeof PublishStatus] ?? value;
+  })
   @IsOptional()
   @IsEnum(PublishStatus)
   publishStatus?: PublishStatus;

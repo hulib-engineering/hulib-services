@@ -30,6 +30,14 @@ export class FindAllHubersDto {
   topicIds?: number[];
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return value;
+
+    const numericValue = Number(value);
+    if (!Number.isNaN(numericValue)) return numericValue;
+
+    return PublishStatus[value as keyof typeof PublishStatus] ?? value;
+  })
   @IsEnum(PublishStatus)
   publishStatus?: PublishStatus;
 
