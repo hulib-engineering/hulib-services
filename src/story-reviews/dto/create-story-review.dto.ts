@@ -8,7 +8,7 @@ export class CreateStoryReviewDto {
   })
   @IsOptional()
   @IsInt()
-  @Min(1)
+  @Min(0)
   @Max(5)
   preRating?: number;
 
@@ -17,34 +17,34 @@ export class CreateStoryReviewDto {
     example: 2,
   })
   @IsInt()
-  @Min(1)
+  @Min(0)
   @Max(5)
   rating: number;
 
   @ApiProperty({
     type: String,
-    example: '',
+    example: 'This is a test title.',
   })
   @IsString()
   title: string;
 
   @ApiProperty({
     type: String,
-    example: '1111111111111111111',
+    example: 'This is a test comment.',
   })
   @IsString()
   comment: string;
 
   @ApiProperty({
     type: Number,
-    example: 79,
+    example: 1,
   })
   @IsInt()
   storyId: number;
 
   @ApiProperty({
     type: Number,
-    example: 169,
+    example: 1,
   })
   @IsInt()
   userId: number;
