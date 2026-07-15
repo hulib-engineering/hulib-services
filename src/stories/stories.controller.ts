@@ -21,6 +21,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { Story } from './domain/story';
@@ -215,6 +216,13 @@ export class StoriesController {
   })
   findRelatedTopics(@Param('id') id: Story['id']) {
     return this.storiesService.getTopics(id);
+  }
+
+  @Get('contest-participants')
+  @ApiOperation({ summary: 'List users with stories matching a topic' })
+  @ApiQuery({ name: 'topic', required: false, type: String, example: 'Khoảnh khắc', description: 'Topic name prefix to filter stories' })
+  async getContestParticipants(@Query('topic') topic?: string) {
+    return this.storiesService.getContestParticipants(topic);
   }
 
   @Patch(':id')

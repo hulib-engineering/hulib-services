@@ -586,4 +586,42 @@ export class StoriesService {
       };
     });
   }
+
+  async getContestParticipants(topicName: string = 'Khoảnh khắc') {
+    return this.prisma.user.findMany({
+      where: {
+        stories: {
+          some: {
+            topics: {
+              some: {
+                topic: { name: { startsWith: topicName } },
+              },
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        bio: true,
+        phoneNumber: true,
+        stories: {
+          where: {
+            topics: {
+              some: {
+                topic: { name: { startsWith: topicName } },
+              },
+            },
+          },
+          select: {
+            id: true,
+            title: true,
+            abstract: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+  }
 }

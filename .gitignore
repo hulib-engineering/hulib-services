@@ -43,3 +43,6 @@ lerna-debug.log*
 .env.keys
 
 staging_backup.sql
+
+# generated reports
+reports/
