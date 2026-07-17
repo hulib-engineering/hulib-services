@@ -11,11 +11,11 @@ import {
   Request,
   SerializeOptions,
 } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
@@ -38,7 +38,6 @@ import { pagination } from '@utils/pagination';
 import { PaginationResponseDto } from '@utils/dto/pagination-response.dto';
 
 @ApiTags('Stories')
-@ApiBearerAuth()
 @Controller({
   path: 'stories',
   version: '1',
@@ -126,8 +125,29 @@ export class StoriesController {
   @ApiOkResponse({
     type: Story,
   })
-  findOne(@Param('id') id: Story['id']) {
-    return this.storiesService.findOne(id);
+  findOne(@Param('id') id: Story['id'], @Request() request) {
+    return this.storiesService.findOne(
+      id,
+      true,
+      this.getStoryViewerKey(request),
+    );
+  }
+
+  private getStoryViewerKey(request): string {
+    if (request.user?.id) {
+      return `user:${request.user.id}`;
+    }
+
+    const ip =
+      request.ip ||
+      request.headers?.['x-forwarded-for'] ||
+      request.socket?.remoteAddress ||
+      'unknown-ip';
+    const userAgent = request.headers?.['user-agent'] ?? 'unknown-agent';
+
+    return `anonymous:${createHash('sha256')
+      .update(`${ip}:${userAgent}`)
+      .digest('hex')}`;
   }
 
   @Post(':id/share')
@@ -142,6 +162,10 @@ export class StoriesController {
           type: 'string',
           enum: ['up', 'down'],
           example: 'up',
+        },
+        userId: {
+          type: 'number',
+          example: 1,
         },
       },
     },
@@ -162,9 +186,14 @@ export class StoriesController {
   })
   share(
     @Param('id', ParseIntPipe) id: Story['id'],
-    @Body() body?: { type?: 'up' | 'down' },
+    @Body() body?: { type?: 'up' | 'down'; userId?: number },
+    @Request() request?,
   ) {
-    return this.storiesService.share(id, body?.type);
+    return this.storiesService.share(
+      id,
+      body?.type,
+      this.getActionUserId(request, body?.userId),
+    );
   }
 
   @Post(':id/like')
@@ -179,6 +208,10 @@ export class StoriesController {
           type: 'string',
           enum: ['up', 'down'],
           example: 'up',
+        },
+        userId: {
+          type: 'number',
+          example: 1,
         },
       },
     },
@@ -199,9 +232,18 @@ export class StoriesController {
   })
   like(
     @Param('id', ParseIntPipe) id: Story['id'],
-    @Body() body?: { type?: 'up' | 'down' },
+    @Body() body?: { type?: 'up' | 'down'; userId?: number },
+    @Request() request?,
   ) {
-    return this.storiesService.like(id, body?.type);
+    return this.storiesService.like(
+      id,
+      body?.type,
+      this.getActionUserId(request, body?.userId),
+    );
+  }
+
+  private getActionUserId(request, bodyUserId?: number): number | undefined {
+    return request?.user?.id ? Number(request.user.id) : bodyUserId;
   }
 
   @Get(':id/topics')

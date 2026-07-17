@@ -33,15 +33,19 @@ import { FileType } from '@files/domain/file';
 import { StoryQueryTypeEnum } from '@stories/story-query-type.enum';
 import { omit } from 'lodash';
 import { Prisma } from '@prisma/client';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class StoriesService {
+  private readonly storyActionThrottleTtl = 5 * 60_000;
+
   constructor(
     private readonly storiesRepository: StoryRepository,
     private readonly storyReviewService: StoryReviewsService,
     private readonly topicsRepository: TopicsRepository,
     private readonly usersService: UsersService,
     private readonly notifsService: NotificationsService,
+    private readonly cacheService: CacheService,
     private prisma: PrismaService,
   ) {}
 
@@ -209,7 +213,7 @@ export class StoriesService {
     };
   }
 
-  async findOne(id: Story['id'], incrementView = true) {
+  async findOne(id: Story['id'], incrementView = true, viewerKey?: string) {
     const result = await this.prisma.story.findUnique({
       where: { id: Number(id) },
       include: {
@@ -277,7 +281,9 @@ export class StoriesService {
       FROM "story"
       WHERE "id" = ${Number(id)}
     `;
-    const viewCount = incrementView
+    const shouldIncrementView =
+      incrementView && (await this.shouldIncrementStoryView(id, viewerKey));
+    const viewCount = shouldIncrementView
       ? (
           await this.prisma.story.update({
             where: { id: Number(id) },
@@ -322,6 +328,30 @@ export class StoriesService {
         rating: humanBookRating,
       },
     };
+  }
+
+  private async shouldIncrementStoryView(
+    storyId: Story['id'],
+    viewerKey?: string,
+  ): Promise<boolean> {
+    if (!viewerKey) return true;
+
+    const cacheParams = {
+      key: 'StoryViewThrottle' as const,
+      args: [String(storyId), viewerKey],
+    };
+
+    try {
+      const alreadyCounted = await this.cacheService.get<boolean>(cacheParams);
+      if (alreadyCounted) return false;
+
+      await this.cacheService.set(cacheParams, true, {
+        ttl: this.storyActionThrottleTtl,
+      });
+      return true;
+    } catch {
+      return true;
+    }
   }
 
   async update(
@@ -437,7 +467,21 @@ export class StoriesService {
     return topics;
   }
 
-  async share(id: Story['id'], type: 'up' | 'down' = 'up') {
+  async share(id: Story['id'], type: 'up' | 'down' = 'up', userId?: number) {
+    const shouldUpdate = await this.shouldProcessUserStoryAction({
+      cacheKey: 'StoryShareThrottle',
+      storyId: id,
+      userId,
+      args: [type],
+    });
+    if (!shouldUpdate) {
+      const counter = await this.getStoryCounter(id);
+      return {
+        id: counter.id,
+        shareCount: counter.shareCount,
+      };
+    }
+
     const delta = type === 'down' ? -1 : 1;
     const [updatedStory] = await this.prisma.$queryRaw<
       { id: number; shareCount: number }[]
@@ -465,7 +509,21 @@ export class StoriesService {
     };
   }
 
-  async like(id: Story['id'], type: 'up' | 'down' = 'up') {
+  async like(id: Story['id'], type: 'up' | 'down' = 'up', userId?: number) {
+    const shouldUpdate = await this.shouldProcessUserStoryAction({
+      cacheKey: 'StoryLikeThrottle',
+      storyId: id,
+      userId,
+      args: [type],
+    });
+    if (!shouldUpdate) {
+      const counter = await this.getStoryCounter(id);
+      return {
+        id: counter.id,
+        likeCount: counter.likeCount,
+      };
+    }
+
     const delta = type === 'down' ? -1 : 1;
     const [updatedStory] = await this.prisma.$queryRaw<
       { id: number; likeCount: number }[]
@@ -491,6 +549,64 @@ export class StoriesService {
       id: updatedStory.id,
       likeCount: Number(updatedStory.likeCount),
     };
+  }
+
+  private async getStoryCounter(id: Story['id']) {
+    const [storyCounterRecord] = await this.prisma.$queryRaw<
+      { id: number; shareCount: number; likeCount: number }[]
+    >`
+      SELECT "id", "shareCount", "likeCount"
+      FROM "story"
+      WHERE "id" = ${Number(id)}
+        AND "publishStatus" <> ${PublishStatus.deleted}
+    `;
+
+    if (!storyCounterRecord) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          story: 'storyNotFound',
+        },
+      });
+    }
+
+    return {
+      id: storyCounterRecord.id,
+      shareCount: Number(storyCounterRecord.shareCount),
+      likeCount: Number(storyCounterRecord.likeCount),
+    };
+  }
+
+  private async shouldProcessUserStoryAction({
+    cacheKey,
+    storyId,
+    userId,
+    args = [],
+  }: {
+    cacheKey: 'StoryShareThrottle' | 'StoryLikeThrottle';
+    storyId: Story['id'];
+    userId?: number;
+    args?: string[];
+  }): Promise<boolean> {
+    if (!userId) return true;
+
+    const cacheParams = {
+      key: cacheKey,
+      args: [String(storyId), String(userId), ...args],
+    };
+
+    try {
+      const alreadyProcessed =
+        await this.cacheService.get<boolean>(cacheParams);
+      if (alreadyProcessed) return false;
+
+      await this.cacheService.set(cacheParams, true, {
+        ttl: this.storyActionThrottleTtl,
+      });
+      return true;
+    } catch {
+      return true;
+    }
   }
 
   // For Prisma pipe only
