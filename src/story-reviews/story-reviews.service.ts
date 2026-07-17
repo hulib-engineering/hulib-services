@@ -19,10 +19,16 @@ import appConfig from '@config/app.config';
 import { AppConfig } from '@config/app-config.type';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class StoryReviewsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly storyReviewCreateThrottleTtl = 5 * 60_000;
+
+  constructor(
+    private prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   private readonly storyReviewSelect = {
     id: true,
@@ -64,6 +70,19 @@ export class StoryReviewsService {
   };
 
   async create(createStoryReviewDto: CreateStoryReviewDto) {
+    const shouldCreate = await this.shouldCreateStoryReview(
+      createStoryReviewDto.storyId,
+      createStoryReviewDto.userId,
+    );
+    if (!shouldCreate) {
+      const latestReview = await this.findLatestByUserIdAndStoryId(
+        createStoryReviewDto.userId,
+        createStoryReviewDto.storyId,
+      );
+
+      if (latestReview) return latestReview;
+    }
+
     const [story, user] = await this.prisma.$transaction([
       this.prisma.story.findUnique({
         where: { id: Number(createStoryReviewDto.storyId) },
@@ -100,6 +119,39 @@ export class StoryReviewsService {
       },
       select: this.storyReviewSelect,
     });
+  }
+
+  private findLatestByUserIdAndStoryId(userId: number, storyId: number) {
+    return this.prisma.storyReview.findFirst({
+      where: {
+        userId: Number(userId),
+        storyId: Number(storyId),
+      },
+      orderBy: { createdAt: 'desc' },
+      select: this.storyReviewSelect,
+    });
+  }
+
+  private async shouldCreateStoryReview(
+    storyId: number,
+    userId: number,
+  ): Promise<boolean> {
+    const cacheParams = {
+      key: 'StoryReviewCreateThrottle' as const,
+      args: [String(storyId), String(userId)],
+    };
+
+    try {
+      const alreadyCreated = await this.cacheService.get<boolean>(cacheParams);
+      if (alreadyCreated) return false;
+
+      await this.cacheService.set(cacheParams, true, {
+        ttl: this.storyReviewCreateThrottleTtl,
+      });
+      return true;
+    } catch {
+      return true;
+    }
   }
 
   findOne(id: number) {
