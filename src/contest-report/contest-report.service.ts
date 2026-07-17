@@ -9,6 +9,7 @@ import { existsSync, mkdirSync, readdirSync } from 'fs';
 export class ContestReportService {
   private readonly logger = new Logger(ContestReportService.name);
   private readonly reportsDir = join(process.cwd(), 'reports');
+  private readonly SAFE_TOPIC_REGEX = /[^a-zA-Z0-9À-ỹ]/g;
 
   constructor(private readonly prisma: PrismaService) {
     if (!existsSync(this.reportsDir)) {
@@ -16,22 +17,26 @@ export class ContestReportService {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(process.env.CONTEST_REPORT_CRON || CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async generateDailyReport() {
     this.logger.log('Starting daily contest report generation...');
     const filename = await this.generate();
     this.logger.log(`Daily report saved: ${filename}`);
   }
 
+  private sanitizeTopicName(topicName: string): string {
+    return topicName.replace(this.SAFE_TOPIC_REGEX, '_').substring(0, 30);
+  }
+
   async generate(topicName: string = 'Khoảnh khắc'): Promise<string> {
+    const topicFilter = { name: { startsWith: topicName } };
+
     const users = await this.prisma.user.findMany({
       where: {
         stories: {
           some: {
             topics: {
-              some: {
-                topic: { name: { startsWith: topicName } },
-              },
+              some: { topic: topicFilter },
             },
           },
         },
@@ -44,9 +49,7 @@ export class ContestReportService {
         stories: {
           where: {
             topics: {
-              some: {
-                topic: { name: { startsWith: topicName } },
-              },
+              some: { topic: topicFilter },
             },
           },
           select: {
@@ -85,34 +88,33 @@ export class ContestReportService {
     };
     headerRow.alignment = { horizontal: 'center' };
 
-    for (const user of users) {
+    const rows = users.flatMap((user) => {
       if (user.stories.length === 0) {
-        sheet.addRow({
+        return [{
           fullName: user.fullName,
           email: user.email,
           phoneNumber: user.phoneNumber,
           bio: user.bio,
-        });
-      } else {
-        for (const story of user.stories) {
-          sheet.addRow({
-            fullName: user.fullName,
-            email: user.email,
-            phoneNumber: user.phoneNumber,
-            bio: user.bio,
-            storyId: story.id,
-            storyTitle: story.title,
-            storyAbstract: story.abstract,
-            createdAt: story.createdAt
-              ? new Date(story.createdAt).toISOString().slice(0, 19).replace('T', ' ')
-              : '',
-          });
-        }
+        }];
       }
-    }
+      return user.stories.map((story) => ({
+        fullName: user.fullName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        bio: user.bio,
+        storyId: story.id,
+        storyTitle: story.title,
+        storyAbstract: story.abstract,
+        createdAt: story.createdAt
+          ? new Date(story.createdAt).toISOString().slice(0, 19).replace('T', ' ')
+          : '',
+      }));
+    });
+    sheet.addRows(rows);
 
-    const safeTopic = topicName.replace(/[^a-zA-Z0-9À-ỹ]/g, '_').substring(0, 30);
-    const filename = `contest-report-${safeTopic}-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    const today = new Date().toISOString().slice(0, 10);
+    const safeTopic = this.sanitizeTopicName(topicName);
+    const filename = `contest-report-${today}-${safeTopic}.xlsx`;
     const filePath = join(this.reportsDir, filename);
     await workbook.xlsx.writeFile(filePath);
     return filename;
@@ -122,10 +124,10 @@ export class ContestReportService {
     if (!existsSync(this.reportsDir)) {
       throw new NotFoundException('No reports directory found');
     }
-    const safeTopic = topicName.replace(/[^a-zA-Z0-9À-ỹ]/g, '_').substring(0, 30);
-    const prefix = `contest-report-${safeTopic}-`;
+    const safeTopic = this.sanitizeTopicName(topicName);
+    const prefix = `contest-report-`;
     const files = readdirSync(this.reportsDir)
-      .filter((f) => f.startsWith(prefix) && f.endsWith('.xlsx'))
+      .filter((f) => f.startsWith(prefix) && f.endsWith('.xlsx') && f.includes(safeTopic))
       .sort()
       .reverse();
     if (files.length === 0) {

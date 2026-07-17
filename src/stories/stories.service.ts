@@ -588,14 +588,13 @@ export class StoriesService {
   }
 
   async getContestParticipants(topicName: string = 'Khoảnh khắc') {
+    const topicFilter = { name: { startsWith: topicName } };
     return this.prisma.user.findMany({
       where: {
         stories: {
           some: {
             topics: {
-              some: {
-                topic: { name: { startsWith: topicName } },
-              },
+              some: { topic: topicFilter },
             },
           },
         },
@@ -609,9 +608,7 @@ export class StoriesService {
         stories: {
           where: {
             topics: {
-              some: {
-                topic: { name: { startsWith: topicName } },
-              },
+              some: { topic: topicFilter },
             },
           },
           select: {
