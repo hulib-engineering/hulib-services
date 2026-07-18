@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { SAFE_TOPIC_REGEX } from './constants';
 import * as ExcelJS from 'exceljs';
 import { join } from 'path';
 import { existsSync, mkdirSync, readdirSync } from 'fs';
@@ -9,7 +10,6 @@ import { existsSync, mkdirSync, readdirSync } from 'fs';
 export class ContestReportService {
   private readonly logger = new Logger(ContestReportService.name);
   private readonly reportsDir = join(process.cwd(), 'reports');
-  private readonly SAFE_TOPIC_REGEX = /[^a-zA-Z0-9À-ỹ]/g;
 
   constructor(private readonly prisma: PrismaService) {
     if (!existsSync(this.reportsDir)) {
@@ -25,7 +25,7 @@ export class ContestReportService {
   }
 
   private sanitizeTopicName(topicName: string): string {
-    return topicName.replace(this.SAFE_TOPIC_REGEX, '_').substring(0, 30);
+    return topicName.replace(SAFE_TOPIC_REGEX, '_').substring(0, 30);
   }
 
   async generate(topicName: string = 'Khoảnh khắc'): Promise<string> {
