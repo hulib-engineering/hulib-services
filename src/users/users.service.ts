@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -41,6 +42,8 @@ import { omit } from 'lodash';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
@@ -151,6 +154,9 @@ export class UsersService {
   }
 
   async findById(id: User['id']): Promise<NullableType<any>> {
+    const startedAt = Date.now();
+    this.logger.log(`[users/findById] loading:start userId=${id}`);
+
     const user = await this.prisma.user.findUnique({
       where: {
         id: Number(id),
@@ -256,6 +262,11 @@ export class UsersService {
     });
 
     if (!user) {
+      this.logger.warn(
+        `[users/findById] loading:not_found userId=${id} durationMs=${
+          Date.now() - startedAt
+        }`,
+      );
       throw new NotFoundException();
     }
 
@@ -288,6 +299,11 @@ export class UsersService {
         }))
       : [];
 
+    const [photo, coverImage] = await Promise.all([
+      this.transformFileUrl(user.file),
+      this.transformFileUrl(user.coverImage),
+    ]);
+
     const isLiber = user.role?.id === RoleEnum.reader;
     const publishedStoriesCount = await this.prisma.story.count({
       where: {
@@ -307,6 +323,14 @@ export class UsersService {
       hasSeenHuberOnboarding: huberMeta?.hasSeenHuberOnboarding,
     });
 
+    this.logger.log(
+      `[users/findById] loading:resolved userId=${id} durationMs=${
+        Date.now() - startedAt
+      } roleId=${user.role?.id ?? 'unknown'} hasPhoto=${Boolean(
+        photo,
+      )} hasCoverImage=${Boolean(coverImage)} sharingTopics=${mappedHumanBookTopic.length}`,
+    );
+
     if (isLiber) {
       const firstStory = await this.prisma.story.findFirst({
         where: {
@@ -324,8 +348,8 @@ export class UsersService {
       });
       return {
         ...omit(user, ['feedbackTos', 'file', 'coverImage']),
-        photo: this.transformFileUrl(user.file),
-        coverImage: this.transformFileUrl(user.coverImage),
+        photo,
+        coverImage,
         sharingTopics: mappedHumanBookTopic,
         topicsOfInterest: mappedTopicsOfInterest,
         feedbackBys: mappedFeedbackBys,
@@ -340,8 +364,8 @@ export class UsersService {
 
     return {
       ...omit(user, ['feedbackTos', 'file', 'coverImage']),
-      photo: this.transformFileUrl(user.file),
-      coverImage: this.transformFileUrl(user.coverImage),
+      photo,
+      coverImage,
       sharingTopics: mappedHumanBookTopic,
       topicsOfInterest: mappedTopicsOfInterest,
       feedbackBys: mappedFeedbackBys,
