@@ -1,5 +1,5 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { OrNeverType } from '@utils/types/or-never.type';
@@ -9,6 +9,8 @@ import { SessionService } from '@session/session.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
     configService: ConfigService<AllConfigType>,
     private readonly sessionService: SessionService,
@@ -23,18 +25,31 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     payload: JwtPayloadType,
   ): Promise<OrNeverType<JwtPayloadType>> {
     if (!payload.id) {
+      this.logger.warn('[jwt] validate:missing_user_id');
       throw new UnauthorizedException();
     }
 
     if (!payload.sessionId) {
+      this.logger.warn(`[jwt] validate:missing_session_id userId=${payload.id}`);
       throw new UnauthorizedException('Invalid token: Missing session ID.');
     }
+
+    this.logger.log(
+      `[jwt] validate:start userId=${payload.id} sessionId=${payload.sessionId}`,
+    );
 
     const session = await this.sessionService.findById(payload.sessionId);
 
     if (!session) {
+      this.logger.warn(
+        `[jwt] validate:session_not_found userId=${payload.id} sessionId=${payload.sessionId}`,
+      );
       throw new UnauthorizedException('Session does not exist or has expired.');
     }
+
+    this.logger.log(
+      `[jwt] validate:success userId=${payload.id} sessionId=${payload.sessionId}`,
+    );
 
     return payload;
   }
