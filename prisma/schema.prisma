@@ -182,6 +182,7 @@ model story {
   publishStatus Int             @default(1)
   viewCount     Int             @default(0)
   shareCount    Int             @default(0)
+  sharedUserIds Int[]           @default([])
   likeCount     Int             @default(0)
   createdAt     DateTime        @default(now()) @db.Timestamp(6)
   updatedAt     DateTime        @default(now()) @db.Timestamp(6)

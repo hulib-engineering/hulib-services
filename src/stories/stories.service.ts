@@ -275,9 +275,9 @@ export class StoriesService {
 
     const storyReview = await this.storyReviewService.getReviewsOverview(id);
     const [storyCounterRecord] = await this.prisma.$queryRaw<
-      { shareCount: number; likeCount: number }[]
+      { shareCount: number; sharedUserIds: number[]; likeCount: number }[]
     >`
-      SELECT "shareCount", "likeCount"
+      SELECT "shareCount", "sharedUserIds", "likeCount"
       FROM "story"
       WHERE "id" = ${Number(id)}
     `;
@@ -318,6 +318,7 @@ export class StoriesService {
       storyReview,
       viewCount,
       shareCount: Number(storyCounterRecord?.shareCount ?? 0),
+      sharedUserIds: storyCounterRecord?.sharedUserIds ?? [],
       likeCount: Number(storyCounterRecord?.likeCount ?? 0),
       totalLikes: storyCount.storyFavorite,
       topics: result.topics?.map((nestedTopic) => nestedTopic.topic) || [],
@@ -479,20 +480,48 @@ export class StoriesService {
       return {
         id: counter.id,
         shareCount: counter.shareCount,
+        sharedUserIds: counter.sharedUserIds,
       };
     }
 
     const delta = type === 'down' ? -1 : 1;
-    const [updatedStory] = await this.prisma.$queryRaw<
-      { id: number; shareCount: number }[]
-    >`
-      UPDATE "story"
-      SET "shareCount" = GREATEST("shareCount" + ${delta}, 0),
-          "updatedAt" = CURRENT_TIMESTAMP
-      WHERE "id" = ${Number(id)}
-        AND "publishStatus" <> ${PublishStatus.deleted}
-      RETURNING "id", "shareCount"
-    `;
+    const [updatedStory] = userId
+      ? await this.prisma.$queryRaw<
+          { id: number; shareCount: number; sharedUserIds: number[] }[]
+        >`
+          UPDATE "story"
+          SET "shareCount" = CASE
+                WHEN ${type} = 'up'
+                  AND NOT (${Number(userId)} = ANY(COALESCE("sharedUserIds", ARRAY[]::INTEGER[])))
+                THEN "shareCount" + 1
+                WHEN ${type} = 'down'
+                  AND ${Number(userId)} = ANY(COALESCE("sharedUserIds", ARRAY[]::INTEGER[]))
+                THEN GREATEST("shareCount" - 1, 0)
+                ELSE "shareCount"
+              END,
+              "sharedUserIds" = CASE
+                WHEN ${type} = 'up'
+                  AND NOT (${Number(userId)} = ANY(COALESCE("sharedUserIds", ARRAY[]::INTEGER[])))
+                THEN array_append(COALESCE("sharedUserIds", ARRAY[]::INTEGER[]), ${Number(userId)})
+                WHEN ${type} = 'down'
+                THEN array_remove(COALESCE("sharedUserIds", ARRAY[]::INTEGER[]), ${Number(userId)})
+                ELSE COALESCE("sharedUserIds", ARRAY[]::INTEGER[])
+              END,
+              "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "id" = ${Number(id)}
+            AND "publishStatus" <> ${PublishStatus.deleted}
+          RETURNING "id", "shareCount", "sharedUserIds"
+        `
+      : await this.prisma.$queryRaw<
+          { id: number; shareCount: number; sharedUserIds: number[] }[]
+        >`
+          UPDATE "story"
+          SET "shareCount" = GREATEST("shareCount" + ${delta}, 0),
+              "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "id" = ${Number(id)}
+            AND "publishStatus" <> ${PublishStatus.deleted}
+          RETURNING "id", "shareCount", "sharedUserIds"
+        `;
 
     if (!updatedStory) {
       throw new UnprocessableEntityException({
@@ -506,6 +535,7 @@ export class StoriesService {
     return {
       id: updatedStory.id,
       shareCount: Number(updatedStory.shareCount),
+      sharedUserIds: updatedStory.sharedUserIds ?? [],
     };
   }
 
@@ -553,9 +583,14 @@ export class StoriesService {
 
   private async getStoryCounter(id: Story['id']) {
     const [storyCounterRecord] = await this.prisma.$queryRaw<
-      { id: number; shareCount: number; likeCount: number }[]
+      {
+        id: number;
+        shareCount: number;
+        sharedUserIds: number[];
+        likeCount: number;
+      }[]
     >`
-      SELECT "id", "shareCount", "likeCount"
+      SELECT "id", "shareCount", "sharedUserIds", "likeCount"
       FROM "story"
       WHERE "id" = ${Number(id)}
         AND "publishStatus" <> ${PublishStatus.deleted}
@@ -573,6 +608,7 @@ export class StoriesService {
     return {
       id: storyCounterRecord.id,
       shareCount: Number(storyCounterRecord.shareCount),
+      sharedUserIds: storyCounterRecord.sharedUserIds ?? [],
       likeCount: Number(storyCounterRecord.likeCount),
     };
   }
@@ -673,14 +709,22 @@ export class StoriesService {
       storyStats.map((item) => [item.id, item._count.storyFavorite]),
     );
     const storyCounterRows = await this.prisma.$queryRaw<
-      { id: number; shareCount: number; likeCount: number }[]
+      {
+        id: number;
+        shareCount: number;
+        sharedUserIds: number[];
+        likeCount: number;
+      }[]
     >`
-      SELECT "id", "shareCount", "likeCount"
+      SELECT "id", "shareCount", "sharedUserIds", "likeCount"
       FROM "story"
       WHERE "id" IN (${Prisma.join(storyIds)})
     `;
     const shareCountByStoryId = new Map(
       storyCounterRows.map((item) => [item.id, item.shareCount]),
+    );
+    const sharedUserIdsByStoryId = new Map(
+      storyCounterRows.map((item) => [item.id, item.sharedUserIds]),
     );
     const likeCountByStoryId = new Map(
       storyCounterRows.map((item) => [item.id, item.likeCount]),
@@ -690,6 +734,7 @@ export class StoriesService {
       const storyWithoutInternalCount = omit(story, [
         'viewCount',
         'shareCount',
+        'sharedUserIds',
         'likeCount',
       ]);
 
@@ -697,6 +742,7 @@ export class StoriesService {
         ...storyWithoutInternalCount,
         viewCount: Number(viewCountByStoryId.get(story.id) ?? 0),
         shareCount: Number(shareCountByStoryId.get(story.id) ?? 0),
+        sharedUserIds: sharedUserIdsByStoryId.get(story.id) ?? [],
         likeCount: Number(likeCountByStoryId.get(story.id) ?? 0),
         totalLikes: Number(totalLikesByStoryId.get(story.id) ?? 0),
       };

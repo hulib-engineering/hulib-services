@@ -181,6 +181,7 @@ export class StoriesController {
       example: {
         id: 1,
         shareCount: 3,
+        sharedUserIds: [1, 2, 3],
       },
     },
   })
@@ -243,7 +244,8 @@ export class StoriesController {
   }
 
   private getActionUserId(request, bodyUserId?: number): number | undefined {
-    return request?.user?.id ? Number(request.user.id) : bodyUserId;
+    const userId = request?.user?.id ?? bodyUserId;
+    return userId ? Number(userId) : undefined;
   }
 
   @Get(':id/topics')
