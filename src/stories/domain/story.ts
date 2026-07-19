@@ -59,6 +59,12 @@ export class Story {
   shareCount?: number;
 
   @ApiProperty({
+    type: [Number],
+    example: [1, 2, 3],
+  })
+  sharedUserIds?: number[];
+
+  @ApiProperty({
     type: Number,
     example: 8,
   })
