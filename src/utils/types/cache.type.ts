@@ -7,7 +7,7 @@ export enum CacheKey {
   EmailVerificationMailLastSentAt = 'auth:email-verification-mail:%s:last-sent-at', // %s: userId
   ResetPasswordMailLastSentAt = 'auth:reset-password-mail:%s:last-sent-at', // %s: userId
   StoryViewThrottle = 'story:%s:view:%s', // %s: storyId, %s: viewer key
-  StoryShareThrottle = 'story:%s:share:%s:%s', // %s: storyId, %s: userId, %s: type
+  StoryShareThrottle = 'story:%s:share:%s', // %s: storyId, %s: userId
   StoryLikeThrottle = 'story:%s:like:%s:%s', // %s: storyId, %s: userId, %s: type
   StoryReviewCreateThrottle = 'story:%s:review:%s:create', // %s: storyId, %s: userId
 }

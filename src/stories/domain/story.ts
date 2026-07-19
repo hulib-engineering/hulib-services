@@ -42,12 +42,6 @@ export class Story {
 
   @ApiProperty({
     type: Number,
-    example: 5,
-  })
-  totalLikes?: number;
-
-  @ApiProperty({
-    type: Number,
     example: 10,
   })
   viewCount?: number;
@@ -59,10 +53,22 @@ export class Story {
   shareCount?: number;
 
   @ApiProperty({
+    type: [Number],
+    example: [1, 2, 3],
+  })
+  sharedUserIds?: number[];
+
+  @ApiProperty({
     type: Number,
     example: 8,
   })
   likeCount?: number;
+
+  @ApiProperty({
+    type: [Number],
+    example: [1, 2, 3],
+  })
+  likedUserIds?: number[];
 
   @ApiProperty({
     type: () => [Topic],
