@@ -13,6 +13,7 @@ import { User } from '@users/domain/user';
 import { Topic } from '@topics/domain/topics';
 import { AppConfig } from '@config/app-config.type';
 import appConfig from '@config/app.config';
+import { DEFAULT_TOPIC_NAME } from '../common/constants';
 
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
@@ -587,7 +588,7 @@ export class StoriesService {
     });
   }
 
-  async getContestParticipants(topicName: string = 'Khoảnh khắc') {
+  async getContestParticipants(topicName: string = DEFAULT_TOPIC_NAME) {
     const topicFilter = { name: { startsWith: topicName } };
     return this.prisma.user.findMany({
       where: {
@@ -616,6 +617,8 @@ export class StoriesService {
             title: true,
             abstract: true,
             createdAt: true,
+            likeCount: true,
+            shareCount: true,
           },
         },
       },

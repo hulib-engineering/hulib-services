@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { SAFE_TOPIC_REGEX } from './constants';
+import { DEFAULT_TOPIC_NAME } from '../common/constants';
 import * as ExcelJS from 'exceljs';
 import { join } from 'path';
 import { existsSync, mkdirSync, readdirSync } from 'fs';
@@ -28,7 +29,7 @@ export class ContestReportService {
     return topicName.replace(SAFE_TOPIC_REGEX, '_').substring(0, 30);
   }
 
-  async generate(topicName: string = 'Khoảnh khắc'): Promise<string> {
+  async generate(topicName: string = DEFAULT_TOPIC_NAME): Promise<string> {
     const topicFilter = { name: { startsWith: topicName } };
 
     const users = await this.prisma.user.findMany({
@@ -57,6 +58,8 @@ export class ContestReportService {
             title: true,
             abstract: true,
             createdAt: true,
+            likeCount: true,
+            shareCount: true,
           },
         },
       },
@@ -77,6 +80,8 @@ export class ContestReportService {
       { header: 'Story Title', key: 'storyTitle', width: 35 },
       { header: 'Story Abstract', key: 'storyAbstract', width: 60 },
       { header: 'Created At', key: 'createdAt', width: 22 },
+      { header: 'Likes', key: 'likeCount', width: 10 },
+      { header: 'Shares', key: 'shareCount', width: 10 },
     ];
 
     const headerRow = sheet.getRow(1);
@@ -108,6 +113,8 @@ export class ContestReportService {
         createdAt: story.createdAt
           ? new Date(story.createdAt).toISOString().slice(0, 19).replace('T', ' ')
           : '',
+        likeCount: story.likeCount,
+        shareCount: story.shareCount,
       }));
     });
     sheet.addRows(rows);
@@ -120,7 +127,7 @@ export class ContestReportService {
     return filename;
   }
 
-  getLatestFilename(topicName: string = 'Khoảnh khắc'): string {
+  getLatestFilename(topicName: string = DEFAULT_TOPIC_NAME): string {
     if (!existsSync(this.reportsDir)) {
       throw new NotFoundException('No reports directory found');
     }
