@@ -1,8 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaService } from '@prisma-client/prisma-client.service';
+import { StoriesService } from '@stories/stories.service';
 import { SAFE_TOPIC_REGEX } from './constants';
 import { DEFAULT_TOPIC_NAME } from '../common/constants';
+import { ContestUser } from './types';
 import * as ExcelJS from 'exceljs';
 import { join } from 'path';
 import { existsSync, mkdirSync, readdirSync } from 'fs';
@@ -11,8 +12,9 @@ import { existsSync, mkdirSync, readdirSync } from 'fs';
 export class ContestReportService {
   private readonly logger = new Logger(ContestReportService.name);
   private readonly reportsDir = join(process.cwd(), 'reports');
+  private readonly MAX_EXPORT_ROWS = Number(process.env.CONTEST_REPORT_MAX_ROWS) || 10000;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(private readonly storiesService: StoriesService) {
     if (!existsSync(this.reportsDir)) {
       mkdirSync(this.reportsDir, { recursive: true });
     }
@@ -30,40 +32,7 @@ export class ContestReportService {
   }
 
   async generate(topicName: string = DEFAULT_TOPIC_NAME): Promise<string> {
-    const topicFilter = { name: { startsWith: topicName } };
-
-    const users = await this.prisma.user.findMany({
-      where: {
-        stories: {
-          some: {
-            topics: {
-              some: { topic: topicFilter },
-            },
-          },
-        },
-      },
-      select: {
-        fullName: true,
-        email: true,
-        bio: true,
-        phoneNumber: true,
-        stories: {
-          where: {
-            topics: {
-              some: { topic: topicFilter },
-            },
-          },
-          select: {
-            id: true,
-            title: true,
-            abstract: true,
-            createdAt: true,
-            likeCount: true,
-            shareCount: true,
-          },
-        },
-      },
-    });
+    const users = await this.storiesService.getContestParticipants(topicName);
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Hulib System';
@@ -93,7 +62,7 @@ export class ContestReportService {
     };
     headerRow.alignment = { horizontal: 'center' };
 
-    const rows = users.flatMap((user) => {
+    const rows = (users as ContestUser[]).slice(0, this.MAX_EXPORT_ROWS).flatMap((user) => {
       if (user.stories.length === 0) {
         return [{
           fullName: user.fullName,

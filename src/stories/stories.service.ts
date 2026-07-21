@@ -588,9 +588,18 @@ export class StoriesService {
     });
   }
 
-  async getContestParticipants(topicName: string = DEFAULT_TOPIC_NAME) {
+  async getContestParticipants(
+    topicName: string = DEFAULT_TOPIC_NAME,
+    page?: number,
+    limit?: number,
+  ) {
     const topicFilter = { name: { startsWith: topicName } };
-    return this.prisma.user.findMany({
+    const skip = page && limit ? (page - 1) * limit : undefined;
+    const take = limit;
+
+    const users = await this.prisma.user.findMany({
+      skip,
+      take,
       where: {
         stories: {
           some: {
@@ -623,5 +632,28 @@ export class StoriesService {
         },
       },
     });
+
+    if (page && limit) {
+      const total = await this.prisma.user.count({
+        where: {
+          stories: {
+            some: {
+              topics: {
+                some: { topic: topicFilter },
+              },
+            },
+          },
+        },
+      });
+      return {
+        data: users,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    }
+
+    return users;
   }
 }
