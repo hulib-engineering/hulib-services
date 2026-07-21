@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { StoryReviewsController } from './story-reviews.controller';
 import { StoryReviewsService } from './story-reviews.service';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { CacheService } from '../cache/cache.service';
 
 describe('StoryReviewsController', () => {
   let controller: StoryReviewsController;
@@ -9,7 +10,17 @@ describe('StoryReviewsController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StoryReviewsController],
-      providers: [StoryReviewsService, PrismaService],
+      providers: [
+        StoryReviewsService,
+        PrismaService,
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
     controller = module.get<StoryReviewsController>(StoryReviewsController);

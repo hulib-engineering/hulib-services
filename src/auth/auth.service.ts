@@ -6,6 +6,7 @@ import {
   UnprocessableEntityException,
   InternalServerErrorException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import ms from 'ms';
 import crypto from 'crypto';
@@ -44,6 +45,8 @@ import { FileType } from '@files/domain/file';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private jwtService: JwtService,
     private usersService: UsersService,
@@ -373,24 +376,77 @@ export class AuthService {
   }
 
   async me(userJwtPayload: JwtPayloadType): Promise<NullableType<User>> {
-    return this.usersService.findById(userJwtPayload.id);
+    const startedAt = Date.now();
+    this.logger.log(
+      `[auth/me] loading:start userId=${userJwtPayload.id} sessionId=${userJwtPayload.sessionId}`,
+    );
+
+    try {
+      const user = await this.usersService.findById(userJwtPayload.id);
+      this.logger.log(
+        `[auth/me] loading:success userId=${userJwtPayload.id} durationMs=${
+          Date.now() - startedAt
+        } hasUser=${Boolean(user)} roleId=${user?.role?.id ?? 'unknown'} hasPhoto=${Boolean(
+          user?.photo,
+        )} hasCoverImage=${Boolean(user?.coverImage)}`,
+      );
+
+      return user;
+    } catch (error) {
+      this.logger.error(
+        `[auth/me] loading:error userId=${userJwtPayload.id} durationMs=${
+          Date.now() - startedAt
+        } error=${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
   }
 
-  async getMyAvatar(
-    userJwtPayload: JwtPayloadType,
-  ): Promise<NullableType<FileType>> {
-    const user = await this.usersService.findById(userJwtPayload.id);
+  async getMyAvatar(userId: User['id']): Promise<NullableType<FileType>> {
+    const startedAt = Date.now();
+    this.logger.log(`[auth/me/avatar] loading:start userId=${userId}`);
 
-    if (!user) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          user: 'userNotFound',
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: Number(userId),
+        },
+        select: {
+          id: true,
+          photoId: true,
         },
       });
-    }
 
-    return this.filesService.findById(user.photoId);
+      if (!user) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: {
+            user: 'userNotFound',
+          },
+        });
+      }
+
+      const avatar = user.photoId
+        ? await this.filesService.findById(user.photoId)
+        : null;
+
+      this.logger.log(
+        `[auth/me/avatar] loading:success userId=${userId} durationMs=${
+          Date.now() - startedAt
+        } photoId=${user.photoId ?? 'none'} hasAvatar=${Boolean(avatar)}`,
+      );
+
+      return avatar;
+    } catch (error) {
+      this.logger.error(
+        `[auth/me/avatar] loading:error userId=${userId} durationMs=${
+          Date.now() - startedAt
+        } error=${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
   }
 
   async update(

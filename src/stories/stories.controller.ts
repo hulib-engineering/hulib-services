@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -11,11 +12,11 @@ import {
   Request,
   SerializeOptions,
 } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
 import {
-  ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
@@ -39,7 +40,6 @@ import { pagination } from '@utils/pagination';
 import { PaginationResponseDto } from '@utils/dto/pagination-response.dto';
 
 @ApiTags('Stories')
-@ApiBearerAuth()
 @Controller({
   path: 'stories',
   version: '1',
@@ -127,22 +127,81 @@ export class StoriesController {
   @ApiOkResponse({
     type: Story,
   })
-  findOne(@Param('id') id: Story['id']) {
-    return this.storiesService.findOne(id);
+  findOne(@Param('id') id: Story['id'], @Request() request) {
+    return this.storiesService.findOne(
+      id,
+      true,
+      this.getStoryViewerKey(request),
+    );
   }
 
-  @Post(':id/share')
+  private getStoryViewerKey(request): string {
+    if (request.user?.id) {
+      return `user:${request.user.id}`;
+    }
+
+    const ip =
+      request.ip ||
+      request.headers?.['x-forwarded-for'] ||
+      request.socket?.remoteAddress ||
+      'unknown-ip';
+    const userAgent = request.headers?.['user-agent'] ?? 'unknown-agent';
+
+    return `anonymous:${createHash('sha256')
+      .update(`${ip}:${userAgent}`)
+      .digest('hex')}`;
+  }
+
+  @Post('share')
   @ApiOperation({
-    summary: 'Update story share count',
+    summary: 'Increase story share count',
   })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        type: {
-          type: 'string',
-          enum: ['up', 'down'],
-          example: 'up',
+        storyId: {
+          type: 'number',
+          example: 1,
+        },
+        userId: {
+          type: 'number',
+          example: 1,
+        },
+      },
+      required: ['storyId'],
+    },
+  })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        id: 1,
+        shareCount: 3,
+        sharedUserIds: [1, 2, 3],
+      },
+    },
+  })
+  shareByBody(
+    @Body() body: { storyId?: number; userId?: number },
+    @Request() request?,
+  ) {
+    return this.storiesService.share(
+      this.getBodyStoryId(body?.storyId),
+      this.getActionUserId(request, body?.userId),
+    );
+  }
+
+  @Post(':id/share')
+  @ApiOperation({
+    summary: 'Increase story share count',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'number',
+          example: 1,
         },
       },
     },
@@ -158,14 +217,64 @@ export class StoriesController {
       example: {
         id: 1,
         shareCount: 3,
+        sharedUserIds: [1, 2, 3],
       },
     },
   })
   share(
     @Param('id', ParseIntPipe) id: Story['id'],
-    @Body() body?: { type?: 'up' | 'down' },
+    @Body() body?: { userId?: number },
+    @Request() request?,
   ) {
-    return this.storiesService.share(id, body?.type);
+    return this.storiesService.share(
+      id,
+      this.getActionUserId(request, body?.userId),
+    );
+  }
+
+  @Post('like')
+  @ApiOperation({
+    summary: 'Update story like count',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        storyId: {
+          type: 'number',
+          example: 1,
+        },
+        type: {
+          type: 'string',
+          enum: ['up', 'down'],
+          example: 'up',
+        },
+        userId: {
+          type: 'number',
+          example: 1,
+        },
+      },
+      required: ['storyId'],
+    },
+  })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        id: 1,
+        likeCount: 8,
+        likedUserIds: [1, 2, 3],
+      },
+    },
+  })
+  likeByBody(
+    @Body() body: { storyId?: number; type?: 'up' | 'down'; userId?: number },
+    @Request() request?,
+  ) {
+    return this.storiesService.like(
+      this.getBodyStoryId(body?.storyId),
+      body?.type,
+      this.getActionUserId(request, body?.userId),
+    );
   }
 
   @Post(':id/like')
@@ -181,6 +290,10 @@ export class StoriesController {
           enum: ['up', 'down'],
           example: 'up',
         },
+        userId: {
+          type: 'number',
+          example: 1,
+        },
       },
     },
     required: false,
@@ -195,14 +308,34 @@ export class StoriesController {
       example: {
         id: 1,
         likeCount: 8,
+        likedUserIds: [1, 2, 3],
       },
     },
   })
   like(
     @Param('id', ParseIntPipe) id: Story['id'],
-    @Body() body?: { type?: 'up' | 'down' },
+    @Body() body?: { type?: 'up' | 'down'; userId?: number },
+    @Request() request?,
   ) {
-    return this.storiesService.like(id, body?.type);
+    return this.storiesService.like(
+      id,
+      body?.type,
+      this.getActionUserId(request, body?.userId),
+    );
+  }
+
+  private getActionUserId(request, bodyUserId?: number): number | undefined {
+    const userId = request?.user?.id ?? bodyUserId;
+    return userId ? Number(userId) : undefined;
+  }
+
+  private getBodyStoryId(storyId?: number): number {
+    const parsedStoryId = Number(storyId);
+    if (!parsedStoryId) {
+      throw new BadRequestException('storyId is required');
+    }
+
+    return parsedStoryId;
   }
 
   @Get(':id/topics')
