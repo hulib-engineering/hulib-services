@@ -1017,13 +1017,18 @@ export class UsersService {
     });
   }
 
-  async updateTopics(userId: User['id'], topicIds: number[]): Promise<void> {
+  async updateTopics(
+    userId: User['id'],
+    topicIds: number[] | undefined,
+  ): Promise<void> {
+    if (!topicIds?.length) return;
+
     const userIdNum = Number(userId);
     await this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`DELETE FROM "humanBookTopic" WHERE "userId" = ${userIdNum}`;
-      if (topicIds.length > 0) {
+      if (topicIds?.length > 0) {
         await tx.humanBookTopic.createMany({
-          data: topicIds.map((topicId) => ({ userId: userIdNum, topicId })),
+          data: topicIds?.map((topicId) => ({ userId: userIdNum, topicId })),
         });
       }
     });
