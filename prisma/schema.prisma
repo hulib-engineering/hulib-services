@@ -415,6 +415,12 @@ enum chatStatus {
   deleted
 }
 
+enum EducationType {
+  vocational
+  university
+  life_experience
+}
+
 model huberFavorite {
   userId    Int
   huberId   Int
@@ -428,14 +434,16 @@ model huberFavorite {
 }
 
 model education {
-  id          Int       @id @default(autoincrement())
-  major       String    @db.VarChar()
-  institution String    @db.VarChar()
-  startedAt   DateTime  @db.Date
-  endedAt     DateTime? @db.Date
+  id          Int            @id @default(autoincrement())
+  major       String         @db.VarChar()
+  institution String         @db.VarChar()
+  startedAt   DateTime       @db.Date
+  endedAt     DateTime?      @db.Date
   huberId     Int
-  createdAt   DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime  @default(now()) @db.Timestamp(6)
+  type        EducationType?
+  isPublic    Boolean        @default(false)
+  createdAt   DateTime       @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime       @default(now()) @db.Timestamp(6)
   deletedAt   DateTime?
 
   huber user @relation("HuberEducation", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
