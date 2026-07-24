@@ -182,19 +182,30 @@ export class StoriesService {
     paginationOptions,
     filterOptions,
     sortOptions,
+    currentUserId,
   }: {
     paginationOptions: IPaginationOptions;
     filterOptions?: FilterStoryDto;
     sortOptions?: SortStoryDto[];
+    currentUserId?: User['id'];
   }) {
-    const result = await this.storiesRepository.findAllWithCountAndPagination({
-      paginationOptions: {
-        page: paginationOptions.page,
-        limit: paginationOptions.limit,
-      },
-      filterOptions,
-      sortOptions,
-    });
+    const result =
+      filterOptions?.type === StoryQueryTypeEnum.MOST_POPULAR
+        ? await this.storiesRepository.findMostPopularWithCountAndPagination({
+            paginationOptions: {
+              page: paginationOptions.page,
+              limit: paginationOptions.limit,
+            },
+          })
+        : await this.storiesRepository.findAllWithCountAndPagination({
+            paginationOptions: {
+              page: paginationOptions.page,
+              limit: paginationOptions.limit,
+            },
+            filterOptions,
+            sortOptions,
+            currentUserId: currentUserId ? Number(currentUserId) : undefined,
+          });
 
     return {
       data: await Promise.all(

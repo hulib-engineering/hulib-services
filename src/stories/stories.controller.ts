@@ -25,11 +25,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Story } from './domain/story';
-import {
-  InfinityPaginationResponse,
-  InfinityPaginationResponseDto,
-} from '@utils/dto/infinity-pagination-response.dto';
-import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
 import { DEFAULT_LIMIT, DEFAULT_PAGE } from '@utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
@@ -66,14 +61,12 @@ export class StoriesController {
   })
   @Get()
   @ApiOkResponse({
-    type: InfinityPaginationResponse(Story),
+    type: PaginationResponseDto<Story>,
   })
   async findAll(
     @Request() request,
     @Query() query: FindAllStoriesDto,
-  ): Promise<
-    InfinityPaginationResponseDto<Story> | PaginationResponseDto<Story>
-  > {
+  ): Promise<PaginationResponseDto<Story>> {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
 
@@ -98,8 +91,8 @@ export class StoriesController {
       return pagination(data, count, { page, limit });
     }
 
-    return infinityPagination(
-      await this.storiesService.findAllWithPagination({
+    const { data, count } =
+      await this.storiesService.findAllWithCountAndPagination({
         paginationOptions: {
           page,
           limit,
@@ -112,9 +105,9 @@ export class StoriesController {
         },
         sortOptions: query?.sort ?? undefined,
         currentUserId: currentUser?.id,
-      }),
-      { page, limit },
-    );
+      });
+
+    return pagination(data, count, { page, limit });
   }
 
   @Get(':id')
