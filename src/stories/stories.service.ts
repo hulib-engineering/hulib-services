@@ -14,6 +14,7 @@ import { User } from '@users/domain/user';
 import { Topic } from '@topics/domain/topics';
 import { AppConfig } from '@config/app-config.type';
 import appConfig from '@config/app.config';
+import { DEFAULT_TOPIC_NAME } from '../common/constants';
 
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
@@ -824,5 +825,74 @@ export class StoriesService {
         likeCount: (likedUserIdsByStoryId.get(story.id) ?? []).length,
       };
     });
+  }
+
+  async getContestParticipants(
+    topicName: string = DEFAULT_TOPIC_NAME,
+    page?: number,
+    limit?: number,
+  ) {
+    const topicFilter = { name: { startsWith: topicName } };
+    const skip = page && limit ? (page - 1) * limit : undefined;
+    const take = limit;
+
+    const users = await this.prisma.user.findMany({
+      skip,
+      take,
+      where: {
+        stories: {
+          some: {
+            topics: {
+              some: { topic: topicFilter },
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        bio: true,
+        phoneNumber: true,
+        stories: {
+          where: {
+            topics: {
+              some: { topic: topicFilter },
+            },
+          },
+          select: {
+            id: true,
+            title: true,
+            abstract: true,
+            createdAt: true,
+            likeCount: true,
+            shareCount: true,
+          },
+        },
+      },
+    });
+
+    if (page && limit) {
+      const total = await this.prisma.user.count({
+        where: {
+          stories: {
+            some: {
+              topics: {
+                some: { topic: topicFilter },
+              },
+            },
+          },
+        },
+      });
+      return {
+        data: users,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    }
+
+    return users;
   }
 }
