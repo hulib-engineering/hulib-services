@@ -214,6 +214,8 @@ export class UsersService {
             institution: true,
             startedAt: true,
             endedAt: true,
+            type: true,
+            isPublic: true,
           },
           orderBy: {
             startedAt: 'desc',
@@ -773,6 +775,8 @@ export class UsersService {
       institution: string;
       startedAt: string;
       endedAt?: string;
+      type?: string;
+      isPublic?: boolean;
     },
   ) {
     const user = await this.prisma.user.findUnique({
@@ -805,6 +809,8 @@ export class UsersService {
         startedAt: new Date(educationData.startedAt),
         endedAt: educationData.endedAt ? new Date(educationData.endedAt) : null,
         huberId: Number(userId),
+        type: educationData.type as any,
+        isPublic: educationData.isPublic ?? false,
       },
       omit: {
         deletedAt: true,
@@ -822,6 +828,8 @@ export class UsersService {
       institution?: string;
       startedAt?: string;
       endedAt?: string;
+      type?: string;
+      isPublic?: boolean;
     },
   ) {
     const education = await this.prisma.education.findUnique({
@@ -852,6 +860,12 @@ export class UsersService {
           endedAt: educationData.endedAt
             ? new Date(educationData.endedAt)
             : null,
+        }),
+        ...(educationData.type !== undefined && {
+          type: educationData.type as any,
+        }),
+        ...(educationData.isPublic !== undefined && {
+          isPublic: educationData.isPublic,
         }),
       },
       omit: {
@@ -1000,6 +1014,23 @@ export class UsersService {
       data: {
         deletedAt: new Date(),
       },
+    });
+  }
+
+  async updateTopics(
+    userId: User['id'],
+    topicIds: number[] | undefined,
+  ): Promise<void> {
+    if (!topicIds?.length) return;
+
+    const userIdNum = Number(userId);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`DELETE FROM "humanBookTopic" WHERE "userId" = ${userIdNum}`;
+      if (topicIds?.length > 0) {
+        await tx.humanBookTopic.createMany({
+          data: topicIds?.map((topicId) => ({ userId: userIdNum, topicId })),
+        });
+      }
     });
   }
 
