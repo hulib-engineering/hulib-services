@@ -29,10 +29,12 @@ export abstract class StoryRepository {
     paginationOptions,
     filterOptions,
     sortOptions,
+    currentUserId,
   }: {
     paginationOptions: IPaginationOptions;
     filterOptions?: FilterStoryDto;
     sortOptions?: SortStoryDto[];
+    currentUserId?: number;
   }): Promise<{ data: Story[]; count: number }>;
 
   abstract findMostPopularWithPagination({
@@ -40,6 +42,12 @@ export abstract class StoryRepository {
   }: {
     paginationOptions: IPaginationOptions;
   }): Promise<Story[]>;
+
+  abstract findMostPopularWithCountAndPagination({
+    paginationOptions,
+  }: {
+    paginationOptions: IPaginationOptions;
+  }): Promise<{ data: Story[]; count: number }>;
 
   abstract findById(id: Story['id']): Promise<NullableType<Story>>;
 
