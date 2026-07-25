@@ -3,7 +3,7 @@ import { TopicsService } from './topics.service';
 import { TopicsController } from './topics.controller';
 import { RelationalTopicsPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 
-import { CaslModule } from '@casl/casl.module';
+import { CaslModule } from '@permission/casl.module';
 
 @Module({
   imports: [RelationalTopicsPersistenceModule, CaslModule],
