@@ -5,6 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { Relation } from '@utils/types/relation.type';
 import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
 import { ReadingSessionEntity } from './reading-session.entity';
 
@@ -18,21 +19,21 @@ export class MessageEntity {
 
   @ManyToOne(() => ReadingSessionEntity, (session) => session.messages)
   @JoinColumn({ name: 'readingSessionId' })
-  readingSession: ReadingSessionEntity;
+  readingSession: Relation<ReadingSessionEntity>;
 
   @Column()
   humanBookId: number;
 
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'humanBookId' })
-  humanBook: UserEntity;
+  humanBook: Relation<UserEntity>;
 
   @Column()
   readerId: number;
 
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'readerId' })
-  reader: UserEntity;
+  reader: Relation<UserEntity>;
 
   @Column({ type: 'varchar', length: 4000 })
   content: string;

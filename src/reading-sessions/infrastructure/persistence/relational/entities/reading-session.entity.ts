@@ -10,6 +10,7 @@ import {
   OneToMany,
 } from 'typeorm';
 
+import { Relation } from '@utils/types/relation.type';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { StoryEntity } from '@stories/infrastructure/persistence/relational/entities/story.entity';
 import { FeedbackEntity } from './feedback.entity';
@@ -28,7 +29,7 @@ export class ReadingSessionEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'humanBookId' })
-  humanBook: UserEntity;
+  humanBook: Relation<UserEntity>;
 
   @Column()
   humanBookId: number;
@@ -37,7 +38,7 @@ export class ReadingSessionEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'readerId' })
-  reader: UserEntity;
+  reader: Relation<UserEntity>;
 
   @Column()
   readerId: number;
@@ -46,7 +47,7 @@ export class ReadingSessionEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'storyId' })
-  story: StoryEntity;
+  story: Relation<StoryEntity>;
 
   @Column()
   storyId: number;
@@ -92,8 +93,8 @@ export class ReadingSessionEntity {
   deletedAt?: Date;
 
   @OneToMany(() => FeedbackEntity, (feedback) => feedback.readingSession)
-  feedbacks: FeedbackEntity[];
+  feedbacks: Relation<FeedbackEntity[]>;
 
   @OneToMany(() => MessageEntity, (message) => message.readingSession)
-  messages: MessageEntity[];
+  messages: Relation<MessageEntity[]>;
 }
