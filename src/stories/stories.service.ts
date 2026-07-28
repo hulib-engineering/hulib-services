@@ -14,7 +14,6 @@ import { User } from '@users/domain/user';
 import { Topic } from '@topics/domain/topics';
 import { AppConfig } from '@config/app-config.type';
 import appConfig from '@config/app.config';
-import { DEFAULT_TOPIC_NAME } from '../common/constants';
 
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
@@ -828,13 +827,36 @@ export class StoriesService {
   }
 
   async getContestParticipants(
-    topicName: string = DEFAULT_TOPIC_NAME,
+    topicName: string,
     page?: number,
     limit?: number,
   ) {
-    const topicFilter = { name: { startsWith: topicName } };
+    const normalizedTopicName =
+      topicName.trim().replace(/\s+/g, ' ') || 'Khoảnh khắc';
     const skip = page && limit ? (page - 1) * limit : undefined;
     const take = limit;
+    const topicRows = await this.prisma.$queryRaw<{ id: number }[]>`
+      SELECT id
+      FROM topics
+      WHERE unaccent(lower(name)) LIKE unaccent(lower(${normalizedTopicName})) || '%'
+    `;
+    const topicIds = topicRows.map((topic) => topic.id);
+
+    if (topicIds.length === 0) {
+      if (page && limit) {
+        return {
+          data: [],
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+        };
+      }
+
+      return [];
+    }
+
+    const topicFilter = { topicId: { in: topicIds } };
 
     const users = await this.prisma.user.findMany({
       skip,
@@ -843,7 +865,7 @@ export class StoriesService {
         stories: {
           some: {
             topics: {
-              some: { topic: topicFilter },
+              some: topicFilter,
             },
           },
         },
@@ -857,7 +879,7 @@ export class StoriesService {
         stories: {
           where: {
             topics: {
-              some: { topic: topicFilter },
+              some: topicFilter,
             },
           },
           select: {
@@ -878,7 +900,7 @@ export class StoriesService {
           stories: {
             some: {
               topics: {
-                some: { topic: topicFilter },
+                some: topicFilter,
               },
             },
           },

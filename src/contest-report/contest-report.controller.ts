@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Res } from '@nestjs/common';
 import {
   ApiBody,
   ApiCreatedResponse,
@@ -19,6 +11,29 @@ import {
 import { Response } from 'express';
 import { createReadStream } from 'fs';
 import { ContestReportService } from './contest-report.service';
+import { GenerateContestReportDto } from './dto/generate-contest-report.dto';
+import { GeneratedContestReportDto } from './dto/generated-contest-report.dto';
+
+const EXCEL_CONTENT_TYPE =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+function encodeRFC5987Value(value: string): string {
+  return encodeURIComponent(value).replace(
+    /['()*]/g,
+    (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+}
+
+function buildAttachmentHeader(filename: string): string {
+  const fallbackFilename =
+    filename
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w.-]+/g, '_')
+      .replace(/^_+|_+$/g, '') || 'contest-report.xlsx';
+
+  return `attachment; filename="${fallbackFilename}"; filename*=UTF-8''${encodeRFC5987Value(filename)}`;
+}
 
 @ApiTags('Contest Report')
 @Controller({
@@ -30,47 +45,50 @@ export class ContestReportController {
 
   @Post('generate')
   @ApiOperation({ summary: 'Generate Excel report filtered by topic' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        topic: { type: 'string', example: 'Khoảnh khắc', description: 'Topic name prefix to filter stories' },
-      },
-    },
-  })
+  @ApiBody({ type: GenerateContestReportDto })
   @ApiCreatedResponse({
-    schema: { example: { filename: 'contest-report-Khoảnh_khắc-2026-07-15.xlsx' } },
+    type: GeneratedContestReportDto,
   })
-  async generate(@Body('topic') topic?: string): Promise<{ filename: string }> {
-    const filename = await this.contestReportService.generate(topic);
+  async generate(
+    @Body() generateContestReportDto: GenerateContestReportDto,
+  ): Promise<GeneratedContestReportDto> {
+    const filename = await this.contestReportService.generate(
+      generateContestReportDto.topic,
+    );
     return { filename };
   }
 
   @Get('download/:filename')
   @ApiOperation({ summary: 'Download contest report Excel file by filename' })
-  @ApiParam({ name: 'filename', type: String, example: 'contest-report-2026-07-15.xlsx' })
+  @ApiParam({
+    name: 'filename',
+    type: String,
+    example: 'contest-report-2026-07-28-khoanh_khac.xlsx',
+  })
   @ApiOkResponse({ description: 'Excel file' })
-  async download(
-    @Param('filename') filename: string,
-    @Res() res: Response,
-  ) {
+  download(@Param('filename') filename: string, @Res() res: Response) {
     const filePath = this.contestReportService.getFilePath(filename);
     const stream = createReadStream(filePath);
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', EXCEL_CONTENT_TYPE);
+    res.setHeader('Content-Disposition', buildAttachmentHeader(filename));
     stream.pipe(res);
   }
 
   @Get('download-latest')
   @ApiOperation({ summary: 'Download the latest contest report Excel file' })
-  @ApiQuery({ name: 'topic', required: false, type: String, example: 'Khoảnh khắc' })
+  @ApiQuery({
+    name: 'topic',
+    required: false,
+    type: String,
+    example: 'khoanh khac',
+  })
   @ApiOkResponse({ description: 'Excel file' })
-  async downloadLatest(@Res() res: Response, @Query('topic') topic?: string) {
+  downloadLatest(@Res() res: Response, @Query('topic') topic?: string) {
     const filename = this.contestReportService.getLatestFilename(topic);
     const filePath = this.contestReportService.getFilePath(filename);
     const stream = createReadStream(filePath);
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', EXCEL_CONTENT_TYPE);
+    res.setHeader('Content-Disposition', buildAttachmentHeader(filename));
     stream.pipe(res);
   }
 }

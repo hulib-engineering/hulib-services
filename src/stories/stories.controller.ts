@@ -111,6 +111,43 @@ export class StoriesController {
     return pagination(data, count, { page, limit });
   }
 
+  @Get('contest-participants')
+  @ApiOperation({ summary: 'List users with stories matching a topic' })
+  @ApiQuery({
+    name: 'topic',
+    required: false,
+    type: String,
+    example: 'Khoang khac',
+    description: 'Topic name prefix to filter stories',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Items per page',
+  })
+  async getContestParticipants(
+    @Query('topic') topic?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? Number(page) : undefined;
+    const limitNum = limit ? Number(limit) : undefined;
+    return this.storiesService.getContestParticipants(
+      topic ?? 'Khoảnh khắc',
+      pageNum,
+      limitNum,
+    );
+  }
+
   @Get(':id')
   @ApiParam({
     name: 'id',
@@ -342,21 +379,6 @@ export class StoriesController {
   })
   findRelatedTopics(@Param('id') id: Story['id']) {
     return this.storiesService.getTopics(id);
-  }
-
-  @Get('contest-participants')
-  @ApiOperation({ summary: 'List users with stories matching a topic' })
-  @ApiQuery({ name: 'topic', required: false, type: String, example: 'Khoảnh khắc', description: 'Topic name prefix to filter stories' })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1, description: 'Page number' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10, description: 'Items per page' })
-  async getContestParticipants(
-    @Query('topic') topic?: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
-    const pageNum = page ? Number(page) : undefined;
-    const limitNum = limit ? Number(limit) : undefined;
-    return this.storiesService.getContestParticipants(topic, pageNum, limitNum);
   }
 
   @Patch(':id')

@@ -1,24 +1,20 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { StoriesService } from '@stories/stories.service';
-import { SAFE_TOPIC_REGEX } from './constants';
-import { DEFAULT_TOPIC_NAME } from '../common/constants';
-import { ContestUser } from './types';
+import { ContestUser } from './domain/contest-report';
 import * as ExcelJS from 'exceljs';
-import { join } from 'path';
-import { existsSync, mkdirSync, readdirSync } from 'fs';
+import { ContestReportRepository } from './infrastructure/persistence/contest-report.repository';
 
 @Injectable()
 export class ContestReportService {
   private readonly logger = new Logger(ContestReportService.name);
-  private readonly reportsDir = join(process.cwd(), 'reports');
-  private readonly MAX_EXPORT_ROWS = Number(process.env.CONTEST_REPORT_MAX_ROWS) || 10000;
+  private readonly MAX_EXPORT_ROWS =
+    Number(process.env.CONTEST_REPORT_MAX_ROWS) || 10000;
 
-  constructor(private readonly storiesService: StoriesService) {
-    if (!existsSync(this.reportsDir)) {
-      mkdirSync(this.reportsDir, { recursive: true });
-    }
-  }
+  constructor(
+    private readonly storiesService: StoriesService,
+    private readonly contestReportRepository: ContestReportRepository,
+  ) {}
 
   @Cron(process.env.CONTEST_REPORT_CRON || CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async generateDailyReport() {
@@ -28,11 +24,25 @@ export class ContestReportService {
   }
 
   private sanitizeTopicName(topicName: string): string {
-    return topicName.replace(SAFE_TOPIC_REGEX, '_').substring(0, 30);
+    return (
+      topicName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\u0111/g, 'd')
+        .replace(/\u0110/g, 'd')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .substring(0, 30) || 'topic'
+    );
   }
 
-  async generate(topicName: string = DEFAULT_TOPIC_NAME): Promise<string> {
-    const users = await this.storiesService.getContestParticipants(topicName);
+  async generate(topicName = 'Khoảnh khắc'): Promise<string> {
+    const contestParticipants =
+      await this.storiesService.getContestParticipants(topicName);
+    const users = Array.isArray(contestParticipants)
+      ? contestParticipants
+      : contestParticipants.data;
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Hulib System';
@@ -62,59 +72,58 @@ export class ContestReportService {
     };
     headerRow.alignment = { horizontal: 'center' };
 
-    const rows = (users as ContestUser[]).slice(0, this.MAX_EXPORT_ROWS).flatMap((user) => {
-      if (user.stories.length === 0) {
-        return [{
+    const rows = (users as ContestUser[])
+      .slice(0, this.MAX_EXPORT_ROWS)
+      .flatMap((user) => {
+        if (user.stories.length === 0) {
+          return [
+            {
+              fullName: user.fullName,
+              email: user.email,
+              phoneNumber: user.phoneNumber,
+              bio: user.bio,
+            },
+          ];
+        }
+        return user.stories.map((story) => ({
           fullName: user.fullName,
           email: user.email,
           phoneNumber: user.phoneNumber,
           bio: user.bio,
-        }];
-      }
-      return user.stories.map((story) => ({
-        fullName: user.fullName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        bio: user.bio,
-        storyId: story.id,
-        storyTitle: story.title,
-        storyAbstract: story.abstract,
-        createdAt: story.createdAt
-          ? new Date(story.createdAt).toISOString().slice(0, 19).replace('T', ' ')
-          : '',
-        likeCount: story.likeCount,
-        shareCount: story.shareCount,
-      }));
-    });
+          storyId: story.id,
+          storyTitle: story.title,
+          storyAbstract: story.abstract,
+          createdAt: story.createdAt
+            ? new Date(story.createdAt)
+                .toISOString()
+                .slice(0, 19)
+                .replace('T', ' ')
+            : '',
+          likeCount: story.likeCount,
+          shareCount: story.shareCount,
+        }));
+      });
     sheet.addRows(rows);
 
     const today = new Date().toISOString().slice(0, 10);
     const safeTopic = this.sanitizeTopicName(topicName);
     const filename = `contest-report-${today}-${safeTopic}.xlsx`;
-    const filePath = join(this.reportsDir, filename);
-    await workbook.xlsx.writeFile(filePath);
+    await this.contestReportRepository.save(filename, workbook);
     return filename;
   }
 
-  getLatestFilename(topicName: string = DEFAULT_TOPIC_NAME): string {
-    if (!existsSync(this.reportsDir)) {
-      throw new NotFoundException('No reports directory found');
-    }
+  getLatestFilename(topicName = 'Khoảnh khắc'): string {
     const safeTopic = this.sanitizeTopicName(topicName);
-    const prefix = `contest-report-`;
-    const files = readdirSync(this.reportsDir)
-      .filter((f) => f.startsWith(prefix) && f.endsWith('.xlsx') && f.includes(safeTopic))
-      .sort()
-      .reverse();
-    if (files.length === 0) {
+    const filename = this.contestReportRepository.findLatestFilename(safeTopic);
+    if (!filename) {
       throw new NotFoundException('No report files found');
     }
-    return files[0];
+    return filename;
   }
 
   getFilePath(filename: string): string {
-    const filePath = join(this.reportsDir, filename);
-    if (!existsSync(filePath)) {
+    const filePath = this.contestReportRepository.getFilePath(filename);
+    if (!filePath) {
       throw new NotFoundException(`Report file not found: ${filename}`);
     }
     return filePath;
