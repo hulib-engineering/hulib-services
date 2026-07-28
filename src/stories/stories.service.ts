@@ -838,7 +838,7 @@ export class StoriesService {
     const topicRows = await this.prisma.$queryRaw<{ id: number }[]>`
       SELECT id
       FROM topics
-      WHERE unaccent(lower(name)) LIKE unaccent(lower(${normalizedTopicName})) || '%'
+      WHERE unaccent(lower(name)) LIKE '%' || unaccent(lower(${normalizedTopicName})) || '%'
     `;
     const topicIds = topicRows.map((topic) => topic.id);
 
