@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -21,14 +22,10 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { Story } from './domain/story';
-import {
-  InfinityPaginationResponse,
-  InfinityPaginationResponseDto,
-} from '@utils/dto/infinity-pagination-response.dto';
-import { infinityPagination } from '@utils/infinity-pagination';
 import { FindAllStoriesDto } from './dto/find-all-stories.dto';
 import { DEFAULT_LIMIT, DEFAULT_PAGE } from '@utils/dto/pagination-input.dto';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
@@ -65,14 +62,12 @@ export class StoriesController {
   })
   @Get()
   @ApiOkResponse({
-    type: InfinityPaginationResponse(Story),
+    type: PaginationResponseDto<Story>,
   })
   async findAll(
     @Request() request,
     @Query() query: FindAllStoriesDto,
-  ): Promise<
-    InfinityPaginationResponseDto<Story> | PaginationResponseDto<Story>
-  > {
+  ): Promise<PaginationResponseDto<Story>> {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
 
@@ -97,8 +92,8 @@ export class StoriesController {
       return pagination(data, count, { page, limit });
     }
 
-    return infinityPagination(
-      await this.storiesService.findAllWithPagination({
+    const { data, count } =
+      await this.storiesService.findAllWithCountAndPagination({
         paginationOptions: {
           page,
           limit,
@@ -111,8 +106,45 @@ export class StoriesController {
         },
         sortOptions: query?.sort ?? undefined,
         currentUserId: currentUser?.id,
-      }),
-      { page, limit },
+      });
+
+    return pagination(data, count, { page, limit });
+  }
+
+  @Get('contest-participants')
+  @ApiOperation({ summary: 'List users with stories matching a topic' })
+  @ApiQuery({
+    name: 'topic',
+    required: false,
+    type: String,
+    example: 'Khoang khac',
+    description: 'Topic name prefix to filter stories',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Items per page',
+  })
+  async getContestParticipants(
+    @Query('topic') topic?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? Number(page) : undefined;
+    const limitNum = limit ? Number(limit) : undefined;
+    return this.storiesService.getContestParticipants(
+      topic ?? 'Khoảnh khắc',
+      pageNum,
+      limitNum,
     );
   }
 
@@ -150,19 +182,53 @@ export class StoriesController {
       .digest('hex')}`;
   }
 
-  @Post(':id/share')
+  @Post('share')
   @ApiOperation({
-    summary: 'Update story share count',
+    summary: 'Increase story share count',
   })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        type: {
-          type: 'string',
-          enum: ['up', 'down'],
-          example: 'up',
+        storyId: {
+          type: 'number',
+          example: 1,
         },
+        userId: {
+          type: 'number',
+          example: 1,
+        },
+      },
+      required: ['storyId'],
+    },
+  })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        id: 1,
+        shareCount: 3,
+        sharedUserIds: [1, 2, 3],
+      },
+    },
+  })
+  shareByBody(
+    @Body() body: { storyId?: number; userId?: number },
+    @Request() request?,
+  ) {
+    return this.storiesService.share(
+      this.getBodyStoryId(body?.storyId),
+      this.getActionUserId(request, body?.userId),
+    );
+  }
+
+  @Post(':id/share')
+  @ApiOperation({
+    summary: 'Increase story share count',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
         userId: {
           type: 'number',
           example: 1,
@@ -181,16 +247,61 @@ export class StoriesController {
       example: {
         id: 1,
         shareCount: 3,
+        sharedUserIds: [1, 2, 3],
       },
     },
   })
   share(
     @Param('id', ParseIntPipe) id: Story['id'],
-    @Body() body?: { type?: 'up' | 'down'; userId?: number },
+    @Body() body?: { userId?: number },
     @Request() request?,
   ) {
     return this.storiesService.share(
       id,
+      this.getActionUserId(request, body?.userId),
+    );
+  }
+
+  @Post('like')
+  @ApiOperation({
+    summary: 'Update story like count',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        storyId: {
+          type: 'number',
+          example: 1,
+        },
+        type: {
+          type: 'string',
+          enum: ['up', 'down'],
+          example: 'up',
+        },
+        userId: {
+          type: 'number',
+          example: 1,
+        },
+      },
+      required: ['storyId'],
+    },
+  })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        id: 1,
+        likeCount: 8,
+        likedUserIds: [1, 2, 3],
+      },
+    },
+  })
+  likeByBody(
+    @Body() body: { storyId?: number; type?: 'up' | 'down'; userId?: number },
+    @Request() request?,
+  ) {
+    return this.storiesService.like(
+      this.getBodyStoryId(body?.storyId),
       body?.type,
       this.getActionUserId(request, body?.userId),
     );
@@ -227,6 +338,7 @@ export class StoriesController {
       example: {
         id: 1,
         likeCount: 8,
+        likedUserIds: [1, 2, 3],
       },
     },
   })
@@ -243,7 +355,17 @@ export class StoriesController {
   }
 
   private getActionUserId(request, bodyUserId?: number): number | undefined {
-    return request?.user?.id ? Number(request.user.id) : bodyUserId;
+    const userId = request?.user?.id ?? bodyUserId;
+    return userId ? Number(userId) : undefined;
+  }
+
+  private getBodyStoryId(storyId?: number): number {
+    const parsedStoryId = Number(storyId);
+    if (!parsedStoryId) {
+      throw new BadRequestException('storyId is required');
+    }
+
+    return parsedStoryId;
   }
 
   @Get(':id/topics')

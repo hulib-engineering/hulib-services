@@ -42,4 +42,7 @@ lerna-debug.log*
 /docker-volumes
 .env.keys
 
+# generated reports
+reports/
+
 staging_backup.sql

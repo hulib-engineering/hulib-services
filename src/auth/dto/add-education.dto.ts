@@ -1,10 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsString,
-  IsNotEmpty,
+  IsBoolean,
   IsDateString,
+  IsEnum,
+  IsNotEmpty,
   IsOptional,
+  IsString,
 } from 'class-validator';
+import { EducationType } from '@prisma/client';
 
 export class AddEducationDto {
   @ApiProperty({
@@ -31,12 +34,28 @@ export class AddEducationDto {
   @IsNotEmpty()
   startedAt: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'End date of education (optional if ongoing)',
     example: '2024-06-01',
-    required: false,
   })
   @IsDateString()
   @IsOptional()
   endedAt?: string;
+
+  @ApiPropertyOptional({
+    enum: EducationType,
+    description:
+      'vocational: Trung cấp, khóa học ngắn hạn, học nghề | university: Cao đẳng, Đại học & trên đại học | life_experience: Trường đời, trải nghiệm thực tế',
+  })
+  @IsEnum(EducationType)
+  @IsOptional()
+  type?: EducationType;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    default: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  isPublic?: boolean;
 }

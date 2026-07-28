@@ -55,6 +55,8 @@ import { AddEducationDto } from './dto/add-education.dto';
 import { AddWorkDto } from './dto/add-work.dto';
 import { UpdateEducationDto } from './dto/update-education.dto';
 import { UpdateWorkDto } from './dto/update-work.dto';
+import { UpdateUserTopicsDto } from './dto/update-user-topics.dto';
+import { AuthRoles } from './decorators/auth.decorator';
 import { UsersService } from '@users/users.service';
 
 @ApiTags('Auth')
@@ -301,6 +303,20 @@ export class AuthController {
   })
   addEducation(@Request() request, @Body() addEducationDto: AddEducationDto) {
     return this.usersService.addEducation(request.user.id, addEducationDto);
+  }
+
+  @AuthRoles(RoleEnum.humanBook)
+  @Patch('me/topics')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: User })
+  updateTopics(
+    @Request() request,
+    @Body() updateUserTopicsDto: UpdateUserTopicsDto,
+  ) {
+    return this.usersService.updateTopics(
+      request.user.id,
+      updateUserTopicsDto.topics,
+    );
   }
 
   @ApiBearerAuth()

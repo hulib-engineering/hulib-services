@@ -24,4 +24,8 @@ jobs:
           script: |
             curl -sfS https://dotenvx.sh | sudo sh
             cd hulib-services
+            git fetch origin main
+            git checkout -f main
+            git reset --hard origin/main
+            export DEPLOY_BRANCH=main
             dotenvx run --strict --env-file=${DOTENV_FILE} -- ./deploy.sh
