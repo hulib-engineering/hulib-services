@@ -69,7 +69,6 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
 @Module({
   imports: [
     AppealsModule,
-    ContestReportModule,
     ReportsModule,
     SocketModule,
     NotificationsModule,
@@ -78,6 +77,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     ScheduleModule.forRoot(),
     HealthcheckModule,
     StoriesModule,
+    ContestReportModule,
     FavStoriesModule,
     FavHubersModule,
     TopicsModule,
