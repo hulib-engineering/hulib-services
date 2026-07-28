@@ -1,3 +1,21 @@
+import { ApiProperty } from '@nestjs/swagger';
+
+export class ContestReport {
+  @ApiProperty({
+    type: Number,
+  })
+  id?: number;
+
+  @ApiProperty()
+  name?: string;
+
+  @ApiProperty()
+  createdAt?: Date;
+
+  @ApiProperty()
+  updatedAt?: Date;
+}
+
 export interface ContestStory {
   id: number;
   title: string;
