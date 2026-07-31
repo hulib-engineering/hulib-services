@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Relation } from '@utils/types/relation.type';
 import { ReadingSession } from './reading-session';
 
 export class Feedback {
@@ -17,7 +18,7 @@ export class Feedback {
   @ApiProperty({
     type: () => ReadingSession,
   })
-  readingSession: ReadingSession;
+  readingSession: Relation<ReadingSession>;
 
   @ApiProperty({
     type: Number,

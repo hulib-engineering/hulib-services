@@ -10,7 +10,7 @@ import { MailModule } from '@mail/mail.module';
 import { SessionModule } from '@session/session.module';
 import { UsersModule } from '@users/users.module';
 import { TopicsModule } from '@topics/topics.module';
-import { CaslModule } from '@casl/casl.module';
+import { CaslModule } from '@permission/casl.module';
 import { FavStoriesModule } from '@fav-stories/fav-stories.module';
 import { FilesModule } from '@files/files.module';
 import { FavHubersModule } from '../fav-hubers/fav-hubers.module';

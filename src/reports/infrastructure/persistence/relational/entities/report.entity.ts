@@ -8,6 +8,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Relation } from '@utils/types/relation.type';
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
@@ -57,7 +58,7 @@ export class ReportEntity extends EntityRelationalHelper {
     eager: false,
   })
   @JoinColumn({ name: 'reporterId' })
-  reporter?: UserEntity;
+  reporter?: Relation<UserEntity>;
 
   @ApiProperty({
     type: Number,
@@ -73,7 +74,7 @@ export class ReportEntity extends EntityRelationalHelper {
     eager: false,
   })
   @JoinColumn({ name: 'reportedUserId' })
-  reportedUser?: UserEntity;
+  reportedUser?: Relation<UserEntity>;
 
   @ApiProperty({
     type: () => ModerationEntity,

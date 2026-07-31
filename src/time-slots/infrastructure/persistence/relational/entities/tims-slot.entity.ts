@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { Relation } from '@utils/types/relation.type';
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
@@ -38,7 +39,7 @@ export class TimeSlotEntity extends EntityRelationalHelper {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'huberId' })
-  huber: UserEntity;
+  huber: Relation<UserEntity>;
 
   @ApiProperty({
     type: String,
