@@ -12,7 +12,7 @@ import { Topics } from './domain/topics';
 import { TopicColor } from './topic-color.enum';
 import { TopicStatus } from './topic-status.enum';
 
-import { PermissionService } from '@casl/services/permission.service';
+import { PermissionService } from '@permission/services/permission.service';
 import { User } from '@users/domain/user';
 
 @Injectable()

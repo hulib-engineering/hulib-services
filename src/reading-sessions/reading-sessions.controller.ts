@@ -36,9 +36,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@roles/roles.guard';
 import { RoleEnum } from '@roles/roles.enum';
 import { Roles } from '@roles/roles.decorator';
-import { CheckAbilities } from '@casl/decorators/casl.decorator';
-import { Action } from '@casl/ability.factory';
-import { CaslGuard } from '@casl/guards/casl.guard';
+import { CheckAbilities } from '@permission/decorators/casl.decorator';
+import { Action } from '@permission/ability.factory';
+import { CaslGuard } from '@permission/guards/casl.guard';
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()

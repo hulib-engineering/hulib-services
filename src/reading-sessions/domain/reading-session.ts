@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Relation } from '@utils/types/relation.type';
 import { User } from '@users/domain/user';
 import { Story } from '@stories/domain/story';
 import { Feedback } from './feedback';
@@ -170,12 +171,12 @@ export class ReadingSession {
   deletedAt?: Date;
 
   @ApiProperty({
-    type: [Feedback],
+    type: () => [Feedback],
   })
-  feedbacks: Feedback[];
+  feedbacks: Relation<Feedback[]>;
 
   @ApiProperty({
-    type: [Message],
+    type: () => [Message],
   })
-  messages: Message[];
+  messages: Relation<Message[]>;
 }

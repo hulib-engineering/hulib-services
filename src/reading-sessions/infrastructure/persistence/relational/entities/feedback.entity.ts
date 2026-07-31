@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   JoinColumn,
 } from 'typeorm';
+import { Relation } from '@utils/types/relation.type';
 import { ReadingSessionEntity } from './reading-session.entity';
 
 @Entity({
@@ -18,7 +19,7 @@ export class FeedbackEntity {
 
   @ManyToOne(() => ReadingSessionEntity, (session) => session.feedbacks)
   @JoinColumn({ name: 'readingSessionId' })
-  readingSession: ReadingSessionEntity;
+  readingSession: Relation<ReadingSessionEntity>;
 
   @Column()
   readingSessionId: number;
