@@ -32,9 +32,9 @@ import { TopicDto } from './dto/topic.dto';
 import { UpdateTopicsDto } from './dto/update-topics.dto';
 import { TopicQueryTypeEnum } from '@topics/topic-query-type.enum';
 import { AuthGuard } from '@nestjs/passport';
-import { CheckAbilities } from '@casl/decorators/casl.decorator';
-import { Action } from '@casl/ability.factory';
-import { CaslGuard } from '@casl/guards/casl.guard';
+import { CheckAbilities } from '@permission/decorators/casl.decorator';
+import { Action } from '@permission/ability.factory';
+import { CaslGuard } from '@permission/guards/casl.guard';
 import { pagination } from '@utils/pagination';
 import { RoleEnum } from '@roles/roles.enum';
 

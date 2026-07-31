@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CaslModule } from '@casl/casl.module';
+import { CaslModule } from '@permission/casl.module';
 
 // Controllers
 import { ReadingSessionsController } from './reading-sessions.controller';

@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { Relation } from '@utils/types/relation.type';
 import { EntityRelationalHelper } from '@utils/relational-entity-helper';
 import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
 import { ChatStatus } from '../../../../domain/chat';
@@ -28,7 +29,7 @@ export class ChatEntity extends EntityRelationalHelper {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'senderId' })
-  sender: UserEntity;
+  sender: Relation<UserEntity>;
 
   @Column({ type: Number })
   recipientId: number;
@@ -37,7 +38,7 @@ export class ChatEntity extends EntityRelationalHelper {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'recipientId' })
-  recipient: UserEntity;
+  recipient: Relation<UserEntity>;
 
   @Column({ type: String })
   message: string;
