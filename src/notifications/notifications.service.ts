@@ -22,6 +22,9 @@ export class NotificationsService {
     NotificationTypeEnum.reviewStory,
     NotificationTypeEnum.publishStory,
     NotificationTypeEnum.rejectStory,
+    NotificationTypeEnum.storySubmitted,
+    NotificationTypeEnum.welcomeHuber,
+    NotificationTypeEnum.storyResonance,
   ];
   private readonly readingSessionRelatedNotiTypes: string[] = [
     NotificationTypeEnum.sessionRequest,
@@ -35,6 +38,9 @@ export class NotificationsService {
   private readonly appealRelatedNotiTypes: string[] = [
     NotificationTypeEnum.userAppeal,
     NotificationTypeEnum.appealResponse,
+  ];
+  private readonly chatRelatedNotificationTypes: string[] = [
+    NotificationTypeEnum.pendingMessage,
   ];
 
   constructor(
@@ -407,13 +413,17 @@ export class NotificationsService {
         type.name === NotificationTypeEnum.huberReported;
       const isHuberWarningNotiType =
         type.name === NotificationTypeEnum.huberWarning;
+      const isChatRelatedNotiType = this.chatRelatedNotificationTypes.includes(
+        type.name,
+      );
 
       const isNeedRelatedEntityId =
         isStoryNotificationType ||
         isReadingSessionRelatedNotiType ||
         isAppealRelatedNotiType ||
         isHuberReportNotiType ||
-        isHuberWarningNotiType;
+        isHuberWarningNotiType ||
+        isChatRelatedNotiType;
 
       if (isNeedRelatedEntityId && !data.relatedEntityId) {
         this.logger.warn(
@@ -500,6 +510,17 @@ export class NotificationsService {
 
       if (!moderation) {
         throw new BadRequestException('Invalid moderation ID');
+      }
+    }
+    if (this.chatRelatedNotificationTypes.includes(notificationType)) {
+      const chat = await this.prisma.chat.findUnique({
+        where: {
+          id: relatedEntityId,
+        },
+      });
+
+      if (!chat) {
+        throw new BadRequestException('Invalid chat ID');
       }
     }
   }

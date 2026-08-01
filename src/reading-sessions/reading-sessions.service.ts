@@ -386,6 +386,56 @@ export class ReadingSessionsService {
     await this.scheduleRemindersForUpcomingSessions(now);
 
     await this.markOverdueSessionsAsMissed(now);
+
+    await this.autoCancelUnansweredSessions(now);
+  }
+
+  // A request the huber never approved/rejected, with the meeting time now
+  // less than 24h away, is auto-canceled so the liber isn't left hanging.
+  private async autoCancelUnansweredSessions(now: Date) {
+    const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    const unansweredSessions = await this.prisma.readingSession.findMany({
+      where: {
+        sessionStatus: ReadingSessionStatus.PENDING,
+        startedAt: {
+          lte: in24Hours,
+        },
+        deletedAt: null,
+      },
+    });
+
+    if (unansweredSessions.length === 0) {
+      return;
+    }
+
+    this.logger.log(
+      `[CRON] Found ${unansweredSessions.length} unanswered session request(s) to auto-cancel`,
+    );
+
+    const adminId = await this.notificationService.getAdminId();
+
+    for (const session of unansweredSessions) {
+      await this.prisma.readingSession.update({
+        where: { id: session.id },
+        data: {
+          sessionStatus: ReadingSessionStatus.CANCELED,
+          rejectReason:
+            "Automatically canceled: Huber didn't respond before the meeting time.",
+        },
+      });
+
+      if (adminId) {
+        await this.notificationService.pushNoti({
+          senderId: adminId,
+          recipientId: session.readerId,
+          type: NotificationTypeEnum.cancelReadingSession,
+          relatedEntityId: session.id,
+        });
+      }
+
+      this.logger.log(`[CRON] Auto-canceled session ${session.id}`);
+    }
   }
 
   private async scheduleRemindersForUpcomingSessions(now: Date) {

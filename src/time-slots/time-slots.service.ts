@@ -4,8 +4,10 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { User } from '@users/domain/user';
 
 import {
@@ -17,12 +19,19 @@ import { TimeSlot } from './domain/time-slot';
 import { UsersService } from '@users/users.service';
 import { RoleEnum } from '../roles/roles.enum';
 import { Approval } from '../users/approval.enum';
+import { PrismaService } from '@prisma-client/prisma-client.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
 @Injectable()
 export class TimeSlotService {
+  private readonly logger = new Logger(this.constructor.name);
+
   constructor(
     private readonly timeSlotRepository: TimeSlotRepository,
     private readonly userService: UsersService,
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private getDayName(dayOfWeek: number): string {
@@ -183,5 +192,53 @@ export class TimeSlotService {
     }
 
     return timeSlot;
+  }
+
+  @Cron('0 0 * * *', { timeZone: 'UTC' }) // Once a day at 00:00 UTC
+  async remindHubersToSetupCalendar() {
+    const hubersWithoutSlots = await this.prisma.user.findMany({
+      where: {
+        roleId: RoleEnum.humanBook,
+        huberSince: { not: null },
+        timeSlots: { none: {} },
+      },
+      select: { id: true },
+    });
+
+    if (hubersWithoutSlots.length === 0) {
+      return;
+    }
+
+    const adminId = await this.notificationsService.getAdminId();
+    if (!adminId) {
+      return;
+    }
+
+    this.logger.log(
+      `[CRON] Found ${hubersWithoutSlots.length} huber(s) without meeting availability set up`,
+    );
+
+    // Nag weekly rather than every run, until the huber sets up a slot.
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    for (const huber of hubersWithoutSlots) {
+      const recentReminder = await this.prisma.notification.findFirst({
+        where: {
+          type: { name: NotificationTypeEnum.calendarReminder },
+          recipientId: huber.id,
+          createdAt: { gte: sevenDaysAgo },
+        },
+      });
+
+      if (recentReminder) {
+        continue;
+      }
+
+      await this.notificationsService.pushNoti({
+        senderId: adminId,
+        recipientId: huber.id,
+        type: NotificationTypeEnum.calendarReminder,
+      });
+    }
   }
 }

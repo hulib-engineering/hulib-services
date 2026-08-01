@@ -14,5 +14,10 @@ export enum NotificationTypeEnum {
   huberWarning = 'huberWarning',
   userAppeal = 'userAppeal',
   appealResponse = 'appealResponse',
+  pendingMessage = 'pendingMessage',
+  storySubmitted = 'storySubmitted',
+  welcomeHuber = 'welcomeHuber',
+  calendarReminder = 'calendarReminder',
+  storyResonance = 'storyResonance',
   other = 'other',
 }

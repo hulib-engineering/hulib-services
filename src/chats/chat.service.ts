@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { User } from '@users/domain/user';
 
 import { CreateChatDto } from './dto/create-chat.dto';
@@ -8,14 +9,19 @@ import { Conversation } from './domain/conversation';
 import { UsersService } from '@users/users.service';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { SocketService } from '../socket/socket.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
 @Injectable()
 export class ChatService {
+  private readonly logger = new Logger(this.constructor.name);
+
   constructor(
     private readonly chatRepository: ChatRepository,
     private readonly userService: UsersService,
     private readonly prisma: PrismaService,
     private readonly socketService: SocketService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(createChatDto: CreateChatDto, userId: number) {
@@ -133,6 +139,60 @@ export class ChatService {
 
   checkUserOnline(userId: User['id']) {
     return this.socketService.isUserOnline(userId);
+  }
+
+  @Cron('0 */30 * * * *', { timeZone: 'UTC' }) // Every 30 mins
+  async remindPendingMessages() {
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const staleUnread = await this.prisma.chat.findMany({
+      where: {
+        readAt: null,
+        deletedAt: null,
+        createdAt: { lte: cutoff },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (staleUnread.length === 0) {
+      return;
+    }
+
+    // Only remind once per (sender -> recipient) conversation direction per
+    // run, using the oldest unanswered message in that direction.
+    const earliestByPair = new Map<string, (typeof staleUnread)[number]>();
+    for (const chat of staleUnread) {
+      const key = `${chat.senderId}->${chat.recipientId}`;
+      if (!earliestByPair.has(key)) {
+        earliestByPair.set(key, chat);
+      }
+    }
+
+    this.logger.log(
+      `[CRON] Found ${earliestByPair.size} conversation(s) with messages unanswered for 24h+`,
+    );
+
+    for (const chat of earliestByPair.values()) {
+      const alreadyNotified = await this.prisma.notification.findFirst({
+        where: {
+          type: { name: NotificationTypeEnum.pendingMessage },
+          relatedEntityId: chat.id,
+          deletedAt: null,
+        },
+      });
+
+      if (alreadyNotified) {
+        continue;
+      }
+
+      await this.notificationsService.pushNoti({
+        senderId: chat.senderId,
+        recipientId: chat.recipientId,
+        type: NotificationTypeEnum.pendingMessage,
+        relatedEntityId: chat.id,
+      });
+    }
   }
 
   private async countUnreadMessages(userId: User['id']) {

@@ -88,6 +88,12 @@ export class StoriesService {
         type: NotificationTypeEnum.publishStory,
         relatedEntityId: newStory.id,
       });
+      await this.notifsService.pushNoti({
+        senderId: adminId,
+        recipientId: Number(humanBook.id),
+        type: NotificationTypeEnum.storySubmitted,
+        relatedEntityId: newStory.id,
+      });
     }
 
     return newStory;
@@ -126,6 +132,12 @@ export class StoriesService {
         senderId: Number(userId),
         recipientId: adminId,
         type: NotificationTypeEnum.account,
+      });
+      await this.notifsService.pushNoti({
+        senderId: adminId,
+        recipientId: Number(userId),
+        type: NotificationTypeEnum.storySubmitted,
+        relatedEntityId: newStory.id,
       });
     }
 
@@ -311,6 +323,18 @@ export class StoriesService {
         ).viewCount
       : result.viewCount;
 
+    if (shouldIncrementView && viewCount > 0 && viewCount % 100 === 0) {
+      const adminId = await this.notifsService.getAdminId();
+      if (adminId && adminId !== Number(result.humanBookId)) {
+        await this.notifsService.pushNoti({
+          senderId: adminId,
+          recipientId: Number(result.humanBookId),
+          type: NotificationTypeEnum.storyResonance,
+          relatedEntityId: Number(id),
+        });
+      }
+    }
+
     const humanBookCount = result.humanBook._count;
     const humanBookWithoutFeedback = omit(result.humanBook, [
       'feedbackTos',
@@ -412,6 +436,16 @@ export class StoriesService {
       updateStoriesDto.publishStatus === 'published'
     ) {
       const adminId = await this.notifsService.getAdminId();
+
+      // Must be read before the upgrade below fills in huberSince, otherwise
+      // every approval would look like a first approval.
+      const [huberRow] = await this.prisma.$queryRaw<
+        { huberSince: Date | null }[]
+      >`
+        SELECT "huberSince" FROM "user" WHERE "id" = ${Number(story.humanBookId)}
+      `;
+      const isFirstApproval = !huberRow?.huberSince;
+
       if (adminId) {
         await this.notifsService.pushNoti({
           senderId: adminId,
@@ -419,6 +453,15 @@ export class StoriesService {
           type: NotificationTypeEnum.publishStory,
           relatedEntityId: story.id,
         });
+
+        if (isFirstApproval) {
+          await this.notifsService.pushNoti({
+            senderId: adminId,
+            recipientId: Number(story.humanBookId),
+            type: NotificationTypeEnum.welcomeHuber,
+            relatedEntityId: story.id,
+          });
+        }
       }
 
       await this.prisma.$executeRaw`
