@@ -9,6 +9,10 @@ import {
 import { SocketService } from '../socket/socket.service';
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
+import {
+  NotificationEvent,
+  NotificationListFetchEvent,
+} from './notification.events';
 
 @Injectable()
 @WebSocketGateway({ namespace: '/notification', cors: defaultCorsConfig })
@@ -29,25 +33,29 @@ export class NotificationGateway
     this.logger.log('Notification gateway initialized');
   }
 
-  @OnEvent('notification.list.fetch')
-  async emitNotification(payload: {
-    userId: number;
-    notifications: Notification[];
-  }) {
+  @OnEvent(NotificationEvent.ListFetch)
+  async emitNotification(payload: NotificationListFetchEvent) {
     this.logger.log('[GATEWAY] Notification list fetch event received');
 
-    const userClients = await this.cacheService.get<string[]>({
-      key: 'UserSocketClients',
-      args: [payload.userId.toString()],
-    });
+    try {
+      const userClients = await this.cacheService.get<string[]>({
+        key: 'UserSocketClients',
+        args: [payload.userId.toString()],
+      });
 
-    if (userClients && Array.isArray(userClients)) {
-      for (const clientId of userClients) {
-        const client = this.getClient(clientId);
-        if (client) {
-          client.emit('list', payload.notifications);
+      if (userClients && Array.isArray(userClients)) {
+        for (const clientId of userClients) {
+          const client = this.getClient(clientId);
+          if (client) {
+            client.emit('list', payload.notifications);
+          }
         }
       }
+    } catch (error) {
+      this.logger.error(
+        `Failed to push notification list to user ${payload.userId}`,
+        error instanceof Error ? error.stack : error,
+      );
     }
   }
 

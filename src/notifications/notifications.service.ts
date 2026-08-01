@@ -9,6 +9,10 @@ import { RoleEnum } from '@roles/roles.enum';
 import { FindQueryNotificationsDto } from './dto/find-all-notifications-query.dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationTypeEnum } from './notification-type.enum';
+import {
+  NotificationEvent,
+  NotificationListFetchEvent,
+} from './notification.events';
 
 @Injectable()
 export class NotificationsService {
@@ -546,10 +550,10 @@ export class NotificationsService {
   }
 
   pushNoti(createNotificationDto: CreateNotificationDto): void {
-    this.eventEmitter.emit('notification.create', createNotificationDto);
+    this.eventEmitter.emit(NotificationEvent.Create, createNotificationDto);
   }
 
-  @OnEvent('notification.create')
+  @OnEvent(NotificationEvent.Create)
   async handleNotificationCreate(payload: CreateNotificationDto) {
     try {
       const notification = await this.create(payload);
@@ -560,13 +564,14 @@ export class NotificationsService {
           paginationOptions: { page: 1, limit: 5 },
         });
 
-        this.eventEmitter.emit('notification.list.fetch', {
+        const event: NotificationListFetchEvent = {
           userId: notification.recipientId,
           notifications: {
             ...refetchedNotifs,
             ...infinityPagination(refetchedNotifs.data, { page: 1, limit: 5 }),
           },
-        });
+        };
+        this.eventEmitter.emit(NotificationEvent.ListFetch, event);
       }
     } catch (error) {
       this.logger.error(`Notification creation failed: ${error.message}`);
