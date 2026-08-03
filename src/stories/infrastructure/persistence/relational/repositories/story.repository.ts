@@ -35,14 +35,19 @@ export class StoriesRelationalRepository implements StoryRepository {
   ): FindOptionsWhere<StoryEntity> {
     const where: FindOptionsWhere<StoryEntity> = {};
 
+    // Only published stories are meant for public listing, so only they are
+    // restricted to owners who are already admin/humanBook. Non-published
+    // statuses (e.g. pending) must stay visible even when the owner is still
+    // a reader awaiting their first approval.
+    const restrictToPublishedRoles =
+      filterOptions?.publishStatus === PublishStatus.published;
+
     if (filterOptions?.humanBookId) {
       where.humanBook = {
         id: Number(filterOptions.humanBookId),
-        role: {
-          id: In([1, 2]),
-        },
+        ...(restrictToPublishedRoles ? { role: { id: In([1, 2]) } } : {}),
       };
-    } else {
+    } else if (restrictToPublishedRoles) {
       where.humanBook = {
         role: {
           id: In([1, 2]),

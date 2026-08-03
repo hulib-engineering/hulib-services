@@ -11,7 +11,9 @@ import {
   Query,
   Request,
   SerializeOptions,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { createHash } from 'crypto';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -61,6 +63,7 @@ export class StoriesController {
     excludePrefixes: ['__'],
   })
   @Get()
+  @UseGuards(AuthGuard(['jwt', 'anonymous']))
   @ApiOkResponse({
     type: PaginationResponseDto<Story>,
   })
