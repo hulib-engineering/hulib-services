@@ -132,52 +132,6 @@ export class StoriesService {
     return newStory;
   }
 
-  async findAllWithPagination({
-    paginationOptions,
-    filterOptions,
-    sortOptions,
-    currentUserId,
-  }: {
-    paginationOptions: IPaginationOptions;
-    filterOptions?: FilterStoryDto;
-    sortOptions?: SortStoryDto[];
-    currentUserId?: User['id'];
-  }) {
-    let result: Story[];
-    if (
-      filterOptions &&
-      filterOptions.type === StoryQueryTypeEnum.MOST_POPULAR
-    ) {
-      result = await this.storiesRepository.findMostPopularWithPagination({
-        paginationOptions: {
-          page: paginationOptions.page,
-          limit: paginationOptions.limit,
-        },
-      });
-    } else {
-      result = await this.storiesRepository.findAllWithPagination({
-        paginationOptions,
-        filterOptions,
-        sortOptions,
-        currentUserId: currentUserId ? Number(currentUserId) : undefined,
-      });
-    }
-
-    return await Promise.all(
-      (await this.attachStoryStats(result)).map(async (story) => {
-        const storyReview = await this.storyReviewService.getReviewsOverview(
-          story.id,
-        );
-
-        return {
-          ...story,
-          cover: await this.transformFileUrl(story.cover),
-          storyReview,
-        };
-      }),
-    );
-  }
-
   async findAllWithCountAndPagination({
     paginationOptions,
     filterOptions,

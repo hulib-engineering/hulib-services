@@ -95,18 +95,35 @@ export class StoriesController {
       return pagination(data, count, { page, limit });
     }
 
+    // Non-admin (or anonymous) callers only ever see published stories,
+    // except when browsing their own — then their requested status applies,
+    // scoped to their own humanBookId regardless of what was passed in.
+    const requestsOwnNonPublished =
+      !!query.publishStatus &&
+      query.publishStatus !== PublishStatus.published &&
+      !!currentUser?.id;
+
+    const filterOptions = requestsOwnNonPublished
+      ? {
+          humanBookId: String(currentUser.id),
+          topicIds: query.topicIds,
+          publishStatus: query.publishStatus,
+          type: query.type,
+        }
+      : {
+          humanBookId: query.humanBookId,
+          topicIds: query.topicIds,
+          publishStatus: PublishStatus.published,
+          type: query.type,
+        };
+
     const { data, count } =
       await this.storiesService.findAllWithCountAndPagination({
         paginationOptions: {
           page,
           limit,
         },
-        filterOptions: {
-          humanBookId: query.humanBookId,
-          topicIds: query.topicIds,
-          publishStatus: query.publishStatus || PublishStatus.published,
-          type: query.type,
-        },
+        filterOptions,
         sortOptions: query?.sort ?? undefined,
         currentUserId: currentUser?.id,
       });
