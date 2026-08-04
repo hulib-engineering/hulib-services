@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { StoriesService } from './stories.service';
 import { StoriesController } from './stories.controller';
+import { StoriesAdminController } from './stories-admin.controller';
 import { RelationalStoriesPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 
 import { UsersModule } from '@users/users.module';
@@ -17,7 +18,7 @@ import { CacheModule } from '../cache/cache.module';
     NotificationsModule,
     CacheModule,
   ],
-  controllers: [StoriesController],
+  controllers: [StoriesAdminController, StoriesController],
   providers: [StoriesService, StoryReviewsService],
   exports: [StoriesService, RelationalStoriesPersistenceModule],
 })
