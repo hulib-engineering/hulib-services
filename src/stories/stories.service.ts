@@ -1,12 +1,14 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpStatus,
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
 
 import { UsersService } from '@users/users.service';
+import { RoleEnum } from '@roles/roles.enum';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repository';
@@ -324,7 +326,7 @@ export class StoriesService {
   async update(
     id: Story['id'],
     updateStoriesDto: UpdateStoryDto,
-    // currentUser?: User,
+    currentUser?: { id?: number; roleId?: number },
   ) {
     const story = await this.findOne(id, false);
 
@@ -337,17 +339,32 @@ export class StoriesService {
       });
     }
 
-    // if (
-    //   currentUser?.role?.id !== RoleEnum.admin &&
-    //   Number(story.humanBookId) !== Number(currentUser?.id)
-    // ) {
-    //   throw new ForbiddenException({
-    //     status: HttpStatus.FORBIDDEN,
-    //     errors: {
-    //       story: 'onlyOwnerCanUpdateStory',
-    //     },
-    //   });
-    // }
+    const isAdmin = currentUser?.roleId === RoleEnum.admin;
+
+    if (!isAdmin && Number(story.humanBookId) !== Number(currentUser?.id)) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        errors: {
+          story: 'onlyOwnerCanUpdateStory',
+        },
+      });
+    }
+
+    // Approving/rejecting a story is an admin-only decision (it also
+    // promotes the owner to Huber on approval) — an owner editing their own
+    // draft must never be able to flip this themselves.
+    if (
+      !isAdmin &&
+      updateStoriesDto.publishStatus &&
+      ['published', 'rejected'].includes(updateStoriesDto.publishStatus)
+    ) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        errors: {
+          story: 'onlyAdminCanReviewStory',
+        },
+      });
+    }
 
     let topicsEntities: Topic[] = [];
     if (updateStoriesDto.topics) {
