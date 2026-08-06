@@ -18,6 +18,8 @@ export class NotificationsService {
     NotificationTypeEnum.reviewStory,
     NotificationTypeEnum.publishStory,
     NotificationTypeEnum.rejectStory,
+    NotificationTypeEnum.reactStory,
+    NotificationTypeEnum.shareStory,
   ];
   private readonly readingSessionRelatedNotiTypes: string[] = [
     NotificationTypeEnum.sessionRequest,

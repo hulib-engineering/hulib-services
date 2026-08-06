@@ -485,11 +485,12 @@ export class StoriesService {
       throw new BadRequestException('userId is required');
     }
 
+    let humanBookId: number | undefined;
     if (userId) {
       const [storyShareRecord] = await this.prisma.$queryRaw<
-        { id: number; sharedUserIds: number[] }[]
+        { id: number; sharedUserIds: number[]; humanBookId: number }[]
       >`
-        SELECT "id", "sharedUserIds"
+        SELECT "id", "sharedUserIds", "humanBookId"
         FROM "story"
         WHERE "id" = ${Number(id)}
           AND "publishStatus" <> ${PublishStatus.deleted}
@@ -512,6 +513,8 @@ export class StoriesService {
           },
         });
       }
+
+      humanBookId = storyShareRecord.humanBookId;
     }
 
     const [updatedStory] = userId
@@ -560,6 +563,16 @@ export class StoriesService {
       });
     }
 
+    // notify the huber that their story was shared
+    if (humanBookId) {
+      await this.notifsService.pushNoti({
+        senderId: Number(userId),
+        recipientId: humanBookId,
+        type: NotificationTypeEnum.shareStory,
+        relatedEntityId: updatedStory.id,
+      });
+    }
+
     return {
       id: updatedStory.id,
       sharedUserIds: updatedStory.sharedUserIds ?? [],
@@ -572,11 +585,12 @@ export class StoriesService {
       throw new BadRequestException('userId is required');
     }
 
+    let humanBookId: number | undefined;
     if (userId) {
       const [storyLikeRecord] = await this.prisma.$queryRaw<
-        { id: number; likedUserIds: number[] }[]
+        { id: number; likedUserIds: number[]; humanBookId: number }[]
       >`
-        SELECT "id", "likedUserIds"
+        SELECT "id", "likedUserIds", "humanBookId"
         FROM "story"
         WHERE "id" = ${Number(id)}
           AND "publishStatus" <> ${PublishStatus.deleted}
@@ -611,6 +625,8 @@ export class StoriesService {
           },
         });
       }
+
+      humanBookId = storyLikeRecord.humanBookId;
     }
 
     const delta = type === 'down' ? -1 : 1;
@@ -655,6 +671,16 @@ export class StoriesService {
         errors: {
           story: 'storyNotFound',
         },
+      });
+    }
+
+    // notify the huber on a new like only, not on unlike
+    if (humanBookId && type === 'up') {
+      await this.notifsService.pushNoti({
+        senderId: Number(userId),
+        recipientId: humanBookId,
+        type: NotificationTypeEnum.reactStory,
+        relatedEntityId: updatedStory.id,
       });
     }
 

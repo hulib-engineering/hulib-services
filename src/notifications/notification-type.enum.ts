@@ -5,6 +5,8 @@ export enum NotificationTypeEnum {
   reviewStory = 'reviewStory',
   publishStory = 'publishStory',
   rejectStory = 'rejectStory',
+  reactStory = 'reactStory',
+  shareStory = 'shareStory',
   huberReported = 'huberReported',
   rejectHuber = 'rejectHuber',
   approveReadingSession = 'approveReadingSession',
