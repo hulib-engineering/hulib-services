@@ -524,6 +524,12 @@ export class NotificationsService {
     };
   }
 
+  async getUnseenCount(recipientId: number): Promise<number> {
+    return this.prisma.notification.count({
+      where: { recipientId, seen: false, deletedAt: null },
+    });
+  }
+
   async getAdminId(): Promise<number | null> {
     const admin = await this.prisma.user.findFirst({
       where: { role: { id: RoleEnum.admin } },
