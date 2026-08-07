@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readdirSync } from 'fs';
+import { writeFile } from 'fs/promises';
 import { join } from 'path';
-import * as ExcelJS from 'exceljs';
 import { ContestReportRepository } from '../../contest-report.repository';
 
 export class RelationalContestReportRepository extends ContestReportRepository {
@@ -13,8 +13,8 @@ export class RelationalContestReportRepository extends ContestReportRepository {
     }
   }
 
-  async save(filename: string, workbook: ExcelJS.Workbook): Promise<void> {
-    await workbook.xlsx.writeFile(join(this.reportsDir, filename));
+  async save(filename: string, content: string | Buffer): Promise<void> {
+    await writeFile(join(this.reportsDir, filename), content);
   }
 
   findLatestFilename(safeTopic: string): string | null {

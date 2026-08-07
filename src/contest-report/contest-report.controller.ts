@@ -11,6 +11,10 @@ import {
 import { Response } from 'express';
 import { createReadStream } from 'fs';
 import { ContestReportService } from './contest-report.service';
+import {
+  ContestReportFirestoreFile,
+  ContestReportFirestoreService,
+} from './contest-report-firestore.service';
 import { GenerateContestReportDto } from './dto/generate-contest-report.dto';
 import { GeneratedContestReportDto } from './dto/generated-contest-report.dto';
 
@@ -41,7 +45,10 @@ function buildAttachmentHeader(filename: string): string {
   version: '1',
 })
 export class ContestReportController {
-  constructor(private readonly contestReportService: ContestReportService) {}
+  constructor(
+    private readonly contestReportService: ContestReportService,
+    private readonly contestReportFirestoreService: ContestReportFirestoreService,
+  ) {}
 
   @Post('generate')
   @ApiOperation({ summary: 'Generate Excel report filtered by topic' })
@@ -58,12 +65,49 @@ export class ContestReportController {
     return { filename };
   }
 
+  @Post('firestore/generate')
+  @ApiOperation({ summary: 'Generate Excel report and save it to Firestore' })
+  @ApiBody({ type: GenerateContestReportDto })
+  @ApiCreatedResponse({ description: 'Excel report saved to Firestore' })
+  generateFirestore(
+    @Body() generateContestReportDto: GenerateContestReportDto,
+  ): Promise<ContestReportFirestoreFile> {
+    return this.contestReportFirestoreService.generateAndSave(
+      generateContestReportDto.topic,
+    );
+  }
+
+  @Get('firestore')
+  @ApiOperation({ summary: 'Get all Excel reports from Firestore' })
+  @ApiOkResponse({ description: 'Excel reports from Firestore' })
+  findAllFirestore(): Promise<ContestReportFirestoreFile[]> {
+    return this.contestReportFirestoreService.findAll();
+  }
+
+  @Get('firestore/download/:filename')
+  @ApiOperation({ summary: 'Download contest report Excel file from Firestore' })
+  @ApiParam({
+    name: 'filename',
+    type: String,
+    example: 'contest-report-31-07-2026-16-25-khoanh_khac.xlsx',
+  })
+  @ApiOkResponse({ description: 'Excel file from Firestore' })
+  async downloadFirestore(
+    @Param('filename') filename: string,
+    @Res() res: Response,
+  ) {
+    const report = await this.contestReportFirestoreService.findOne(filename);
+    res.setHeader('Content-Type', EXCEL_CONTENT_TYPE);
+    res.setHeader('Content-Disposition', buildAttachmentHeader(filename));
+    res.send(Buffer.from(report.fileContentBase64, 'base64'));
+  }
+
   @Get('download/:filename')
   @ApiOperation({ summary: 'Download contest report Excel file by filename' })
   @ApiParam({
     name: 'filename',
     type: String,
-    example: 'contest-report-2026-07-28-khoanh_khac.xlsx',
+    example: 'contest-report-31-07-2026-16-25-khoanh_khac.xlsx',
   })
   @ApiOkResponse({ description: 'Excel file' })
   download(@Param('filename') filename: string, @Res() res: Response) {

@@ -1,7 +1,5 @@
-import * as ExcelJS from 'exceljs';
-
 export abstract class ContestReportRepository {
-  abstract save(filename: string, workbook: ExcelJS.Workbook): Promise<void>;
+  abstract save(filename: string, content: string | Buffer): Promise<void>;
 
   abstract findLatestFilename(safeTopic: string): string | null;
 

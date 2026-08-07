@@ -3,7 +3,7 @@ import { IsOptional, IsString } from 'class-validator';
 
 export class GenerateContestReportDto {
   @ApiPropertyOptional({
-    example: 'khoang khac',
+    example: 'khoanh khac',
     description: 'Topic name prefix to filter stories',
   })
   @IsOptional()

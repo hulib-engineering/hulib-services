@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class GeneratedContestReportDto {
   @ApiProperty({
-    example: 'contest-report-YY-MM-DD-<topic-name>.xlsx',
+    example: 'contest-report-DD-MM-YYYY-HH-mm-<topic-name>.xlsx',
   })
   filename?: string;
 }
