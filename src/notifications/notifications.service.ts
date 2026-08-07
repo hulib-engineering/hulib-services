@@ -67,17 +67,6 @@ export class NotificationsService {
         },
         include: {
           type: true,
-          recipient: {
-            select: {
-              id: true,
-              fullName: true,
-              file: {
-                select: {
-                  path: true,
-                },
-              },
-            },
-          },
           sender: {
             select: {
               id: true,
@@ -94,6 +83,7 @@ export class NotificationsService {
           typeId: true,
           recipientId: true,
           senderId: true,
+          deletedAt: true,
         },
         skip,
         take,
@@ -240,6 +230,7 @@ export class NotificationsService {
         {
           id: s.id,
           title: s.title,
+          likeCount: s.likeCount,
           numOfRatings: s.storyReview.length,
           numOfComments: s.storyReview.length,
           rejectionReason: s.rejectionReason,
@@ -323,16 +314,40 @@ export class NotificationsService {
     );
 
     const result = notifications.map((n) => {
-      const recipient = this.mapUserWithPhoto(n.recipient);
       const sender = this.mapUserWithPhoto(n.sender);
 
       let relatedEntity: any = null;
 
       if (this.storyRelatedNotificationTypes.includes(n.type.name)) {
-        relatedEntity =
+        const story =
           n.relatedEntityId !== null
             ? storyMap.get(n.relatedEntityId) || null
             : null;
+
+        if (story) {
+          if (n.type.name === NotificationTypeEnum.reactStory) {
+            // react: show like + comment counts only
+            relatedEntity = {
+              id: story.id,
+              title: story.title,
+              likeCount: story.likeCount,
+              numOfComments: story.numOfComments,
+            };
+          } else if (
+            n.type.name === NotificationTypeEnum.shareStory ||
+            n.type.name === NotificationTypeEnum.reviewStory
+          ) {
+            // share/review: show rating + comment counts only
+            relatedEntity = {
+              id: story.id,
+              title: story.title,
+              numOfRatings: story.numOfRatings,
+              numOfComments: story.numOfComments,
+            };
+          } else {
+            relatedEntity = story;
+          }
+        }
       } else if (this.readingSessionRelatedNotiTypes.includes(n.type.name)) {
         relatedEntity =
           n.relatedEntityId !== null
@@ -355,9 +370,10 @@ export class NotificationsService {
             : null;
       }
 
+      const { relatedEntityId, ...rest } = n;
+
       return {
-        ...n,
-        recipient,
+        ...rest,
         sender,
         relatedEntity,
       };
