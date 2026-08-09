@@ -20,6 +20,8 @@ import { AppConfig } from '@config/app-config.type';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { CacheService } from '../cache/cache.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 
 @Injectable()
 export class StoryReviewsService {
@@ -28,6 +30,7 @@ export class StoryReviewsService {
   constructor(
     private prisma: PrismaService,
     private readonly cacheService: CacheService,
+    private readonly notifsService: NotificationsService,
   ) {}
 
   private readonly storyReviewSelect = {
@@ -112,13 +115,23 @@ export class StoryReviewsService {
       });
     }
 
-    return this.prisma.storyReview.create({
+    const review = await this.prisma.storyReview.create({
       data: {
         ...createStoryReviewDto,
         preRating: createStoryReviewDto.preRating ?? null,
       },
       select: this.storyReviewSelect,
     });
+
+    // notify the huber that their story got a new comment
+    await this.notifsService.pushNoti({
+      senderId: Number(review.userId),
+      recipientId: Number(review.story.humanBookId),
+      type: NotificationTypeEnum.reviewStory,
+      relatedEntityId: review.storyId,
+    });
+
+    return review;
   }
 
   private findLatestByUserIdAndStoryId(userId: number, storyId: number) {

@@ -68,6 +68,20 @@ export class NotificationsController {
     };
   }
 
+  @Get('unseen-count')
+  @ApiOkResponse({
+    schema: { example: { unseenCount: 3 } },
+  })
+  @ApiOperation({
+    summary: 'Get unseen notification count for the current user',
+  })
+  async getUnseenCount(@Request() request) {
+    const unseenCount = await this.notificationsService.getUnseenCount(
+      request.user.id,
+    );
+    return { unseenCount };
+  }
+
   @Post()
   @ApiOperation({
     summary:

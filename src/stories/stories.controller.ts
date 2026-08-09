@@ -18,6 +18,7 @@ import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
@@ -185,6 +186,8 @@ export class StoriesController {
   }
 
   @Post('share')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Increase story share count',
   })
@@ -193,10 +196,6 @@ export class StoriesController {
       type: 'object',
       properties: {
         storyId: {
-          type: 'number',
-          example: 1,
-        },
-        userId: {
           type: 'number',
           example: 1,
         },
@@ -213,31 +212,18 @@ export class StoriesController {
       },
     },
   })
-  shareByBody(
-    @Body() body: { storyId?: number; userId?: number },
-    @Request() request?,
-  ) {
+  shareByBody(@Body() body: { storyId?: number }, @Request() request) {
     return this.storiesService.share(
       this.getBodyStoryId(body?.storyId),
-      this.getActionUserId(request, body?.userId),
+      Number(request.user.id),
     );
   }
 
   @Post(':id/share')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Increase story share count',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        userId: {
-          type: 'number',
-          example: 1,
-        },
-      },
-    },
-    required: false,
   })
   @ApiParam({
     name: 'id',
@@ -253,63 +239,57 @@ export class StoriesController {
       },
     },
   })
-  share(
-    @Param('id', ParseIntPipe) id: Story['id'],
-    @Body() body?: { userId?: number },
-    @Request() request?,
-  ) {
-    return this.storiesService.share(
-      id,
-      this.getActionUserId(request, body?.userId),
-    );
+  share(@Param('id', ParseIntPipe) id: Story['id'], @Request() request) {
+    return this.storiesService.share(id, Number(request.user.id));
   }
 
-  @Post('like')
-  @ApiOperation({
-    summary: 'Update story like count',
-  })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        storyId: {
-          type: 'number',
-          example: 1,
-        },
-        type: {
-          type: 'string',
-          enum: ['up', 'down'],
-          example: 'up',
-        },
-        userId: {
-          type: 'number',
-          example: 1,
-        },
-      },
-      required: ['storyId'],
-    },
-  })
-  @ApiOkResponse({
-    schema: {
-      example: {
-        id: 1,
-        likeCount: 8,
-        likedUserIds: [1, 2, 3],
-      },
-    },
-  })
-  likeByBody(
-    @Body() body: { storyId?: number; type?: 'up' | 'down'; userId?: number },
-    @Request() request?,
-  ) {
-    return this.storiesService.like(
-      this.getBodyStoryId(body?.storyId),
-      body?.type,
-      this.getActionUserId(request, body?.userId),
-    );
-  }
+  // redundant with POST /stories/:id/like, not necessary
+  // @Post('like')
+  // @UseGuards(AuthGuard('jwt'))
+  // @ApiBearerAuth()
+  // @ApiOperation({
+  //   summary: 'Update story like count',
+  // })
+  // @ApiBody({
+  //   schema: {
+  //     type: 'object',
+  //     properties: {
+  //       storyId: {
+  //         type: 'number',
+  //         example: 1,
+  //       },
+  //       type: {
+  //         type: 'string',
+  //         enum: ['up', 'down'],
+  //         example: 'up',
+  //       },
+  //     },
+  //     required: ['storyId'],
+  //   },
+  // })
+  // @ApiOkResponse({
+  //   schema: {
+  //     example: {
+  //       id: 1,
+  //       likeCount: 8,
+  //       likedUserIds: [1, 2, 3],
+  //     },
+  //   },
+  // })
+  // likeByBody(
+  //   @Body() body: { storyId?: number; type?: 'up' | 'down' },
+  //   @Request() request,
+  // ) {
+  //   return this.storiesService.like(
+  //     this.getBodyStoryId(body?.storyId),
+  //     body?.type,
+  //     Number(request.user.id),
+  //   );
+  // }
 
   @Post(':id/like')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update story like count',
   })
@@ -321,10 +301,6 @@ export class StoriesController {
           type: 'string',
           enum: ['up', 'down'],
           example: 'up',
-        },
-        userId: {
-          type: 'number',
-          example: 1,
         },
       },
     },
@@ -346,19 +322,10 @@ export class StoriesController {
   })
   like(
     @Param('id', ParseIntPipe) id: Story['id'],
-    @Body() body?: { type?: 'up' | 'down'; userId?: number },
-    @Request() request?,
+    @Body() body: { type?: 'up' | 'down' },
+    @Request() request,
   ) {
-    return this.storiesService.like(
-      id,
-      body?.type,
-      this.getActionUserId(request, body?.userId),
-    );
-  }
-
-  private getActionUserId(request, bodyUserId?: number): number | undefined {
-    const userId = request?.user?.id ?? bodyUserId;
-    return userId ? Number(userId) : undefined;
+    return this.storiesService.like(id, body?.type, Number(request.user.id));
   }
 
   private getBodyStoryId(storyId?: number): number {

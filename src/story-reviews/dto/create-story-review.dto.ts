@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreateStoryReviewDto {
@@ -49,3 +49,8 @@ export class CreateStoryReviewDto {
   @IsInt()
   userId: number;
 }
+
+// userId comes from the JWT, not the client
+export class CreateStoryReviewBodyDto extends OmitType(CreateStoryReviewDto, [
+  'userId',
+] as const) {}
