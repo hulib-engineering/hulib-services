@@ -231,8 +231,8 @@ export class NotificationsService {
           id: s.id,
           title: s.title,
           likeCount: s.likeCount,
+          shareCount: s.shareCount,
           numOfRatings: s.storyReview.length,
-          numOfComments: s.storyReview.length,
           rejectionReason: s.rejectionReason,
         },
       ]),
@@ -326,23 +326,25 @@ export class NotificationsService {
 
         if (story) {
           if (n.type.name === NotificationTypeEnum.reactStory) {
-            // react: show like + comment counts only
+            // like: show like count only
             relatedEntity = {
               id: story.id,
               title: story.title,
               likeCount: story.likeCount,
-              numOfComments: story.numOfComments,
             };
-          } else if (
-            n.type.name === NotificationTypeEnum.shareStory ||
-            n.type.name === NotificationTypeEnum.reviewStory
-          ) {
-            // share/review: show rating + comment counts only
+          } else if (n.type.name === NotificationTypeEnum.shareStory) {
+            // share: show share count only
+            relatedEntity = {
+              id: story.id,
+              title: story.title,
+              shareCount: story.shareCount,
+            };
+          } else if (n.type.name === NotificationTypeEnum.reviewStory) {
+            // review/rating: show rating count only
             relatedEntity = {
               id: story.id,
               title: story.title,
               numOfRatings: story.numOfRatings,
-              numOfComments: story.numOfComments,
             };
           } else {
             relatedEntity = story;
@@ -370,10 +372,13 @@ export class NotificationsService {
             : null;
       }
 
-      const { relatedEntityId, ...rest } = n;
-
       return {
-        ...rest,
+        id: n.id,
+        seen: n.seen,
+        extraNote: n.extraNote,
+        createdAt: n.createdAt,
+        updatedAt: n.updatedAt,
+        type: n.type,
         sender,
         relatedEntity,
       };
