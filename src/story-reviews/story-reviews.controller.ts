@@ -8,10 +8,14 @@ import {
   Param,
   Post,
   Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { StoryReviewsService } from './story-reviews.service';
-import { CreateStoryReviewDto } from './dto/create-story-review.dto';
+import { CreateStoryReviewBodyDto } from './dto/create-story-review.dto';
 import {
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
@@ -32,11 +36,19 @@ export class StoryReviewsController {
   constructor(private readonly storyReviewsService: StoryReviewsService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
   @ApiCreatedResponse({
     type: StoryReview,
   })
-  create(@Body() createStoryReviewDto: CreateStoryReviewDto) {
-    return this.storyReviewsService.create(createStoryReviewDto);
+  create(
+    @Body() createStoryReviewDto: CreateStoryReviewBodyDto,
+    @Request() request,
+  ) {
+    return this.storyReviewsService.create({
+      ...createStoryReviewDto,
+      userId: Number(request.user.id),
+    });
   }
 
   @Get()

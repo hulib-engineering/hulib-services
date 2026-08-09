@@ -18,6 +18,8 @@ export class NotificationsService {
     NotificationTypeEnum.reviewStory,
     NotificationTypeEnum.publishStory,
     NotificationTypeEnum.rejectStory,
+    NotificationTypeEnum.reactStory,
+    NotificationTypeEnum.shareStory,
   ];
   private readonly readingSessionRelatedNotiTypes: string[] = [
     NotificationTypeEnum.sessionRequest,
@@ -65,17 +67,6 @@ export class NotificationsService {
         },
         include: {
           type: true,
-          recipient: {
-            select: {
-              id: true,
-              fullName: true,
-              file: {
-                select: {
-                  path: true,
-                },
-              },
-            },
-          },
           sender: {
             select: {
               id: true,
@@ -92,6 +83,7 @@ export class NotificationsService {
           typeId: true,
           recipientId: true,
           senderId: true,
+          deletedAt: true,
         },
         skip,
         take,
@@ -238,8 +230,9 @@ export class NotificationsService {
         {
           id: s.id,
           title: s.title,
+          likeCount: s.likeCount,
+          shareCount: s.shareCount,
           numOfRatings: s.storyReview.length,
-          numOfComments: s.storyReview.length,
           rejectionReason: s.rejectionReason,
         },
       ]),
@@ -321,16 +314,42 @@ export class NotificationsService {
     );
 
     const result = notifications.map((n) => {
-      const recipient = this.mapUserWithPhoto(n.recipient);
       const sender = this.mapUserWithPhoto(n.sender);
 
       let relatedEntity: any = null;
 
       if (this.storyRelatedNotificationTypes.includes(n.type.name)) {
-        relatedEntity =
+        const story =
           n.relatedEntityId !== null
             ? storyMap.get(n.relatedEntityId) || null
             : null;
+
+        if (story) {
+          if (n.type.name === NotificationTypeEnum.reactStory) {
+            // like: show like count only
+            relatedEntity = {
+              id: story.id,
+              title: story.title,
+              likeCount: story.likeCount,
+            };
+          } else if (n.type.name === NotificationTypeEnum.shareStory) {
+            // share: show share count only
+            relatedEntity = {
+              id: story.id,
+              title: story.title,
+              shareCount: story.shareCount,
+            };
+          } else if (n.type.name === NotificationTypeEnum.reviewStory) {
+            // review/rating: show rating count only
+            relatedEntity = {
+              id: story.id,
+              title: story.title,
+              numOfRatings: story.numOfRatings,
+            };
+          } else {
+            relatedEntity = story;
+          }
+        }
       } else if (this.readingSessionRelatedNotiTypes.includes(n.type.name)) {
         relatedEntity =
           n.relatedEntityId !== null
@@ -354,8 +373,12 @@ export class NotificationsService {
       }
 
       return {
-        ...n,
-        recipient,
+        id: n.id,
+        seen: n.seen,
+        extraNote: n.extraNote,
+        createdAt: n.createdAt,
+        updatedAt: n.updatedAt,
+        type: n.type,
         sender,
         relatedEntity,
       };
@@ -520,6 +543,12 @@ export class NotificationsService {
     return {
       message: 'Update notification successfully',
     };
+  }
+
+  async getUnseenCount(recipientId: number): Promise<number> {
+    return this.prisma.notification.count({
+      where: { recipientId, seen: false, deletedAt: null },
+    });
   }
 
   async getAdminId(): Promise<number | null> {
