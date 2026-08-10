@@ -35,6 +35,8 @@ import { StoryQueryTypeEnum } from '@stories/story-query-type.enum';
 import { omit } from 'lodash';
 import { Prisma } from '@prisma/client';
 import { CacheService } from '../cache/cache.service';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Injectable()
 export class StoriesService {
@@ -48,6 +50,7 @@ export class StoriesService {
     private readonly notifsService: NotificationsService,
     private readonly cacheService: CacheService,
     private prisma: PrismaService,
+    @InjectQueue('mail') private readonly mailQueue: Queue,
   ) {}
 
   async create(createStoriesDto: CreateStoryDto) {
@@ -90,6 +93,17 @@ export class StoriesService {
       });
     }
 
+    if (humanBook.email) {
+      await this.mailQueue.add('story-submitted', {
+        to: humanBook.email,
+        data: {
+          fullName: humanBook.fullName || '',
+          storyTitle: newStory.title,
+          storyId: newStory.id,
+        },
+      });
+    }
+
     return newStory;
   }
 
@@ -126,6 +140,17 @@ export class StoriesService {
         senderId: Number(userId),
         recipientId: adminId,
         type: NotificationTypeEnum.account,
+      });
+    }
+
+    if (user.email) {
+      await this.mailQueue.add('story-submitted', {
+        to: user.email,
+        data: {
+          fullName: user.fullName || '',
+          storyTitle: newStory.title,
+          storyId: newStory.id,
+        },
       });
     }
 
@@ -421,6 +446,8 @@ export class StoriesService {
         });
       }
 
+      const wasAlreadyHuber = !!story.humanBook?.huberSince;
+
       await this.prisma.$executeRaw`
         UPDATE "user"
         SET "roleId" = 2,
@@ -428,12 +455,44 @@ export class StoriesService {
             "huberSince" = COALESCE("huberSince", CURRENT_TIMESTAMP)
         WHERE "id" = ${Number(story.humanBookId)}
       `;
+
+      if (story.humanBook?.email) {
+        await this.mailQueue.add('story-approved', {
+          to: story.humanBook.email,
+          data: {
+            fullName: story.humanBook.fullName || '',
+            storyTitle: story.title,
+            storyId: story.id,
+          },
+        });
+
+        if (!wasAlreadyHuber) {
+          await this.mailQueue.add('welcome-huber', {
+            to: story.humanBook.email,
+            data: {
+              fullName: story.humanBook.fullName || '',
+            },
+          });
+        }
+      }
     }
 
     if (
       !!updateStoriesDto.publishStatus &&
       updateStoriesDto.publishStatus === 'rejected'
     ) {
+      if (story.humanBook?.email) {
+        await this.mailQueue.add('story-rejected', {
+          to: story.humanBook.email,
+          data: {
+            fullName: story.humanBook.fullName || '',
+            storyTitle: story.title,
+            storyId: story.id,
+            rejectReason: updateStoriesDto.rejectionReason,
+          },
+        });
+      }
+
       const adminId = await this.notifsService.getAdminId();
       if (adminId) {
         await this.notifsService.pushNoti({

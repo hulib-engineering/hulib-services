@@ -573,4 +573,224 @@ export class MailService {
       },
     });
   }
+
+  async storySubmitted(mailData: {
+    to: string;
+    data: {
+      fullName: string;
+      storyTitle: string;
+      storyId: number;
+      locale?: string;
+    };
+  }): Promise<void> {
+    const locale = mailData.data.locale || 'vi';
+
+    const [title, subTitle, storyTitleLabel, dear, p1, p2, buttonLabel] =
+      await Promise.all([
+        this.i18n.t('story-submitted.title', { lang: locale }),
+        this.i18n.t('story-submitted.subTitle', { lang: locale }),
+        this.i18n.t('story-submitted.storyTitleLabel', { lang: locale }),
+        this.i18n.t('common.dear', { lang: locale }),
+        this.i18n.t('story-submitted.p1', { lang: locale }),
+        this.i18n.t('story-submitted.p2', { lang: locale }),
+        this.i18n.t('story-submitted.buttonLabel', { lang: locale }),
+      ]);
+
+    const webAppLink = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `${dear} ${mailData.data.fullName}, ${p1}`,
+      throwOnError: true,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', { infer: true }),
+        'src',
+        'mail',
+        'mail-templates',
+        'story-status.hbs',
+      ),
+      context: {
+        dear,
+        fullName: mailData.data.fullName,
+        title,
+        subTitle,
+        storyTitleLabel,
+        storyTitle: mailData.data.storyTitle,
+        p1,
+        p2,
+        buttonLabel,
+        buttonUrl: `${webAppLink}/stories/${mailData.data.storyId}`,
+        webAppLink,
+      },
+    });
+  }
+
+  async storyRejected(mailData: {
+    to: string;
+    data: {
+      fullName: string;
+      storyTitle: string;
+      storyId: number;
+      rejectReason?: string;
+      locale?: string;
+    };
+  }): Promise<void> {
+    const locale = mailData.data.locale || 'vi';
+
+    const [title, subTitle, dear, p1Template, p2, buttonLabel] =
+      await Promise.all([
+        this.i18n.t('story-rejected.title', { lang: locale }),
+        this.i18n.t('story-rejected.subTitle', { lang: locale }),
+        this.i18n.t('common.dear', { lang: locale }),
+        this.i18n.t('story-rejected.p1', { lang: locale }),
+        this.i18n.t('story-rejected.p2', { lang: locale }),
+        this.i18n.t('story-rejected.buttonLabel', { lang: locale }),
+      ]);
+
+    const p1 = (p1Template as string).replace(
+      '{storyTitle}',
+      mailData.data.storyTitle,
+    );
+
+    const webAppLink = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `${dear} ${mailData.data.fullName}, ${p1}`,
+      throwOnError: true,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', { infer: true }),
+        'src',
+        'mail',
+        'mail-templates',
+        'story-status.hbs',
+      ),
+      context: {
+        dear,
+        fullName: mailData.data.fullName,
+        title,
+        subTitle,
+        rejectReason: mailData.data.rejectReason,
+        p1,
+        p2,
+        buttonLabel,
+        buttonUrl: `${webAppLink}/stories/${mailData.data.storyId}`,
+        webAppLink,
+      },
+    });
+  }
+
+  async storyApproved(mailData: {
+    to: string;
+    data: {
+      fullName: string;
+      storyTitle: string;
+      storyId: number;
+      locale?: string;
+    };
+  }): Promise<void> {
+    const locale = mailData.data.locale || 'vi';
+
+    const [title, subTitle, dear, p1Template, p2, buttonLabel] =
+      await Promise.all([
+        this.i18n.t('story-approved.title', { lang: locale }),
+        this.i18n.t('story-approved.subTitle', { lang: locale }),
+        this.i18n.t('common.dear', { lang: locale }),
+        this.i18n.t('story-approved.p1', { lang: locale }),
+        this.i18n.t('story-approved.p2', { lang: locale }),
+        this.i18n.t('story-approved.buttonLabel', { lang: locale }),
+      ]);
+
+    const p1 = (p1Template as string).replace(
+      '{storyTitle}',
+      mailData.data.storyTitle,
+    );
+
+    const webAppLink = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `${dear} ${mailData.data.fullName}, ${p1}`,
+      throwOnError: true,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', { infer: true }),
+        'src',
+        'mail',
+        'mail-templates',
+        'story-status.hbs',
+      ),
+      context: {
+        dear,
+        fullName: mailData.data.fullName,
+        title,
+        subTitle,
+        p1,
+        p2,
+        buttonLabel,
+        buttonUrl: `${webAppLink}/stories/${mailData.data.storyId}`,
+        webAppLink,
+      },
+    });
+  }
+
+  async welcomeHuber(mailData: {
+    to: string;
+    data: {
+      fullName: string;
+      locale?: string;
+    };
+  }): Promise<void> {
+    const locale = mailData.data.locale || 'vi';
+
+    const [title, subTitle, dear, p1, p2, p3, buttonLabel] = await Promise.all(
+      [
+        this.i18n.t('welcome-huber.title', { lang: locale }),
+        this.i18n.t('welcome-huber.subTitle', { lang: locale }),
+        this.i18n.t('common.dear', { lang: locale }),
+        this.i18n.t('welcome-huber.p1', { lang: locale }),
+        this.i18n.t('welcome-huber.p2', { lang: locale }),
+        this.i18n.t('welcome-huber.p3', { lang: locale }),
+        this.i18n.t('welcome-huber.buttonLabel', { lang: locale }),
+      ],
+    );
+
+    const webAppLink = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `${dear} ${mailData.data.fullName}, ${p1}`,
+      throwOnError: true,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', { infer: true }),
+        'src',
+        'mail',
+        'mail-templates',
+        'welcome-huber.hbs',
+      ),
+      context: {
+        dear,
+        fullName: mailData.data.fullName,
+        title,
+        subTitle,
+        p1,
+        p2,
+        p3,
+        buttonLabel,
+        buttonUrl: `${webAppLink}/profile`,
+        webAppLink,
+      },
+    });
+  }
 }

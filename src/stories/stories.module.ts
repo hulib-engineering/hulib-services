@@ -8,6 +8,7 @@ import { StoryReviewsModule } from '@story-reviews/story-reviews.module';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { CacheModule } from '../cache/cache.module';
+import { MailModule } from '@mail/mail.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CacheModule } from '../cache/cache.module';
     StoryReviewsModule,
     NotificationsModule,
     CacheModule,
+    MailModule,
   ],
   controllers: [StoriesController],
   providers: [StoriesService, StoryReviewsService],
