@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
 import { StoryRepository } from '../story.repository';
-import { StoriesRelationalRepository } from './repositories/story.repository';
+import { PrismaStoriesRepository } from '../prisma/repositories/story-prisma.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { StoryEntity } from './entities/story.entity';
 import { UsersRelationalRepository } from '../../../../users/infrastructure/persistence/relational/repositories/user.repository';
 import { UserRepository } from '../../../../users/infrastructure/persistence/user.repository';
 import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
@@ -11,7 +10,6 @@ import { TopicsRelationalRepository } from '../../../../topics/infrastructure/pe
 import { TopicsEntity } from '../../../../topics/infrastructure/persistence/relational/entities/topics.entity';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([StoryEntity]),
     TypeOrmModule.forFeature([UserEntity]),
     TypeOrmModule.forFeature([TopicsEntity]),
   ],
@@ -19,7 +17,7 @@ import { TopicsEntity } from '../../../../topics/infrastructure/persistence/rela
   providers: [
     {
       provide: StoryRepository,
-      useClass: StoriesRelationalRepository,
+      useClass: PrismaStoriesRepository,
     },
     {
       provide: UserRepository,

@@ -10,7 +10,6 @@ import {
   Post,
   Query,
   Request,
-  SerializeOptions,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -59,12 +58,12 @@ export class StoriesController {
     return this.storiesService.create(createStoriesDto);
   }
 
-  @SerializeOptions({
-    groups: ['admin'],
-    excludePrefixes: ['__'],
-  })
   @Get()
   @UseGuards(AuthGuard(['jwt', 'anonymous']))
+  @ApiOperation({
+    summary:
+      'Public story listing — always published-only, except a caller browsing their own non-published stories.',
+  })
   @ApiOkResponse({
     type: PaginationResponseDto<Story>,
   })
@@ -74,27 +73,32 @@ export class StoriesController {
   ): Promise<PaginationResponseDto<Story>> {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
-
     const currentUser = request.user;
-    const isAdmin = currentUser?.role?.id === RoleEnum.admin;
 
-    if (isAdmin) {
-      const { data, count } =
-        await this.storiesService.findAllWithCountAndPagination({
-          paginationOptions: {
-            page,
-            limit,
-          },
-          filterOptions: {
-            humanBookId: query.humanBookId,
-            topicIds: query.topicIds,
-            publishStatus: query.publishStatus || PublishStatus.pending,
-            type: query.type,
-          },
-          sortOptions: query?.sort ?? undefined,
-        });
-      return pagination(data, count, { page, limit });
-    }
+    // Every caller (including an admin browsing the public site as
+    // themselves) sees the same published-only feed by default — this
+    // endpoint's behavior must never change based on who's asking, only on
+    // what's explicitly requested. The one exception: a logged-in caller
+    // browsing their own non-published stories, always scoped to their own
+    // humanBookId regardless of what was passed in.
+    const requestsOwnNonPublished =
+      !!query.publishStatus &&
+      query.publishStatus !== PublishStatus.published &&
+      !!currentUser?.id;
+
+    const filterOptions = requestsOwnNonPublished
+      ? {
+          humanBookId: String(currentUser.id),
+          topicIds: query.topicIds,
+          publishStatus: query.publishStatus,
+          type: query.type,
+        }
+      : {
+          humanBookId: query.humanBookId,
+          topicIds: query.topicIds,
+          publishStatus: PublishStatus.published,
+          type: query.type,
+        };
 
     const { data, count } =
       await this.storiesService.findAllWithCountAndPagination({
@@ -102,12 +106,7 @@ export class StoriesController {
           page,
           limit,
         },
-        filterOptions: {
-          humanBookId: query.humanBookId,
-          topicIds: query.topicIds,
-          publishStatus: query.publishStatus || PublishStatus.published,
-          type: query.type,
-        },
+        filterOptions,
         sortOptions: query?.sort ?? undefined,
         currentUserId: currentUser?.id,
       });
@@ -352,6 +351,11 @@ export class StoriesController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({
+    summary:
+      "Edit a story's own content. Only the owner or an admin may call this, and only an admin may change publishStatus to published/rejected.",
+  })
   @ApiParam({
     name: 'id',
     type: String,
@@ -363,8 +367,12 @@ export class StoriesController {
   update(
     @Param('id') id: Story['id'],
     @Body() updateStoriesDto: UpdateStoryDto,
+    @Request() request,
   ) {
-    return this.storiesService.update(id, updateStoriesDto);
+    return this.storiesService.update(id, updateStoriesDto, {
+      id: request.user?.id,
+      roleId: request.user?.role?.id,
+    });
   }
 
   @Delete(':id')
