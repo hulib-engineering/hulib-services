@@ -206,7 +206,6 @@ export class UsersService {
       },
     }));
 
-    console.log('🚀 ~ UsersService ~ findById ~ user:', user);
     const profileState = this.buildHuberProfileState({
       isHuber,
       bio: user.bio,
