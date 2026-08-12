@@ -139,6 +139,15 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
       }),
     }),
     BullModule.registerQueue({ name: 'reminder' }),
+    BullModule.registerQueue({
+      name: 'mail',
+      defaultJobOptions: {
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: 100,
+        removeOnFail: false,
+      },
+    }),
     CacheManagerModule,
     UsersModule,
     FilesModule,

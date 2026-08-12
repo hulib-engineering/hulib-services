@@ -10,6 +10,10 @@ import { OAuth2Client } from 'google-auth-library';
 export class MailerService {
   private readonly transporter: nodemailer.Transporter;
   private google: OAuth2Client;
+  private readonly templateCache = new Map<
+    string,
+    HandlebarsTemplateDelegate
+  >();
 
   constructor(private readonly configService: ConfigService<AllConfigType>) {
     const isLocalDev =
@@ -54,20 +58,36 @@ export class MailerService {
     });
   }
 
+  private async getCompiledTemplate(
+    templatePath: string,
+  ): Promise<HandlebarsTemplateDelegate> {
+    const cached = this.templateCache.get(templatePath);
+    if (cached) {
+      return cached;
+    }
+
+    const raw = await fs.readFile(templatePath, 'utf-8');
+    const compiled = Handlebars.compile(raw, { strict: true });
+    this.templateCache.set(templatePath, compiled);
+    return compiled;
+  }
+
   async sendMail({
     templatePath,
     context,
+    throwOnError,
     ...mailOptions
   }: nodemailer.SendMailOptions & {
     templatePath: string;
     context: Record<string, unknown>;
+    // Existing callers rely on failures being swallowed (logged only); the
+    // mail-queue processor opts into rethrowing so Bull can retry the job.
+    throwOnError?: boolean;
   }): Promise<void> {
     let html: string | undefined;
     if (templatePath) {
-      const template = await fs.readFile(templatePath, 'utf-8');
-      html = Handlebars.compile(template, {
-        strict: true,
-      })(context);
+      const template = await this.getCompiledTemplate(templatePath);
+      html = template(context);
     }
 
     try {
@@ -84,6 +104,9 @@ export class MailerService {
       });
     } catch (e) {
       console.error('Error sending email: ', e);
+      if (throwOnError) {
+        throw e;
+      }
     }
   }
 }
