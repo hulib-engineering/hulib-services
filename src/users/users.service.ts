@@ -23,6 +23,7 @@ import { GenderEnum } from '@genders/genders.enum';
 import { Action, Approval } from '@users/approval.enum';
 import { CreateFeedbackDto } from '@users/dto/create-feedback.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { UserProfileRepository } from '@users/infrastructure/persistence/relational/repositories/user-profile.repository';
 import { user as PrismaUser } from '@prisma/client';
 import { UpgradeDto } from '@users/dto/upgrade.dto';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -37,7 +38,6 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { AppConfig } from '@config/app-config.type';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ReadingSessionStatus } from '@reading-sessions/domain';
-import { TopicStatus } from '@topics/topic-status.enum';
 import { omit } from 'lodash';
 
 @Injectable()
@@ -49,6 +49,7 @@ export class UsersService {
     private readonly filesService: FilesService,
     private readonly notificationsService: NotificationsService,
     private readonly prisma: PrismaService,
+    private readonly userProfileRepository: UserProfileRepository,
   ) {}
 
   async create(createProfileDto: CreateUserDto): Promise<User> {
@@ -153,135 +154,41 @@ export class UsersService {
     });
   }
 
+  private computeUserRating(feedbacks: { rating: number }[]): number {
+    if (feedbacks.length === 0) return 0;
+    const avg =
+      feedbacks.reduce((acc, f) => acc + f.rating, 0) / feedbacks.length;
+    return Math.round(avg * 10) / 10;
+  }
+
   async findById(id: User['id']): Promise<NullableType<any>> {
     const startedAt = Date.now();
     this.logger.log(`[users/findById] loading:start userId=${id}`);
 
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: Number(id),
-      },
-      include: {
-        humanBookTopic: {
-          where: {
-            topic: {
-              status: TopicStatus.active,
-            },
-          },
-          include: {
-            topic: {
-              select: {
-                id: true,
-                name: true,
-                color: true,
-              },
-            },
-          },
-        },
-        topicsOfInterest: {
-          include: {
-            topic: {
-              select: {
-                id: true,
-                name: true,
-                color: true,
-              },
-            },
-          },
-        },
-        feedbackTos: {
-          select: {
-            feedbackBy: {
-              select: {
-                id: true,
-                fullName: true,
-                file: true,
-              },
-            },
-            id: true,
-            rating: true,
-            content: true,
-            createdAt: true,
-          },
-        },
-        educations: {
-          where: {
-            deletedAt: null,
-          },
-          select: {
-            id: true,
-            major: true,
-            institution: true,
-            startedAt: true,
-            endedAt: true,
-            type: true,
-            isPublic: true,
-          },
-          orderBy: {
-            startedAt: 'desc',
-          },
-        },
-        works: {
-          where: {
-            deletedAt: null,
-          },
-          select: {
-            id: true,
-            position: true,
-            company: true,
-            startedAt: true,
-            endedAt: true,
-          },
-          orderBy: {
-            startedAt: 'desc',
-          },
-        },
-        gender: true,
-        role: true,
-        status: true,
-        file: true,
-        coverImage: true,
-        _count: {
-          select: {
-            feedbackTos: true,
-            storyFavorite: true,
-            timeSlots: true,
-            topicsOfInterest: true,
-          },
-        },
-      },
-      omit: {
-        deletedAt: true,
-        genderId: true,
-        roleId: true,
-        statusId: true,
-        photoId: true,
-        coverImageId: true,
-        password: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const user = await this.userProfileRepository.findUserWithRelations(
+      Number(id),
+    );
 
     if (!user) {
       this.logger.warn(
-        `[users/findById] loading:not_found userId=${id} durationMs=${
-          Date.now() - startedAt
-        }`,
+        `[users/findById] loading:not_found userId=${id} durationMs=${Date.now() - startedAt}`,
       );
       throw new NotFoundException();
     }
 
-    const [huberMeta] = await this.prisma.$queryRaw<
-      {
-        huberSince: Date | null;
-        hasSeenHuberOnboarding: boolean;
-      }[]
-    >`
-      SELECT "huberSince", "hasSeenHuberOnboarding"
-      FROM "user"
-      WHERE "id" = ${Number(id)}
-    `;
+    const isHuber = user.role?.id === RoleEnum.humanBook;
+    const isLiber = user.role?.id === RoleEnum.reader;
+
+    const [huberMeta, storiesCount, photo, coverImage, firstStory] =
+      await Promise.all([
+        this.userProfileRepository.findHuberMeta(Number(id)),
+        this.userProfileRepository.countStories(Number(id)),
+        this.transformFileUrl(user.file),
+        this.transformFileUrl(user.coverImage),
+        isLiber
+          ? this.userProfileRepository.findFirstStory(Number(id))
+          : Promise.resolve(null),
+      ]);
 
     const mappedHumanBookTopic = user.humanBookTopic
       ? user.humanBookTopic.map((item) => item.topic)
@@ -291,34 +198,21 @@ export class UsersService {
       ? user.topicsOfInterest.map((item) => item.topic)
       : [];
 
-    const mappedFeedbackBys = user.topicsOfInterest
-      ? user.feedbackTos.map((item) => ({
-          ...item,
-          feedbackBy: {
-            ...omit(item.feedbackBy, ['file']),
-            photo: item.feedbackBy?.file?.path,
-          },
-        }))
-      : [];
-
-    const [photo, coverImage] = await Promise.all([
-      this.transformFileUrl(user.file),
-      this.transformFileUrl(user.coverImage),
-    ]);
-
-    const isLiber = user.role?.id === RoleEnum.reader;
-    const publishedStoriesCount = await this.prisma.story.count({
-      where: {
-        humanBookId: Number(id),
-        publishStatus: PublishStatus.published,
+    const mappedFeedbackBys = user.feedbackTos.map((item) => ({
+      ...item,
+      feedbackBy: {
+        ...omit(item.feedbackBy, ['file']),
+        photo: item.feedbackBy?.file?.path,
       },
-    });
+    }));
+
+    console.log('🚀 ~ UsersService ~ findById ~ user:', user);
     const profileState = this.buildHuberProfileState({
-      isHuber: user.role?.id === RoleEnum.humanBook,
+      isHuber,
       bio: user.bio,
       videoUrl: user.videoUrl,
       sharingTopicsCount: mappedHumanBookTopic.length,
-      publishedStoriesCount,
+      publishedStoriesCount: storiesCount,
       favoriteStoriesCount: user._count.storyFavorite,
       feedbacksCount: user._count.feedbackTos,
       timeSlotsCount: user._count.timeSlots,
@@ -333,38 +227,7 @@ export class UsersService {
       )} hasCoverImage=${Boolean(coverImage)} sharingTopics=${mappedHumanBookTopic.length}`,
     );
 
-    if (isLiber) {
-      const firstStory = await this.prisma.story.findFirst({
-        where: {
-          humanBookId: Number(id),
-        },
-        include: {
-          cover: true,
-        },
-        omit: {
-          coverId: true,
-          createdAt: true,
-          updatedAt: true,
-          humanBookId: true,
-        },
-      });
-      return {
-        ...omit(user, ['feedbackTos', 'file', 'coverImage']),
-        photo,
-        coverImage,
-        sharingTopics: mappedHumanBookTopic,
-        topicsOfInterest: mappedTopicsOfInterest,
-        feedbackBys: mappedFeedbackBys,
-        educations: user.educations || [],
-        works: user.works || [],
-        huberSince: huberMeta?.huberSince ?? null,
-        hasSeenHuberOnboarding: huberMeta?.hasSeenHuberOnboarding ?? false,
-        firstStory,
-        profileState,
-      };
-    }
-
-    return {
+    const base = {
       ...omit(user, ['feedbackTos', 'file', 'coverImage']),
       photo,
       coverImage,
@@ -377,6 +240,22 @@ export class UsersService {
       hasSeenHuberOnboarding: huberMeta?.hasSeenHuberOnboarding ?? false,
       profileState,
     };
+
+    if (isHuber) {
+      return {
+        ...base,
+        storiesCount: storiesCount,
+        conversationsCount: user._count.huberReadingSessions,
+        rating: this.computeUserRating(user.feedbackTos),
+        ratingCount: user._count.feedbackTos,
+      };
+    }
+
+    if (isLiber) {
+      return { ...base, firstStory };
+    }
+
+    return base;
   }
 
   findByEmail(email: User['email']): Promise<NullableType<User>> {
@@ -699,6 +578,58 @@ export class UsersService {
     return this.prisma.feedback.update({
       where: { id: feedback?.id || 0 },
       data: { rating: payload.rating, content: payload.content },
+    });
+  }
+
+  async getFeedbacksForUser(
+    userId: User['id'],
+    paginationOptions: IPaginationOptions,
+  ) {
+    const skip = (paginationOptions.page - 1) * paginationOptions.limit;
+    const take = paginationOptions.limit;
+    const where = { feedbackToId: Number(userId), deletedAt: null };
+
+    const [totalItems, feedbacks] = await this.prisma.$transaction([
+      this.prisma.feedback.count({ where }),
+      this.prisma.feedback.findMany({
+        where,
+        select: {
+          id: true,
+          rating: true,
+          preRating: true,
+          content: true,
+          createdAt: true,
+          feedbackBy: {
+            select: {
+              id: true,
+              fullName: true,
+              file: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+    ]);
+
+    const data = await Promise.all(
+      feedbacks.map(async (feedback) => ({
+        id: feedback.id,
+        rating: feedback.preRating,
+        content: feedback.content,
+        createdAt: feedback.createdAt,
+        feedbackBy: {
+          id: feedback.feedbackBy?.id ?? null,
+          fullName: feedback.feedbackBy?.fullName ?? null,
+          photo: await this.transformFileUrl(feedback.feedbackBy?.file ?? null),
+        },
+      })),
+    );
+
+    return pagination(data, totalItems, {
+      page: paginationOptions.page,
+      limit: paginationOptions.limit,
     });
   }
 
