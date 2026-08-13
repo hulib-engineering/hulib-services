@@ -39,6 +39,9 @@ import { CacheService } from '../cache/cache.service';
 @Injectable()
 export class StoriesService {
   private readonly storyActionThrottleTtl = 5 * 60_000;
+  private readonly contestStoryCreatedAtStart = new Date(
+    '2026-07-25T00:00:00+07:00',
+  );
 
   constructor(
     private readonly storiesRepository: StoryRepository,
@@ -827,48 +830,25 @@ export class StoriesService {
   }
 
   async getContestParticipants(
-    topicName: string,
+    _topicName: string,
     page?: number,
     limit?: number,
   ) {
-    const normalizedTopicName =
-      topicName.trim().replace(/\s+/g, ' ') || 'Khoảnh khắc';
     const skip = page && limit ? (page - 1) * limit : undefined;
     const take = limit;
-    const topicRows = await this.prisma.$queryRaw<{ id: number }[]>`
-      SELECT id
-      FROM topics
-      WHERE regexp_replace(unaccent(lower(name)), '[^a-z0-9]+', '', 'g')
-        LIKE '%' || regexp_replace(unaccent(lower(${normalizedTopicName})), '[^a-z0-9]+', '', 'g') || '%'
-    `;
-    const topicIds = topicRows.map((topic) => topic.id);
-
-    if (topicIds.length === 0) {
-      if (page && limit) {
-        return {
-          data: [],
-          total: 0,
-          page,
-          limit,
-          totalPages: 0,
-        };
-      }
-
-      return [];
-    }
-
-    const topicFilter = { topicId: { in: topicIds } };
+    const storyFilter = {
+      createdAt: {
+        gte: this.contestStoryCreatedAtStart,
+        lte: new Date(),
+      },
+    };
 
     const users = await this.prisma.user.findMany({
       skip,
       take,
       where: {
         stories: {
-          some: {
-            topics: {
-              some: topicFilter,
-            },
-          },
+          some: storyFilter,
         },
       },
       select: {
@@ -878,11 +858,7 @@ export class StoriesService {
         bio: true,
         phoneNumber: true,
         stories: {
-          where: {
-            topics: {
-              some: topicFilter,
-            },
-          },
+          where: storyFilter,
           select: {
             id: true,
             title: true,
@@ -899,11 +875,7 @@ export class StoriesService {
       const total = await this.prisma.user.count({
         where: {
           stories: {
-            some: {
-              topics: {
-                some: topicFilter,
-              },
-            },
+            some: storyFilter,
           },
         },
       });
