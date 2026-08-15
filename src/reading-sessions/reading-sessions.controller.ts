@@ -106,11 +106,14 @@ export class ReadingSessionsController {
   })
   @ApiResponse({ type: ReadingSessionResponseDto })
   @Patch(':id')
+  @CheckAbilities((ability) => ability.can(Action.Update, 'ReadingSession'))
+  @UseGuards(AuthGuard('jwt'), CaslGuard)
   async updateSession(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateReadingSessionDto,
+    @Request() request,
   ) {
-    return this.readingSessionsService.updateSession(id, dto);
+    return this.readingSessionsService.updateSession(id, dto, request.user);
   }
 
   @ApiOperation({ summary: 'Delete a reading session' })

@@ -574,8 +574,47 @@ export class NotificationsService {
     });
   }
 
+  /**
+   * Called when a Huber decides (approves/rejects) a booking request, so the
+   * originating sessionRequest notification stops showing as actionable in
+   * their own list once resolved.
+   */
+  async softDeleteSessionRequestNotification(
+    sessionId: number,
+    recipientId: number,
+  ): Promise<void> {
+    await this.prisma.notification.updateMany({
+      where: {
+        relatedEntityId: sessionId,
+        recipientId,
+        type: { name: NotificationTypeEnum.sessionRequest },
+        deletedAt: null,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    await this.emitListRefresh(recipientId);
+  }
+
   pushNoti(createNotificationDto: CreateNotificationDto): void {
     this.eventEmitter.emit('notification.create', createNotificationDto);
+  }
+
+  private async emitListRefresh(recipientId: number): Promise<void> {
+    const refetchedNotifs = await this.findAllWithPagination({
+      filterOptions: { recipientId },
+      paginationOptions: { page: 1, limit: 5 },
+    });
+
+    this.eventEmitter.emit('notification.list.fetch', {
+      userId: recipientId,
+      notifications: {
+        ...refetchedNotifs,
+        ...infinityPagination(refetchedNotifs.data, { page: 1, limit: 5 }),
+      },
+    });
   }
 
   @OnEvent('notification.create')
@@ -584,18 +623,7 @@ export class NotificationsService {
       const notification = await this.create(payload);
 
       if (notification) {
-        const refetchedNotifs = await this.findAllWithPagination({
-          filterOptions: { recipientId: notification.recipientId },
-          paginationOptions: { page: 1, limit: 5 },
-        });
-
-        this.eventEmitter.emit('notification.list.fetch', {
-          userId: notification.recipientId,
-          notifications: {
-            ...refetchedNotifs,
-            ...infinityPagination(refetchedNotifs.data, { page: 1, limit: 5 }),
-          },
-        });
+        await this.emitListRefresh(notification.recipientId);
       }
     } catch (error) {
       this.logger.error(`Notification creation failed: ${error.message}`);

@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   HttpStatus,
   Injectable,
   Logger,
@@ -29,6 +30,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { RoleEnum } from '@roles/roles.enum';
+import { JwtPayloadType } from '@auth/strategies/types/jwt-payload.type';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -216,8 +219,22 @@ export class ReadingSessionsService {
     return session;
   }
 
-  async updateSession(id: number, dto: UpdateReadingSessionDto): Promise<void> {
+  async updateSession(
+    id: number,
+    dto: UpdateReadingSessionDto,
+    actor?: JwtPayloadType,
+  ): Promise<void> {
     const session = await this.findOneSession(id);
+
+    if (actor) {
+      const isParticipant =
+        session.readerId === actor.id || session.humanBookId === actor.id;
+      if (actor.role?.id !== RoleEnum.admin && !isParticipant) {
+        throw new ForbiddenException(
+          'You are not a participant of this reading session',
+        );
+      }
+    }
 
     if (
       session.sessionStatus === ReadingSessionStatus.APPROVED &&
@@ -292,6 +309,10 @@ export class ReadingSessionsService {
     await this.readingSessionRepository.update(id, session);
 
     if (dto.sessionStatus === 'approved') {
+      await this.notificationService.softDeleteSessionRequestNotification(
+        session.id,
+        session.humanBookId,
+      );
       await this.notificationService.pushNoti({
         senderId: session.humanBookId,
         recipientId: session.readerId,
@@ -301,6 +322,10 @@ export class ReadingSessionsService {
     }
 
     if (dto.sessionStatus === 'rejected') {
+      await this.notificationService.softDeleteSessionRequestNotification(
+        session.id,
+        session.humanBookId,
+      );
       await this.notificationService.pushNoti({
         senderId: session.humanBookId,
         recipientId: session.readerId,
