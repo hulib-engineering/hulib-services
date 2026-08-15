@@ -324,6 +324,7 @@ export class ReadingSessionsService {
         recipientId: session.humanBookId,
         type: NotificationTypeEnum.approveReadingSession,
         relatedEntityId: session.id,
+        seen: true,
       });
     }
 
@@ -343,6 +344,7 @@ export class ReadingSessionsService {
         recipientId: session.humanBookId,
         type: NotificationTypeEnum.rejectReadingSession,
         relatedEntityId: session.id,
+        seen: true,
       });
     }
 

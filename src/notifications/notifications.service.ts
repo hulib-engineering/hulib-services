@@ -452,6 +452,7 @@ export class NotificationsService {
           typeId: type.id,
           relatedEntityId: isNeedRelatedEntityId ? data.relatedEntityId : null,
           extraNote: data.extraNote,
+          seen: data.seen ?? false,
         },
       });
     } catch (error) {

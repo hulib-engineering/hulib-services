@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateNotificationDto {
   @ApiProperty()
@@ -26,4 +32,11 @@ export class CreateNotificationDto {
   @IsString()
   @IsNotEmpty()
   extraNote?: string;
+
+  @ApiPropertyOptional({
+    description: 'Create the notification already marked as seen',
+  })
+  @IsBoolean()
+  @IsOptional()
+  seen?: boolean;
 }
