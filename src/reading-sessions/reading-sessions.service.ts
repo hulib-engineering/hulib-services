@@ -319,6 +319,12 @@ export class ReadingSessionsService {
         type: NotificationTypeEnum.approveReadingSession,
         relatedEntityId: session.id,
       });
+      await this.notificationService.pushNoti({
+        senderId: session.readerId,
+        recipientId: session.humanBookId,
+        type: NotificationTypeEnum.approveReadingSession,
+        relatedEntityId: session.id,
+      });
     }
 
     if (dto.sessionStatus === 'rejected') {
@@ -329,6 +335,12 @@ export class ReadingSessionsService {
       await this.notificationService.pushNoti({
         senderId: session.humanBookId,
         recipientId: session.readerId,
+        type: NotificationTypeEnum.rejectReadingSession,
+        relatedEntityId: session.id,
+      });
+      await this.notificationService.pushNoti({
+        senderId: session.readerId,
+        recipientId: session.humanBookId,
         type: NotificationTypeEnum.rejectReadingSession,
         relatedEntityId: session.id,
       });
