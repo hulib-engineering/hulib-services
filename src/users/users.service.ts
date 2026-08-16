@@ -23,7 +23,6 @@ import { GenderEnum } from '@genders/genders.enum';
 import { Action, Approval } from '@users/approval.enum';
 import { CreateFeedbackDto } from '@users/dto/create-feedback.dto';
 import { PrismaService } from '@prisma-client/prisma-client.service';
-import { UserProfileRepository } from '@users/infrastructure/persistence/relational/repositories/user-profile.repository';
 import { user as PrismaUser } from '@prisma/client';
 import { UpgradeDto } from '@users/dto/upgrade.dto';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -38,18 +37,20 @@ import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { AppConfig } from '@config/app-config.type';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ReadingSessionStatus } from '@reading-sessions/domain';
+import { TopicStatus } from '@topics/topic-status.enum';
 import { omit } from 'lodash';
+import { computeAverageRating } from '@utils/rating';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
+  private s3Client: S3Client | null = null;
 
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly filesService: FilesService,
     private readonly notificationsService: NotificationsService,
     private readonly prisma: PrismaService,
-    private readonly userProfileRepository: UserProfileRepository,
   ) {}
 
   async create(createProfileDto: CreateUserDto): Promise<User> {
@@ -154,20 +155,11 @@ export class UsersService {
     });
   }
 
-  private computeUserRating(feedbacks: { rating: number }[]): number {
-    if (feedbacks.length === 0) return 0;
-    const avg =
-      feedbacks.reduce((acc, f) => acc + f.rating, 0) / feedbacks.length;
-    return Math.round(avg * 10) / 10;
-  }
-
   async findById(id: User['id']): Promise<NullableType<any>> {
     const startedAt = Date.now();
     this.logger.log(`[users/findById] loading:start userId=${id}`);
 
-    const user = await this.userProfileRepository.findUserWithRelations(
-      Number(id),
-    );
+    const user = await this.findUserWithRelations(Number(id));
 
     if (!user) {
       this.logger.warn(
@@ -181,13 +173,11 @@ export class UsersService {
 
     const [huberMeta, storiesCount, photo, coverImage, firstStory] =
       await Promise.all([
-        this.userProfileRepository.findHuberMeta(Number(id)),
-        this.userProfileRepository.countStories(Number(id)),
+        this.findHuberMeta(Number(id)),
+        this.countStories(Number(id)),
         this.transformFileUrl(user.file),
         this.transformFileUrl(user.coverImage),
-        isLiber
-          ? this.userProfileRepository.findFirstStory(Number(id))
-          : Promise.resolve(null),
+        isLiber ? this.findFirstStory(Number(id)) : Promise.resolve(null),
       ]);
 
     const mappedHumanBookTopic = user.humanBookTopic
@@ -243,9 +233,9 @@ export class UsersService {
     if (isHuber) {
       return {
         ...base,
-        storiesCount: storiesCount,
+        storiesCount,
         conversationsCount: user._count.huberReadingSessions,
-        rating: this.computeUserRating(user.feedbackTos),
+        rating: computeAverageRating(user.feedbackTos),
         ratingCount: user._count.feedbackTos,
       };
     }
@@ -615,7 +605,7 @@ export class UsersService {
     const data = await Promise.all(
       feedbacks.map(async (feedback) => ({
         id: feedback.id,
-        rating: feedback.preRating,
+        rating: feedback.rating,
         content: feedback.content,
         createdAt: feedback.createdAt,
         feedbackBy: {
@@ -964,6 +954,116 @@ export class UsersService {
     });
   }
 
+  private findUserWithRelations(id: number) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        humanBookTopic: {
+          where: { topic: { status: TopicStatus.active } },
+          include: {
+            topic: { select: { id: true, name: true, color: true } },
+          },
+        },
+        topicsOfInterest: {
+          include: {
+            topic: { select: { id: true, name: true, color: true } },
+          },
+        },
+        feedbackTos: {
+          where: { deletedAt: null },
+          select: {
+            feedbackBy: {
+              select: { id: true, fullName: true, file: true },
+            },
+            id: true,
+            rating: true,
+            content: true,
+            createdAt: true,
+          },
+        },
+        educations: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            major: true,
+            institution: true,
+            startedAt: true,
+            endedAt: true,
+            type: true,
+            isPublic: true,
+          },
+          orderBy: { startedAt: 'desc' },
+        },
+        works: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            position: true,
+            company: true,
+            startedAt: true,
+            endedAt: true,
+          },
+          orderBy: { startedAt: 'desc' },
+        },
+        gender: true,
+        role: true,
+        status: true,
+        file: true,
+        coverImage: true,
+        _count: {
+          select: {
+            feedbackTos: { where: { deletedAt: null } },
+            storyFavorite: true,
+            timeSlots: true,
+            topicsOfInterest: true,
+            favoritedByUsers: true,
+            huberReadingSessions: { where: { sessionStatus: 'finished' } },
+          },
+        },
+      },
+      omit: {
+        deletedAt: true,
+        genderId: true,
+        roleId: true,
+        statusId: true,
+        photoId: true,
+        coverImageId: true,
+        password: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  private async findHuberMeta(id: number) {
+    const [meta] = await this.prisma.$queryRaw<
+      { huberSince: Date | null; hasSeenHuberOnboarding: boolean }[]
+    >`
+      SELECT "huberSince", "hasSeenHuberOnboarding"
+      FROM "user"
+      WHERE "id" = ${id}
+    `;
+    return meta ?? null;
+  }
+
+  private countStories(humanBookId: number) {
+    return this.prisma.story.count({
+      where: { humanBookId, publishStatus: { not: PublishStatus.rejected } },
+    });
+  }
+
+  private findFirstStory(humanBookId: number) {
+    return this.prisma.story.findFirst({
+      where: { humanBookId },
+      include: { cover: true },
+      omit: {
+        coverId: true,
+        createdAt: true,
+        updatedAt: true,
+        humanBookId: true,
+      },
+    });
+  }
+
   private async transformFileUrl(
     file: FileDto | null,
   ): Promise<FileDto | null> {
@@ -980,20 +1080,24 @@ export class UsersService {
         throw new BadRequestException('Missing file path for S3 object.');
       }
 
-      const s3 = new S3Client({
-        region: config.awsS3Region ?? '',
-        credentials: {
-          accessKeyId: config.accessKeyId ?? '',
-          secretAccessKey: config.secretAccessKey ?? '',
-        },
-      });
+      if (!this.s3Client) {
+        this.s3Client = new S3Client({
+          region: config.awsS3Region ?? '',
+          credentials: {
+            accessKeyId: config.accessKeyId ?? '',
+            secretAccessKey: config.secretAccessKey ?? '',
+          },
+        });
+      }
 
       const command = new GetObjectCommand({
         Bucket: config.awsDefaultS3Bucket,
         Key: file.path,
       });
 
-      file.path = await getSignedUrl(s3, command, { expiresIn: 3600 });
+      file.path = await getSignedUrl(this.s3Client, command, {
+        expiresIn: 3600,
+      });
     }
 
     return file;
