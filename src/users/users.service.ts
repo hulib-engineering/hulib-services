@@ -570,58 +570,6 @@ export class UsersService {
     });
   }
 
-  async getFeedbacksForUser(
-    userId: User['id'],
-    paginationOptions: IPaginationOptions,
-  ) {
-    const skip = (paginationOptions.page - 1) * paginationOptions.limit;
-    const take = paginationOptions.limit;
-    const where = { feedbackToId: Number(userId), deletedAt: null };
-
-    const [totalItems, feedbacks] = await this.prisma.$transaction([
-      this.prisma.feedback.count({ where }),
-      this.prisma.feedback.findMany({
-        where,
-        select: {
-          id: true,
-          rating: true,
-          preRating: true,
-          content: true,
-          createdAt: true,
-          feedbackBy: {
-            select: {
-              id: true,
-              fullName: true,
-              file: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take,
-      }),
-    ]);
-
-    const data = await Promise.all(
-      feedbacks.map(async (feedback) => ({
-        id: feedback.id,
-        rating: feedback.rating,
-        content: feedback.content,
-        createdAt: feedback.createdAt,
-        feedbackBy: {
-          id: feedback.feedbackBy?.id ?? null,
-          fullName: feedback.feedbackBy?.fullName ?? null,
-          photo: await this.transformFileUrl(feedback.feedbackBy?.file ?? null),
-        },
-      })),
-    );
-
-    return pagination(data, totalItems, {
-      page: paginationOptions.page,
-      limit: paginationOptions.limit,
-    });
-  }
-
   async getReadingSessions({
     userId,
     status,
