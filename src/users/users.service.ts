@@ -39,7 +39,6 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ReadingSessionStatus } from '@reading-sessions/domain';
 import { TopicStatus } from '@topics/topic-status.enum';
 import { omit } from 'lodash';
-import { computeAverageRating } from '@utils/rating';
 
 @Injectable()
 export class UsersService {
@@ -171,13 +170,14 @@ export class UsersService {
     const isHuber = user.role?.id === RoleEnum.humanBook;
     const isLiber = user.role?.id === RoleEnum.reader;
 
-    const [huberMeta, storiesCount, photo, coverImage, firstStory] =
+    const [huberMeta, storiesCount, photo, coverImage, firstStory, rating] =
       await Promise.all([
         this.findHuberMeta(Number(id)),
         this.countStories(Number(id)),
         this.transformFileUrl(user.file),
         this.transformFileUrl(user.coverImage),
         isLiber ? this.findFirstStory(Number(id)) : Promise.resolve(null),
+        isHuber ? this.computeRatingAggregate(Number(id)) : Promise.resolve(0),
       ]);
 
     const mappedHumanBookTopic = user.humanBookTopic
@@ -187,14 +187,6 @@ export class UsersService {
     const mappedTopicsOfInterest = user.topicsOfInterest
       ? user.topicsOfInterest.map((item) => item.topic)
       : [];
-
-    const mappedFeedbackBys = user.feedbackTos.map((item) => ({
-      ...item,
-      feedbackBy: {
-        ...omit(item.feedbackBy, ['file']),
-        photo: item.feedbackBy?.file?.path,
-      },
-    }));
 
     const profileState = this.buildHuberProfileState({
       isHuber,
@@ -217,12 +209,11 @@ export class UsersService {
     );
 
     const base = {
-      ...omit(user, ['feedbackTos', 'file', 'coverImage']),
+      ...omit(user, ['file', 'coverImage']),
       photo,
       coverImage,
       sharingTopics: mappedHumanBookTopic,
       topicsOfInterest: mappedTopicsOfInterest,
-      feedbackBys: mappedFeedbackBys,
       educations: user.educations || [],
       works: user.works || [],
       huberSince: huberMeta?.huberSince ?? null,
@@ -235,7 +226,8 @@ export class UsersService {
         ...base,
         storiesCount,
         conversationsCount: user._count.huberReadingSessions,
-        rating: computeAverageRating(user.feedbackTos),
+        followersCount: user._count.favoritedByUsers,
+        rating,
         ratingCount: user._count.feedbackTos,
       };
     }
@@ -902,6 +894,15 @@ export class UsersService {
     });
   }
 
+  private async computeRatingAggregate(userId: number): Promise<number> {
+    const result = await this.prisma.feedback.aggregate({
+      where: { feedbackToId: userId, deletedAt: null },
+      _avg: { rating: true },
+    });
+    const avg = result._avg.rating ?? 0;
+    return Math.round(avg * 10) / 10;
+  }
+
   private findUserWithRelations(id: number) {
     return this.prisma.user.findUnique({
       where: { id },
@@ -915,18 +916,6 @@ export class UsersService {
         topicsOfInterest: {
           include: {
             topic: { select: { id: true, name: true, color: true } },
-          },
-        },
-        feedbackTos: {
-          where: { deletedAt: null },
-          select: {
-            feedbackBy: {
-              select: { id: true, fullName: true, file: true },
-            },
-            id: true,
-            rating: true,
-            content: true,
-            createdAt: true,
           },
         },
         educations: {
@@ -965,7 +954,7 @@ export class UsersService {
             timeSlots: true,
             topicsOfInterest: true,
             favoritedByUsers: true,
-            huberReadingSessions: { where: { sessionStatus: 'finished' } },
+            huberReadingSessions: { where: { sessionStatus: ReadingSessionStatus.FINISHED } },
           },
         },
       },
@@ -995,7 +984,10 @@ export class UsersService {
 
   private countStories(humanBookId: number) {
     return this.prisma.story.count({
-      where: { humanBookId, publishStatus: { not: PublishStatus.rejected } },
+      where: {
+        humanBookId,
+        publishStatus: PublishStatus.published,
+      },
     });
   }
 
