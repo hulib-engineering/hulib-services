@@ -55,10 +55,8 @@ export class StoriesService {
     @InjectQueue('mail') private readonly mailQueue: Queue,
   ) {}
 
-  async create(createStoriesDto: CreateStoryDto) {
-    const humanBook = await this.usersService.findById(
-      createStoriesDto.humanBook.id,
-    );
+  async create(userId: User['id'], createStoriesDto: CreateStoryDto) {
+    const humanBook = await this.usersService.findById(userId);
 
     if (!humanBook) {
       throw new UnprocessableEntityException({

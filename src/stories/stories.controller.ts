@@ -48,14 +48,16 @@ export class StoriesController {
   ) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
   @ApiCreatedResponse({
     type: Story,
   })
   create(@Request() request, @Body() createStoriesDto: CreateStoryDto) {
-    if (request.user?.role?.id === RoleEnum.reader) {
+    if (request.user.role?.id === RoleEnum.reader) {
       return this.storiesService.createFirst(request.user.id, createStoriesDto);
     }
-    return this.storiesService.create(createStoriesDto);
+    return this.storiesService.create(request.user.id, createStoriesDto);
   }
 
   @Get()
