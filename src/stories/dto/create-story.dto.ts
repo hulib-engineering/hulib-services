@@ -12,8 +12,6 @@ import {
   ApiPropertyOptional,
 } from '@nestjs/swagger';
 import { FileDto } from '@files/dto/file.dto';
-import { UserDto } from '@users/dto/user.dto';
-import { Type } from 'class-transformer';
 import { PublishStatus } from '@stories/status.enum';
 import { Topic } from '../../topics/domain/topics';
 
@@ -31,11 +29,6 @@ export class CreateStoryDto {
   @ApiPropertyOptional({ type: () => FileDto })
   @IsOptional()
   cover?: FileDto | null;
-
-  @ApiProperty({ example: { id: '8686' }, type: UserDto })
-  @IsNotEmpty()
-  @Type(() => UserDto)
-  humanBook: UserDto;
 
   @ApiProperty({ example: [{ id: '1' }, { id: '2' }], type: () => [Topic] })
   @IsOptional()
