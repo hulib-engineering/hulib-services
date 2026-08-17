@@ -296,7 +296,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Post('me/educations')
-  @Roles(RoleEnum.humanBook)
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiCreatedResponse({
     description: 'Education added successfully',
@@ -321,7 +321,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Post('me/works')
-  @Roles(RoleEnum.humanBook)
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiCreatedResponse({
     description: 'Work experience added successfully',
@@ -332,7 +332,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Patch('me/educations/:id')
-  @Roles(RoleEnum.humanBook)
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
@@ -357,7 +357,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Patch('me/works/:id')
-  @Roles(RoleEnum.humanBook)
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
@@ -382,7 +382,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Delete('me/educations/:id')
-  @Roles(RoleEnum.humanBook)
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
@@ -397,7 +397,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Delete('me/works/:id')
-  @Roles(RoleEnum.humanBook)
+  @Roles(RoleEnum.humanBook, RoleEnum.reader)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiParam({
     name: 'id',
