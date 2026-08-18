@@ -43,6 +43,7 @@ import { omit } from 'lodash';
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
+  private s3Client: S3Client | null = null;
 
   constructor(
     private readonly usersRepository: UserRepository,
@@ -157,131 +158,27 @@ export class UsersService {
     const startedAt = Date.now();
     this.logger.log(`[users/findById] loading:start userId=${id}`);
 
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: Number(id),
-      },
-      include: {
-        humanBookTopic: {
-          where: {
-            topic: {
-              status: TopicStatus.active,
-            },
-          },
-          include: {
-            topic: {
-              select: {
-                id: true,
-                name: true,
-                color: true,
-              },
-            },
-          },
-        },
-        topicsOfInterest: {
-          include: {
-            topic: {
-              select: {
-                id: true,
-                name: true,
-                color: true,
-              },
-            },
-          },
-        },
-        feedbackTos: {
-          select: {
-            feedbackBy: {
-              select: {
-                id: true,
-                fullName: true,
-                file: true,
-              },
-            },
-            id: true,
-            rating: true,
-            content: true,
-            createdAt: true,
-          },
-        },
-        educations: {
-          where: {
-            deletedAt: null,
-          },
-          select: {
-            id: true,
-            major: true,
-            institution: true,
-            startedAt: true,
-            endedAt: true,
-            type: true,
-            isPublic: true,
-          },
-          orderBy: {
-            startedAt: 'desc',
-          },
-        },
-        works: {
-          where: {
-            deletedAt: null,
-          },
-          select: {
-            id: true,
-            position: true,
-            company: true,
-            startedAt: true,
-            endedAt: true,
-          },
-          orderBy: {
-            startedAt: 'desc',
-          },
-        },
-        gender: true,
-        role: true,
-        status: true,
-        file: true,
-        coverImage: true,
-        _count: {
-          select: {
-            feedbackTos: true,
-            storyFavorite: true,
-            timeSlots: true,
-            topicsOfInterest: true,
-          },
-        },
-      },
-      omit: {
-        deletedAt: true,
-        genderId: true,
-        roleId: true,
-        statusId: true,
-        photoId: true,
-        coverImageId: true,
-        password: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const user = await this.findUserWithRelations(Number(id));
 
     if (!user) {
       this.logger.warn(
-        `[users/findById] loading:not_found userId=${id} durationMs=${
-          Date.now() - startedAt
-        }`,
+        `[users/findById] loading:not_found userId=${id} durationMs=${Date.now() - startedAt}`,
       );
       throw new NotFoundException();
     }
 
-    const [huberMeta] = await this.prisma.$queryRaw<
-      {
-        huberSince: Date | null;
-        hasSeenHuberOnboarding: boolean;
-      }[]
-    >`
-      SELECT "huberSince", "hasSeenHuberOnboarding"
-      FROM "user"
-      WHERE "id" = ${Number(id)}
-    `;
+    const isHuber = user.role?.id === RoleEnum.humanBook;
+    const isLiber = user.role?.id === RoleEnum.reader;
+
+    const [huberMeta, storiesCount, photo, coverImage, firstStory, rating] =
+      await Promise.all([
+        this.findHuberMeta(Number(id)),
+        this.countStories(Number(id)),
+        this.transformFileUrl(user.file),
+        this.transformFileUrl(user.coverImage),
+        isLiber ? this.findFirstStory(Number(id)) : Promise.resolve(null),
+        isHuber ? this.computeRatingAggregate(Number(id)) : Promise.resolve(0),
+      ]);
 
     const mappedHumanBookTopic = user.humanBookTopic
       ? user.humanBookTopic.map((item) => item.topic)
@@ -291,34 +188,12 @@ export class UsersService {
       ? user.topicsOfInterest.map((item) => item.topic)
       : [];
 
-    const mappedFeedbackBys = user.topicsOfInterest
-      ? user.feedbackTos.map((item) => ({
-          ...item,
-          feedbackBy: {
-            ...omit(item.feedbackBy, ['file']),
-            photo: item.feedbackBy?.file?.path,
-          },
-        }))
-      : [];
-
-    const [photo, coverImage] = await Promise.all([
-      this.transformFileUrl(user.file),
-      this.transformFileUrl(user.coverImage),
-    ]);
-
-    const isLiber = user.role?.id === RoleEnum.reader;
-    const publishedStoriesCount = await this.prisma.story.count({
-      where: {
-        humanBookId: Number(id),
-        publishStatus: PublishStatus.published,
-      },
-    });
     const profileState = this.buildHuberProfileState({
-      isHuber: user.role?.id === RoleEnum.humanBook,
+      isHuber,
       bio: user.bio,
       videoUrl: user.videoUrl,
       sharingTopicsCount: mappedHumanBookTopic.length,
-      publishedStoriesCount,
+      publishedStoriesCount: storiesCount,
       favoriteStoriesCount: user._count.storyFavorite,
       feedbacksCount: user._count.feedbackTos,
       timeSlotsCount: user._count.timeSlots,
@@ -333,50 +208,35 @@ export class UsersService {
       )} hasCoverImage=${Boolean(coverImage)} sharingTopics=${mappedHumanBookTopic.length}`,
     );
 
-    if (isLiber) {
-      const firstStory = await this.prisma.story.findFirst({
-        where: {
-          humanBookId: Number(id),
-        },
-        include: {
-          cover: true,
-        },
-        omit: {
-          coverId: true,
-          createdAt: true,
-          updatedAt: true,
-          humanBookId: true,
-        },
-      });
-      return {
-        ...omit(user, ['feedbackTos', 'file', 'coverImage']),
-        photo,
-        coverImage,
-        sharingTopics: mappedHumanBookTopic,
-        topicsOfInterest: mappedTopicsOfInterest,
-        feedbackBys: mappedFeedbackBys,
-        educations: user.educations || [],
-        works: user.works || [],
-        huberSince: huberMeta?.huberSince ?? null,
-        hasSeenHuberOnboarding: huberMeta?.hasSeenHuberOnboarding ?? false,
-        firstStory,
-        profileState,
-      };
-    }
-
-    return {
-      ...omit(user, ['feedbackTos', 'file', 'coverImage']),
+    const base = {
+      ...omit(user, ['file', 'coverImage']),
       photo,
       coverImage,
       sharingTopics: mappedHumanBookTopic,
       topicsOfInterest: mappedTopicsOfInterest,
-      feedbackBys: mappedFeedbackBys,
       educations: user.educations || [],
       works: user.works || [],
       huberSince: huberMeta?.huberSince ?? null,
       hasSeenHuberOnboarding: huberMeta?.hasSeenHuberOnboarding ?? false,
       profileState,
     };
+
+    if (isHuber) {
+      return {
+        ...base,
+        storiesCount,
+        conversationsCount: user._count.huberReadingSessions,
+        followersCount: user._count.favoritedByUsers,
+        rating,
+        ratingCount: user._count.feedbackTos,
+      };
+    }
+
+    if (isLiber) {
+      return { ...base, firstStory };
+    }
+
+    return base;
   }
 
   findByEmail(email: User['email']): Promise<NullableType<User>> {
@@ -1034,6 +894,116 @@ export class UsersService {
     });
   }
 
+  private async computeRatingAggregate(userId: number): Promise<number> {
+    const result = await this.prisma.feedback.aggregate({
+      where: { feedbackToId: userId, deletedAt: null },
+      _avg: { rating: true },
+    });
+    const avg = result._avg.rating ?? 0;
+    return Math.round(avg * 10) / 10;
+  }
+
+  private findUserWithRelations(id: number) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        humanBookTopic: {
+          where: { topic: { status: TopicStatus.active } },
+          include: {
+            topic: { select: { id: true, name: true, color: true } },
+          },
+        },
+        topicsOfInterest: {
+          include: {
+            topic: { select: { id: true, name: true, color: true } },
+          },
+        },
+        educations: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            major: true,
+            institution: true,
+            startedAt: true,
+            endedAt: true,
+            type: true,
+            isPublic: true,
+          },
+          orderBy: { startedAt: 'desc' },
+        },
+        works: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            position: true,
+            company: true,
+            startedAt: true,
+            endedAt: true,
+          },
+          orderBy: { startedAt: 'desc' },
+        },
+        gender: true,
+        role: true,
+        status: true,
+        file: true,
+        coverImage: true,
+        _count: {
+          select: {
+            feedbackTos: { where: { deletedAt: null } },
+            storyFavorite: true,
+            timeSlots: true,
+            topicsOfInterest: true,
+            favoritedByUsers: true,
+            huberReadingSessions: { where: { sessionStatus: ReadingSessionStatus.FINISHED } },
+          },
+        },
+      },
+      omit: {
+        deletedAt: true,
+        genderId: true,
+        roleId: true,
+        statusId: true,
+        photoId: true,
+        coverImageId: true,
+        password: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  private async findHuberMeta(id: number) {
+    const [meta] = await this.prisma.$queryRaw<
+      { huberSince: Date | null; hasSeenHuberOnboarding: boolean }[]
+    >`
+      SELECT "huberSince", "hasSeenHuberOnboarding"
+      FROM "user"
+      WHERE "id" = ${id}
+    `;
+    return meta ?? null;
+  }
+
+  private countStories(humanBookId: number) {
+    return this.prisma.story.count({
+      where: {
+        humanBookId,
+        publishStatus: PublishStatus.published,
+      },
+    });
+  }
+
+  private findFirstStory(humanBookId: number) {
+    return this.prisma.story.findFirst({
+      where: { humanBookId },
+      include: { cover: true },
+      omit: {
+        coverId: true,
+        createdAt: true,
+        updatedAt: true,
+        humanBookId: true,
+      },
+    });
+  }
+
   private async transformFileUrl(
     file: FileDto | null,
   ): Promise<FileDto | null> {
@@ -1050,20 +1020,24 @@ export class UsersService {
         throw new BadRequestException('Missing file path for S3 object.');
       }
 
-      const s3 = new S3Client({
-        region: config.awsS3Region ?? '',
-        credentials: {
-          accessKeyId: config.accessKeyId ?? '',
-          secretAccessKey: config.secretAccessKey ?? '',
-        },
-      });
+      if (!this.s3Client) {
+        this.s3Client = new S3Client({
+          region: config.awsS3Region ?? '',
+          credentials: {
+            accessKeyId: config.accessKeyId ?? '',
+            secretAccessKey: config.secretAccessKey ?? '',
+          },
+        });
+      }
 
       const command = new GetObjectCommand({
         Bucket: config.awsDefaultS3Bucket,
         Key: file.path,
       });
 
-      file.path = await getSignedUrl(s3, command, { expiresIn: 3600 });
+      file.path = await getSignedUrl(this.s3Client, command, {
+        expiresIn: 3600,
+      });
     }
 
     return file;

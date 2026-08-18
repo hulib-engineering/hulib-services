@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { computeAverageRating } from '@utils/rating';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { IPaginationOptions } from '@utils/types/pagination-options';
@@ -298,11 +299,7 @@ export class HubersService {
 
   private computFieldsToSort(huber: Record<string, any>) {
     const allFeedback = (huber.feedbackTos as any[]) ?? [];
-    const avgRating =
-      allFeedback.length > 0
-        ? allFeedback.reduce((acc, f) => acc + f.rating, 0) / allFeedback.length
-        : 0;
-    const rating = Math.round(avgRating * 10) / 10;
+    const rating = computeAverageRating(allFeedback);
     const fullName = huber.fullName ?? '';
 
     return { rating, fullName };
