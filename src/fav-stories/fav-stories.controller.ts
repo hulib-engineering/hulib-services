@@ -46,8 +46,17 @@ export class FavStoriesController {
     description: 'List of favorite stories',
     type: [Story],
   })
-  async getFavoriteStories(@Query('userId') userId: number) {
-    return this.FavStoriesService.getFavoriteStories(userId);
+  async getFavoriteStories(
+    @Query('userId') userId: number,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? Number(page) : 1;
+    const limitNum = limit ? Math.min(Number(limit), 50) : 10;
+    return this.FavStoriesService.getFavoriteStories(userId, {
+      page: pageNum,
+      limit: limitNum,
+    });
   }
 
   @Delete()

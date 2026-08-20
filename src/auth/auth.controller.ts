@@ -200,8 +200,17 @@ export class AuthController {
   @ApiOkResponse({
     type: InfinityPaginationResponse(Story),
   })
-  getFavorites(@Request() reqest) {
-    return this.favStoriesService.getFavoriteStories(reqest.user.id);
+  getFavorites(
+    @Request() reqest,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? Number(page) : 1;
+    const limitNum = limit ? Math.min(Number(limit), 50) : 10;
+    return this.favStoriesService.getFavoriteStories(reqest.user.id, {
+      page: pageNum,
+      limit: limitNum,
+    });
   }
 
   @Get('me/fav-hubers')
