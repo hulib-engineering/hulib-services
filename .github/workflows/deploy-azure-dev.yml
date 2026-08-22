@@ -1,0 +1,72 @@
+name: Deploy to Azure Dev
+
+on:
+  push:
+    branches: [develop, azure-dev]
+
+concurrency:
+  group: deploy-azure-dev
+  cancel-in-progress: true
+
+permissions:
+  id-token: write # required for Azure OIDC login
+  contents: read
+
+env:
+  ACR_NAME: hulibdevacr
+  IMAGE_NAME: hulib-api
+  RESOURCE_GROUP: hulib-dev-rg
+  CONTAINER_APP_NAME: hulib-dev-api
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test -- --passWithNoTests
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_DEV }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Builds inside ACR itself, no local Docker daemon needed.
+      # Uses Dockerfile.prod (npm ci --> prisma generate --> nest build --> start:prod),
+      # not the root Dockerfile, which is the local/dev-compose image.
+      - name: Build and push image
+        run: |
+          az acr build \
+            --registry ${{ env.ACR_NAME }} \
+            --image ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --image ${{ env.IMAGE_NAME }}:dev \
+            --file Dockerfile.prod \
+            .
+
+      - name: Deploy new image to Container App
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
