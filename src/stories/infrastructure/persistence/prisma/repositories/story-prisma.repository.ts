@@ -71,6 +71,10 @@ export class PrismaStoriesRepository implements StoryRepository {
       where.topics = { some: { topicId: { in: filterOptions.topicIds } } };
     }
 
+    if (filterOptions?.ids?.length) {
+      where.id = { in: filterOptions.ids };
+    }
+
     if (filterOptions?.publishStatus) {
       where.publishStatus = filterOptions.publishStatus;
     }
