@@ -2,38 +2,37 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { RoleEnum } from '@roles/roles.enum';
+import { StoriesService } from '@stories/stories.service';
+import { PublishStatus } from '@stories/status.enum';
 import { TopicStatus } from '@topics/topic-status.enum';
 
 import { SearchDto } from './dto/search.dto';
 
 @Injectable()
 export class SearchService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storiesService: StoriesService,
+  ) {}
 
-  async getStoryIdsByAccentedKeyword(text?: string | null) {
-    if (!text) return { ids: [], highlightTitles: [], highlightAbstracts: [] };
-    // Search accent case with View
-    const unaccentedLower = (str: string) =>
-      str
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLocaleLowerCase();
-    const nameWhere = `unaccent(lower(title)) ilike '%${unaccentedLower(text)}%'`;
-    const where = [...(nameWhere ? [nameWhere] : [])].join(' OR ');
-    const founds: {
-      id: number;
-      highlight_title: string;
-      highlight_abstract: string;
-    }[] = await this.prisma.$queryRawUnsafe(
-      `SELECT id, ts_headline(title, plainto_tsquery('${text}'), 'HighlightAll=true') as highlight_title, ts_headline(abstract, plainto_tsquery('${text}'), 'HighlightAll=true') as highlight_abstract
+  // Story ids whose title or abstract contains the FULL keyword phrase
+  // (accent-insensitive), e.g. 'hai vì sao' must appear as-is inside the
+  // title/abstract — not word-by-word.
+  async getStoryIdsByKeyword(text?: string | null): Promise<number[]> {
+    const keyword = text?.trim();
+    if (!keyword) return [];
+
+    // Escape LIKE wildcard characters (\ % _) so user input is treated literally
+    const escapedLike = keyword.replace(/[\\%_]/g, '\\$&');
+
+    const rows: { id: number }[] = await this.prisma.$queryRaw`
+      SELECT id
       FROM story
-      WHERE to_tsvector(abstract) @@ plainto_tsquery('${text}') OR to_tsvector(title) @@ plainto_tsquery('${text}') OR ${where};`,
-    );
+      WHERE unaccent(lower(title)) ILIKE '%' || unaccent(lower(${escapedLike})) || '%'
+        OR unaccent(lower(abstract)) ILIKE '%' || unaccent(lower(${escapedLike})) || '%';
+    `;
 
-    const ids = founds.map((el) => el.id);
-    const highlightTitles = founds.map((el) => el.highlight_title);
-    const highlightAbstracts = founds.map((el) => el.highlight_abstract);
-    return { ids, highlightTitles, highlightAbstracts };
+    return rows.map((row) => row.id);
   }
 
   // prisma search stories
@@ -42,92 +41,51 @@ export class SearchService {
 
     const keywordTrimmed = keyword?.trim().replace('+', ' ');
 
-    const hubers = await this.prisma.user.findMany({
-      where: {
-        roleId: RoleEnum.humanBook,
-        fullName: {
-          contains: keywordTrimmed,
-          mode: 'insensitive',
-        },
-      },
-      include: {
-        humanBookTopic: {
-          where: {
-            topic: {
-              status: TopicStatus.active,
-            },
-          },
-          include: {
-            topic: true,
+    const [hubers, storyIds] = await Promise.all([
+      this.prisma.user.findMany({
+        where: {
+          roleId: RoleEnum.humanBook,
+          fullName: {
+            contains: keywordTrimmed,
+            mode: 'insensitive',
           },
         },
-      },
-    });
-
-    // const stories = await this.prisma.story.findMany({
-    //   where: {
-    //     title: {
-    //       contains: unidecode(keywordTrimmed),
-    //       mode: 'insensitive',
-    //     },
-    //   },
-    //   include: {
-    //     humanBook: true,
-    //   },
-    //   omit: {
-    //     humanBookId: true,
-    //   },
-    //   orderBy: {
-    //     createdAt: 'desc',
-    //   },
-    // });
-
-    const { ids, highlightTitles, highlightAbstracts } =
-      await this.getStoryIdsByAccentedKeyword(keywordTrimmed);
-    const stories = await this.prisma.story.findMany({
-      where: {
-        id: { in: ids },
-        publishStatus: { equals: 2 },
-      },
-      include: {
-        humanBook: {
-          select: {
-            fullName: true,
-            role: {
-              select: {
-                name: true,
+        include: {
+          humanBookTopic: {
+            where: {
+              topic: {
+                status: TopicStatus.active,
               },
             },
-          },
-        },
-        topics: {
-          select: {
-            topic: {
-              select: { id: true, name: true },
+            include: {
+              topic: true,
             },
           },
         },
-        storyReview: true,
-        cover: true,
-      },
-      omit: { humanBookId: true, coverId: true },
-    });
+      }),
+      this.getStoryIdsByKeyword(keywordTrimmed),
+    ]);
 
-    const serializedStories = stories.map((story, index) => ({
-      ...story,
-      topics: story.topics.map((topic) => ({
-        ...topic.topic,
-      })),
-      highlightTitle:
-        highlightTitles[index] !== story.title ? highlightTitles[index] : null,
-      highlightAbstract:
-        highlightAbstracts[index] !== story.abstract
-          ? highlightAbstracts[index]
-          : null,
-    }));
+    // No match — skip the listing query entirely (an empty ids filter would
+    // otherwise mean "no restriction" in the repository).
+    if (!storyIds.length) {
+      return { stories: [], hubers };
+    }
+
+    // Reuse the GET /stories pipeline so every returned story has the exact
+    // same shape as the stories listing API (stats, review overview and an
+    // S3-presigned/local cover path).
+    const { data: stories } =
+      await this.storiesService.findAllWithCountAndPagination({
+        paginationOptions: { page: 1, limit: storyIds.length },
+        filterOptions: {
+          ids: storyIds,
+          publishStatus: PublishStatus.published,
+        },
+      });
 
     return {
-      stories: serializedStories,
+      stories,
       hubers,
     };
   }

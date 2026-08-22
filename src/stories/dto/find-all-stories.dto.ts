@@ -73,6 +73,19 @@ export class FilterStoryDto {
   @IsOptional()
   @IsEnum(StoryQueryTypeEnum)
   type?: StoryQueryTypeEnum;
+
+  // Internal filter used by Search API to restrict the listing pipeline to a
+  // pre-computed set of matching story ids.
+  @ApiPropertyOptional()
+  @Transform(({ value }) =>
+    value
+      ? Array.isArray(value)
+        ? value.map((each) => Number(each))
+        : [Number(value)]
+      : [],
+  )
+  @IsOptional()
+  ids?: number[];
 }
 
 export class FindAllStoriesDto extends FilterStoryDto {
