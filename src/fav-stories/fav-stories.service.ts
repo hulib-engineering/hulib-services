@@ -8,6 +8,7 @@ import { PrismaService } from '@prisma-client/prisma-client.service';
 import { User } from '@users/domain/user';
 import { Story } from '@stories/domain/story';
 import { PublishStatus } from '@stories/status.enum';
+import { infinityPagination } from '@utils/infinity-pagination';
 
 @Injectable()
 export class FavStoriesService {
@@ -87,10 +88,7 @@ export class FavStoriesService {
       };
     });
 
-    return {
-      data,
-      hasNextPage: data.length === limit,
-    };
+    return infinityPagination(data, { page, limit });
   }
 
   async removeFavoriteStory(storyId: number, userId: number) {

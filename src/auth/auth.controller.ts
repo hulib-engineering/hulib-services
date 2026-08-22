@@ -19,6 +19,7 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 
@@ -200,13 +201,27 @@ export class AuthController {
   @ApiOkResponse({
     type: InfinityPaginationResponse(Story),
   })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Items per page',
+  })
   getFavorites(
     @Request() reqest,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const pageNum = page ? Number(page) : 1;
-    const limitNum = limit ? Math.min(Number(limit), 50) : 10;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(Math.max(1, Number(limit) || 10), 50);
     return this.favStoriesService.getFavoriteStories(reqest.user.id, {
       page: pageNum,
       limit: limitNum,
