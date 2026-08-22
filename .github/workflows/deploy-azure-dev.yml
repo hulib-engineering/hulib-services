@@ -33,15 +33,15 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       # Builds inside ACR itself, no local Docker daemon needed.
-      # Uses Dockerfile.prod (npm ci --> prisma generate --> nest build --> start:prod),
-      # not the root Dockerfile, which is the local/dev-compose image.
+      # Uses Dockerfile.azure (npm ci --> prisma generate --> nest build --> start:prod),
+      # which has no dotenvx - config comes from Key Vault-backed Container App secrets/env vars.
       - name: Build and push image
         run: |
           az acr build \
             --registry ${{ env.ACR_NAME }} \
             --image ${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --image ${{ env.IMAGE_NAME }}:dev \
-            --file Dockerfile.prod \
+            --file Dockerfile.azure \
             .
 
       - name: Deploy new image to Container App

@@ -1,0 +1,12 @@
+FROM node:20.17.0-alpine
+
+WORKDIR /usr/src/app
+COPY package.json .
+COPY package-lock.json .
+RUN npm ci --ignore-scripts
+
+COPY . /usr/src/app
+RUN npx prisma generate
+RUN npm run build
+
+CMD ["npm", "run", "start:prod"]
