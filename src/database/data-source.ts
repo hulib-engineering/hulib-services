@@ -3,7 +3,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 
 export const AppDataSource = new DataSource({
   type: process.env.DATABASE_TYPE,
-  url: process.env.DATABASE_URL,
+  url: process.env.BE_DATABASE_URL,
   host: process.env.DATABASE_HOST,
   port: process.env.DATABASE_PORT
     ? parseInt(process.env.DATABASE_PORT, 10)
