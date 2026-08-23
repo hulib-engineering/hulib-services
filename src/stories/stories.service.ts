@@ -859,6 +859,9 @@ export class StoriesService {
         phoneNumber: true,
         stories: {
           where: storyFilter,
+          orderBy: {
+            createdAt: 'desc',
+          },
           select: {
             id: true,
             title: true,

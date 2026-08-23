@@ -270,9 +270,9 @@ export class ContestReportService {
       ? contestParticipants
       : contestParticipants.data;
 
-    const rows = (users as ContestUser[])
+    const rows: ContestReportRow[] = (users as ContestUser[])
       .slice(0, this.MAX_EXPORT_ROWS)
-      .flatMap((user) => {
+      .flatMap<ContestReportRow>((user) => {
         if (user.stories.length === 0) {
           return [
             {
@@ -300,7 +300,10 @@ export class ContestReportService {
           likeCount: story.likeCount,
           shareCount: story.shareCount,
         }));
-      });
+      })
+      .sort((currentRow, nextRow) =>
+        (nextRow.createdAt ?? '').localeCompare(currentRow.createdAt ?? ''),
+      );
 
     const now = new Date();
     const timestamp = [
