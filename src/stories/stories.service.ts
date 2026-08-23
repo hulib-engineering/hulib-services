@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   HttpStatus,
   Injectable,
+  Logger,
   UnprocessableEntityException,
 } from '@nestjs/common';
 
@@ -43,6 +44,7 @@ import { Queue } from 'bull';
 @Injectable()
 export class StoriesService {
   private readonly storyActionThrottleTtl = 5 * 60_000;
+  private readonly debugLogger = new Logger('DEBUG-TEMP-StoriesService');
 
   constructor(
     private readonly storiesRepository: StoryRepository,
@@ -75,6 +77,7 @@ export class StoriesService {
       );
     }
 
+    this.debugLogger.log('before storiesRepository.create');
     const newStory = await this.storiesRepository.create({
       ...createStoriesDto,
       publishStatus:
@@ -82,18 +85,22 @@ export class StoriesService {
       humanBook,
       topics: topicsEntities,
     });
+    this.debugLogger.log(`after storiesRepository.create id=${newStory.id}`);
 
     const adminId = await this.notifsService.getAdminId();
     if (adminId) {
+      this.debugLogger.log('before pushNoti');
       await this.notifsService.pushNoti({
         senderId: Number(humanBook.id),
         recipientId: adminId,
         type: NotificationTypeEnum.publishStory,
         relatedEntityId: newStory.id,
       });
+      this.debugLogger.log('after pushNoti');
     }
 
     if (humanBook.email) {
+      this.debugLogger.log('before mailQueue.add');
       await this.mailQueue.add('story-submitted', {
         to: humanBook.email,
         data: {
@@ -102,8 +109,10 @@ export class StoriesService {
           storyId: newStory.id,
         },
       });
+      this.debugLogger.log('after mailQueue.add');
     }
 
+    this.debugLogger.log('before return newStory');
     return newStory;
   }
 
