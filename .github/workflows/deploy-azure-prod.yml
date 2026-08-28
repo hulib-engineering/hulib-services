@@ -1,0 +1,52 @@
+name: Deploy to Azure Prod
+
+on:
+  push:
+    branches: [main, azure-prod]
+
+concurrency:
+  group: deploy-azure-prod
+  cancel-in-progress: true
+
+permissions:
+  id-token: write # required for Azure OIDC login
+  contents: read
+
+env:
+  ACR_NAME: hulibprodacr
+  IMAGE_NAME: hulib-api
+  RESOURCE_GROUP: hulib-prod-rg
+  CONTAINER_APP_NAME: hulib-prod-api
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Builds inside ACR itself, no local Docker daemon needed.
+      # Uses Dockerfile.azure (npm ci --> prisma generate --> nest build --> start:prod),
+      # which has no dotenvx - config comes from Key Vault-backed Container App secrets/env vars.
+      - name: Build and push image
+        run: |
+          az acr build \
+            --registry ${{ env.ACR_NAME }} \
+            --image ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --image ${{ env.IMAGE_NAME }}:prod \
+            --file Dockerfile.azure \
+            .
+
+      - name: Deploy new image to Container App
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
