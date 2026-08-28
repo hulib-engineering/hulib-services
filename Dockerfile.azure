@@ -7,6 +7,6 @@ RUN npm ci --ignore-scripts
 
 COPY . /usr/src/app
 RUN npx prisma generate
-RUN npm run build
+RUN npm run build && find dist -type f
 
 CMD ["npm", "run", "start:prod"]
