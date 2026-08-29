@@ -3,7 +3,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 
 export const AppDataSource = new DataSource({
   type: process.env.DATABASE_TYPE,
-  url: process.env.DATABASE_URL,
+  url: 'postgresql://neondb_owner:npg_oXTHp8WBK5gs@ep-quiet-cloud-aywl1eqy-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
   host: process.env.DATABASE_HOST,
   port: process.env.DATABASE_PORT
     ? parseInt(process.env.DATABASE_PORT, 10)
