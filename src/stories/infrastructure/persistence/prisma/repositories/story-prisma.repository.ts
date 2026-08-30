@@ -38,11 +38,11 @@ export class PrismaStoriesRepository implements StoryRepository {
         publishStatus:
           PublishStatus[data.publishStatus as keyof typeof PublishStatus],
         humanBook: { connect: { id: Number(data.humanBook.id) } },
-        cover: data.cover ? { connect: { id: data.cover.id } } : undefined,
+        cover: data.cover?.id ? { connect: { id: data.cover.id } } : undefined,
         topics: data.topics?.length
           ? {
               create: data.topics.map((topic) => ({
-                topic: { connect: { id: topic.id } },
+                topic: { connect: { id: Number(topic.id) } },
               })),
             }
           : undefined,
