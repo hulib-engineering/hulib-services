@@ -15,6 +15,7 @@ type ContestReportRow = {
   createdAt?: string | null;
   likeCount?: number;
   shareCount?: number;
+  commentCount?: number;
 };
 
 const CONTEST_REPORT_COLUMNS: Array<{
@@ -31,6 +32,7 @@ const CONTEST_REPORT_COLUMNS: Array<{
   { header: 'Created At', key: 'createdAt' },
   { header: 'Likes', key: 'likeCount' },
   { header: 'Shares', key: 'shareCount' },
+  { header: 'Comments', key: 'commentCount' },
 ];
 
 function escapeHtmlValue(value: unknown): string {
@@ -299,6 +301,7 @@ export class ContestReportService {
             : '',
           likeCount: story.likeCount,
           shareCount: story.shareCount,
+          commentCount: story._count?.storyReview ?? 0,
         }));
       })
       .sort((currentRow, nextRow) =>

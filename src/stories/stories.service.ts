@@ -869,6 +869,11 @@ export class StoriesService {
             createdAt: true,
             likeCount: true,
             shareCount: true,
+            _count: {
+              select: {
+                storyReview: true,
+              },
+            },
           },
         },
       },

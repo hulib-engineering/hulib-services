@@ -23,6 +23,9 @@ export interface ContestStory {
   createdAt: Date;
   likeCount: number;
   shareCount: number;
+  _count?: {
+    storyReview: number;
+  };
 }
 
 export interface ContestUser {
@@ -45,4 +48,5 @@ export interface ExcelRow {
   createdAt?: string;
   likeCount?: number;
   shareCount?: number;
+  commentCount?: number;
 }
