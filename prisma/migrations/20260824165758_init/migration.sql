@@ -87,9 +87,9 @@ CREATE TABLE "role" (
 CREATE TABLE "session" (
     "id" SERIAL NOT NULL,
     "hash" VARCHAR NOT NULL,
-    "createdAt" TIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deletedAt" TIME(6),
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deletedAt" TIMESTAMP(6),
     "userId" INTEGER,
 
     CONSTRAINT "session_pkey" PRIMARY KEY ("id")
@@ -124,9 +124,9 @@ CREATE TABLE "user" (
     "socialId" VARCHAR,
     "fullName" VARCHAR,
     "birthday" VARCHAR,
-    "createdAt" TIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deletedAt" TIME(6),
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deletedAt" TIMESTAMP(6),
     "genderId" INTEGER,
     "roleId" INTEGER,
     "statusId" INTEGER,

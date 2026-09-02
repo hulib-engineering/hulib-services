@@ -9,4 +9,4 @@ COPY . /usr/src/app
 RUN npx prisma generate
 RUN npm run build && find dist -type f
 
-CMD ["npm", "run", "start:prod"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]
