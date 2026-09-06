@@ -751,17 +751,15 @@ export class MailService {
   }): Promise<void> {
     const locale = mailData.data.locale || 'vi';
 
-    const [title, subTitle, dear, p1, p2, p3, buttonLabel] = await Promise.all(
-      [
-        this.i18n.t('welcome-huber.title', { lang: locale }),
-        this.i18n.t('welcome-huber.subTitle', { lang: locale }),
-        this.i18n.t('common.dear', { lang: locale }),
-        this.i18n.t('welcome-huber.p1', { lang: locale }),
-        this.i18n.t('welcome-huber.p2', { lang: locale }),
-        this.i18n.t('welcome-huber.p3', { lang: locale }),
-        this.i18n.t('welcome-huber.buttonLabel', { lang: locale }),
-      ],
-    );
+    const [title, subTitle, dear, p1, p2, p3, buttonLabel] = await Promise.all([
+      this.i18n.t('welcome-huber.title', { lang: locale }),
+      this.i18n.t('welcome-huber.subTitle', { lang: locale }),
+      this.i18n.t('common.dear', { lang: locale }),
+      this.i18n.t('welcome-huber.p1', { lang: locale }),
+      this.i18n.t('welcome-huber.p2', { lang: locale }),
+      this.i18n.t('welcome-huber.p3', { lang: locale }),
+      this.i18n.t('welcome-huber.buttonLabel', { lang: locale }),
+    ]);
 
     const webAppLink = this.configService.getOrThrow('app.frontendDomain', {
       infer: true,

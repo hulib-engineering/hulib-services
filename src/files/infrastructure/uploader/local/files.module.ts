@@ -2,13 +2,11 @@ import { Module } from '@nestjs/common';
 import * as fs from 'fs';
 import { FilesLocalController } from './files.controller';
 import { MulterModule } from '@nestjs/platform-express';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { diskStorage } from 'multer';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 
 import { FilesLocalService } from './files.service';
 import { RelationalFilePersistenceModule } from '@files/infrastructure/persistence/relational/relational-persistence.module';
-import { AllConfigType } from '@config/config.type';
 
 const infrastructurePersistenceModule = RelationalFilePersistenceModule;
 
@@ -16,9 +14,7 @@ const infrastructurePersistenceModule = RelationalFilePersistenceModule;
   imports: [
     infrastructurePersistenceModule,
     MulterModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService<AllConfigType>) => {
+      useFactory: () => {
         return {
           storage: diskStorage({
             destination: (req, file, callback) => {
@@ -44,7 +40,7 @@ const infrastructurePersistenceModule = RelationalFilePersistenceModule;
     }),
   ],
   controllers: [FilesLocalController],
-  providers: [ConfigModule, ConfigService, FilesLocalService],
+  providers: [FilesLocalService],
   exports: [FilesLocalService],
 })
 export class FilesLocalModule {}

@@ -954,7 +954,9 @@ export class UsersService {
             timeSlots: true,
             topicsOfInterest: true,
             favoritedByUsers: true,
-            huberReadingSessions: { where: { sessionStatus: ReadingSessionStatus.FINISHED } },
+            huberReadingSessions: {
+              where: { sessionStatus: ReadingSessionStatus.FINISHED },
+            },
           },
         },
       },
