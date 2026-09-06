@@ -32,9 +32,8 @@ on:
       azure-subscription-id:
         required: true
 
-permissions:
-  id-token: write # required for Azure OIDC login
-  contents: read
+# Note: `permissions` are inherited from the calling workflow (workflow_call
+# cannot set them itself). Callers MUST grant `id-token: write` for azure/login.
 
 jobs:
   build-and-deploy:
