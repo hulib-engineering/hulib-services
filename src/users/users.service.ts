@@ -360,6 +360,29 @@ export class UsersService {
     return this.usersRepository.update(id, clonedPayload);
   }
 
+  async updateLanguage(
+    id: User['id'],
+    language: 'en' | 'vi',
+  ): Promise<{ id: number; languageCode: string } | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: Number(id) },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        errors: { user: 'userNotFound' },
+      });
+    }
+
+    return this.prisma.user.update({
+      where: { id: Number(id) },
+      data: { languageCode: language },
+      select: { id: true, languageCode: true },
+    });
+  }
+
   async updateStatus(id: User['id'], status: string) {
     const statusValue = StatusEnum[status as keyof typeof StatusEnum];
     if (!statusValue) {
