@@ -28,7 +28,7 @@ async function bootstrap() {
   // set before the app -- and its ConfigService -- is constructed).
   const corsOrigins = (process.env.CORS_ORIGINS ?? '')
     .split(',')
-    .map(origin => origin.trim())
+    .map((origin) => origin.trim())
     .filter(Boolean);
 
   const app = await NestFactory.create(AppModule, {

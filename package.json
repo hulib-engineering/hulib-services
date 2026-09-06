@@ -32,6 +32,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint --fix \"{src,apps,libs,test}/**/*.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json --incremental false",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

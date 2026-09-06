@@ -17,7 +17,7 @@ import { Session } from '@session/domain/session';
 // argument), before ConfigService exists.
 const corsOrigins = (process.env.CORS_ORIGINS ?? '')
   .split(',')
-  .map(origin => origin.trim())
+  .map((origin) => origin.trim())
   .filter(Boolean);
 
 export const defaultCorsConfig = {

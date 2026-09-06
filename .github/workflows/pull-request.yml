@@ -1,0 +1,13 @@
+name: Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint / Typecheck / Unit tests
+    uses: ./.github/workflows/ci.yml

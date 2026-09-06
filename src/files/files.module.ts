@@ -14,8 +14,8 @@ const infrastructureUploaderModule =
   fileConfiguration.driver === FileDriver.LOCAL
     ? FilesLocalModule
     : [FileDriver.S3, FileDriver.S3_PRESIGNED].includes(
-        fileConfiguration.driver,
-      )
+          fileConfiguration.driver,
+        )
       ? FilesS3Module
       : FilesS3PresignedModule;
 
