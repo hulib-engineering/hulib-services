@@ -8,6 +8,7 @@ import { PrismaService } from '@prisma-client/prisma-client.service';
 import { User } from '@users/domain/user';
 import { Story } from '@stories/domain/story';
 import { PublishStatus } from '@stories/status.enum';
+import { infinityPagination } from '@utils/infinity-pagination';
 
 @Injectable()
 export class FavStoriesService {
@@ -42,9 +43,17 @@ export class FavStoriesService {
     });
   }
 
-  async getFavoriteStories(userId: number) {
+  async getFavoriteStories(
+    userId: number,
+    options: { page: number; limit: number },
+  ) {
+    const { page, limit } = options;
+    const skip = (page - 1) * limit;
+
     const favorites = await this.prisma.storyFavorite.findMany({
       where: { userId },
+      skip,
+      take: limit,
       include: {
         story: {
           include: {
@@ -70,11 +79,7 @@ export class FavStoriesService {
       },
     });
 
-    if (!favorites.length) {
-      return [];
-    }
-
-    return favorites.map((favorite) => {
+    const data = favorites.map((favorite) => {
       const { id, publishStatus, ...rest } = favorite.story;
       return {
         storyId: id,
@@ -82,6 +87,8 @@ export class FavStoriesService {
         ...rest,
       };
     });
+
+    return infinityPagination(data, { page, limit });
   }
 
   async removeFavoriteStory(storyId: number, userId: number) {
