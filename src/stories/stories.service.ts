@@ -8,7 +8,6 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 
-import { UsersService } from '@users/users.service';
 import { RoleEnum } from '@roles/roles.enum';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
@@ -43,6 +42,7 @@ import { Queue } from 'bull';
 
 @Injectable()
 export class StoriesService {
+  private readonly logger = new Logger(StoriesService.name);
   private readonly storyActionThrottleTtl = 5 * 60_000;
   private readonly debugLogger = new Logger('DEBUG-TEMP-StoriesService');
 
@@ -50,7 +50,6 @@ export class StoriesService {
     private readonly storiesRepository: StoryRepository,
     private readonly storyReviewService: StoryReviewsService,
     private readonly topicsRepository: TopicsRepository,
-    private readonly usersService: UsersService,
     private readonly notifsService: NotificationsService,
     private readonly cacheService: CacheService,
     private prisma: PrismaService,
@@ -58,17 +57,6 @@ export class StoriesService {
   ) {}
 
   async create(userId: User['id'], createStoriesDto: CreateStoryDto) {
-    const humanBook = await this.usersService.findById(userId);
-
-    if (!humanBook) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          email: 'notFound',
-        },
-      });
-    }
-
     const { topics } = createStoriesDto;
     let topicsEntities: any[] = [];
     if (topics && topics.length > 0) {
@@ -77,57 +65,56 @@ export class StoriesService {
       );
     }
 
-    this.debugLogger.log('before storiesRepository.create');
     const newStory = await this.storiesRepository.create({
       ...createStoriesDto,
       publishStatus:
         createStoriesDto.publishStatus ?? PublishStatus[PublishStatus.pending],
-      humanBook,
+      humanBook: { id: Number(userId) } as User,
       topics: topicsEntities,
     });
-    this.debugLogger.log(`after storiesRepository.create id=${newStory.id}`);
 
     const adminId = await this.notifsService.getAdminId();
     if (adminId) {
-      this.debugLogger.log('before pushNoti');
       await this.notifsService.pushNoti({
-        senderId: Number(humanBook.id),
+        senderId: Number(userId),
         recipientId: adminId,
         type: NotificationTypeEnum.publishStory,
         relatedEntityId: newStory.id,
       });
-      this.debugLogger.log('after pushNoti');
     }
 
-    if (humanBook.email) {
-      this.debugLogger.log('before mailQueue.add');
-      await this.mailQueue.add('story-submitted', {
-        to: humanBook.email,
-        data: {
-          fullName: humanBook.fullName || '',
-          storyTitle: newStory.title,
-          storyId: newStory.id,
-        },
-      });
-      this.debugLogger.log('after mailQueue.add');
-    }
+    void this.enqueueStoryMail('story-submitted', newStory.humanBook.email, {
+      fullName: newStory.humanBook.fullName || '',
+      storyTitle: newStory.title,
+      storyId: newStory.id,
+    });
 
-    this.debugLogger.log('before return newStory');
     return newStory;
   }
 
-  async createFirst(userId: User['id'], createStoriesDto: CreateStoryDto) {
-    const user = await this.usersService.findById(userId);
+  private async enqueueStoryMail(
+    jobName: string,
+    email: string | null | undefined,
+    data: Record<string, unknown>,
+  ): Promise<void> {
+    if (!email) return;
 
-    if (!user) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.NOT_FOUND,
-        errors: {
-          email: 'userNotFound',
-        },
+    try {
+      await this.mailQueue.add(jobName, {
+        to: email,
+        data,
       });
+    } catch (error) {
+      this.logger.error(
+        `Failed to enqueue ${jobName} email for ${email}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        error instanceof Error ? error.stack : undefined,
+      );
     }
+  }
 
+  async createFirst(userId: User['id'], createStoriesDto: CreateStoryDto) {
     let topicsEntities: Topic[] = [];
     if (createStoriesDto.topics && createStoriesDto.topics.length > 0) {
       topicsEntities = await this.topicsRepository.findByIds(
@@ -138,7 +125,7 @@ export class StoriesService {
       ...createStoriesDto,
       publishStatus:
         createStoriesDto.publishStatus ?? PublishStatus[PublishStatus.pending],
-      humanBook: user,
+      humanBook: { id: Number(userId) } as User,
       topics: topicsEntities,
     });
 
@@ -152,16 +139,11 @@ export class StoriesService {
       });
     }
 
-    if (user.email) {
-      await this.mailQueue.add('story-submitted', {
-        to: user.email,
-        data: {
-          fullName: user.fullName || '',
-          storyTitle: newStory.title,
-          storyId: newStory.id,
-        },
-      });
-    }
+    void this.enqueueStoryMail('story-submitted', newStory.humanBook.email, {
+      fullName: newStory.humanBook.fullName || '',
+      storyTitle: newStory.title,
+      storyId: newStory.id,
+    });
 
     return newStory;
   }
@@ -330,7 +312,6 @@ export class StoriesService {
       },
     };
   }
-
   private async shouldIncrementStoryView(
     storyId: Story['id'],
     viewerKey?: string,
