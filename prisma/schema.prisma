@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider   = "postgresql"
-  url        = "postgresql://neondb_owner:npg_oXTHp8WBK5gs@ep-quiet-cloud-aywl1eqy-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+  url        = env("DATABASE_URL")
   extensions = [uuid_ossp(map: "uuid-ossp"), unaccent]
 }
 
@@ -133,6 +133,7 @@ model user {
   warnCount             Int                    @default(0)
   huberSince            DateTime?              @db.Timestamp(6)
   hasSeenHuberOnboarding Boolean               @default(false)
+  languageCode           String                 @default("en") @db.VarChar
   humanBookTopic        humanBookTopic[]
   topicsOfInterest      liberTopicOfInterest[]
   humanBooks            humanBooks[]
