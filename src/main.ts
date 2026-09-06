@@ -24,16 +24,16 @@ async function bootstrap() {
     fs.mkdirSync(filesDir);
   }
 
+  // Read before ConfigService exists (cors is a NestFactory.create option,
+  // set before the app -- and its ConfigService -- is constructed).
+  const corsOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
   const app = await NestFactory.create(AppModule, {
     cors: {
-      origin: [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'https://hulib-fe-dev.vercel.app',
-        'https://hulib.vercel.app',
-        'https://www.hulib.org',
-        'https://hulib.org',
-      ],
+      origin: corsOrigins,
       credentials: true,
       preflightContinue: false,
     },

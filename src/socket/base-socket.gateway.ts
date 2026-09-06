@@ -12,15 +12,16 @@ import { AuthService } from '@auth/auth.service';
 import { User } from '@users/domain/user';
 import { Session } from '@session/domain/session';
 
+// Same parsing as main.ts's NestFactory.create cors option -- read directly
+// from process.env since this is evaluated at module-load time (decorator
+// argument), before ConfigService exists.
+const corsOrigins = (process.env.CORS_ORIGINS ?? '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
 export const defaultCorsConfig = {
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://hulib-fe-dev.vercel.app',
-    'https://hulib.vercel.app',
-    'https://www.hulib.org',
-    'https://hulib.org',
-  ],
+  origin: corsOrigins,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   allowedHeaders: [
     'Content-Type, Accept,Authorization,X-Requested-With',
