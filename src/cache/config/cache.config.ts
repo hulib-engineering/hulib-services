@@ -9,7 +9,7 @@ class EnvironmentVariablesValidator {
   REDIS_HOST: string;
 
   @IsString()
-  BE_REDIS_PASSWORD: string;
+  REDIS_PASSWORD: string;
 
   @IsString()
   REDIS_PORT: string;
@@ -44,7 +44,7 @@ export function getConfig(): RedisConfig {
     host: process.env.REDIS_HOST,
     port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
     username: process.env.REDIS_USERNAME ?? 'default',
-    password: process.env.BE_REDIS_PASSWORD,
+    password: process.env.REDIS_PASSWORD,
     tls:
       process.env.REDIS_TLS === 'true'
         ? {
