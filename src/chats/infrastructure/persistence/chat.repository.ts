@@ -17,4 +17,13 @@ export abstract class ChatRepository {
   abstract findById(id: Chat['id']): Promise<NullableType<Chat>>;
 
   abstract update(data: Chat): Promise<Chat>;
+
+  abstract markMessagesAsRead(
+    from: Chat['senderId'],
+    to: Chat['recipientId'],
+  ): Promise<void>;
+
+  abstract countUnreadMessages(
+    userId: User['id'],
+  ): Promise<{ senderId: number; unread: number }[]>;
 }

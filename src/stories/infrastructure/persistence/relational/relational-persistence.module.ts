@@ -1,19 +1,11 @@
 import { Module } from '@nestjs/common';
 import { StoryRepository } from '../story.repository';
 import { PrismaStoriesRepository } from '../prisma/repositories/story-prisma.repository';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersRelationalRepository } from '../../../../users/infrastructure/persistence/relational/repositories/user.repository';
 import { UserRepository } from '../../../../users/infrastructure/persistence/user.repository';
-import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
+import { UserRepositoryImplement } from '../../../../users/infrastructure/persistence/relational/repositories/user-prisma.repository';
 import { TopicsRepository } from '../../../../topics/infrastructure/persistence/topics.repository';
-import { TopicsRelationalRepository } from '../../../../topics/infrastructure/persistence/relational/repositories/topics.repository';
-import { TopicsEntity } from '../../../../topics/infrastructure/persistence/relational/entities/topics.entity';
+import { TopicsRepositoryImplement } from '../../../../topics/infrastructure/persistence/relational/repositories/topics-prisma.repository';
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([UserEntity]),
-    TypeOrmModule.forFeature([TopicsEntity]),
-  ],
-
   providers: [
     {
       provide: StoryRepository,
@@ -21,11 +13,11 @@ import { TopicsEntity } from '../../../../topics/infrastructure/persistence/rela
     },
     {
       provide: UserRepository,
-      useClass: UsersRelationalRepository,
+      useClass: UserRepositoryImplement,
     },
     {
       provide: TopicsRepository,
-      useClass: TopicsRelationalRepository,
+      useClass: TopicsRepositoryImplement,
     },
   ],
   exports: [StoryRepository, UserRepository, TopicsRepository],

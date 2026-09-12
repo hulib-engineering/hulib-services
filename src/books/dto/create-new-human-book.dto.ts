@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { TagEntity } from '@tags/infrastructure/persistence/relational/entities/tag.entity';
 import { Tag } from '@tags/domain/tag';
 import { IsNumber } from 'class-validator';
 
@@ -20,7 +19,7 @@ export class createNewHumanBookDto {
   authorId: number;
 
   @ApiPropertyOptional({
-    type: () => TagEntity,
+    type: () => Tag,
     nullable: true,
   })
   tag: Tag[];

@@ -16,7 +16,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { UserFavoriteHuberService } from './fav-hubers.service';
-import { FavoriteHubersEntity } from './infrastructure/persistence/relational/entities/fav-hubers.entity';
+import { FavoriteHuberDto } from './dto/favorite-huber.dto';
 import { SaveFavHuberDto } from './dto/save-fav-huber.dto';
 
 @ApiTags('Favorited Hubers')
@@ -32,7 +32,7 @@ export class UserFavoriteHuberController {
   @Post()
   @ApiOperation({ summary: 'Add a favorite huber by id' })
   @ApiCreatedResponse({
-    type: FavoriteHubersEntity,
+    type: FavoriteHuberDto,
   })
   create(@Body() saveFavHuberDto: SaveFavHuberDto) {
     return this.userFavoriteHuberService.add(
@@ -45,7 +45,7 @@ export class UserFavoriteHuberController {
   @ApiOperation({ summary: 'Get all favorite hubers' })
   @ApiOkResponse({
     description: 'Get list of favorite hubers',
-    type: [FavoriteHubersEntity],
+    type: [FavoriteHuberDto],
   })
   getFavoriteHubers(@Param('userId') userId: number) {
     return this.userFavoriteHuberService.getFavoriteHubers(userId);
@@ -55,7 +55,7 @@ export class UserFavoriteHuberController {
   @ApiOperation({ summary: 'Remove all favorite hubers' })
   @ApiOkResponse({
     description: 'Remove all favorite hubers',
-    type: [FavoriteHubersEntity],
+    type: [FavoriteHuberDto],
   })
   removeAllFavoriteHubers(@Query('userId') userId: number) {
     return this.userFavoriteHuberService.removeAll(userId);
@@ -65,7 +65,7 @@ export class UserFavoriteHuberController {
   @ApiOperation({ summary: 'Remove a favorite huber' })
   @ApiOkResponse({
     description: 'Remove a favorite huber',
-    type: FavoriteHubersEntity,
+    type: FavoriteHuberDto,
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeFavorite(

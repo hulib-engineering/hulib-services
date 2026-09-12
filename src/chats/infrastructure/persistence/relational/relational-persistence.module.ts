@@ -1,17 +1,13 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ChatRepository } from '../chat.repository';
-import { ChatRelationalRepository } from './repositories/chat.repository';
-import { ChatEntity } from './entities/chat.entity';
+import { ChatRepositoryImplement } from './repositories/chat-prisma.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ChatEntity])],
-
   providers: [
     {
       provide: ChatRepository,
-      useClass: ChatRelationalRepository,
+      useClass: ChatRepositoryImplement,
     },
   ],
   exports: [ChatRepository],

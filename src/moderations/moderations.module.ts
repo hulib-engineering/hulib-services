@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RelationalReportPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
+import { RelationalModerationPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { ModerationsController } from './moderations.controller';
 import { ModerationsService } from './moderations.service';
 import { UsersModule } from '../users/users.module';
@@ -8,13 +8,13 @@ import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-    RelationalReportPersistenceModule,
+    RelationalModerationPersistenceModule,
     UsersModule,
     NotificationsModule,
     MailModule,
   ],
   controllers: [ModerationsController],
   providers: [ModerationsService],
-  exports: [ModerationsService, RelationalReportPersistenceModule],
+  exports: [ModerationsService, RelationalModerationPersistenceModule],
 })
 export class ModerationsModule {}

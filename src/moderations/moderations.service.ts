@@ -182,7 +182,7 @@ export class ModerationsService {
           status: ModerationStatus.active,
         },
         order: {
-          createdAt: 'DESC',
+          createdAt: 'desc',
         },
         take: 1,
       });
@@ -377,7 +377,7 @@ export class ModerationsService {
           status: ModerationStatus.active,
         },
         order: {
-          createdAt: 'DESC',
+          createdAt: 'desc',
         },
         take: 1,
       });
