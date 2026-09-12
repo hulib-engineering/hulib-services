@@ -133,7 +133,7 @@ model user {
   warnCount             Int                    @default(0)
   huberSince            DateTime?              @db.Timestamp(6)
   hasSeenHuberOnboarding Boolean               @default(false)
-  languageCode           String                 @default("en") @db.VarChar
+  languageCode           String                 @default("vi") @db.VarChar
   humanBookTopic        humanBookTopic[]
   topicsOfInterest      liberTopicOfInterest[]
   humanBooks            humanBooks[]
