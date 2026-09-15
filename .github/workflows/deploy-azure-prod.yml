@@ -1,0 +1,35 @@
+name: Deploy to Azure Prod
+
+on:
+  push:
+    branches: [main, azure-prod]
+
+concurrency:
+  group: deploy-azure-prod
+  cancel-in-progress: true
+
+permissions:
+  id-token: write # required for Azure OIDC login
+  contents: read
+
+jobs:
+  checks:
+    name: Lint / Typecheck / Unit tests
+    uses: ./.github/workflows/ci.yml
+
+  build-and-deploy:
+    name: Build & Deploy
+    needs: checks
+    uses: ./.github/workflows/build-deploy-azure.yml
+    with:
+      acr-name: hulibprodacr
+      image-name: hulib-api
+      resource-group: hulib-prod-rg
+      container-app-name: hulib-prod-api
+      tag: ${{ github.sha }}
+      stable-tag: prod
+      environment: azure-prod
+    secrets:
+      azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}

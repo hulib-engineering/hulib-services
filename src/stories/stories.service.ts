@@ -44,6 +44,7 @@ import { Queue } from 'bull';
 export class StoriesService {
   private readonly logger = new Logger(StoriesService.name);
   private readonly storyActionThrottleTtl = 5 * 60_000;
+  private readonly debugLogger = new Logger('DEBUG-TEMP-StoriesService');
 
   constructor(
     private readonly storiesRepository: StoryRepository,

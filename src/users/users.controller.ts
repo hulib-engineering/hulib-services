@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  Request,
   SerializeOptions,
   UseGuards,
 } from '@nestjs/common';
@@ -37,6 +38,7 @@ import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
 import { GetUserReadingSessionsQueryDto } from './dto/get-user-reading-sessions-query.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { UpdateLanguageDto } from './dto/update-language.dto';
 import { PaginationResponseDto } from '@utils/dto/pagination-response.dto';
 import { pagination } from '@utils/pagination';
 
@@ -108,6 +110,26 @@ export class UsersController {
   })
   findOne(@Param('id') id: User['id']): Promise<NullableType<User>> {
     return this.usersService.findById(id);
+  }
+
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    description: 'Update language successfully.',
+  })
+  @ApiOperation({
+    summary: 'Change preferred language for the logged-in user. ["en", "vi"]',
+  })
+  @Patch('me/language')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  updateLanguage(
+    @Request() request,
+    @Body() updateLanguageDto: UpdateLanguageDto,
+  ) {
+    return this.usersService.updateLanguage(
+      request.user.id,
+      updateLanguageDto.language,
+    );
   }
 
   @ApiOkResponse({

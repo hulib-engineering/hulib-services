@@ -30,7 +30,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     if (!payload.sessionId) {
-      this.logger.warn(`[jwt] validate:missing_session_id userId=${payload.id}`);
+      this.logger.warn(
+        `[jwt] validate:missing_session_id userId=${payload.id}`,
+      );
       throw new UnauthorizedException('Invalid token: Missing session ID.');
     }
 

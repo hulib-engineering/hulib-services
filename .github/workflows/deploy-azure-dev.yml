@@ -1,0 +1,35 @@
+name: Deploy to Azure Dev
+
+on:
+  push:
+    branches: [develop, azure-dev]
+
+concurrency:
+  group: deploy-azure-dev
+  cancel-in-progress: true
+
+permissions:
+  id-token: write # required for Azure OIDC login
+  contents: read
+
+jobs:
+  checks:
+    name: Lint / Typecheck / Unit tests
+    uses: ./.github/workflows/ci.yml
+
+  build-and-deploy:
+    name: Build & Deploy
+    needs: checks
+    uses: ./.github/workflows/build-deploy-azure.yml
+    with:
+      acr-name: hulibdevacr
+      image-name: hulib-api
+      resource-group: hulib-dev-rg
+      container-app-name: hulib-dev-api
+      tag: ${{ github.sha }}
+      stable-tag: dev
+      environment: development
+    secrets:
+      azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}

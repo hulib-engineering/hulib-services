@@ -28,9 +28,7 @@ export class RedisIoAdapter extends IoAdapter {
     const subClient = pubClient.duplicate();
 
     const handleRedisError = (error: Error) => {
-      this.logger.warn(
-        `Redis socket adapter error: ${error.message}.`,
-      );
+      this.logger.warn(`Redis socket adapter error: ${error.message}.`);
     };
 
     pubClient.on('error', handleRedisError);

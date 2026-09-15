@@ -135,6 +135,11 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
           password: configService.getOrThrow('redis.password', {
             infer: true,
           }),
+          // Missing this was the bug: Azure Managed Redis requires TLS,
+          // and without it ioredis hangs retrying a plain connection
+          // (MaxRetriesPerRequestError only surfaces well after the
+          // request's own timeout has already returned a 504).
+          tls: configService.get('redis.tls', { infer: true }),
         },
       }),
     }),
