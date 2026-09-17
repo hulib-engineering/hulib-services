@@ -27,7 +27,7 @@
       "@chat-types/*": ["src/chat-types/*"],
       "@chats/*": ["src/chats/*"],
       "@config/*": ["src/config/*"],
-      "@database/*": ["src/database/*"],
+
       "@fav-stories/*": ["src/fav-stories/*"],
       "@files/*": ["src/files/*"],
       "@home/*": ["src/home/*"],

@@ -3,7 +3,6 @@ import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { UsersModule } from '@users/users.module';
 import { FilesModule } from '@files/files.module';
 import { AuthModule } from '@auth/auth.module';
-import databaseConfig from './database/config/database.config';
 import authConfig from './auth/config/auth.config';
 import appConfig from './config/app.config';
 import mailConfig from './mail/config/mail.config';
@@ -74,7 +73,6 @@ import { ContestReportModule } from './contest-report/contest-report.module';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
-        databaseConfig,
         authConfig,
         appConfig,
         mailConfig,
