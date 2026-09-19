@@ -70,16 +70,6 @@ model session {
   userId    Int?
 }
 
-model userStatus {
-  id   Int    @id
-  name String @db.VarChar
-}
-
-model stickerStatus {
-  id   Int    @id
-  name String @db.VarChar
-}
-
 enum TopicColor {
   yellow
   orange

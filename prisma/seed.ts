@@ -223,8 +223,6 @@ async function cleanDatabase() {
   await prisma.topics.deleteMany();
   await prisma.file.deleteMany();
   await prisma.role.deleteMany();
-  await prisma.userStatus.deleteMany();
-  await prisma.stickerStatus.deleteMany();
   await prisma.gender.deleteMany();
 }
 
@@ -249,22 +247,6 @@ async function seedLookups() {
       { id: ROLE.humanBook, name: 'Huber' },
       { id: ROLE.reader, name: 'Liber' },
       { id: ROLE.guest, name: 'Guest' },
-    ],
-  });
-
-  await prisma.userStatus.createMany({
-    data: [
-      { id: STATUS.active, name: 'Active' },
-      { id: STATUS.inactive, name: 'Inactive' },
-      { id: STATUS.under_warning, name: 'Under Warning' },
-    ],
-  });
-
-  await prisma.stickerStatus.createMany({
-    data: [
-      { id: STATUS.active, name: 'Active' },
-      { id: STATUS.inactive, name: 'Inactive' },
-      { id: STATUS.under_warning, name: 'Under Warning' },
     ],
   });
 
