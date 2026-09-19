@@ -9,10 +9,10 @@ This skill is step 2. It runs after `plan` (step 1) wrote `docs/plans/plan-<issu
 
 ## Steps
 
-1. Read the plan file `docs/plans/plan-<issue>.md`.
+1. Read the plan file `docs/plans/plan-<issue>.md` (includes the branch name created in step 1).
 2. Implement sub-task by sub-task, in order, following the plan.
 3. Write clean code, minimal comments (only where logic isn't obvious).
-4. For each completed sub-task, commit it separately with a commit message matching the sub-task, e.g. `feat: <sub-task description>` (see repo style in `git log`). Do not bundle multiple sub-tasks into one commit.
+4. For each completed sub-task, commit it separately — one commit per sub-task, message per the commit convention in `README.md`. Do not bundle multiple sub-tasks into one commit.
 5. After finishing all sub-tasks, write result file to `docs/results/result-<issue>.md` (NOT directly under `docs/`).
 6. Tell user: implementation done, result saved at `docs/results/result-<issue>.md`.
 

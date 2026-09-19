@@ -69,6 +69,52 @@ Common types:
 | `test`      | Adding/updating tests                                            |
 | `chore`     | Maintenance, dependencies, build, tooling                        |
 
+### Conventions
+
+#### Branch naming
+
+- Pattern: `<type>/<issue-number>-<kebab-case-slug>`
+- Derived from the issue title, which carries the Conventional Commits type prefix above (e.g. `feat: Add CSV export` → `feat/42-add-csv-export`).
+- The slug is the short description in kebab-case.
+- Branches are always forked from `develop`.
+
+#### Commit messages
+
+- Format: `<type>: <short description>` with the issue number in the body, e.g. `feat: Add CSV export` / body `refs #42`.
+- One commit per sub-task. Never bundle multiple sub-tasks into a single commit.
+
+#### File locations
+
+| Purpose                     | Path                              |
+| --------------------------- | --------------------------------- |
+| Plan files                  | `docs/plans/plan-<issue>.md`      |
+| Implementation results      | `docs/results/result-<issue>.md`  |
+
+### Implementation guide (AI flow)
+
+Full development flow, step by step. Write issue is step 0.
+
+| Step | Skill          | Trigger                    | Action                                                                                                  | Output                                  |
+| ---- | -------------- | -------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| 0    | write-issue    | `brainstorm-issue`/`new-task` | Write issue (background, requirement, out of scope) and create it on GitHub                          | GitHub issue                            |
+| 1    | pull-and-plan  | `plan`                     | Pull issue, break requirements into sub-tasks, present plan for confirmation, then create branch from `develop` and write plan file | Branch + `docs/plans/plan-<issue>.md` |
+| 2    | implement-plan | `implement`                | Read plan, implement sub-task by sub-task, one commit per sub-task, then write result file               | `docs/results/result-<issue>.md`        |
+| 3    | create-pr      | `pr`/`submit`              | Read plan + result, push branch, create PR that closes the issue                                         | Pull request                            |
+
+Detailed steps:
+
+**Step 0 - Write issue** (`.ai/skills/write-issue.md`)
+Think product-first (problem, audience, smallest useful version), then create the GitHub issue with `gh issue create`. The issue title must use a Conventional Commits type prefix, since the type is reused for the branch name.
+
+**Step 1 - Pull and plan** (`.ai/skills/pull-and-plan.md`)
+Pull the issue, break requirements into small testable sub-tasks with done-conditions, derive the branch name, and show the plan to the user. STOP and wait for confirmation — nothing is created before the user confirms. After confirmation, fork the branch from `develop` and write the plan.
+
+**Step 2 - Implement** (`.ai/skills/implement-plan.md`)
+Implement each sub-task in order, commit each completed sub-task separately, then write the result file.
+
+**Step 3 - Create PR** (`.ai/skills/create-pr.md`)
+Read plan and result, push the branch, create a PR using the Summary/Feature/API/Database/Testing/Notes/Checklist body format with `Closes #<issue>`.
+
 ## Features
 
 - [x] Database. Support [Prisma](https://www.npmjs.com/package/@prisma/client).
