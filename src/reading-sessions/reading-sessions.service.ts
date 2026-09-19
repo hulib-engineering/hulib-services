@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { ReadingSession, ReadingSessionStatus } from './domain/reading-session';
 import { Message } from './domain/message';
-import { ReadingSessionRepository } from './infrastructure/persistence/relational/repositories/reading-session-prisma.repository';
-import { MessageRepository } from './infrastructure/persistence/relational/repositories/message-prisma.repository';
+import { ReadingSessionRepository } from './reading-session.repository';
+import { MessageRepository } from './message.repository';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
 import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';

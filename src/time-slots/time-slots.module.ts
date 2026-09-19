@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 
 import { TimeSlotService } from './time-slots.service';
 import { TimeSlotController } from './time-slots.controller';
-import { RelationalTimeSlotPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
+import { TimeSlotRepository } from './time-slot.repository';
 import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [RelationalTimeSlotPersistenceModule, UsersModule],
+  imports: [UsersModule],
   controllers: [TimeSlotController],
-  providers: [TimeSlotService],
-  exports: [TimeSlotService, RelationalTimeSlotPersistenceModule],
+  providers: [TimeSlotService, TimeSlotRepository],
+  exports: [TimeSlotService, TimeSlotRepository],
 })
 export class TimeSlotModule {}

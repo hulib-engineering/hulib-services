@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '@users/domain/user';
 
 import { CreateChatDto } from './dto/create-chat.dto';
-import { ChatRepository } from './infrastructure/persistence/chat.repository';
+import { ChatRepository } from './chat.repository';
 import { Chat, ChatStatus } from './domain/chat';
 import { Conversation } from './domain/conversation';
 import { UsersService } from '@users/users.service';

@@ -8,8 +8,8 @@ import { ReadingSessionsController } from './reading-sessions.controller';
 import { ReadingSessionsService } from './reading-sessions.service';
 
 // Repositories
-import { ReadingSessionRepository } from './infrastructure/persistence/relational/repositories/reading-session-prisma.repository';
-import { MessageRepository } from './infrastructure/persistence/relational/repositories/message-prisma.repository';
+import { ReadingSessionRepository } from './reading-session.repository';
+import { MessageRepository } from './message.repository';
 
 import { UsersModule } from '@users/users.module';
 import { StoriesModule } from '@stories/stories.module';
