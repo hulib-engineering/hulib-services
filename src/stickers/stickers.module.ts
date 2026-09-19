@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
+import { RelationalStickerPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { StickersService } from './stickers.service';
 import { StickersController } from './stickers.controller';
-import { RelationalStickerPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 
 @Module({
   imports: [RelationalStickerPersistenceModule],

@@ -11,12 +11,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 const infrastructurePersistenceModule = RelationalUserPersistenceModule;
 
 @Module({
-  imports: [
-    infrastructurePersistenceModule,
-    FilesModule,
-    CaslModule,
-    NotificationsModule,
-  ],
+  imports: [FilesModule, infrastructurePersistenceModule, CaslModule, NotificationsModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService, infrastructurePersistenceModule],

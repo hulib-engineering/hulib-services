@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { RelationalModerationPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
+
 import { ModerationsController } from './moderations.controller';
 import { ModerationsService } from './moderations.service';
+import { RelationalModerationPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { MailModule } from '../mail/mail.module';
