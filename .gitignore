@@ -46,3 +46,4 @@ lerna-debug.log*
 reports/
 
 staging_backup.sql
+.ai/models.md
