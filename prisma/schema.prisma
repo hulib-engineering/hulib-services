@@ -72,12 +72,17 @@ model session {
   userId    Int?
 }
 
-model status {
+model userStatus {
   id   Int    @id
   name String @db.VarChar
 
-  // Optional back relation
-  user     user[]
+  user user[]
+}
+
+model stickerStatus {
+  id   Int    @id
+  name String @db.VarChar
+
   stickers sticker[]
 }
 
@@ -151,8 +156,8 @@ model user {
   gender     gender?    @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file       file?      @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   coverImage file?      @relation("UserCoverImage", fields: [coverImageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  role       role?      @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  status     status?    @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  role       role?       @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status     userStatus? @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   messagesAsHumanBook message[] @relation("HumanBookRelation")
   messagesAsReader    message[] @relation("ReaderRelation")
@@ -362,8 +367,8 @@ model sticker {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  image  file?   @relation(fields: [imageId], references: [id])
-  status status? @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  image  file?         @relation(fields: [imageId], references: [id])
+  status stickerStatus? @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   // Optional back relation
   chat chat[]
