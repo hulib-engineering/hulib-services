@@ -1,16 +1,22 @@
 # Skill: implement-plan
 
 Trigger keyword: `implement`
-Args: plan=docs/plan-<issue>.md
+Args: plan=docs/plans/plan-<issue>.md
+
+## AI flow
+
+This skill is step 2. It runs after `plan` (step 1) wrote `docs/plans/plan-<issue>.md`.
 
 ## Steps
 
-1. Read the plan file.
-2. Implement step by step, in order.
+1. Read the plan file `docs/plans/plan-<issue>.md`.
+2. Implement sub-task by sub-task, in order, following the plan.
 3. Write clean code, minimal comments (only where logic isn't obvious).
-4. After finishing, write result file to `docs/result-<issue>.md`.
+4. For each completed sub-task, commit it separately with a commit message matching the sub-task, e.g. `feat: <sub-task description>` (see repo style in `git log`). Do not bundle multiple sub-tasks into one commit.
+5. After finishing all sub-tasks, write result file to `docs/results/result-<issue>.md` (NOT directly under `docs/`).
+6. Tell user: implementation done, result saved at `docs/results/result-<issue>.md`.
 
-## Output format (docs/result-<issue>.md)
+## Output format (docs/results/result-<issue>.md)
 
 Result: <issue title>
 What changed
@@ -21,4 +27,4 @@ What was done
 <short summary, plain language>
 
 Notes / follow-up
-<anything left, anything to check> 5. Tell user: implementation done, result saved at `docs/result-<issue>.md`.
+<anything left, anything to check>
