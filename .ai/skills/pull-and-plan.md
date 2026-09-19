@@ -3,11 +3,65 @@
 Trigger keyword: `plan`
 Args: issue=<number>
 
+## AI flow
+
+Full development flow (write issue is step 0):
+
+| Step | Skill | Trigger | Output |
+| ---- | ----- | ------- | ------ |
+| 0 | write-issue | `brainstorm-issue` / `new-task` | GitHub issue |
+| 1 | pull-and-plan | `plan` | `docs/plans/plan-<issue>.md` (after confirm) |
+| 2 | implement-plan | `implement` | `docs/results/result-<issue>.md` |
+| 3 | create-pr | `pr` / `submit` | Pull request (closes issue) |
+
+This skill is step 1. It must not run until step 0 (the issue) exists.
+
 ## Steps
 
 1. Run `gh issue view <issue> --json title,body` to pull issue content.
-2. Brainstorm: list possible solutions, pick the simplest one that meets requirements.
-3. List problems/risks that could come up (edge cases, dependencies, breaking changes).
-4. Write plan file to `docs/plan-<issue>.md`.
+2. Break the issue requirements into sub-tasks:
+   - Each sub-task is small, testable, has a clear done-condition.
+   - Order them into implementation order (dependencies first, one task per unit of change).
+   - Note edge cases / risks that apply to each sub-task where relevant.
+3. Present the proposed plan to the user as a list of steps that need confirmation (see output format below).
+4. STOP. Do NOT write any file yet. Wait for the user's confirmation.
+5. Only after the user confirms, write the plan file to `docs/plans/plan-<issue>.md` (NOT directly under `docs/`).
+6. Output the plan file path to the user.
 
-## Output format (docs/plan-<issue>.md)
+## Output to user (ask before writing the file)
+
+Show this, then wait for confirmation:
+
+```
+Plan for #<issue>
+<issue title>
+
+Sub-tasks to confirm (in order):
+1. <sub-task> — done when: <condition>
+2. <sub-task> — done when: <condition>
+
+Decisions / risks:
+- <item>
+- <item>
+
+Confirm to write docs/plans/plan-<issue>.md
+```
+
+## Output format (docs/plans/plan-<issue>.md)
+
+```
+# Plan: <issue title>
+
+Issue: #<issue>
+
+## Sub-tasks
+
+| # | Sub-task | Done condition |
+| ----- | -------- | -------------- |
+| 1 | <sub-task> | <condition> |
+| 2 | <sub-task> | <condition> |
+
+## Decisions / risks
+- <item>
+- <item>
+```
