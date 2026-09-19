@@ -12,6 +12,7 @@ import { NullableType } from '@utils/types/nullable.type';
 import { FilterUserDto, QueryUserDto, SortUserDto } from './dto/query-user.dto';
 import { UserRepository } from './user.repository';
 import { User } from './domain/user';
+import { toClientUser } from './user-mapper';
 import bcrypt from 'bcryptjs';
 import { AuthProvidersEnum } from '@auth/auth-providers.enum';
 import { FilesService } from '@files/files.service';
@@ -393,16 +394,8 @@ export class UsersService {
     }
 
     const userConfig = {
-      include: {
-        gender: true,
-        role: true,
-        status: true,
-      },
       omit: {
         deletedAt: true,
-        genderId: true,
-        roleId: true,
-        statusId: true,
         photoId: true,
         password: true,
         createdAt: true,
@@ -435,14 +428,17 @@ export class UsersService {
           },
         }),
       ]);
-      return user;
+
+      return toClientUser(user);
     }
 
-    return this.prisma.user.update({
-      where: { id: Number(id) },
-      data: { statusId: statusValue },
-      ...userConfig,
-    });
+    return toClientUser(
+      await this.prisma.user.update({
+        where: { id: Number(id) },
+        data: { statusId: statusValue },
+        ...userConfig,
+      }),
+    );
   }
 
   async remove(id: User['id']): Promise<void> {
@@ -607,15 +603,9 @@ export class UsersService {
     const userConfig = {
       include: {
         topicsOfInterest: true,
-        gender: true,
-        role: true,
-        status: true,
       },
       omit: {
         deletedAt: true,
-        genderId: true,
-        roleId: true,
-        statusId: true,
         photoId: true,
         password: true,
         createdAt: true,
@@ -623,7 +613,7 @@ export class UsersService {
       },
     };
 
-    const [totalItems, data] = await this.prisma.$transaction([
+    const [totalItems, rows] = await this.prisma.$transaction([
       this.prisma.readingSession.count({ where }),
       this.prisma.readingSession.findMany({
         where,
@@ -644,6 +634,12 @@ export class UsersService {
         take,
       }),
     ]);
+
+    const data = rows.map((session) => ({
+      ...session,
+      humanBook: toClientUser(session.humanBook),
+      reader: toClientUser(session.reader),
+    }));
 
     return pagination(data, totalItems, {
       page: paginationOptions.page,
@@ -926,8 +922,8 @@ export class UsersService {
     return Math.round(avg * 10) / 10;
   }
 
-  private findUserWithRelations(id: number) {
-    return this.prisma.user.findUnique({
+  private async findUserWithRelations(id: number) {
+    const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
         humanBookTopic: {
@@ -965,9 +961,6 @@ export class UsersService {
           },
           orderBy: { startedAt: 'desc' },
         },
-        gender: true,
-        role: true,
-        status: true,
         file: true,
         coverImage: true,
         _count: {
@@ -985,15 +978,14 @@ export class UsersService {
       },
       omit: {
         deletedAt: true,
-        genderId: true,
-        roleId: true,
-        statusId: true,
         photoId: true,
         coverImageId: true,
         password: true,
         updatedAt: true,
       },
     });
+
+    return user ? toClientUser(user) : null;
   }
 
   private async findHuberMeta(id: number) {

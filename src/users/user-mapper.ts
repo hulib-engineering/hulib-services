@@ -16,6 +16,56 @@ export const basicUserInclude = {
 
 export type BasicUserRecord = Prisma.userGetPayload<typeof basicUserInclude>;
 
+export function toGenderRef(
+  raw: { genderId?: number | null } | null | undefined,
+): { id: number; name: string | undefined } | undefined {
+  if (!raw || raw.genderId == null) return undefined;
+  return { id: raw.genderId, name: GenderEnum[raw.genderId] };
+}
+
+export function toRoleRef(
+  raw: { roleId?: number | null } | null | undefined,
+): { id: number; name: string | undefined } | undefined {
+  if (!raw || raw.roleId == null) return undefined;
+  return { id: raw.roleId, name: RoleEnum[raw.roleId] };
+}
+
+export function toStatusRef(
+  raw: { statusId?: number | null } | null | undefined,
+): { id: number; name: string | undefined } | undefined {
+  if (!raw || raw.statusId == null) return undefined;
+  return { id: raw.statusId, name: StatusEnum[raw.statusId] };
+}
+
+export type UserWithIds = {
+  genderId?: number | null;
+  roleId?: number | null;
+  statusId?: number | null;
+};
+
+export function toClientUser<T extends UserWithIds>(
+  raw: T | null | undefined,
+): Omit<T, 'genderId' | 'roleId' | 'statusId'> & {
+  gender?: { id: number; name: string | undefined } | undefined;
+  role?: { id: number; name: string | undefined } | undefined;
+  status?: { id: number; name: string | undefined } | undefined;
+} {
+  if (raw == null) return raw as never;
+  const { genderId, roleId, statusId, ...rest } = raw as {
+    genderId?: number | null;
+    roleId?: number | null;
+    statusId?: number | null;
+  } & Record<string, unknown>;
+  const result = { ...rest } as Record<string, unknown>;
+  const gender = toGenderRef({ genderId });
+  const role = toRoleRef({ roleId });
+  const status = toStatusRef({ statusId });
+  if (gender) result.gender = gender;
+  if (role) result.role = role;
+  if (status) result.status = status;
+  return result as never;
+}
+
 export class UserMapperImplement {
   static toDomain(raw: BasicUserRecord): User {
     const domainEntity = new User();

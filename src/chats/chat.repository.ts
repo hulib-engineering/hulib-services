@@ -13,13 +13,18 @@ export const chatInclude = {
   include: {
     sender: basicUserInclude,
     recipient: basicUserInclude,
-    sticker: { include: { image: true } },
   },
 } satisfies Prisma.chatDefaultArgs;
 
 type ChatRecord = Prisma.chatGetPayload<typeof chatInclude>;
 
-function toDomain(raw: ChatRecord): Chat {
+type StickerRow = NonNullable<
+  Prisma.stickerGetPayload<{ include: { image: true } }>
+>;
+
+type ChatRow = ChatRecord & { sticker?: StickerRow | null };
+
+function toDomain(raw: ChatRow): Chat {
   const domain = new Chat();
   domain.id = raw.id;
   domain.message = raw.message ?? '';
@@ -58,6 +63,33 @@ function toDomain(raw: ChatRecord): Chat {
 export class ChatRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async withStickers<T extends { stickerId?: number | null }>(
+    rows: T[],
+  ): Promise<(T & { sticker?: StickerRow | null })[]> {
+    const stickerIds = Array.from(
+      new Set(
+        rows
+          .map((row) => row.stickerId)
+          .filter((id): id is number => typeof id === 'number'),
+      ),
+    );
+    const stickers =
+      stickerIds.length > 0
+        ? await this.prisma.sticker.findMany({
+            where: { id: { in: stickerIds } },
+            include: { image: true },
+          })
+        : [];
+    const stickerById = new Map(
+      stickers.map((sticker) => [sticker.id, sticker]),
+    );
+    return rows.map((row) => ({
+      ...row,
+      sticker:
+        row.stickerId != null ? stickerById.get(row.stickerId) : undefined,
+    }));
+  }
+
   async create(
     data: Omit<Chat, 'id' | 'createdAt' | 'updatedAt'>,
     sender: User,
@@ -78,8 +110,9 @@ export class ChatRepository {
       },
       ...chatInclude,
     });
+    const [row] = await this.withStickers([created]);
 
-    return toDomain(created);
+    return toDomain(row);
   }
 
   async findByUser(userId: User['id']): Promise<Chat[]> {
@@ -94,7 +127,8 @@ export class ChatRepository {
       ...chatInclude,
     });
 
-    return rows.map((row) => toDomain(row));
+    const withStickers = await this.withStickers(rows);
+    return withStickers.map((row) => toDomain(row));
   }
 
   async findByUsers(user1: User['id'], user2: User['id']): Promise<Chat[]> {
@@ -117,7 +151,8 @@ export class ChatRepository {
       ...chatInclude,
     });
 
-    return rows.map((row) => toDomain(row));
+    const withStickers = await this.withStickers(rows);
+    return withStickers.map((row) => toDomain(row));
   }
 
   async findById(id: Chat['id']): Promise<NullableType<Chat>> {
@@ -126,7 +161,10 @@ export class ChatRepository {
       ...chatInclude,
     });
 
-    return found ? toDomain(found) : null;
+    if (!found) return null;
+    const [row] = await this.withStickers([found]);
+
+    return toDomain(row);
   }
 
   async update(data: Chat): Promise<Chat> {
@@ -145,8 +183,9 @@ export class ChatRepository {
       },
       ...chatInclude,
     });
+    const [row] = await this.withStickers([updated]);
 
-    return toDomain(updated);
+    return toDomain(row);
   }
 
   async markMessagesAsRead(

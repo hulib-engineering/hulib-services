@@ -12,8 +12,7 @@ import { TopicColor } from '@topics/topic-color.enum';
 import { TopicStatus } from '@topics/topic-status.enum';
 import { FileType } from '@files/domain/file';
 import { User } from '@users/domain/user';
-import { Role } from '@roles/domain/role';
-import { Status } from '@statuses/domain/status';
+import { toRoleRef, toStatusRef } from '@users/user-mapper';
 
 // Password (and a few other internal-only columns) are never fetched for
 // humanBook, so they can never leak through this mapper regardless of how
@@ -24,14 +23,9 @@ export const storyInclude = {
     omit: {
       password: true,
       deletedAt: true,
-      genderId: true,
-      roleId: true,
-      statusId: true,
       photoId: true,
     },
     include: {
-      role: true,
-      status: true,
       file: true,
     },
   },
@@ -91,18 +85,14 @@ function toDomainUser(raw: HumanBookWithRelations): User {
   user.createdAt = raw.createdAt;
   user.updatedAt = raw.updatedAt;
 
-  if (raw.role) {
-    const role = new Role();
-    role.id = raw.role.id;
-    role.name = raw.role.name;
-    user.role = role;
+  if (raw.roleId != null) {
+    const role = toRoleRef(raw);
+    if (role) user.role = role;
   }
 
-  if (raw.status) {
-    const status = new Status();
-    status.id = raw.status.id;
-    status.name = raw.status.name;
-    user.status = status;
+  if (raw.statusId != null) {
+    const status = toStatusRef(raw);
+    if (status) user.status = status;
   }
 
   user.photo = toDomainFile(raw.file);

@@ -23,7 +23,6 @@ model file {
 model gender {
   id   Int    @id
   name String @db.VarChar
-  user user[]
 }
 
 model humanBookTopic {
@@ -60,7 +59,6 @@ model humanBooks {
 model role {
   id   Int    @id
   name String @db.VarChar
-  user user[]
 }
 
 model session {
@@ -75,15 +73,11 @@ model session {
 model userStatus {
   id   Int    @id
   name String @db.VarChar
-
-  user user[]
 }
 
 model stickerStatus {
   id   Int    @id
   name String @db.VarChar
-
-  stickers sticker[]
 }
 
 enum TopicColor {
@@ -127,6 +121,9 @@ model user {
   genderId              Int?
   roleId                Int?
   statusId              Int?
+  genderId_backup       Int?
+  roleId_backup         Int?
+  statusId_backup       Int?
   approval              String?                @db.VarChar
   photoId               String?                @db.Uuid
   coverImageId          String?                @db.Uuid
@@ -153,11 +150,8 @@ model user {
   huberReadingSessions readingSession[] @relation("HumanBookRelation")
 
   timeSlots  timeSlot[]
-  gender     gender?    @relation(fields: [genderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   file       file?      @relation(fields: [photoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   coverImage file?      @relation("UserCoverImage", fields: [coverImageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  role       role?       @relation(fields: [roleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  status     userStatus? @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   messagesAsHumanBook message[] @relation("HumanBookRelation")
   messagesAsReader    message[] @relation("ReaderRelation")
@@ -336,7 +330,7 @@ model notification {
   senderId        Int
   sender          user             @relation("SenderNotification", fields: [senderId], references: [id])
   typeId          Int
-  type            notificationType @relation(fields: [typeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  typeId_backup   Int?
   seen            Boolean          @default(false)
   relatedEntityId Int?
   extraNote       String?
@@ -346,15 +340,13 @@ model notification {
 }
 
 model notificationType {
-  id           Int            @id @default(autoincrement())
-  name         String         @unique @db.VarChar
-  notification notification[]
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar
 }
 
 model chatType {
   id   Int    @id @default(autoincrement())
   name String @unique @db.VarChar
-  chat chat[]
 }
 
 model sticker {
@@ -363,15 +355,12 @@ model sticker {
   imageId  String? @db.Uuid
   category String?
   statusId Int?
+  statusId_backup Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  image  file?         @relation(fields: [imageId], references: [id])
-  status stickerStatus? @relation(fields: [statusId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  // Optional back relation
-  chat chat[]
+  image file? @relation(fields: [imageId], references: [id])
 }
 
 model chat {
@@ -383,11 +372,11 @@ model chat {
   status      chatStatus @default(sent)
   chatTypeId  Int?       @default(1)
   stickerId   Int?
+  chatTypeId_backup Int?
+  stickerId_backup  Int?
 
-  sticker   sticker?  @relation(fields: [stickerId], references: [id])
   sender    user      @relation("ChatSender", fields: [senderId], references: [id])
   recipient user      @relation("ChatRecipient", fields: [recipientId], references: [id])
-  chatType  chatType? @relation(fields: [chatTypeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   readAt    DateTime?
   createdAt DateTime  @default(now()) @db.Timestamp(6)
