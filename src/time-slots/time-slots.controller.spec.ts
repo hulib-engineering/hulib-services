@@ -37,9 +37,9 @@ describe('TimeSlotController', () => {
     const result = [{ id: 1 }, { id: 2 }];
     timeSlotService.findAll.mockResolvedValue(result);
 
-    await expect(
-      controller.findAll({ user: { id: 7 } }),
-    ).resolves.toEqual(result);
+    await expect(controller.findAll({ user: { id: 7 } })).resolves.toEqual(
+      result,
+    );
     expect(timeSlotService.findAll).toHaveBeenCalledWith(7);
   });
 

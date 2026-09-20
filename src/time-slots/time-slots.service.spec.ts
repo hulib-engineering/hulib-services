@@ -7,8 +7,6 @@ import {
 } from '@nestjs/common';
 import { TimeSlotService } from './time-slots.service';
 import { TimeSlotRepository } from './time-slot.repository';
-import { TimeSlot } from './domain/time-slot';
-import { UsersService } from '@users/users.service';
 import { RoleEnum } from '../roles/roles.enum';
 import { Approval } from '../users/approval.enum';
 
@@ -39,10 +37,7 @@ describe('TimeSlotService', () => {
       update: jest.fn(),
     } as never;
     userService = { findById: jest.fn() };
-    service = new TimeSlotService(
-      repository as never,
-      userService as never,
-    );
+    service = new TimeSlotService(repository as never, userService as never);
   });
 
   describe('create', () => {
@@ -95,7 +90,10 @@ describe('TimeSlotService', () => {
 
     it('should throw Forbidden for a reader without pending approval', async () => {
       userService.findById.mockResolvedValue(
-        makeUser({ role: { id: RoleEnum.reader }, approval: Approval.approved }),
+        makeUser({
+          role: { id: RoleEnum.reader },
+          approval: Approval.approved,
+        }),
       );
 
       await expect(
@@ -155,10 +153,7 @@ describe('TimeSlotService', () => {
         { id: 2, dayOfWeek: 1, startTime: '09:00' },
       ]);
 
-      await service.createMany(
-        dto([{ dayOfWeek: 1, startTime: '09:00' }]),
-        5,
-      );
+      await service.createMany(dto([{ dayOfWeek: 1, startTime: '09:00' }]), 5);
 
       expect(repository.createMany).toHaveBeenCalled();
     });

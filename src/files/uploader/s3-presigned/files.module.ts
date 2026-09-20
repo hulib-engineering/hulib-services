@@ -49,7 +49,12 @@ import { AllConfigType } from '@config/config.type';
     }),
   ],
   controllers: [FilesS3PresignedController],
-  providers: [ConfigModule, ConfigService, FileRepository, FilesS3PresignedService],
+  providers: [
+    ConfigModule,
+    ConfigService,
+    FileRepository,
+    FilesS3PresignedService,
+  ],
   exports: [FileRepository, FilesS3PresignedService],
 })
 export class FilesS3PresignedModule {}

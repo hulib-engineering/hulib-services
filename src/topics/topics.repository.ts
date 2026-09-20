@@ -10,9 +10,7 @@ import { TopicColor } from './topic-color.enum';
 import { TopicStatus } from './topic-status.enum';
 import { PublishStatus } from '@stories/status.enum';
 
-function toDomain(
-  raw: Prisma.topicsGetPayload<Record<string, never>>,
-): Topics {
+function toDomain(raw: Prisma.topicsGetPayload<Record<string, never>>): Topics {
   const domain = new Topics();
   domain.id = raw.id;
   domain.name = raw.name;

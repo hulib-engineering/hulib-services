@@ -1,12 +1,15 @@
 import { NotFoundException } from '@nestjs/common';
 import { ContestReportService } from './contest-report.service';
-import { ContestReportRepository } from './contest-report.repository';
 import { StoriesService } from '@stories/stories.service';
 
 describe('ContestReportService', () => {
   let service: ContestReportService;
   let storiesService: { getContestParticipants: jest.Mock };
-  let repository: { save: jest.Mock; findLatestFilename: jest.Mock; getFilePath: jest.Mock };
+  let repository: {
+    save: jest.Mock;
+    findLatestFilename: jest.Mock;
+    getFilePath: jest.Mock;
+  };
 
   beforeEach(() => {
     storiesService = { getContestParticipants: jest.fn() };
@@ -54,13 +57,28 @@ describe('ContestReportService', () => {
 
     it('should write a single row per story and a bare row for storyless users', async () => {
       storiesService.getContestParticipants.mockResolvedValue([
-        { fullName: 'No Story', email: 'x@x.com', phoneNumber: '', bio: '', stories: [] },
+        {
+          fullName: 'No Story',
+          email: 'x@x.com',
+          phoneNumber: '',
+          bio: '',
+          stories: [],
+        },
         {
           fullName: 'With Story',
           email: 'y@y.com',
           phoneNumber: '',
           bio: '',
-          stories: [{ id: 9, title: 'S', abstract: '', createdAt: null, likeCount: 0, shareCount: 0 }],
+          stories: [
+            {
+              id: 9,
+              title: 'S',
+              abstract: '',
+              createdAt: null,
+              likeCount: 0,
+              shareCount: 0,
+            },
+          ],
         },
       ]);
 
@@ -75,7 +93,7 @@ describe('ContestReportService', () => {
   });
 
   describe('getLatestFilename', () => {
-    it('should throw NotFound when no report file matches', async () => {
+    it('should throw NotFound when no report file matches', () => {
       repository.findLatestFilename.mockReturnValue(null);
 
       expect(() => service.getLatestFilename('Khoảnh khắc')).toThrow(
@@ -84,7 +102,9 @@ describe('ContestReportService', () => {
     });
 
     it('should return the latest matching filename', () => {
-      repository.findLatestFilename.mockReturnValue('contest-report-2026-01-01.xlsx');
+      repository.findLatestFilename.mockReturnValue(
+        'contest-report-2026-01-01.xlsx',
+      );
 
       expect(service.getLatestFilename('Khoảnh khắc')).toBe(
         'contest-report-2026-01-01.xlsx',

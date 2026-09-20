@@ -14,10 +14,7 @@ import {
 import { RoleEnum } from '@roles/roles.enum';
 import { Approval } from '@users/approval.enum';
 
-import {
-  basicUserInclude,
-  UserMapperImplement,
-} from './user-mapper';
+import { basicUserInclude, UserMapperImplement } from './user-mapper';
 
 // findByEmail/findBySocialIdAndProvider intentionally don't load humanBookTopic
 // (sharingTopics). Auth flows round-trip the whole domain User returned by
