@@ -1,7 +1,7 @@
 import { Tag } from '@tags/domain/tag';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { UserEntity } from '@users/infrastructure/persistence/relational/entities/user.entity';
+import { User } from '@users/domain/user';
 
 export class Book {
   @ApiProperty({
@@ -10,10 +10,10 @@ export class Book {
   id: number | string;
 
   @ApiProperty({
-    type: UserEntity,
+    type: User,
   })
   @IsNotEmpty()
-  author: UserEntity;
+  author: User;
 
   @ApiProperty({
     type: String,

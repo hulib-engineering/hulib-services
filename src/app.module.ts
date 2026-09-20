@@ -3,7 +3,6 @@ import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { UsersModule } from '@users/users.module';
 import { FilesModule } from '@files/files.module';
 import { AuthModule } from '@auth/auth.module';
-import databaseConfig from './database/config/database.config';
 import authConfig from './auth/config/auth.config';
 import appConfig from './config/app.config';
 import mailConfig from './mail/config/mail.config';
@@ -15,16 +14,13 @@ import cacheConfig from './cache/config/cache.config';
 import agoraConfig from '@agora/config/agora.config';
 import path from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 import { AuthFacebookModule } from '@auth-facebook/auth-facebook.module';
 import { AuthGoogleModule } from '@auth-google/auth-google.module';
 import { I18nModule } from 'nestjs-i18n/dist/i18n.module';
 import { HeaderResolver } from 'nestjs-i18n';
-import { TypeOrmConfigService } from '@database/typeorm-config.service';
 import { MailModule } from '@mail/mail.module';
 import { HomeModule } from '@home/home.module';
-import { DataSource, DataSourceOptions } from 'typeorm';
 import { AllConfigType } from '@config/config.type';
 import { SessionModule } from '@session/session.module';
 import { MailerModule } from '@mailer/mailer.module';
@@ -59,13 +55,6 @@ import { ModerationsModule } from '@moderations/moderations.module';
 import { AppealsModule } from './appeals/appeals.module';
 import { ContestReportModule } from './contest-report/contest-report.module';
 
-const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
-  useClass: TypeOrmConfigService,
-  dataSourceFactory: async (options: DataSourceOptions) => {
-    return new DataSource(options).initialize();
-  },
-});
-
 @Module({
   imports: [
     AppealsModule,
@@ -84,7 +73,6 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
-        databaseConfig,
         authConfig,
         appConfig,
         mailConfig,
@@ -97,7 +85,6 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
       ],
       envFilePath: ['.env'],
     }),
-    infrastructureDatabaseModule,
     I18nModule.forRootAsync({
       useFactory: (configService: ConfigService<AllConfigType>) => ({
         fallbackLanguage: configService.getOrThrow('app.fallbackLanguage', {

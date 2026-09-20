@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TopicsService } from './topics.service';
+import { TopicsRepository } from './topics.repository';
 import { TopicsController } from './topics.controller';
-import { RelationalTopicsPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 
 import { CaslModule } from '@permission/casl.module';
 
 @Module({
-  imports: [RelationalTopicsPersistenceModule, CaslModule],
+  imports: [CaslModule],
   controllers: [TopicsController],
-  providers: [TopicsService],
-  exports: [TopicsService, RelationalTopicsPersistenceModule],
+  providers: [TopicsService, TopicsRepository],
+  exports: [TopicsService, TopicsRepository],
 })
 export class TopicsModule {}

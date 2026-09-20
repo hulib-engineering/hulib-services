@@ -2,15 +2,15 @@ import { Module } from '@nestjs/common';
 
 import { UsersModule } from '@users/users.module';
 
+import { ChatRepository } from './chat.repository';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
-import { RelationalChatPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { SocketModule } from '../socket/socket.module';
 
 @Module({
-  imports: [RelationalChatPersistenceModule, UsersModule, SocketModule],
+  imports: [UsersModule, SocketModule],
   controllers: [ChatController],
-  providers: [ChatService],
-  exports: [ChatService, RelationalChatPersistenceModule],
+  providers: [ChatService, ChatRepository],
+  exports: [ChatService, ChatRepository],
 })
 export class ChatModule {}

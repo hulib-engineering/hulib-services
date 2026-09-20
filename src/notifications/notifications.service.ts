@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+﻿import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 import { PrismaService } from '@prisma-client/prisma-client.service';
@@ -66,7 +66,6 @@ export class NotificationsService {
           createdAt: 'desc',
         },
         include: {
-          type: true,
           sender: {
             select: {
               id: true,
@@ -80,7 +79,6 @@ export class NotificationsService {
           },
         },
         omit: {
-          typeId: true,
           recipientId: true,
           senderId: true,
           deletedAt: true,
@@ -93,7 +91,7 @@ export class NotificationsService {
     const storyIds = notifications
       .filter(
         (n) =>
-          this.storyRelatedNotificationTypes.includes(n.type.name) &&
+          this.storyRelatedNotificationTypes.includes(n.notificationType) &&
           n.relatedEntityId !== null,
       )
       .map((n) => n.relatedEntityId)
@@ -102,7 +100,7 @@ export class NotificationsService {
     const readingSessionIds = notifications
       .filter(
         (n) =>
-          this.readingSessionRelatedNotiTypes.includes(n.type.name) &&
+          this.readingSessionRelatedNotiTypes.includes(n.notificationType) &&
           n.relatedEntityId !== null,
       )
       .map((n) => n.relatedEntityId)
@@ -111,7 +109,7 @@ export class NotificationsService {
     const reportIds = notifications
       .filter(
         (n) =>
-          n.type.name === NotificationTypeEnum.huberReported &&
+          n.notificationType === NotificationTypeEnum.huberReported &&
           n.relatedEntityId !== null,
       )
       .map((n) => n.relatedEntityId)
@@ -120,7 +118,7 @@ export class NotificationsService {
     const appealIds = notifications
       .filter(
         (n) =>
-          this.appealRelatedNotiTypes.includes(n.type.name) &&
+          this.appealRelatedNotiTypes.includes(n.notificationType) &&
           n.relatedEntityId !== null,
       )
       .map((n) => n.relatedEntityId)
@@ -129,7 +127,7 @@ export class NotificationsService {
     const moderationIds = notifications
       .filter(
         (n) =>
-          n.type.name === NotificationTypeEnum.huberWarning &&
+          n.notificationType === NotificationTypeEnum.huberWarning &&
           n.relatedEntityId !== null,
       )
       .map((n) => n.relatedEntityId)
@@ -318,28 +316,28 @@ export class NotificationsService {
 
       let relatedEntity: any = null;
 
-      if (this.storyRelatedNotificationTypes.includes(n.type.name)) {
+      if (this.storyRelatedNotificationTypes.includes(n.notificationType)) {
         const story =
           n.relatedEntityId !== null
             ? storyMap.get(n.relatedEntityId) || null
             : null;
 
         if (story) {
-          if (n.type.name === NotificationTypeEnum.reactStory) {
+          if (n.notificationType === NotificationTypeEnum.reactStory) {
             // like: show like count only
             relatedEntity = {
               id: story.id,
               title: story.title,
               likeCount: story.likeCount,
             };
-          } else if (n.type.name === NotificationTypeEnum.shareStory) {
+          } else if (n.notificationType === NotificationTypeEnum.shareStory) {
             // share: show share count only
             relatedEntity = {
               id: story.id,
               title: story.title,
               shareCount: story.shareCount,
             };
-          } else if (n.type.name === NotificationTypeEnum.reviewStory) {
+          } else if (n.notificationType === NotificationTypeEnum.reviewStory) {
             // review/rating: show rating count only
             relatedEntity = {
               id: story.id,
@@ -350,22 +348,24 @@ export class NotificationsService {
             relatedEntity = story;
           }
         }
-      } else if (this.readingSessionRelatedNotiTypes.includes(n.type.name)) {
+      } else if (
+        this.readingSessionRelatedNotiTypes.includes(n.notificationType)
+      ) {
         relatedEntity =
           n.relatedEntityId !== null
             ? readingSessionMap.get(n.relatedEntityId) || null
             : null;
-      } else if (n.type.name === NotificationTypeEnum.huberReported) {
+      } else if (n.notificationType === NotificationTypeEnum.huberReported) {
         relatedEntity =
           n.relatedEntityId !== null
             ? reportMap.get(n.relatedEntityId) || null
             : null;
-      } else if (this.appealRelatedNotiTypes.includes(n.type.name)) {
+      } else if (this.appealRelatedNotiTypes.includes(n.notificationType)) {
         relatedEntity =
           n.relatedEntityId !== null
             ? appealMap.get(n.relatedEntityId) || null
             : null;
-      } else if (n.type.name === NotificationTypeEnum.huberWarning) {
+      } else if (n.notificationType === NotificationTypeEnum.huberWarning) {
         relatedEntity =
           n.relatedEntityId !== null
             ? moderationMap.get(n.relatedEntityId) || null
@@ -378,7 +378,7 @@ export class NotificationsService {
         extraNote: n.extraNote,
         createdAt: n.createdAt,
         updatedAt: n.updatedAt,
-        type: n.type,
+        type: { name: n.notificationType },
         sender,
         relatedEntity,
       };
@@ -404,28 +404,29 @@ export class NotificationsService {
         return null;
       }
 
-      const type = await this.prisma.notificationType.findUnique({
-        where: { name: data.type },
-      });
-
-      if (!type) {
+      if (
+        !Object.values(NotificationTypeEnum).includes(
+          data.type as NotificationTypeEnum,
+        )
+      ) {
         this.logger.warn(
           `Notification skipped: Invalid Notification Type (${data.type})`,
         );
         return null;
       }
 
+      const typeName = data.type;
+
       const isStoryNotificationType =
-        this.storyRelatedNotificationTypes.includes(type.name);
+        this.storyRelatedNotificationTypes.includes(typeName);
       const isReadingSessionRelatedNotiType =
-        this.readingSessionRelatedNotiTypes.includes(type.name);
-      const isAppealRelatedNotiType = this.appealRelatedNotiTypes.includes(
-        type.name,
-      );
+        this.readingSessionRelatedNotiTypes.includes(typeName);
+      const isAppealRelatedNotiType =
+        this.appealRelatedNotiTypes.includes(typeName);
       const isHuberReportNotiType =
-        type.name === NotificationTypeEnum.huberReported;
+        typeName === NotificationTypeEnum.huberReported;
       const isHuberWarningNotiType =
-        type.name === NotificationTypeEnum.huberWarning;
+        typeName === NotificationTypeEnum.huberWarning;
 
       const isNeedRelatedEntityId =
         isStoryNotificationType ||
@@ -436,20 +437,20 @@ export class NotificationsService {
 
       if (isNeedRelatedEntityId && !data.relatedEntityId) {
         this.logger.warn(
-          `Notification skipped: Related entity ID is required for type ${type.name}`,
+          `Notification skipped: Related entity ID is required for type ${typeName}`,
         );
         return null;
       }
 
       if (data.relatedEntityId) {
-        await this.verifyRelatedEntityId(type.name, data.relatedEntityId);
+        await this.verifyRelatedEntityId(typeName, data.relatedEntityId);
       }
 
       return this.prisma.notification.create({
         data: {
           recipientId: data.recipientId,
           senderId: data.senderId,
-          typeId: type.id,
+          notificationType: typeName,
           relatedEntityId: isNeedRelatedEntityId ? data.relatedEntityId : null,
           extraNote: data.extraNote,
         },
@@ -553,7 +554,7 @@ export class NotificationsService {
 
   async getAdminId(): Promise<number | null> {
     const admin = await this.prisma.user.findFirst({
-      where: { role: { id: RoleEnum.admin } },
+      where: { roleId: RoleEnum.admin },
       select: { id: true },
     });
     return admin?.id ?? null;
@@ -565,7 +566,7 @@ export class NotificationsService {
     await this.prisma.notification.updateMany({
       where: {
         relatedEntityId: sessionId,
-        type: { name: 'other' },
+        notificationType: NotificationTypeEnum.other,
         deletedAt: null,
       },
       data: {

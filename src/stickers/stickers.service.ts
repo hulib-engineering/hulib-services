@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 
 import { CreateStickerDto } from './dto/create-sticker.dto';
-import { StickerRepository } from './infrastructure/persistence/sticker.repository';
+import { StickerRepository } from './sticker.repository';
 
 @Injectable()
 export class StickersService {
