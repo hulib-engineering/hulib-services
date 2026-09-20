@@ -314,19 +314,19 @@ model message {
 }
 
 model notification {
-  id              Int              @id @default(autoincrement())
-  recipientId     Int
-  recipient       user             @relation("RecipientNotification", fields: [recipientId], references: [id])
-  senderId        Int
-  sender          user             @relation("SenderNotification", fields: [senderId], references: [id])
-  typeId          Int
-  typeId_backup   Int?
-  seen            Boolean          @default(false)
-  relatedEntityId Int?
-  extraNote       String?
-  createdAt       DateTime         @default(now()) @db.Timestamp(6)
-  updatedAt       DateTime         @default(now()) @db.Timestamp(6)
-  deletedAt       DateTime?
+  id               Int       @id @default(autoincrement())
+  recipientId      Int
+  recipient        user      @relation("RecipientNotification", fields: [recipientId], references: [id])
+  senderId         Int
+  sender           user      @relation("SenderNotification", fields: [senderId], references: [id])
+  notificationType String    @db.VarChar
+  typeId_backup    Int?
+  seen             Boolean   @default(false)
+  relatedEntityId  Int?
+  extraNote        String?
+  createdAt        DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime  @default(now()) @db.Timestamp(6)
+  deletedAt        DateTime?
 }
 
 model notificationType {

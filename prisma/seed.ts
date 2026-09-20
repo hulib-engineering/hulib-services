@@ -776,38 +776,32 @@ async function seedNotifications(
   const notifications: {
     recipientId: number;
     senderId: number;
-    typeId: number;
+    notificationType: string;
     relatedEntityId?: number;
     extraNote?: string;
     seen?: boolean;
   }[] = [];
-
-  const typeIdByName = new Map(
-    (await prisma.notificationType.findMany()).map((t) => [t.name, t.id]),
-  );
-  const typeId = (name: (typeof NOTIFICATION_TYPES)[number]) =>
-    typeIdByName.get(name)!;
 
   for (const story of pickMany(stories, Math.min(15, stories.length))) {
     if (story.publishStatus === PUBLISH_STATUS.pending) {
       notifications.push({
         recipientId: admin.id,
         senderId: story.humanBookId,
-        typeId: typeId('publishStory'),
+        notificationType: 'publishStory',
         relatedEntityId: story.id,
       });
     } else if (story.publishStatus === PUBLISH_STATUS.published) {
       notifications.push({
         recipientId: story.humanBookId,
         senderId: admin.id,
-        typeId: typeId('publishStory'),
+        notificationType: 'publishStory',
         relatedEntityId: story.id,
       });
     } else if (story.publishStatus === PUBLISH_STATUS.rejected) {
       notifications.push({
         recipientId: story.humanBookId,
         senderId: admin.id,
-        typeId: typeId('rejectStory'),
+        notificationType: 'rejectStory',
         relatedEntityId: story.id,
         extraNote: story.rejectionReason ?? undefined,
       });
@@ -817,7 +811,7 @@ async function seedNotifications(
     notifications.push({
       recipientId: story.humanBookId,
       senderId: liker.id,
-      typeId: typeId('reactStory'),
+      notificationType: 'reactStory',
       relatedEntityId: story.id,
     });
   }
@@ -826,7 +820,7 @@ async function seedNotifications(
     notifications.push({
       recipientId: session.humanBookId,
       senderId: session.readerId,
-      typeId: typeId('sessionRequest'),
+      notificationType: 'sessionRequest',
       relatedEntityId: session.id,
     });
 
@@ -834,21 +828,21 @@ async function seedNotifications(
       notifications.push({
         recipientId: session.readerId,
         senderId: session.humanBookId,
-        typeId: typeId('approveReadingSession'),
+        notificationType: 'approveReadingSession',
         relatedEntityId: session.id,
       });
     } else if (session.sessionStatus === ReadingSessionStatus.rejected) {
       notifications.push({
         recipientId: session.readerId,
         senderId: session.humanBookId,
-        typeId: typeId('rejectReadingSession'),
+        notificationType: 'rejectReadingSession',
         relatedEntityId: session.id,
       });
     } else if (session.sessionStatus === ReadingSessionStatus.finished) {
       notifications.push({
         recipientId: session.readerId,
         senderId: session.humanBookId,
-        typeId: typeId('sessionFinish'),
+        notificationType: 'sessionFinish',
         relatedEntityId: session.id,
       });
     }
@@ -859,7 +853,7 @@ async function seedNotifications(
     notifications.push({
       recipientId: huber.id,
       senderId: admin.id,
-      typeId: typeId('account'),
+      notificationType: 'account',
     });
   }
 

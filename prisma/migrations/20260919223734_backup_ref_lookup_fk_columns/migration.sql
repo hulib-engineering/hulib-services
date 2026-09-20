@@ -41,14 +41,18 @@ SET "chatTypeId" = "chatTypeId_backup",
 ALTER TABLE "chat" DROP CONSTRAINT "chat_chatTypeId_fkey";
 ALTER TABLE "chat" DROP CONSTRAINT "chat_stickerId_fkey";
 
--- notification.typeId
+-- notification.typeId → notificationType (enum text). Keep typeId_backup for rollback.
 ALTER TABLE "notification" RENAME COLUMN "typeId" TO "typeId_backup";
-
-ALTER TABLE "notification" ADD COLUMN "typeId" INTEGER;
-
-UPDATE "notification" SET "typeId" = "typeId_backup";
-
 ALTER TABLE "notification" DROP CONSTRAINT "notification_typeId_fkey";
+
+ALTER TABLE "notification" ADD COLUMN "notificationType" VARCHAR;
+
+UPDATE "notification" AS n
+SET "notificationType" = nt."name"
+FROM "notificationType" AS nt
+WHERE n."typeId_backup" = nt."id";
+
+ALTER TABLE "notification" ALTER COLUMN "notificationType" SET NOT NULL;
 
 -- sticker.statusId
 ALTER TABLE "sticker" RENAME COLUMN "statusId" TO "statusId_backup";
@@ -58,3 +62,40 @@ ALTER TABLE "sticker" ADD COLUMN "statusId" INTEGER;
 UPDATE "sticker" SET "statusId" = "statusId_backup";
 
 ALTER TABLE "sticker" DROP CONSTRAINT "sticker_statusId_fkey";
+END$$;
+
+-- Step 6: add a text column that holds the enum name
+ALTER TABLE "notification" ADD COLUMN IF NOT EXISTS "notificationType" TEXT;
+
+-- Step 7: ensure the mapping table exists and is populated from the enum
+CREATE TABLE IF NOT EXISTS "NotificationType" (
+    "id"   INTEGER PRIMARY KEY,
+    "name" TEXT NOT NULL
+);
+INSERT INTO "NotificationType" ("id", "name") VALUES
+    (1,  'sessionRequest'),
+    (2,  'sessionFinish'),
+    (3,  'account'),
+    (4,  'reviewStory'),
+    (5,  'publishStory'),
+    (6,  'rejectStory'),
+    (7,  'reactStory'),
+    (8,  'shareStory'),
+    (9,  'huberReported'),
+    (10, 'rejectHuber'),
+    (11, 'approveReadingSession'),
+    (12, 'rejectReadingSession'),
+    (13, 'cancelReadingSession'),
+    (14, 'missReadingSession'),
+    (15, 'huberWarning'),
+    (16, 'userAppeal'),
+    (17, 'appealResponse')
+ON CONFLICT ("id") DO NOTHING;
+
+-- Step 8: map typeId_backup → text name (unknown ids become 'other')
+UPDATE "notification"
+SET "notificationType" = COALESCE(
+    (SELECT "name" FROM "NotificationType" n WHERE n."id" = "notification"."typeId_backup"),
+    'other'
+);
+"
