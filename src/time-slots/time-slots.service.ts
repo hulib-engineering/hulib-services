@@ -12,7 +12,7 @@ import {
   CreateTimeSlotDto,
   CreateTimeSlotsDto,
 } from './dto/create-time-slot.dto';
-import { TimeSlotRepository } from './infrastructure/persistence/time-slot.repository';
+import { TimeSlotRepository } from './time-slot.repository';
 import { TimeSlot } from './domain/time-slot';
 import { UsersService } from '@users/users.service';
 import { RoleEnum } from '../roles/roles.enum';

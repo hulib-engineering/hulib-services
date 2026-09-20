@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { StoriesService } from '@stories/stories.service';
 import { ContestUser } from './domain/contest-report';
 import * as ExcelJS from 'exceljs';
-import { ContestReportRepository } from './infrastructure/persistence/contest-report.repository';
+import { ContestReportRepository } from './contest-report.repository';
 
 @Injectable()
 export class ContestReportService {

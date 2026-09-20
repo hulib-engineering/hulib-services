@@ -6,7 +6,7 @@ import {
 
 import { CreateTopicsDto } from './dto/create-topics.dto';
 import { UpdateTopicsDto } from './dto/update-topics.dto';
-import { TopicsRepository } from './infrastructure/persistence/topics.repository';
+import { TopicsRepository } from './topics.repository';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { Topics } from './domain/topics';
 import { TopicColor } from './topic-color.enum';

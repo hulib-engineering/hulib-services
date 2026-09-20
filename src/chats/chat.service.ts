@@ -2,11 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '@users/domain/user';
 
 import { CreateChatDto } from './dto/create-chat.dto';
-import { ChatRepository } from './infrastructure/persistence/chat.repository';
+import { ChatRepository } from './chat.repository';
 import { Chat, ChatStatus } from './domain/chat';
 import { Conversation } from './domain/conversation';
 import { UsersService } from '@users/users.service';
-import { PrismaService } from '@prisma-client/prisma-client.service';
 import { SocketService } from '../socket/socket.service';
 
 @Injectable()
@@ -14,7 +13,6 @@ export class ChatService {
   constructor(
     private readonly chatRepository: ChatRepository,
     private readonly userService: UsersService,
-    private readonly prisma: PrismaService,
     private readonly socketService: SocketService,
   ) {}
 
@@ -119,37 +117,14 @@ export class ChatService {
   }
 
   async markMessagesAsRead(from: Chat['senderId'], to: Chat['recipientId']) {
-    await this.prisma.chat.updateMany({
-      where: {
-        recipientId: to,
-        senderId: from,
-        readAt: null,
-      },
-      data: {
-        readAt: new Date(),
-      },
-    });
+    await this.chatRepository.markMessagesAsRead(from, to);
   }
 
   checkUserOnline(userId: User['id']) {
     return this.socketService.isUserOnline(userId);
   }
 
-  private async countUnreadMessages(userId: User['id']) {
-    const unreadCounts = await this.prisma.chat.groupBy({
-      by: ['senderId'],
-      where: {
-        recipientId: Number(userId),
-        readAt: null,
-      },
-      _count: {
-        id: true,
-      },
-    });
-
-    return unreadCounts.map((item) => ({
-      senderId: item.senderId,
-      unread: item._count.id,
-    }));
+  private countUnreadMessages(userId: User['id']) {
+    return this.chatRepository.countUnreadMessages(userId);
   }
 }

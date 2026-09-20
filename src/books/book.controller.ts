@@ -38,7 +38,7 @@ export class BooksController {
   // @Roles(RoleEnum.reader)
   @ApiCreatedResponse({ type: Book })
   async create(@Body() createBookDto: createNewHumanBookDto): Promise<Book> {
-    return this.booksService.createBook(createBookDto);
+    return await this.booksService.createBook(createBookDto);
   }
 
   @Get(':id')
@@ -48,6 +48,6 @@ export class BooksController {
   @ApiOkResponse({ type: HumanBookDetailDto })
   @ApiParam({ name: 'id', type: 'number', description: 'ID của human book' })
   async getHumanBookDetail(@Param('id') id: number) {
-    return this.booksService.getHumanBookDetail(id);
+    return await this.booksService.getHumanBookDetail(id);
   }
 }

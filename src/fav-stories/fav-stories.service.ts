@@ -9,6 +9,7 @@ import { User } from '@users/domain/user';
 import { Story } from '@stories/domain/story';
 import { PublishStatus } from '@stories/status.enum';
 import { infinityPagination } from '@utils/infinity-pagination';
+import { toClientUser } from '@users/user-mapper';
 
 @Injectable()
 export class FavStoriesService {
@@ -58,16 +59,8 @@ export class FavStoriesService {
         story: {
           include: {
             humanBook: {
-              include: {
-                gender: true,
-                role: true,
-                status: true,
-              },
               omit: {
                 deletedAt: true,
-                genderId: true,
-                roleId: true,
-                statusId: true,
                 photoId: true,
                 password: true,
                 createdAt: true,
@@ -85,6 +78,7 @@ export class FavStoriesService {
         storyId: id,
         publishStatus: PublishStatus[publishStatus],
         ...rest,
+        humanBook: toClientUser(rest.humanBook),
       };
     });
 

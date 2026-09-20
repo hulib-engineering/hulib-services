@@ -6,17 +6,14 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ReadingSession, ReadingSessionStatus } from './domain/reading-session';
-import { Feedback } from './domain/feedback';
 import { Message } from './domain/message';
-import { ReadingSessionRepository } from './infrastructure/persistence/relational/repositories/reading-sessions.repository';
-import { FeedbackRepository } from './infrastructure/persistence/relational/repositories/feedbacks.repository';
-import { MessageRepository } from './infrastructure/persistence/relational/repositories/messages.repository';
+import { ReadingSessionRepository } from './reading-session.repository';
+import { MessageRepository } from './message.repository';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
 import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
-import { LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { User } from '@users/domain/user';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bull';
@@ -36,7 +33,6 @@ export class ReadingSessionsService {
 
   constructor(
     private readonly readingSessionRepository: ReadingSessionRepository,
-    private readonly feedbackRepository: FeedbackRepository,
     private readonly messageRepository: MessageRepository,
     private readonly usersService: UsersService,
     private readonly storiesService: StoriesService,
@@ -133,13 +129,12 @@ export class ReadingSessionsService {
     const sameDay = new Date(session.startedAt).toDateString();
 
     // Lấy các session cùng ngày với session mới
-    const existingSessions = await this.readingSessionRepository.find({
-      where: {
-        humanBookId: session.humanBookId,
-        startedAt: LessThanOrEqual(session.endedAt),
-        endedAt: MoreThanOrEqual(session.startedAt),
-      },
-    });
+    const existingSessions =
+      await this.readingSessionRepository.findOverlapping(
+        session.humanBookId,
+        session.startedAt,
+        session.endedAt,
+      );
 
     // Kiểm tra xem có session nào trùng thời gian với session mới
     const hasOverlap = existingSessions.some((existing) => {
@@ -234,6 +229,10 @@ export class ReadingSessionsService {
       await this.readingSessionRepository.update(id, {
         preRating: dto.presurvey[2].rating,
       });
+      // Keep the in-memory session in sync — it's re-persisted wholesale
+      // below (Object.assign(session, dto) + a final update), which would
+      // otherwise clobber this targeted write back to its stale value.
+      session.preRating = dto.presurvey[2].rating;
       await this.usersService.addFeedback(
         session.readerId,
         session.humanBookId,
@@ -262,6 +261,10 @@ export class ReadingSessionsService {
         await this.readingSessionRepository.update(id, {
           ...dto.sessionFeedback,
         });
+        // Same reason as the presurvey update above — keep `session` in
+        // sync so the final blanket update doesn't clobber it.
+        session.rating = dto.sessionFeedback.rating;
+        session.preRating = dto.sessionFeedback.preRating;
       }
       if (!!dto.storyReview) {
         const { content, ...rest } = dto.storyReview;
@@ -333,22 +336,6 @@ export class ReadingSessionsService {
     return await this.readingSessionRepository.update(id, session);
   }
 
-  async addFeedback(
-    id: number,
-    feedbackDto: { rating: number; content?: string },
-  ): Promise<ReadingSession> {
-    // const session = await this.findOneSession(id);
-
-    const feedback = new Feedback();
-    feedback.readingSessionId = id;
-    feedback.rating = feedbackDto.rating;
-    feedback.content = feedbackDto.content;
-
-    await this.feedbackRepository.create(feedback);
-
-    return await this.findOneSession(id);
-  }
-
   async addMessage(
     id: number,
     messageDto: { content: string; senderId: number },
@@ -364,11 +351,6 @@ export class ReadingSessionsService {
     await this.messageRepository.create(message);
 
     return await this.findOneSession(id);
-  }
-
-  async getSessionFeedbacks(id: number): Promise<Feedback[]> {
-    await this.findOneSession(id);
-    return await this.feedbackRepository.findByReadingSessionId(id);
   }
 
   async getSessionMessages(id: number): Promise<Message[]> {

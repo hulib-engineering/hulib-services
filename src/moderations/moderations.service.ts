@@ -6,7 +6,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { ModerationRepository } from './infrastructure/persistence/moderation.repository';
+import { ModerationRepository } from './moderation.repository';
 import { UsersService } from '@users/users.service';
 import { BanUserDto } from './dto/ban-user.dto';
 import { UnbanUserDto } from './dto/unban-user.dto';
@@ -182,7 +182,7 @@ export class ModerationsService {
           status: ModerationStatus.active,
         },
         order: {
-          createdAt: 'DESC',
+          createdAt: 'desc',
         },
         take: 1,
       });
@@ -377,7 +377,7 @@ export class ModerationsService {
           status: ModerationStatus.active,
         },
         order: {
-          createdAt: 'DESC',
+          createdAt: 'desc',
         },
         take: 1,
       });

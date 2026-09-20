@@ -4,7 +4,32 @@ import { PrismaService } from '@prisma-client/prisma-client.service';
 import { RoleEnum } from '@roles/roles.enum';
 import { TopicStatus } from '@topics/topic-status.enum';
 
+import { Prisma } from '@prisma/client';
+
 import { SearchDto } from './dto/search.dto';
+
+const storyInclude = {
+  humanBook: {
+    select: {
+      fullName: true,
+      roleId: true,
+    },
+  },
+  topics: {
+    select: {
+      topic: {
+        select: { id: true, name: true },
+      },
+    },
+  },
+  storyReview: true,
+  cover: true,
+} satisfies Prisma.storyInclude;
+
+type StorySearchRow = Prisma.storyGetPayload<{
+  include: typeof storyInclude;
+  omit: { humanBookId: true; coverId: true };
+}>;
 
 @Injectable()
 export class SearchService {
@@ -84,37 +109,24 @@ export class SearchService {
 
     const { ids, highlightTitles, highlightAbstracts } =
       await this.getStoryIdsByAccentedKeyword(keywordTrimmed);
-    const stories = await this.prisma.story.findMany({
+    const stories = (await this.prisma.story.findMany({
       where: {
         id: { in: ids },
         publishStatus: { equals: 2 },
       },
-      include: {
-        humanBook: {
-          select: {
-            fullName: true,
-            role: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-        topics: {
-          select: {
-            topic: {
-              select: { id: true, name: true },
-            },
-          },
-        },
-        storyReview: true,
-        cover: true,
-      },
+      include: storyInclude,
       omit: { humanBookId: true, coverId: true },
-    });
+    })) as StorySearchRow[];
 
     const serializedStories = stories.map((story, index) => ({
       ...story,
+      humanBook: {
+        fullName: story.humanBook.fullName,
+        role:
+          story.humanBook.roleId != null
+            ? { name: RoleEnum[story.humanBook.roleId] }
+            : undefined,
+      },
       topics: story.topics.map((topic) => ({
         ...topic.topic,
       })),

@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
-import { RelationalSessionPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
-import { SessionService } from './session.service';
 
-const infrastructurePersistenceModule = RelationalSessionPersistenceModule;
+import { SessionService } from './session.service';
+import { SessionRepository } from './session.repository';
 
 @Module({
-  imports: [infrastructurePersistenceModule],
-  providers: [SessionService],
-  exports: [SessionService, infrastructurePersistenceModule],
+  providers: [SessionService, SessionRepository],
+  exports: [SessionService, SessionRepository],
 })
 export class SessionModule {}

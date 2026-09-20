@@ -11,7 +11,7 @@ import {
 import { RoleEnum } from '@roles/roles.enum';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
-import { TopicsRepository } from '@topics/infrastructure/persistence/topics.repository';
+import { TopicsRepository } from '@topics/topics.repository';
 import { User } from '@users/domain/user';
 import { Topic } from '@topics/domain/topics';
 import { AppConfig } from '@config/app-config.type';
@@ -19,7 +19,7 @@ import appConfig from '@config/app.config';
 
 import { CreateStoryDto } from './dto/create-story.dto';
 import { UpdateStoryDto } from './dto/update-story.dto';
-import { StoryRepository } from './infrastructure/persistence/story.repository';
+import { StoryRepository } from './story.repository';
 import { IPaginationOptions } from '@utils/types/pagination-options';
 import { Story } from './domain/story';
 import { FilterStoryDto, SortStoryDto } from './dto/find-all-stories.dto';

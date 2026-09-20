@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
+
 import { StoriesService } from './stories.service';
 import { StoriesController } from './stories.controller';
 import { StoriesAdminController } from './stories-admin.controller';
-import { RelationalStoriesPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 
 import { UsersModule } from '@users/users.module';
+import { TopicsModule } from '@topics/topics.module';
+import { StoryRepository } from './story.repository';
 import { StoryReviewsModule } from '@story-reviews/story-reviews.module';
 import { StoryReviewsService } from '@story-reviews/story-reviews.service';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -13,15 +15,15 @@ import { MailModule } from '@mail/mail.module';
 
 @Module({
   imports: [
-    RelationalStoriesPersistenceModule,
     UsersModule,
+    TopicsModule,
     StoryReviewsModule,
     NotificationsModule,
     CacheModule,
     MailModule,
   ],
   controllers: [StoriesAdminController, StoriesController],
-  providers: [StoriesService, StoryReviewsService],
-  exports: [StoriesService, RelationalStoriesPersistenceModule],
+  providers: [StoriesService, StoryReviewsService, StoryRepository],
+  exports: [StoriesService, StoryRepository],
 })
 export class StoriesModule {}
