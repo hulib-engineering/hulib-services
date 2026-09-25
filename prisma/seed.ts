@@ -63,6 +63,7 @@ const NOTIFICATION_TYPES = [
   'huberWarning',
   'userAppeal',
   'appealResponse',
+  'timeSlotReminder',
   'other',
 ] as const;
 

@@ -579,27 +579,39 @@ export class NotificationsService {
     this.eventEmitter.emit('notification.create', createNotificationDto);
   }
 
+  async pushNotiAndWait(
+    createNotificationDto: CreateNotificationDto,
+  ): Promise<boolean> {
+    const notification = await this.create(createNotificationDto);
+    if (!notification) {
+      return false;
+    }
+
+    await this.emitNotificationList(notification.recipientId);
+    return true;
+  }
+
   @OnEvent('notification.create')
   async handleNotificationCreate(payload: CreateNotificationDto) {
     try {
-      const notification = await this.create(payload);
-
-      if (notification) {
-        const refetchedNotifs = await this.findAllWithPagination({
-          filterOptions: { recipientId: notification.recipientId },
-          paginationOptions: { page: 1, limit: 5 },
-        });
-
-        this.eventEmitter.emit('notification.list.fetch', {
-          userId: notification.recipientId,
-          notifications: {
-            ...refetchedNotifs,
-            ...infinityPagination(refetchedNotifs.data, { page: 1, limit: 5 }),
-          },
-        });
-      }
+      await this.pushNotiAndWait(payload);
     } catch (error) {
       this.logger.error(`Notification creation failed: ${error.message}`);
     }
+  }
+
+  private async emitNotificationList(recipientId: number): Promise<void> {
+    const refetchedNotifs = await this.findAllWithPagination({
+      filterOptions: { recipientId },
+      paginationOptions: { page: 1, limit: 5 },
+    });
+
+    this.eventEmitter.emit('notification.list.fetch', {
+      userId: recipientId,
+      notifications: {
+        ...refetchedNotifs,
+        ...infinityPagination(refetchedNotifs.data, { page: 1, limit: 5 }),
+      },
+    });
   }
 }
