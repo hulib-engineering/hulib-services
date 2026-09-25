@@ -10,11 +10,7 @@ import { TimeSlotReminderService } from './time-slots-reminder.service';
 @Module({
   imports: [UsersModule, NotificationsModule],
   controllers: [TimeSlotController],
-  providers: [
-    TimeSlotService,
-    TimeSlotRepository,
-    TimeSlotReminderService,
-  ],
+  providers: [TimeSlotService, TimeSlotRepository, TimeSlotReminderService],
   exports: [TimeSlotService, TimeSlotRepository, TimeSlotReminderService],
 })
 export class TimeSlotModule {}
