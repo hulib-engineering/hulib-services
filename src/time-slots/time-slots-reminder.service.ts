@@ -1,9 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Interval } from '@nestjs/schedule';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { RoleEnum } from '@roles/roles.enum';
 import { StatusEnum } from '@statuses/statuses.enum';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { NotificationsService } from '../notifications/notifications.service';
+
+const TIME_SLOT_REMINDER_INTERVAL_MS = 5 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class TimeSlotReminderService {
@@ -13,6 +16,11 @@ export class TimeSlotReminderService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  @Interval(TIME_SLOT_REMINDER_INTERVAL_MS)
+  async handleScheduledReminder(): Promise<number> {
+    return this.sendReminders();
+  }
 
   async sendReminders(): Promise<number> {
     const adminId = await this.notificationsService.getAdminId();
