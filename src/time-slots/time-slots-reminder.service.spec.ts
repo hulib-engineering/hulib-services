@@ -6,6 +6,7 @@ import { TimeSlotReminderService } from './time-slots-reminder.service';
 
 describe('TimeSlotReminderService', () => {
   let service: TimeSlotReminderService;
+  let sleepSpy: jest.SpyInstance;
   let prisma: { user: { findMany: jest.Mock } };
   let notificationsService: {
     getAdminId: jest.Mock;
@@ -22,6 +23,12 @@ describe('TimeSlotReminderService', () => {
       prisma as never,
       notificationsService as never,
     );
+    sleepSpy = jest
+      .spyOn(
+        service as unknown as { sleep(ms: number): Promise<void> },
+        'sleep',
+      )
+      .mockResolvedValue(undefined);
   });
 
   describe('sendReminders', () => {
@@ -80,6 +87,19 @@ describe('TimeSlotReminderService', () => {
 
       await expect(service.sendReminders()).resolves.toBe(0);
     });
+
+    it('should send in batches of ten and wait 30s between them', async () => {
+      notificationsService.getAdminId.mockResolvedValue(7);
+      prisma.user.findMany.mockResolvedValue(
+        Array.from({ length: 25 }, (_, index) => ({ id: index + 1 })),
+      );
+      notificationsService.pushNotiAndWait.mockResolvedValue(true);
+
+      await expect(service.sendReminders()).resolves.toBe(25);
+      expect(notificationsService.pushNotiAndWait).toHaveBeenCalledTimes(25);
+      expect(sleepSpy).toHaveBeenCalledTimes(2);
+      expect(sleepSpy).toHaveBeenCalledWith(30_000);
+    });
   });
 
   it('should run the scan from the scheduled reminder handler', async () => {
@@ -91,12 +111,16 @@ describe('TimeSlotReminderService', () => {
     expect(sendReminders).toHaveBeenCalledTimes(1);
   });
 
-  it('should be scheduled at midnight on days 5, 10, 15, 20, 25 and 30', () => {
+  it('should run at 18:00 Vietnam time on days 5, 10, 15, 20, 25 and 30', () => {
     const cronOptions = Reflect.getMetadata(
       SCHEDULE_CRON_OPTIONS,
       TimeSlotReminderService.prototype.handleScheduledReminder,
     );
 
-    expect(cronOptions).toEqual({ cronTime: '0 0 5,10,15,20,25,30 * *' });
+    expect(cronOptions).toEqual({
+      cronTime: '0 18 5,10,15,20,25,30 * *',
+      timeZone: 'Asia/Ho_Chi_Minh',
+      waitForCompletion: true,
+    });
   });
 });
