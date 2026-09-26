@@ -1,3 +1,4 @@
+import { SCHEDULE_CRON_OPTIONS } from '@nestjs/schedule/dist/schedule.constants';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { RoleEnum } from '../roles/roles.enum';
 import { StatusEnum } from '../statuses/statuses.enum';
@@ -88,5 +89,14 @@ describe('TimeSlotReminderService', () => {
 
     await expect(service.handleScheduledReminder()).resolves.toBe(3);
     expect(sendReminders).toHaveBeenCalledTimes(1);
+  });
+
+  it('should be scheduled at midnight on days 5, 10, 15, 20, 25 and 30', () => {
+    const cronOptions = Reflect.getMetadata(
+      SCHEDULE_CRON_OPTIONS,
+      TimeSlotReminderService.prototype.handleScheduledReminder,
+    );
+
+    expect(cronOptions).toEqual({ cronTime: '0 0 5,10,15,20,25,30 * *' });
   });
 });
