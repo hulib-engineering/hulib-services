@@ -32,14 +32,12 @@
     "test:e2e": "env-cmd jest --config ./test/jest-e2e.json",
     "test:e2e:relational:docker": "docker compose -f docker-compose.relational.test.yaml --env-file env-example-relational -p tests up -d --build && docker compose -f docker-compose.relational.test.yaml -p tests exec api /opt/wait-for-it.sh -t 0 localhost:3000 -- npm run test:e2e -- --watchAll --runInBand && docker compose -f docker-compose.relational.test.yaml -p tests down && docker compose -p tests rm -svf",
     "dev:husky": "node .husky/install.mjs",
-    "release": "release-it",
     "postinstall": "prisma generate"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.637.0",
     "@aws-sdk/s3-request-presigner": "3.637.0",
     "@casl/ability": "^6.7.3",
-    "@dotenvx/dotenvx": "^1.36.0",
     "@faker-js/faker": "^9.6.0",
     "@nestjs/bull": "^11.0.2",
     "@nestjs/cache-manager": "^3.0.1",
@@ -84,7 +82,6 @@
     "reflect-metadata": "0.2.2",
     "rimraf": "6.0.1",
     "rxjs": "7.8.1",
-    "semantic-release": "^24.2.2",
     "socket.io": "^4.8.1",
     "source-map-support": "0.5.21",
     "swagger-ui-express": "5.0.1",
@@ -98,7 +95,6 @@
     "@nestjs/cli": "10.4.5",
     "@nestjs/schematics": "10.1.4",
     "@nestjs/testing": "10.4.1",
-    "@release-it/conventional-changelog": "8.0.1",
     "@swc/cli": "0.4.0",
     "@swc/core": "1.7.23",
     "@types/axios": "^0.14.4",
@@ -127,7 +123,6 @@
     "prettier": "3.3.3",
     "prisma": "^6.3.1",
     "prompts": "2.4.2",
-    "release-it": "17.6.0",
     "supertest": "7.0.0",
     "ts-jest": "29.2.3",
     "ts-loader": "9.5.1",
@@ -194,66 +189,5 @@
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
-  },
-  "release-it": {
-    "git": {
-      "commitMessage": "chore: release v${version}"
-    },
-    "github": {
-      "release": true
-    },
-    "npm": {
-      "publish": false
-    },
-    "plugins": {
-      "@release-it/conventional-changelog": {
-        "infile": "CHANGELOG.md",
-        "preset": {
-          "name": "conventionalcommits",
-          "types": [
-            {
-              "type": "chore(deps)",
-              "section": "Dependency Upgrades"
-            },
-            {
-              "type": "fix(deps)",
-              "section": "Dependency Upgrades"
-            },
-            {
-              "type": "feat",
-              "section": "Features"
-            },
-            {
-              "type": "fix",
-              "section": "Bug Fixes"
-            },
-            {
-              "type": "perf",
-              "section": "Performance Improvements"
-            },
-            {
-              "type": "revert",
-              "section": "Reverts"
-            },
-            {
-              "type": "docs",
-              "section": "Documentation"
-            },
-            {
-              "type": "refactor",
-              "section": "Code Refactoring"
-            },
-            {
-              "type": "test",
-              "section": "Tests"
-            },
-            {
-              "type": "ci",
-              "section": "Continuous Integration"
-            }
-          ]
-        }
-      }
-    }
   }
 }
