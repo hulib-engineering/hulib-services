@@ -58,7 +58,7 @@ Complete guide to deploy HuLib NestJS backend to Azure Container Apps using Dock
 
 ## Step 2: Update Environment Configuration
 
-Update your existing `.env.production` file with Azure-specific configurations:
+Update your existing `.env` file with Azure-specific configurations:
 
 ```bash
 NODE_ENV=production
@@ -256,7 +256,7 @@ In Azure Portal:
 
 1. Go to **Container Apps** → `hulib-backend`
 2. Navigate to **Configuration** → **Environment variables**
-3. Add all variables from your `.env.production` file
+3. Add all variables from your `.env` file
 4. Click **Save**
 
 ## Step 7: Configure Custom Domain (Optional)
