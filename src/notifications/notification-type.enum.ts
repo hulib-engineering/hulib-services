@@ -16,5 +16,6 @@ export enum NotificationTypeEnum {
   huberWarning = 'huberWarning',
   userAppeal = 'userAppeal',
   appealResponse = 'appealResponse',
+  timeSlotReminder = 'timeSlotReminder',
   other = 'other',
 }
