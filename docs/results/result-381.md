@@ -20,6 +20,6 @@ Notes / follow-up
 - No `lastTimeSlotReminderAt` / `timeSlotDefinedAt` column was added; the row-existence rule depends on the current API rejecting empty slot arrays. If clearing all slots becomes possible, a separate permanent marker will be needed.
 - The cadence assumes a single running application instance; multiple instances would each run the scan. `waitForCompletion` is enabled so a slow batched run cannot overlap with itself.
 - The cron is pinned to `timeZone: 'Asia/Ho_Chi_Minh'` explicitly, so it fires at 18:00 Vietnam time even if the server timezone changes; the rest of the app's schedulers still use the server timezone.
-- The issue title still says "every 5 days" but the agreed cadence is now once a month on the 10th, so the issue wording should be updated to match.
+- The issue was updated during implementation to match the final design (monthly on the 10th, no persisted reminder state, batching, no email).
 - A run over many Hubers is intentionally slow: 500 recipients means 50 batches and roughly 25 minutes of pauses.
 - If no Admin account exists the scan logs a warning and sends nothing; the message text is a fixed English `extraNote` that the frontend may want to localize.
