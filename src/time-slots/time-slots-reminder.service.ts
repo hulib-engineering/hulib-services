@@ -7,7 +7,7 @@ import { processInBatches } from '@utils/process-in-batches';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 
-const TIME_SLOT_REMINDER_CRON = '0 18 5,10,15,20,25,30 * *';
+const TIME_SLOT_REMINDER_CRON = '0 18 10 * *';
 const REMINDER_BATCH_SIZE = 10;
 const REMINDER_BATCH_DELAY_MS = 30_000;
 

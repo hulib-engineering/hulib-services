@@ -111,14 +111,14 @@ describe('TimeSlotReminderService', () => {
     expect(sendReminders).toHaveBeenCalledTimes(1);
   });
 
-  it('should run at 18:00 Vietnam time on days 5, 10, 15, 20, 25 and 30', () => {
+  it('should run at 18:00 Vietnam time on the 10th of every month', () => {
     const cronOptions = Reflect.getMetadata(
       SCHEDULE_CRON_OPTIONS,
       TimeSlotReminderService.prototype.handleScheduledReminder,
     );
 
     expect(cronOptions).toEqual({
-      cronTime: '0 18 5,10,15,20,25,30 * *',
+      cronTime: '0 18 10 * *',
       timeZone: 'Asia/Ho_Chi_Minh',
       waitForCompletion: true,
     });
