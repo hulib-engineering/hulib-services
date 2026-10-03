@@ -509,20 +509,15 @@ export class ReadingSessionsService {
   private async markOverdueSessionsAsMissed(now: Date) {
     const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
 
+    // A session is only "missed" when the huber never joined. Ratings are a
+    // reader action taken after the call, so they cannot prove absence.
     const overdueSessions = await this.prisma.readingSession.findMany({
       where: {
         startedAt: {
           lt: thirtyMinutesAgo,
         },
         sessionStatus: ReadingSessionStatus.APPROVED,
-        OR: [
-          {
-            preRating: 0,
-          },
-          {
-            rating: 0,
-          },
-        ],
+        huberJoinedAt: null,
       },
     });
 
@@ -548,6 +543,13 @@ export class ReadingSessionsService {
             recipientId: session.readerId,
             type: NotificationTypeEnum.missReadingSession,
             relatedEntityId: session.id,
+          });
+          await this.notificationService.pushNoti({
+            senderId: adminId,
+            recipientId: session.humanBookId,
+            type: NotificationTypeEnum.huberNoShowReadingSession,
+            relatedEntityId: session.id,
+            extraNote: this.buildHuberNoShowNote(session),
           });
         }
 
