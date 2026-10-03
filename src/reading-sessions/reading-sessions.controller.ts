@@ -20,6 +20,8 @@ import {
   ApiOperation,
   ApiResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiParam,
 } from '@nestjs/swagger';
 import { ReadingSessionsService } from './reading-sessions.service';
@@ -117,5 +119,27 @@ export class ReadingSessionsController {
   @Delete(':id')
   async deleteSession(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.readingSessionsService.deleteSession(id);
+  }
+
+  @ApiOperation({
+    summary:
+      'Record that the caller has joined the meeting room. Idempotent — the first join time wins.',
+  })
+  @Post(':id/attend')
+  @Roles(RoleEnum.reader, RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiForbiddenResponse({ description: 'Caller is not a session participant.' })
+  @ApiNotFoundResponse({ description: 'Reading session not found.' })
+  async markAttendance(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() request,
+  ): Promise<void> {
+    return this.readingSessionsService.markAttendance(id, request.user.id);
   }
 }

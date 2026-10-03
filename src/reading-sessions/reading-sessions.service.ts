@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   HttpStatus,
   Injectable,
   Logger,
@@ -209,6 +210,23 @@ export class ReadingSessionsService {
       throw new NotFoundException(`Reading session #${id} not found`);
     }
     return session;
+  }
+
+  async markAttendance(id: number, userId: number): Promise<void> {
+    const session = await this.findOneSession(id);
+
+    if (session.humanBookId === userId) {
+      await this.readingSessionRepository.markAttendance(id, 'huber');
+      return;
+    }
+    if (session.readerId === userId) {
+      await this.readingSessionRepository.markAttendance(id, 'reader');
+      return;
+    }
+    throw new ForbiddenException({
+      status: HttpStatus.FORBIDDEN,
+      error: 'notSessionParticipant',
+    });
   }
 
   async updateSession(id: number, dto: UpdateReadingSessionDto): Promise<void> {
