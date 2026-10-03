@@ -31,6 +31,13 @@ import { PrismaService } from '@prisma-client/prisma-client.service';
 const AUTO_CANCEL_REASON =
   'Huber did not respond before the session start time';
 
+const TERMINAL_SESSION_STATUSES: ReadingSessionStatus[] = [
+  ReadingSessionStatus.CANCELED,
+  ReadingSessionStatus.MISSED,
+  ReadingSessionStatus.FINISHED,
+  ReadingSessionStatus.REJECTED,
+];
+
 @Injectable()
 export class ReadingSessionsService {
   private readonly logger = new Logger(this.constructor.name);
@@ -234,6 +241,20 @@ export class ReadingSessionsService {
 
   async updateSession(id: number, dto: UpdateReadingSessionDto): Promise<void> {
     const session = await this.findOneSession(id);
+
+    // Without this, a huber approving just after the cron auto-cancelled the
+    // session would flip it back to approved — an unjoinable session with a
+    // contradictory status.
+    if (
+      (dto.sessionStatus === ReadingSessionStatus.APPROVED ||
+        dto.sessionStatus === ReadingSessionStatus.REJECTED) &&
+      TERMINAL_SESSION_STATUSES.includes(session.sessionStatus)
+    ) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: `sessionAlready${session.sessionStatus}`,
+      });
+    }
 
     if (
       session.sessionStatus === ReadingSessionStatus.APPROVED &&
