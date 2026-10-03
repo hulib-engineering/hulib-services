@@ -28,6 +28,9 @@ import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 
+const AUTO_CANCEL_REASON =
+  'Huber did not respond before the session start time';
+
 @Injectable()
 export class ReadingSessionsService {
   private readonly logger = new Logger(this.constructor.name);
@@ -412,6 +415,8 @@ export class ReadingSessionsService {
 
     await this.scheduleRemindersForUpcomingSessions(now);
 
+    await this.autoCancelStalePendingSessions(now);
+
     await this.markOverdueSessionsAsMissed(now);
   }
 
@@ -447,6 +452,57 @@ export class ReadingSessionsService {
           removeOnFail: true,
         },
       );
+    }
+  }
+
+  // A pending session whose start time has passed is hard proof the huber never
+  // responded, so no attendance data is needed. Detection latency is up to one
+  // cron interval (30 min) after the start time.
+  private async autoCancelStalePendingSessions(now: Date) {
+    const staleSessions = await this.prisma.readingSession.findMany({
+      where: {
+        startedAt: { lt: now },
+        sessionStatus: ReadingSessionStatus.PENDING,
+      },
+      include: { humanBook: { select: { fullName: true } } },
+    });
+
+    if (staleSessions.length === 0) {
+      return;
+    }
+
+    this.logger.log(
+      `[CRON] Found ${staleSessions.length} unanswered sessions to auto cancel`,
+    );
+
+    for (const session of staleSessions) {
+      await this.prisma.readingSession.update({
+        where: { id: session.id },
+        data: {
+          sessionStatus: ReadingSessionStatus.CANCELED,
+          rejectReason: AUTO_CANCEL_REASON,
+        },
+      });
+
+      await this.notificationService.softDeleteSessionReminderNotification(
+        session.id,
+      );
+
+      const adminId = await this.notificationService.getAdminId();
+      if (adminId) {
+        await this.notificationService.pushNoti({
+          senderId: adminId,
+          recipientId: session.readerId,
+          type: NotificationTypeEnum.autoCancelReadingSession,
+          relatedEntityId: session.id,
+          extraNote: this.buildAutoCancelNote(
+            session,
+            session.humanBook?.fullName ?? '',
+          ),
+        });
+      }
+
+      this.logger.log(`[CRON] Auto canceled session ${session.id}`);
     }
   }
 
