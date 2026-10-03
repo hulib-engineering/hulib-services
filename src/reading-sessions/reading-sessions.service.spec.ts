@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ describe('ReadingSessionsService', () => {
     findManyWithPagination: jest.Mock;
     update: jest.Mock;
     softDelete: jest.Mock;
+    markAttendance: jest.Mock;
   };
   let messageRepository: {
     create: jest.Mock;
@@ -67,6 +69,7 @@ describe('ReadingSessionsService', () => {
       findManyWithPagination: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
+      markAttendance: jest.fn(),
     };
     messageRepository = {
       create: jest.fn(),
@@ -311,6 +314,228 @@ describe('ReadingSessionsService', () => {
           recipientId: 10,
         }),
       );
+    });
+
+    it.each([
+      ReadingSessionStatus.CANCELED,
+      ReadingSessionStatus.MISSED,
+      ReadingSessionStatus.FINISHED,
+      ReadingSessionStatus.REJECTED,
+    ])(
+      'should reject approving a session that is already %s',
+      async (terminalStatus) => {
+        readingSessionRepository.findById.mockResolvedValue(
+          makeSession({ sessionStatus: terminalStatus }),
+        );
+
+        await expect(
+          service.updateSession(1, { sessionStatus: 'approved' }),
+        ).rejects.toBeInstanceOf(UnprocessableEntityException);
+
+        expect(readingSessionRepository.update).not.toHaveBeenCalled();
+      },
+    );
+
+    it('should reject a late reject on an auto canceled session', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ sessionStatus: ReadingSessionStatus.CANCELED }),
+      );
+
+      await expect(
+        service.updateSession(1, { sessionStatus: 'rejected' }),
+      ).rejects.toBeInstanceOf(UnprocessableEntityException);
+
+      expect(readingSessionRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('should still allow approving a pending session', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ sessionStatus: ReadingSessionStatus.PENDING }),
+      );
+      readingSessionRepository.update.mockResolvedValue(null);
+
+      await service.updateSession(1, { sessionStatus: 'approved' });
+
+      expect(readingSessionRepository.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('markAttendance', () => {
+    it('should stamp the huber column when the huber joins', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ humanBookId: 10, readerId: 20 }),
+      );
+
+      await service.markAttendance(1, 10);
+
+      expect(readingSessionRepository.markAttendance).toHaveBeenCalledWith(
+        1,
+        'huber',
+      );
+    });
+
+    it('should stamp the reader column when the reader joins', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ humanBookId: 10, readerId: 20 }),
+      );
+
+      await service.markAttendance(1, 20);
+
+      expect(readingSessionRepository.markAttendance).toHaveBeenCalledWith(
+        1,
+        'reader',
+      );
+    });
+
+    it('should throw Forbidden when the caller is not a participant', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ humanBookId: 10, readerId: 20 }),
+      );
+
+      await expect(service.markAttendance(1, 99)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+
+      expect(readingSessionRepository.markAttendance).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFound when no session exists', async () => {
+      readingSessionRepository.findById.mockResolvedValue(null);
+
+      await expect(service.markAttendance(9, 10)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('checkAndScheduleReminders', () => {
+    // The cron runs three scans in a fixed order, so each findMany result has to
+    // line up with the scan it feeds.
+    const stubScans = (
+      upcoming: unknown[],
+      stalePending: unknown[],
+      overdue: unknown[],
+    ) => {
+      prisma.readingSession.findMany
+        .mockResolvedValueOnce(upcoming)
+        .mockResolvedValueOnce(stalePending)
+        .mockResolvedValueOnce(overdue);
+    };
+
+    const scanWhere = (index: number) =>
+      prisma.readingSession.findMany.mock.calls[index][0].where;
+
+    it('should auto cancel an unanswered pending session and notify the reader', async () => {
+      stubScans(
+        [],
+        [
+          makeSession({
+            sessionStatus: ReadingSessionStatus.PENDING,
+            startedAt: new Date('2024-05-01T01:00:00'),
+            humanBook: { fullName: 'Tran Thanh Thoa' },
+          }),
+        ],
+        [],
+      );
+      notificationService.getAdminId.mockResolvedValue(1);
+
+      await service.checkAndScheduleReminders();
+
+      expect(prisma.readingSession.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          sessionStatus: ReadingSessionStatus.CANCELED,
+          rejectReason: expect.stringContaining('did not respond'),
+        },
+      });
+      expect(
+        notificationService.softDeleteSessionReminderNotification,
+      ).toHaveBeenCalledWith(1);
+      expect(notificationService.pushNoti).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: NotificationTypeEnum.autoCancelReadingSession,
+          recipientId: 20,
+          relatedEntityId: 1,
+          extraNote: expect.stringContaining('Tran Thanh Thoa'),
+        }),
+      );
+    });
+
+    it('should only look for pending sessions that already started', async () => {
+      stubScans([], [], []);
+
+      await service.checkAndScheduleReminders();
+
+      expect(scanWhere(1)).toEqual(
+        expect.objectContaining({
+          sessionStatus: ReadingSessionStatus.PENDING,
+        }),
+      );
+    });
+
+    it('should skip the auto cancel notification when no admin exists', async () => {
+      stubScans(
+        [],
+        [makeSession({ sessionStatus: ReadingSessionStatus.PENDING })],
+        [],
+      );
+      notificationService.getAdminId.mockResolvedValue(null);
+
+      await service.checkAndScheduleReminders();
+
+      expect(prisma.readingSession.update).toHaveBeenCalled();
+      expect(notificationService.pushNoti).not.toHaveBeenCalled();
+    });
+
+    it('should mark an approved session as missed and notify both sides when the huber never joined', async () => {
+      stubScans(
+        [],
+        [],
+        [
+          makeSession({
+            sessionStatus: ReadingSessionStatus.APPROVED,
+            startedAt: new Date('2024-05-01T01:00:00'),
+            huberJoinedAt: null,
+          }),
+        ],
+      );
+      notificationService.getAdminId.mockResolvedValue(1);
+
+      await service.checkAndScheduleReminders();
+
+      expect(prisma.readingSession.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { sessionStatus: ReadingSessionStatus.MISSED },
+      });
+      expect(notificationService.pushNoti).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: NotificationTypeEnum.missReadingSession,
+          recipientId: 20,
+        }),
+      );
+      expect(notificationService.pushNoti).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: NotificationTypeEnum.huberNoShowReadingSession,
+          recipientId: 10,
+          extraNote: expect.stringContaining(
+            "couldn't confirm your participation",
+          ),
+        }),
+      );
+    });
+
+    it('should detect a missed session from attendance, not from ratings', async () => {
+      stubScans([], [], []);
+
+      await service.checkAndScheduleReminders();
+
+      expect(scanWhere(2)).toEqual(
+        expect.objectContaining({
+          sessionStatus: ReadingSessionStatus.APPROVED,
+          huberJoinedAt: null,
+        }),
+      );
+      expect(scanWhere(2).OR).toBeUndefined();
     });
   });
 
