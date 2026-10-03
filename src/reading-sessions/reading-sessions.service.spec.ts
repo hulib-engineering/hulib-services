@@ -406,6 +406,53 @@ describe('ReadingSessionsService', () => {
         NotFoundException,
       );
     });
+
+    it('should reject a stamp more than 30 minutes before the start time', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({
+          humanBookId: 10,
+          readerId: 20,
+          startedAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+        }),
+      );
+
+      await expect(service.markAttendance(1, 10)).rejects.toBeInstanceOf(
+        UnprocessableEntityException,
+      );
+
+      expect(readingSessionRepository.markAttendance).not.toHaveBeenCalled();
+    });
+
+    it('should accept a stamp inside the 30 minute grace window', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({
+          humanBookId: 10,
+          readerId: 20,
+          startedAt: new Date(Date.now() + 20 * 60 * 1000),
+        }),
+      );
+
+      await service.markAttendance(1, 10);
+
+      expect(readingSessionRepository.markAttendance).toHaveBeenCalledWith(
+        1,
+        'huber',
+      );
+    });
+
+    it('should reject the non participant before checking the start time', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({
+          humanBookId: 10,
+          readerId: 20,
+          startedAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+        }),
+      );
+
+      await expect(service.markAttendance(1, 99)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+    });
   });
 
   describe('checkAndScheduleReminders', () => {

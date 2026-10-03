@@ -31,6 +31,9 @@ import { PrismaService } from '@prisma-client/prisma-client.service';
 const AUTO_CANCEL_REASON =
   'Huber did not respond before the session start time';
 
+// Matches how far ahead of the start the meeting link and Agora token exist.
+const ATTENDANCE_GRACE_MS = 30 * 60 * 1000;
+
 const TERMINAL_SESSION_STATUSES: ReadingSessionStatus[] = [
   ReadingSessionStatus.CANCELED,
   ReadingSessionStatus.MISSED,
@@ -225,18 +228,34 @@ export class ReadingSessionsService {
   async markAttendance(id: number, userId: number): Promise<void> {
     const session = await this.findOneSession(id);
 
-    if (session.humanBookId === userId) {
-      await this.readingSessionRepository.markAttendance(id, 'huber');
-      return;
+    const role =
+      session.humanBookId === userId
+        ? 'huber'
+        : session.readerId === userId
+          ? 'reader'
+          : null;
+
+    if (!role) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'notSessionParticipant',
+      });
     }
-    if (session.readerId === userId) {
-      await this.readingSessionRepository.markAttendance(id, 'reader');
-      return;
+
+    // The Agora token only becomes reachable about 30 min before the start (see
+    // scheduleRemindersForUpcomingSessions), so a stamp earlier than that is not
+    // a real join and must not count as attendance.
+    const earliestJoinAt = new Date(
+      session.startedAt.getTime() - ATTENDANCE_GRACE_MS,
+    );
+    if (new Date() < earliestJoinAt) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'tooEarlyToRecordAttendance',
+      });
     }
-    throw new ForbiddenException({
-      status: HttpStatus.FORBIDDEN,
-      error: 'notSessionParticipant',
-    });
+
+    await this.readingSessionRepository.markAttendance(id, role);
   }
 
   async updateSession(id: number, dto: UpdateReadingSessionDto): Promise<void> {
