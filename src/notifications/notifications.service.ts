@@ -28,6 +28,8 @@ export class NotificationsService {
     NotificationTypeEnum.rejectReadingSession,
     NotificationTypeEnum.cancelReadingSession,
     NotificationTypeEnum.missReadingSession,
+    NotificationTypeEnum.huberNoShowReadingSession,
+    NotificationTypeEnum.autoCancelReadingSession,
     NotificationTypeEnum.other,
   ];
   private readonly appealRelatedNotiTypes: string[] = [

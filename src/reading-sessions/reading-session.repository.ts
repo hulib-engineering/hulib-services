@@ -70,6 +70,8 @@ export function readingSessionToDomain(raw: ReadingSessionRow): ReadingSession {
   domain.endTime = raw.endTime;
   domain.startedAt = raw.startedAt;
   domain.endedAt = raw.endedAt;
+  domain.huberJoinedAt = raw.huberJoinedAt ?? undefined;
+  domain.readerJoinedAt = raw.readerJoinedAt ?? undefined;
   domain.createdAt = raw.createdAt;
   domain.updatedAt = raw.updatedAt;
   domain.deletedAt = raw.deletedAt ?? undefined;
@@ -251,6 +253,21 @@ export class ReadingSessionRepository {
     await this.prisma.readingSession.update({
       where: { id },
       data: { deletedAt: new Date() },
+    });
+  }
+
+  async markAttendance(id: number, role: 'huber' | 'reader'): Promise<void> {
+    const now = new Date();
+    // The null guard keeps the stamp atomic and makes a repeat call a no-op,
+    // so the first join time is the one we keep.
+    await this.prisma.readingSession.updateMany({
+      where: {
+        id,
+        ...(role === 'huber'
+          ? { huberJoinedAt: null }
+          : { readerJoinedAt: null }),
+      },
+      data: role === 'huber' ? { huberJoinedAt: now } : { readerJoinedAt: now },
     });
   }
 }

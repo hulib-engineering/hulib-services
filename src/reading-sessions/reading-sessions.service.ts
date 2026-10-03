@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   HttpStatus,
   Injectable,
   Logger,
@@ -26,6 +27,19 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+
+const AUTO_CANCEL_REASON =
+  'Huber did not respond before the session start time';
+
+// Matches how far ahead of the start the meeting link and Agora token exist.
+const ATTENDANCE_GRACE_MS = 30 * 60 * 1000;
+
+const TERMINAL_SESSION_STATUSES: ReadingSessionStatus[] = [
+  ReadingSessionStatus.CANCELED,
+  ReadingSessionStatus.MISSED,
+  ReadingSessionStatus.FINISHED,
+  ReadingSessionStatus.REJECTED,
+];
 
 @Injectable()
 export class ReadingSessionsService {
@@ -211,8 +225,55 @@ export class ReadingSessionsService {
     return session;
   }
 
+  async markAttendance(id: number, userId: number): Promise<void> {
+    const session = await this.findOneSession(id);
+
+    const role =
+      session.humanBookId === userId
+        ? 'huber'
+        : session.readerId === userId
+          ? 'reader'
+          : null;
+
+    if (!role) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'notSessionParticipant',
+      });
+    }
+
+    // The Agora token only becomes reachable about 30 min before the start (see
+    // scheduleRemindersForUpcomingSessions), so a stamp earlier than that is not
+    // a real join and must not count as attendance.
+    const earliestJoinAt = new Date(
+      session.startedAt.getTime() - ATTENDANCE_GRACE_MS,
+    );
+    if (new Date() < earliestJoinAt) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'tooEarlyToRecordAttendance',
+      });
+    }
+
+    await this.readingSessionRepository.markAttendance(id, role);
+  }
+
   async updateSession(id: number, dto: UpdateReadingSessionDto): Promise<void> {
     const session = await this.findOneSession(id);
+
+    // Without this, a huber approving just after the cron auto-cancelled the
+    // session would flip it back to approved — an unjoinable session with a
+    // contradictory status.
+    if (
+      (dto.sessionStatus === ReadingSessionStatus.APPROVED ||
+        dto.sessionStatus === ReadingSessionStatus.REJECTED) &&
+      TERMINAL_SESSION_STATUSES.includes(session.sessionStatus)
+    ) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: `sessionAlready${session.sessionStatus}`,
+      });
+    }
 
     if (
       session.sessionStatus === ReadingSessionStatus.APPROVED &&
@@ -358,6 +419,33 @@ export class ReadingSessionsService {
     return await this.messageRepository.findByReadingSessionId(id);
   }
 
+  private formatSessionWhen(
+    session: Pick<ReadingSession, 'startTime' | 'endTime' | 'startedAt'>,
+  ): string {
+    const sessionDate = session.startedAt.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    return `${session.startTime} - ${session.endTime}, ${sessionDate}`;
+  }
+
+  // Deliberately neutral rather than accusatory: a huber can look absent purely
+  // because the attend beacon never arrived, and we would rather ask than accuse.
+  private buildHuberNoShowNote(
+    session: Pick<ReadingSession, 'startTime' | 'endTime' | 'startedAt'>,
+  ): string {
+    return `We couldn't confirm your participation in the session (${this.formatSessionWhen(session)}). If anything got in the way on your side, please let us know so we can improve the experience for everyone.`;
+  }
+
+  private buildAutoCancelNote(
+    session: Pick<ReadingSession, 'startTime' | 'endTime' | 'startedAt'>,
+    huberName: string,
+  ): string {
+    return `Sorry! Your meeting request (${this.formatSessionWhen(session)}) has been auto cancelled because ${huberName} has not responded yet.`;
+  }
+
   @Cron('0 */30 * * * *', { timeZone: 'UTC' }) // Every 30 mins, starting from 00:00 UTC
   async checkAndScheduleReminders() {
     const now = new Date();
@@ -366,6 +454,8 @@ export class ReadingSessionsService {
     );
 
     await this.scheduleRemindersForUpcomingSessions(now);
+
+    await this.autoCancelStalePendingSessions(now);
 
     await this.markOverdueSessionsAsMissed(now);
   }
@@ -405,23 +495,69 @@ export class ReadingSessionsService {
     }
   }
 
+  // A pending session whose start time has passed is hard proof the huber never
+  // responded, so no attendance data is needed. Detection latency is up to one
+  // cron interval (30 min) after the start time.
+  private async autoCancelStalePendingSessions(now: Date) {
+    const staleSessions = await this.prisma.readingSession.findMany({
+      where: {
+        startedAt: { lt: now },
+        sessionStatus: ReadingSessionStatus.PENDING,
+      },
+      include: { humanBook: { select: { fullName: true } } },
+    });
+
+    if (staleSessions.length === 0) {
+      return;
+    }
+
+    this.logger.log(
+      `[CRON] Found ${staleSessions.length} unanswered sessions to auto cancel`,
+    );
+
+    for (const session of staleSessions) {
+      await this.prisma.readingSession.update({
+        where: { id: session.id },
+        data: {
+          sessionStatus: ReadingSessionStatus.CANCELED,
+          rejectReason: AUTO_CANCEL_REASON,
+        },
+      });
+
+      await this.notificationService.softDeleteSessionReminderNotification(
+        session.id,
+      );
+
+      const adminId = await this.notificationService.getAdminId();
+      if (adminId) {
+        await this.notificationService.pushNoti({
+          senderId: adminId,
+          recipientId: session.readerId,
+          type: NotificationTypeEnum.autoCancelReadingSession,
+          relatedEntityId: session.id,
+          extraNote: this.buildAutoCancelNote(
+            session,
+            session.humanBook?.fullName ?? '',
+          ),
+        });
+      }
+
+      this.logger.log(`[CRON] Auto canceled session ${session.id}`);
+    }
+  }
+
   private async markOverdueSessionsAsMissed(now: Date) {
     const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
 
+    // A session is only "missed" when the huber never joined. Ratings are a
+    // reader action taken after the call, so they cannot prove absence.
     const overdueSessions = await this.prisma.readingSession.findMany({
       where: {
         startedAt: {
           lt: thirtyMinutesAgo,
         },
         sessionStatus: ReadingSessionStatus.APPROVED,
-        OR: [
-          {
-            preRating: 0,
-          },
-          {
-            rating: 0,
-          },
-        ],
+        huberJoinedAt: null,
       },
     });
 
@@ -447,6 +583,13 @@ export class ReadingSessionsService {
             recipientId: session.readerId,
             type: NotificationTypeEnum.missReadingSession,
             relatedEntityId: session.id,
+          });
+          await this.notificationService.pushNoti({
+            senderId: adminId,
+            recipientId: session.humanBookId,
+            type: NotificationTypeEnum.huberNoShowReadingSession,
+            relatedEntityId: session.id,
+            extraNote: this.buildHuberNoShowNote(session),
           });
         }
 
