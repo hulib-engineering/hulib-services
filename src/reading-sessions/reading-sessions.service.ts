@@ -376,6 +376,33 @@ export class ReadingSessionsService {
     return await this.messageRepository.findByReadingSessionId(id);
   }
 
+  private formatSessionWhen(
+    session: Pick<ReadingSession, 'startTime' | 'endTime' | 'startedAt'>,
+  ): string {
+    const sessionDate = session.startedAt.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    return `${session.startTime} - ${session.endTime}, ${sessionDate}`;
+  }
+
+  // Deliberately neutral rather than accusatory: a huber can look absent purely
+  // because the attend beacon never arrived, and we would rather ask than accuse.
+  private buildHuberNoShowNote(
+    session: Pick<ReadingSession, 'startTime' | 'endTime' | 'startedAt'>,
+  ): string {
+    return `We couldn't confirm your participation in the session (${this.formatSessionWhen(session)}). If anything got in the way on your side, please let us know so we can improve the experience for everyone.`;
+  }
+
+  private buildAutoCancelNote(
+    session: Pick<ReadingSession, 'startTime' | 'endTime' | 'startedAt'>,
+    huberName: string,
+  ): string {
+    return `Sorry! Your meeting request (${this.formatSessionWhen(session)}) has been auto cancelled because ${huberName} has not responded yet.`;
+  }
+
   @Cron('0 */30 * * * *', { timeZone: 'UTC' }) // Every 30 mins, starting from 00:00 UTC
   async checkAndScheduleReminders() {
     const now = new Date();
