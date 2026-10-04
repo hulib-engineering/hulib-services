@@ -379,36 +379,43 @@ export class MailService {
       locale?: string;
     };
   }): Promise<void> {
-    const locale = mailData.data.locale || 'vi';
+    const message = await this.buildUploadStoryReminderEmailLiber(
+      mailData.data.fullName,
+      mailData.data.locale,
+    );
+    await this.mailerService.sendMail({ to: mailData.to, ...message });
+  }
 
+  async previewUploadStoryReminderEmailLiber(
+    fullName = 'Hoa',
+  ): Promise<string> {
+    const { templatePath, context } =
+      await this.buildUploadStoryReminderEmailLiber(fullName);
+    return this.mailerService.renderTemplate(templatePath, context);
+  }
+
+  private async buildUploadStoryReminderEmailLiber(
+    fullName: string,
+    locale = 'vi',
+  ) {
     const [
       title,
       dear,
       p1,
-      p2,
-      step1,
-      step2,
-      step3,
-      step4,
-      step5,
       p3,
       p4,
       p5,
       p6,
+      buttonLabel,
     ] = await Promise.all([
       this.i18n.t('upload-story-liber.title', { lang: locale }),
       this.i18n.t('common.dear', { lang: locale }),
       this.i18n.t('upload-story-liber.p1', { lang: locale }),
-      this.i18n.t('upload-story-liber.p2', { lang: locale }),
-      this.i18n.t('upload-story-liber.step1', { lang: locale }),
-      this.i18n.t('upload-story-liber.step2', { lang: locale }),
-      this.i18n.t('upload-story-liber.step3', { lang: locale }),
-      this.i18n.t('upload-story-liber.step4', { lang: locale }),
-      this.i18n.t('upload-story-liber.step5', { lang: locale }),
       this.i18n.t('upload-story-liber.p3', { lang: locale }),
       this.i18n.t('upload-story-liber.p4', { lang: locale }),
       this.i18n.t('upload-story-liber.p5', { lang: locale }),
       this.i18n.t('upload-story-liber.p6', { lang: locale }),
+      this.i18n.t('upload-story-liber.buttonLabel', { lang: locale }),
     ]);
 
     const webAppLink = this.configService.getOrThrow('app.frontendDomain', {
@@ -420,10 +427,9 @@ export class MailService {
     const tiktokUrl =
       'https://www.tiktok.com/@hulibvn?is_from_webapp=1&sender_device=pc';
 
-    await this.mailerService.sendMail({
-      to: mailData.to,
+    return {
       subject: title,
-      text: `${dear} ${mailData.data.fullName}, ${p1}`,
+      text: `${dear} ${fullName},\n\n${p1}\n\n${p3}\n${p4}\n\n${buttonLabel}: ${webAppLink}\n\n${p5} ${p6}\nThe HuLib Team`,
       templatePath: path.join(
         this.configService.getOrThrow('app.workingDirectory', { infer: true }),
         'src',
@@ -433,25 +439,20 @@ export class MailService {
       ),
       context: {
         dear,
-        liberFullName: mailData.data.fullName,
+        liberFullName: fullName,
         title,
         p1,
-        p2,
-        step1,
-        step2,
-        step3,
-        step4,
-        step5,
         p3,
         p4,
         p5,
         p6,
+        buttonLabel,
         webAppLink,
         facebookUrl,
         instagramUrl,
         tiktokUrl,
       },
-    });
+    };
   }
 
   async sendUploadStoryReminderEmailHuber(mailData: {
