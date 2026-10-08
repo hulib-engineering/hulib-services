@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   HttpStatus,
   Injectable,
   Logger,
@@ -672,15 +671,6 @@ export class UsersService {
       });
     }
 
-    if (user.roleId !== RoleEnum.humanBook) {
-      throw new ForbiddenException({
-        status: HttpStatus.FORBIDDEN,
-        errors: {
-          role: 'onlyHumanBooksCanAddEducation',
-        },
-      });
-    }
-
     return this.prisma.education.create({
       data: {
         major: educationData.major,
@@ -774,15 +764,6 @@ export class UsersService {
         status: HttpStatus.NOT_FOUND,
         errors: {
           user: 'userNotFound',
-        },
-      });
-    }
-
-    if (user.roleId !== RoleEnum.humanBook) {
-      throw new ForbiddenException({
-        status: HttpStatus.FORBIDDEN,
-        errors: {
-          role: 'onlyHumanBooksCanAddWork',
         },
       });
     }
