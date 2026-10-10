@@ -1,10 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { FavStoriesService } from '@fav-stories/fav-stories.service';
 import { UserFavoriteHuberService } from '../fav-hubers/fav-hubers.service';
 import { UsersService } from '@users/users.service';
+import { RolesGuard } from '@roles/roles.guard';
+import { RoleEnum } from '@roles/roles.enum';
 import { CaslAbilityFactory } from '@permission/ability.factory';
 import {
   makeAbilityFactoryStub,
@@ -363,6 +366,57 @@ describe('AuthController', () => {
         controller.registerToHumanBooks({ user: { id: 1 } }, dto as any),
       ).resolves.toEqual({ id: 1 });
       expect(service.registerToHumanBook).toHaveBeenCalledWith(1, dto);
+    });
+  });
+
+  describe('profile route roles', () => {
+    const rolesGuard = new RolesGuard(new Reflector());
+
+    const allows = (
+      handler: (...args: any[]) => any,
+      roleId: RoleEnum,
+    ): boolean => {
+      const context = {
+        getHandler: () => handler,
+        getClass: () => AuthController,
+        switchToHttp: () => ({
+          getRequest: () => ({ user: { role: { id: roleId } } }),
+        }),
+      } as unknown as ExecutionContext;
+
+      return rolesGuard.canActivate(context);
+    };
+
+    const profileHandlers = {
+      addEducation: AuthController.prototype.addEducation,
+      updateEducation: AuthController.prototype.updateEducation,
+      deleteEducation: AuthController.prototype.deleteEducation,
+      addWork: AuthController.prototype.addWork,
+      updateWork: AuthController.prototype.updateWork,
+      deleteWork: AuthController.prototype.deleteWork,
+    };
+
+    it.each(Object.entries(profileHandlers))(
+      'should let a reader manage their own %s',
+      (_name, handler) => {
+        expect(allows(handler as any, RoleEnum.reader)).toBe(true);
+        expect(allows(handler as any, RoleEnum.humanBook)).toBe(true);
+      },
+    );
+
+    it.each(Object.entries(profileHandlers))(
+      'should reject a guest from %s',
+      (_name, handler) => {
+        expect(allows(handler as any, RoleEnum.guest)).toBe(false);
+      },
+    );
+
+    it('should keep topics of interest huber only', () => {
+      const handler = AuthController.prototype.updateTopics;
+
+      expect(allows(handler, RoleEnum.humanBook)).toBe(true);
+      expect(allows(handler, RoleEnum.reader)).toBe(false);
+      expect(allows(handler, RoleEnum.guest)).toBe(false);
     });
   });
 });
