@@ -31,7 +31,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from '@prisma-client/prisma-client.service';
-import { PaginationResponseDto } from '@utils/dto/pagination-response.dto';
+import { ReadingSessionPageResponseDto } from '@utils/dto/pagination-response.dto';
 import { pagination } from '@utils/pagination';
 
 const AUTO_CANCEL_REASON =
@@ -213,7 +213,7 @@ export class ReadingSessionsService {
   async findAllSessions(
     queryDto: FindAllReadingSessionsQueryDto,
     userId: User['id'],
-  ): Promise<PaginationResponseDto<ReadingSession>> {
+  ): Promise<ReadingSessionPageResponseDto<ReadingSession>> {
     const user = await this.usersService.findById(userId);
     if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
@@ -224,15 +224,21 @@ export class ReadingSessionsService {
     const page = resolvePage(queryDto.page, queryDto.offset, limit);
     const paginationOptions = { page, limit };
 
-    return this.readingSessionRepository
-      .findManyWithPagination({
-        filterOptions: {
-          ...queryDto,
-          userId: typeof userId === 'string' ? Number(userId) : userId,
-        },
+    const filterOptions = {
+      ...queryDto,
+      userId: typeof userId === 'string' ? Number(userId) : userId,
+    };
+
+    const [{ data, count }, counts] = await Promise.all([
+      this.readingSessionRepository.findManyWithPagination({
+        filterOptions,
         paginationOptions,
-      })
-      .then(({ data, count }) => pagination(data, count, paginationOptions));
+      }),
+      this.readingSessionRepository.countByFilterOption(filterOptions),
+    ]);
+
+    const page = pagination(data, count, paginationOptions);
+    return { ...page, meta: { ...page.meta, counts } };
   }
 
   async findOneSession(id: number): Promise<ReadingSession> {
