@@ -161,7 +161,7 @@ export class ReadingSessionRepository {
   }: {
     filterOptions?: FindAllReadingSessionsQueryDto & { userId?: number };
     paginationOptions?: IPaginationOptions;
-  }): Promise<ReadingSession[]> {
+  }): Promise<{ data: ReadingSession[]; count: number }> {
     const where: Prisma.readingSessionWhereInput = {};
 
     if (filterOptions?.humanBookId) {
@@ -211,15 +211,19 @@ export class ReadingSessionRepository {
     if (filterOptions?.upcoming) {
       findArgs.orderBy = { startedAt: 'asc' };
       findArgs.take = 1;
-    }
-
-    if (paginationOptions) {
+    } else if (paginationOptions) {
       findArgs.skip = (paginationOptions.page - 1) * paginationOptions.limit;
       findArgs.take = paginationOptions.limit;
     }
 
-    const rows = await this.prisma.readingSession.findMany(findArgs);
-    return rows.map((row) => readingSessionToDomain(row));
+    const [rows, count] = await this.prisma.$transaction([
+      this.prisma.readingSession.findMany(findArgs),
+      this.prisma.readingSession.count({ where: findArgs.where }),
+    ]);
+    return {
+      data: rows.map((row) => readingSessionToDomain(row)),
+      count,
+    };
   }
 
   async update(

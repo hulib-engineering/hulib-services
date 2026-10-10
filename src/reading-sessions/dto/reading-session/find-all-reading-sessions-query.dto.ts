@@ -11,6 +11,10 @@ import {
 import { Transform, Type } from 'class-transformer';
 import { ReadingSessionStatus } from '../../domain';
 
+export const DEFAULT_READING_SESSIONS_LIMIT = 12;
+export const DEFAULT_READING_SESSIONS_OFFSET = 0;
+export const DEFAULT_READING_SESSIONS_PAGE = 1;
+
 export class FindAllReadingSessionsQueryDto {
   @IsOptional()
   @Type(() => Number)
@@ -78,15 +82,41 @@ export class FindAllReadingSessionsQueryDto {
   @IsDateString({ strict: true })
   endedAt?: string;
 
+  @ApiProperty({
+    required: false,
+    description: 'Number of sessions per page',
+    default: DEFAULT_READING_SESSIONS_LIMIT,
+    minimum: 1,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  limit: number;
+  limit?: number;
 
+  @ApiProperty({
+    required: false,
+    description:
+      'Zero-based row offset. Takes precedence over `page` when both are sent.',
+    default: DEFAULT_READING_SESSIONS_OFFSET,
+    minimum: 0,
+    deprecated: true,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  offset: number;
+  offset?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'One-based page number. Ignored when `offset` is sent.',
+    default: DEFAULT_READING_SESSIONS_PAGE,
+    minimum: 1,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  page?: number;
 }

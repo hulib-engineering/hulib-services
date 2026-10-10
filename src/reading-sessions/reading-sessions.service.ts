@@ -11,7 +11,11 @@ import { Message } from './domain/message';
 import { ReadingSessionRepository } from './reading-session.repository';
 import { MessageRepository } from './message.repository';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
-import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
+import {
+  DEFAULT_READING_SESSIONS_LIMIT,
+  DEFAULT_READING_SESSIONS_PAGE,
+  FindAllReadingSessionsQueryDto,
+} from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
@@ -27,6 +31,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { PaginationResponseDto } from '@utils/dto/pagination-response.dto';
+import { pagination } from '@utils/pagination';
 
 const AUTO_CANCEL_REASON =
   'Huber did not respond before the session start time';
@@ -40,6 +46,19 @@ const TERMINAL_SESSION_STATUSES: ReadingSessionStatus[] = [
   ReadingSessionStatus.FINISHED,
   ReadingSessionStatus.REJECTED,
 ];
+
+// `offset` wins over `page` so a client that sends both is never ambiguous,
+// and both default to the first page rather than to "unpaginated".
+function resolvePage(
+  page: number | undefined,
+  offset: number | undefined,
+  limit: number,
+): number {
+  if (offset !== undefined) {
+    return Math.floor(offset / limit) + 1;
+  }
+  return page ?? DEFAULT_READING_SESSIONS_PAGE;
+}
 
 @Injectable()
 export class ReadingSessionsService {
@@ -194,27 +213,26 @@ export class ReadingSessionsService {
   async findAllSessions(
     queryDto: FindAllReadingSessionsQueryDto,
     userId: User['id'],
-  ): Promise<ReadingSession[]> {
+  ): Promise<PaginationResponseDto<ReadingSession>> {
     const user = await this.usersService.findById(userId);
     if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
-    let paginationOptions: { page: number; limit: number } | undefined =
-      undefined;
-    if (queryDto.limit && queryDto.offset) {
-      paginationOptions = {
-        page: Math.floor(queryDto.offset / queryDto.limit) + 1,
-        limit: queryDto.limit,
-      };
-    }
+    // `offset=0` is falsy, so a truthiness check here would silently drop
+    // pagination for the very first page and return every row instead.
+    const limit = queryDto.limit ?? DEFAULT_READING_SESSIONS_LIMIT;
+    const page = resolvePage(queryDto.page, queryDto.offset, limit);
+    const paginationOptions = { page, limit };
 
-    return this.readingSessionRepository.findManyWithPagination({
-      filterOptions: {
-        ...queryDto,
-        userId: typeof userId === 'string' ? Number(userId) : userId,
-      },
-      paginationOptions,
-    });
+    return this.readingSessionRepository
+      .findManyWithPagination({
+        filterOptions: {
+          ...queryDto,
+          userId: typeof userId === 'string' ? Number(userId) : userId,
+        },
+        paginationOptions,
+      })
+      .then(({ data, count }) => pagination(data, count, paginationOptions));
   }
 
   async findOneSession(id: number): Promise<ReadingSession> {
