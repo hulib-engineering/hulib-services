@@ -6,7 +6,6 @@ import { PrismaService } from '@prisma-client/prisma-client.service';
 import bcrypt from 'bcryptjs';
 import {
   BadRequestException,
-  ForbiddenException,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -755,20 +754,23 @@ describe('UsersService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should only allow human books to add education', async () => {
+    it('should let a reader add an education', async () => {
       prisma.user = {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({ id: 1, roleId: RoleEnum.reader }),
+        findUnique: jest.fn().mockResolvedValue({ id: 1 }),
       };
+      prisma.education = { create: jest.fn().mockResolvedValue({ id: 8 }) };
 
-      await expect(
-        service.addEducation(1, {
-          major: 'CS',
-          institution: 'UIT',
-          startedAt: '2020-01-01',
+      await service.addEducation(1, {
+        major: 'CS',
+        institution: 'UIT',
+        startedAt: '2020-01-01',
+      });
+
+      expect(prisma.education.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 1 }),
         }),
-      ).rejects.toThrow(ForbiddenException);
+      );
     });
 
     it('should create the education with parsed dates and isPublic default', async () => {
@@ -792,7 +794,7 @@ describe('UsersService', () => {
           institution: 'UIT',
           startedAt: new Date('2020-01-01'),
           endedAt: new Date('2024-01-01'),
-          huberId: 1,
+          userId: 1,
           type: undefined,
           isPublic: false,
         },
@@ -848,20 +850,23 @@ describe('UsersService', () => {
   });
 
   describe('works', () => {
-    it('should only allow human books to add work', async () => {
+    it('should let a reader add a work entry', async () => {
       prisma.user = {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({ id: 1, roleId: RoleEnum.reader }),
+        findUnique: jest.fn().mockResolvedValue({ id: 1 }),
       };
+      prisma.work = { create: jest.fn().mockResolvedValue({ id: 5 }) };
 
-      await expect(
-        service.addWork(1, {
-          position: 'Dev',
-          company: 'ACME',
-          startedAt: '2020-01-01',
+      await service.addWork(1, {
+        position: 'Dev',
+        company: 'ACME',
+        startedAt: '2020-01-01',
+      });
+
+      expect(prisma.work.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 1 }),
         }),
-      ).rejects.toThrow(ForbiddenException);
+      );
     });
 
     it('should create the work entry', async () => {
@@ -884,7 +889,7 @@ describe('UsersService', () => {
           company: 'ACME',
           startedAt: new Date('2020-01-01'),
           endedAt: null,
-          huberId: 1,
+          userId: 1,
         },
         omit: { deletedAt: true, createdAt: true, updatedAt: true },
       });
