@@ -9,7 +9,7 @@ Branch: feat/392-allow-reader-to-manage-own-profile
 | -- | -------- | -------------- |
 | 1  | Widen `@Roles` on the 6 education/work routes in `src/auth/auth.controller.ts` to `@Roles(RoleEnum.humanBook, RoleEnum.reader)` | No education/work route is gated on `humanBook` alone; `auth.controller.spec.ts` still passes |
 | 2  | Remove the `roleId !== RoleEnum.humanBook` check from `UsersService.addEducation` and `UsersService.addWork` | A reader can `POST /me/educations` and `POST /me/works` without `ForbiddenException` |
-| 3  | Rename `education.huberId` / `work.huberId` to `userId` in `prisma/schema.prisma` (`@map("huberId")`), generate the migration, update all references | Migration is non-destructive, DB column name unchanged, `users.service.ts` and specs use `userId` |
+| 3  | Rename `education.huberId` / `work.huberId` to `userId` in `prisma/schema.prisma` (`@map("huberId")`), update all references | DB schema is unchanged — no migration needed — and `users.service.ts` / `seed.ts` / specs use `userId` |
 | 4  | Add tests: reader succeeds on education/work, reader still rejected on `PATCH /me/topics`, guest rejected everywhere | Each new case fails if the corresponding guard is reverted |
 | 5  | Run lint, typecheck and affected suites | All green |
 
@@ -48,8 +48,10 @@ Already owner-scoped, no change needed: `updateEducation` (715), `updateWork` (8
 - `PATCH /me/topics` intentionally stays Huber-only. A test pins this so the rule is not
   widened by accident.
 - `guest` (role 4) remains rejected on every route.
-- `@map("huberId")` keeps the physical column name, so the migration only changes the Prisma
-  schema, not the database. Safe to roll out without a data migration.
+- `@map("huberId")` keeps the physical column name. Prisma derives the FK constraint name from the
+  column, not the field, so `education_huberId_fkey` stays valid and no migration is required.
+  Verified with `prisma migrate diff --from-migrations --to-schema-datamodel` against a local
+  Postgres: zero education/work statements.
 - `timeSlot.huberId` and `huberFavorite.huberId` are untouched — the latter genuinely means
   "the favorited Huber".
 - Readers will own rows in tables whose columns read `huberId`; that is now consistent after
