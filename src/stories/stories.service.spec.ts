@@ -232,6 +232,70 @@ describe('StoriesService', () => {
         expect.objectContaining({ title: 'New title' }),
       );
     });
+
+    it('should resolve the requested topic ids before updating', async () => {
+      prisma.story.findUnique.mockResolvedValue(
+        makeStoryRow({ publishStatus: PublishStatus.pending }),
+      );
+      prisma.$queryRaw.mockResolvedValue([{}]);
+      storyReviewService.getReviewsOverview.mockResolvedValue({});
+      topicsRepository.findByIds.mockResolvedValue([
+        { id: 2 },
+        { id: 3 },
+      ] as never);
+      storiesRepository.update.mockResolvedValue({ id: 1 });
+
+      await service.update(1, { topics: [{ id: 2 }, { id: 3 }] } as never, {
+        id: 10,
+        roleId: RoleEnum.humanBook,
+      });
+
+      expect(topicsRepository.findByIds).toHaveBeenCalledWith([2, 3]);
+      expect(storiesRepository.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ topics: [{ id: 2 }, { id: 3 }] }),
+      );
+    });
+
+    it('should clear the topics when an empty list is sent', async () => {
+      prisma.story.findUnique.mockResolvedValue(
+        makeStoryRow({ publishStatus: PublishStatus.pending }),
+      );
+      prisma.$queryRaw.mockResolvedValue([{}]);
+      storyReviewService.getReviewsOverview.mockResolvedValue({});
+      topicsRepository.findByIds.mockResolvedValue([]);
+      storiesRepository.update.mockResolvedValue({ id: 1 });
+
+      await service.update(1, { topics: [] } as never, {
+        id: 10,
+        roleId: RoleEnum.humanBook,
+      });
+
+      expect(storiesRepository.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ topics: [] }),
+      );
+    });
+
+    it('should not touch the topics when they are omitted', async () => {
+      prisma.story.findUnique.mockResolvedValue(
+        makeStoryRow({ publishStatus: PublishStatus.pending }),
+      );
+      prisma.$queryRaw.mockResolvedValue([{}]);
+      storyReviewService.getReviewsOverview.mockResolvedValue({});
+      storiesRepository.update.mockResolvedValue({ id: 1 });
+
+      await service.update(1, { title: 'New title' } as never, {
+        id: 10,
+        roleId: RoleEnum.humanBook,
+      });
+
+      expect(topicsRepository.findByIds).not.toHaveBeenCalled();
+      expect(storiesRepository.update).toHaveBeenCalledWith(
+        1,
+        expect.not.objectContaining({ topics: expect.anything() }),
+      );
+    });
   });
 
   describe('remove', () => {
