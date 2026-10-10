@@ -41,7 +41,7 @@ import { Roles } from '@roles/roles.decorator';
 import { CheckAbilities } from '@permission/decorators/casl.decorator';
 import { Action } from '@permission/ability.factory';
 import { CaslGuard } from '@permission/guards/casl.guard';
-import { PaginationResponseDto } from '@utils/dto/pagination-response.dto';
+import { ReadingSessionPageResponseDto } from '@utils/dto/pagination-response.dto';
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()
@@ -67,7 +67,7 @@ export class ReadingSessionsController {
 
   @ApiOperation({ summary: 'Query many reading sessions' })
   @ApiResponse({
-    type: PaginationResponseDto<ReadingSessionResponseDto>,
+    type: ReadingSessionPageResponseDto<ReadingSessionResponseDto>,
   })
   @Get()
   @CheckAbilities((ability) => ability.can(Action.Read, 'ReadingSession'))
@@ -75,7 +75,7 @@ export class ReadingSessionsController {
   async findAllSessions(
     @Query() queryDto: FindAllReadingSessionsQueryDto,
     @Request() request,
-  ): Promise<PaginationResponseDto<ReadingSessionResponseDto>> {
+  ): Promise<ReadingSessionPageResponseDto<ReadingSessionResponseDto>> {
     return this.readingSessionsService.findAllSessions(
       queryDto,
       request.user.id,
