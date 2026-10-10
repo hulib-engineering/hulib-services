@@ -156,8 +156,8 @@ model user {
   favoriteHubers   huberFavorite[] @relation("UserFavorites")
   favoritedByUsers huberFavorite[] @relation("HuberFavorites")
 
-  educations education[] @relation("HuberEducation")
-  works      work[]      @relation("HuberWork")
+  educations education[] @relation("UserEducation")
+  works      work[]      @relation("UserWork")
 
   moderations moderation[] @relation("UserModerations")
   appeals     appeal[]     @relation("UserAppeals")
@@ -429,14 +429,14 @@ model education {
   institution String         @db.VarChar()
   startedAt   DateTime       @db.Date
   endedAt     DateTime?      @db.Date
-  huberId     Int
+  userId      Int            @map("huberId")
   type        EducationType?
   isPublic    Boolean        @default(false)
   createdAt   DateTime       @default(now()) @db.Timestamp(6)
   updatedAt   DateTime       @default(now()) @db.Timestamp(6)
   deletedAt   DateTime?
 
-  huber user @relation("HuberEducation", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user user @relation("UserEducation", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model work {
@@ -445,12 +445,12 @@ model work {
   company   String    @db.VarChar()
   startedAt DateTime  @db.Date
   endedAt   DateTime? @db.Date
-  huberId   Int
+  userId    Int       @map("huberId")
   createdAt DateTime  @default(now()) @db.Timestamp(6)
   updatedAt DateTime  @default(now()) @db.Timestamp(6)
   deletedAt DateTime?
 
-  huber user @relation("HuberWork", fields: [huberId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user user @relation("UserWork", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 enum ModerationActionType {

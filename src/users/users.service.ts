@@ -677,7 +677,7 @@ export class UsersService {
         institution: educationData.institution,
         startedAt: new Date(educationData.startedAt),
         endedAt: educationData.endedAt ? new Date(educationData.endedAt) : null,
-        huberId: Number(userId),
+        userId: Number(userId),
         type: educationData.type as any,
         isPublic: educationData.isPublic ?? false,
       },
@@ -702,7 +702,7 @@ export class UsersService {
     },
   ) {
     const education = await this.prisma.education.findUnique({
-      where: { id: educationId, huberId: Number(userId) },
+      where: { id: educationId, userId: Number(userId) },
       select: { id: true, deletedAt: true },
     });
 
@@ -774,7 +774,7 @@ export class UsersService {
         company: workData.company,
         startedAt: new Date(workData.startedAt),
         endedAt: workData.endedAt ? new Date(workData.endedAt) : null,
-        huberId: Number(userId),
+        userId: Number(userId),
       },
       omit: {
         deletedAt: true,
@@ -795,7 +795,7 @@ export class UsersService {
     },
   ) {
     const work = await this.prisma.work.findUnique({
-      where: { id: workId, huberId: Number(userId) },
+      where: { id: workId, userId: Number(userId) },
       select: { id: true, deletedAt: true },
     });
 
@@ -833,7 +833,7 @@ export class UsersService {
     educationId: number,
   ): Promise<void> {
     const education = await this.prisma.education.findUnique({
-      where: { id: educationId, huberId: Number(userId) },
+      where: { id: educationId, userId: Number(userId) },
       select: { id: true, deletedAt: true },
     });
 
@@ -856,7 +856,7 @@ export class UsersService {
 
   async deleteWork(userId: User['id'], workId: number): Promise<void> {
     const work = await this.prisma.work.findUnique({
-      where: { id: workId, huberId: Number(userId) },
+      where: { id: workId, userId: Number(userId) },
       select: { id: true, deletedAt: true },
     });
 

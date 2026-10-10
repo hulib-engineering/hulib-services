@@ -792,7 +792,7 @@ describe('UsersService', () => {
           institution: 'UIT',
           startedAt: new Date('2020-01-01'),
           endedAt: new Date('2024-01-01'),
-          huberId: 1,
+          userId: 1,
           type: undefined,
           isPublic: false,
         },
@@ -884,7 +884,7 @@ describe('UsersService', () => {
           company: 'ACME',
           startedAt: new Date('2020-01-01'),
           endedAt: null,
-          huberId: 1,
+          userId: 1,
         },
         omit: { deletedAt: true, createdAt: true, updatedAt: true },
       });
