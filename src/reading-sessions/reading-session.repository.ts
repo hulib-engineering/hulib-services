@@ -7,7 +7,10 @@ import { ReadingSession, ReadingSessionStatus } from './domain';
 import { Story } from '@stories/domain/story';
 import { PublishStatus } from '@stories/status.enum';
 import { basicUserInclude, UserMapperImplement } from '@users/user-mapper';
-import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
+import {
+  DEFAULT_READING_SESSIONS_LIMIT,
+  FindAllReadingSessionsQueryDto,
+} from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { messageToDomain } from './message.repository';
 
 export const readingSessionInclude = {
@@ -103,6 +106,15 @@ const DEFAULT_STATUSES: string[] = [
   ReadingSessionStatus.FINISHED,
 ];
 
+// Counts backing the filter tabs in the client.
+export interface ReadingSessionFilterCounts {
+  all: number;
+  approved: number;
+  pending: number;
+  finished: number;
+  missed: number;
+}
+
 @Injectable()
 export class ReadingSessionRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -155,71 +167,128 @@ export class ReadingSessionRepository {
     return rows.map((row) => readingSessionToDomain(row));
   }
 
+  // Ownership and id scoping, with no time or status constraints. Shared by the
+  // list query and the per-tab count breakdown.
+  private buildScope(
+    filterOptions:
+      | (FindAllReadingSessionsQueryDto & { userId?: number })
+      | undefined,
+    sessionStatuses?: ReadingSessionStatus[],
+  ): Prisma.readingSessionWhereInput {
+    const scoped: Prisma.readingSessionWhereInput = {
+      sessionStatus: {
+        in: (sessionStatuses?.length
+          ? sessionStatuses
+          : DEFAULT_STATUSES) as string[],
+      } as Prisma.readingSessionWhereInput['sessionStatus'],
+      OR: [
+        { humanBookId: filterOptions?.userId },
+        { readerId: filterOptions?.userId },
+      ],
+    };
+
+    if (filterOptions?.humanBookId) {
+      scoped.humanBookId = filterOptions.humanBookId;
+    }
+    if (filterOptions?.readerId) {
+      scoped.readerId = filterOptions.readerId;
+    }
+    if (filterOptions?.storyId) {
+      scoped.storyId = filterOptions.storyId;
+    }
+
+    return scoped;
+  }
+
+  // Builds the `where` for the list query. `overrides` lets the per-tab count
+  // breakdown reuse this exact scoping with a different status filter.
+  private buildSessionWhere(
+    filterOptions:
+      | (FindAllReadingSessionsQueryDto & { userId?: number })
+      | undefined,
+    overrides: { sessionStatuses?: ReadingSessionStatus[] } = {},
+  ): Prisma.readingSessionWhereInput {
+    const and: Prisma.readingSessionWhereInput[] = [];
+
+    // The explicit date params AND together instead of overwriting each other.
+    if (filterOptions?.startedAt) {
+      and.push({ startedAt: { gte: new Date(filterOptions.startedAt) } });
+    }
+    if (filterOptions?.endedAt) {
+      and.push({ startedAt: { lte: new Date(filterOptions.endedAt) } });
+    }
+
+    const scoped = this.buildScope(
+      filterOptions,
+      overrides.sessionStatuses ?? filterOptions?.sessionStatuses,
+    );
+    return and.length ? { ...scoped, AND: and } : scoped;
+  }
+
+  // Per-filter-option counts for the tab badges. Each option is counted
+  // against the caller's own sessions with only that option's status filter
+  // applied, so the numbers stay correct no matter which tab is selected.
+  async countByFilterOption(
+    filterOptions?: FindAllReadingSessionsQueryDto & { userId?: number },
+  ): Promise<ReadingSessionFilterCounts> {
+    const statuses = [
+      ReadingSessionStatus.APPROVED,
+      ReadingSessionStatus.PENDING,
+      ReadingSessionStatus.FINISHED,
+      ReadingSessionStatus.MISSED,
+    ];
+
+    const [all, ...byStatus] = await this.prisma.$transaction([
+      this.prisma.readingSession.count({
+        where: this.buildScope(filterOptions),
+      }),
+      ...statuses.map((status) =>
+        this.prisma.readingSession.count({
+          where: this.buildScope(filterOptions, [status]),
+        }),
+      ),
+    ]);
+
+    return {
+      all,
+      approved: byStatus[0],
+      pending: byStatus[1],
+      finished: byStatus[2],
+      missed: byStatus[3],
+    };
+  }
+
   async findManyWithPagination({
     filterOptions,
     paginationOptions,
   }: {
     filterOptions?: FindAllReadingSessionsQueryDto & { userId?: number };
     paginationOptions?: IPaginationOptions;
-  }): Promise<ReadingSession[]> {
-    const where: Prisma.readingSessionWhereInput = {};
-
-    if (filterOptions?.humanBookId) {
-      where.humanBookId = filterOptions.humanBookId;
-    }
-    if (filterOptions?.readerId) {
-      where.readerId = filterOptions.readerId;
-    }
-
-    if (filterOptions?.sessionStatuses?.length) {
-      where.sessionStatus = {
-        in: filterOptions.sessionStatuses as unknown as string[],
-      } as Prisma.readingSessionWhereInput['sessionStatus'];
-    } else {
-      where.sessionStatus = {
-        in: DEFAULT_STATUSES,
-      } as Prisma.readingSessionWhereInput['sessionStatus'];
-    }
-
-    if (filterOptions?.upcoming) {
-      where.startedAt = { gt: new Date() };
-      where.sessionStatus =
-        ReadingSessionStatus.APPROVED as unknown as Prisma.readingSessionWhereInput['sessionStatus'];
-    }
-
-    if (filterOptions?.startedAt && filterOptions?.endedAt) {
-      where.startedAt = {
-        gte: new Date(filterOptions.startedAt),
-        lte: new Date(filterOptions.endedAt),
-      };
-    } else if (filterOptions?.startedAt) {
-      where.startedAt = { gte: new Date(filterOptions.startedAt) };
-    } else if (filterOptions?.endedAt) {
-      where.startedAt = { lte: new Date(filterOptions.endedAt) };
-    }
+  }): Promise<{ data: ReadingSession[]; count: number }> {
+    const where = this.buildSessionWhere(filterOptions);
 
     const findArgs: Prisma.readingSessionFindManyArgs = {
-      where: {
-        OR: [
-          { ...where, humanBookId: filterOptions?.userId },
-          { ...where, readerId: filterOptions?.userId },
-        ],
-      },
+      where,
+      // Sorted on `id` as well as `startedAt` so rows with an identical start
+      // time keep a stable order — otherwise offset pagination can repeat or
+      // drop rows across page boundaries.
+      orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
+      take: paginationOptions?.limit ?? DEFAULT_READING_SESSIONS_LIMIT,
       ...readingSessionInclude,
     };
 
-    if (filterOptions?.upcoming) {
-      findArgs.orderBy = { startedAt: 'asc' };
-      findArgs.take = 1;
-    }
-
     if (paginationOptions) {
       findArgs.skip = (paginationOptions.page - 1) * paginationOptions.limit;
-      findArgs.take = paginationOptions.limit;
     }
 
-    const rows = await this.prisma.readingSession.findMany(findArgs);
-    return rows.map((row) => readingSessionToDomain(row));
+    const [rows, count] = await this.prisma.$transaction([
+      this.prisma.readingSession.findMany(findArgs),
+      this.prisma.readingSession.count({ where }),
+    ]);
+    return {
+      data: rows.map((row) => readingSessionToDomain(row)),
+      count,
+    };
   }
 
   async update(

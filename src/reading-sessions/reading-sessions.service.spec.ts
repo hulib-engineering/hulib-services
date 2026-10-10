@@ -14,6 +14,7 @@ describe('ReadingSessionsService', () => {
     findById: jest.Mock;
     findOverlapping: jest.Mock;
     findManyWithPagination: jest.Mock;
+    countByFilterOption: jest.Mock;
     update: jest.Mock;
     softDelete: jest.Mock;
     markAttendance: jest.Mock;
@@ -67,6 +68,7 @@ describe('ReadingSessionsService', () => {
       findById: jest.fn(),
       findOverlapping: jest.fn(),
       findManyWithPagination: jest.fn(),
+      countByFilterOption: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
       markAttendance: jest.fn(),
@@ -199,6 +201,29 @@ describe('ReadingSessionsService', () => {
   });
 
   describe('findAllSessions', () => {
+    const emptyPage = { data: [], count: 0 };
+    const emptyCounts = {
+      all: 0,
+      approved: 0,
+      pending: 0,
+      finished: 0,
+      missed: 0,
+    };
+
+    beforeEach(() => {
+      usersService.findById.mockResolvedValue({ id: 5 });
+      readingSessionRepository.findManyWithPagination.mockResolvedValue(
+        emptyPage,
+      );
+      readingSessionRepository.countByFilterOption.mockResolvedValue(
+        emptyCounts,
+      );
+    });
+
+    const paginationOf = () =>
+      readingSessionRepository.findManyWithPagination.mock.calls[0][0]
+        .paginationOptions;
+
     it('should throw NotFound when the user does not exist', async () => {
       usersService.findById.mockResolvedValue(null);
 
@@ -207,30 +232,91 @@ describe('ReadingSessionsService', () => {
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
-    it('should skip pagination when limit or offset is missing', async () => {
-      usersService.findById.mockResolvedValue({ id: 5 });
-      readingSessionRepository.findManyWithPagination.mockResolvedValue([]);
+    it('should default to the first page of 12 when no params are sent', async () => {
+      await service.findAllSessions({}, 5);
 
-      await expect(
-        service.findAllSessions({ limit: 10, offset: 0 }, 5),
-      ).resolves.toEqual([]);
-      expect(
-        readingSessionRepository.findManyWithPagination,
-      ).toHaveBeenCalledWith(
-        expect.objectContaining({ paginationOptions: undefined }),
-      );
+      expect(paginationOf()).toEqual({ page: 1, limit: 12 });
+    });
+
+    it('should paginate the first page when offset is 0', async () => {
+      await service.findAllSessions({ limit: 12, offset: 0 }, 5);
+
+      expect(paginationOf()).toEqual({ page: 1, limit: 12 });
     });
 
     it('should compute the page from offset and limit', async () => {
-      usersService.findById.mockResolvedValue({ id: 5 });
-      readingSessionRepository.findManyWithPagination.mockResolvedValue([]);
-
       await service.findAllSessions({ offset: 20, limit: 10 }, 5);
+
+      expect(paginationOf()).toEqual({ page: 3, limit: 10 });
+    });
+
+    it('should accept page directly', async () => {
+      await service.findAllSessions({ page: 4, limit: 10 }, 5);
+
+      expect(paginationOf()).toEqual({ page: 4, limit: 10 });
+    });
+
+    it('should let offset win when both page and offset are sent', async () => {
+      await service.findAllSessions({ page: 9, offset: 20, limit: 10 }, 5);
+
+      expect(paginationOf()).toEqual({ page: 3, limit: 10 });
+    });
+
+    it('should honor a limit above the default', async () => {
+      await service.findAllSessions({ limit: 50 }, 5);
+
+      expect(paginationOf()).toEqual({ page: 1, limit: 50 });
+    });
+
+    it('should return the data and total in a paginated envelope', async () => {
+      readingSessionRepository.findManyWithPagination.mockResolvedValue({
+        data: [makeSession({ id: 7 })],
+        count: 25,
+      });
+
+      const result = await service.findAllSessions({ limit: 12 }, 5);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.meta).toMatchObject({
+        totalItems: 25,
+        itemsPerPage: 12,
+        totalPages: 3,
+        currentPage: 1,
+      });
+    });
+
+    it('should include the per-filter counts in meta', async () => {
+      readingSessionRepository.countByFilterOption.mockResolvedValue({
+        all: 25,
+        approved: 9,
+        pending: 6,
+        finished: 13,
+        missed: 1,
+      });
+
+      const result = await service.findAllSessions({}, 5);
+
+      expect(result.meta.counts).toEqual({
+        all: 25,
+        approved: 9,
+        pending: 6,
+        finished: 13,
+        missed: 1,
+      });
+    });
+
+    it('should scope both the page and the counts to the caller', async () => {
+      await service.findAllSessions({}, 5);
 
       expect(
         readingSessionRepository.findManyWithPagination,
       ).toHaveBeenCalledWith(
-        expect.objectContaining({ paginationOptions: { page: 3, limit: 10 } }),
+        expect.objectContaining({
+          filterOptions: expect.objectContaining({ userId: 5 }),
+        }),
+      );
+      expect(readingSessionRepository.countByFilterOption).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 5 }),
       );
     });
   });
