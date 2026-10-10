@@ -15,6 +15,12 @@ export const DEFAULT_READING_SESSIONS_LIMIT = 12;
 export const DEFAULT_READING_SESSIONS_OFFSET = 0;
 export const DEFAULT_READING_SESSIONS_PAGE = 1;
 
+export enum ReadingSessionTimeFrame {
+  NOW = 'now',
+  UPCOMING = 'upcoming',
+  PAST = 'past',
+}
+
 export class FindAllReadingSessionsQueryDto {
   @IsOptional()
   @Type(() => Number)
@@ -47,8 +53,16 @@ export class FindAllReadingSessionsQueryDto {
   @IsArray()
   @IsEnum(ReadingSessionStatus, { each: true })
   @Transform(({ value }) => {
+    // Accepts a repeated param (`?sessionStatuses=pending&sessionStatuses=approved`),
+    // a single value, or a comma-separated list, since clients differ on which
+    // they send for a multi-select.
     if (typeof value === 'string') {
-      return [value];
+      return value.split(',').map((item) => item.trim());
+    }
+    if (Array.isArray(value)) {
+      return value.flatMap((item) =>
+        typeof item === 'string' ? item.split(',').map((s) => s.trim()) : item,
+      );
     }
     return value;
   })
@@ -56,8 +70,21 @@ export class FindAllReadingSessionsQueryDto {
 
   @ApiProperty({
     required: false,
-    description: 'Get upcoming reading sessions',
+    description:
+      'Filter by the time window the session sits in, relative to now. Composes with `sessionStatuses` — e.g. `sessionStatuses=approved&timeFrame=now` is the "Right now" filter.',
+    enum: ReadingSessionTimeFrame,
+    example: ReadingSessionTimeFrame.NOW,
+  })
+  @IsOptional()
+  @IsEnum(ReadingSessionTimeFrame)
+  timeFrame?: ReadingSessionTimeFrame;
+
+  @ApiProperty({
+    required: false,
+    description:
+      'Deprecated alias for `timeFrame=upcoming`. Prefer `timeFrame`; this will be removed once clients have migrated.',
     default: false,
+    deprecated: true,
   })
   @IsOptional()
   @Transform(({ value }) => value === 'true')
