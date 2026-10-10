@@ -18,11 +18,10 @@ export class ReadingSessionPageResponseDto<T> extends PaginationResponseDto<T> {
     type: Object,
     description: 'Per-filter-option session counts, keyed by filter option',
     example: {
-      all: 12,
-      now: 1,
-      upcoming: 2,
-      pending: 3,
-      finished: 5,
+      all: 25,
+      approved: 9,
+      pending: 6,
+      finished: 13,
       missed: 1,
     },
   })

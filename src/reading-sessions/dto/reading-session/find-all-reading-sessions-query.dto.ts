@@ -4,7 +4,6 @@ import {
   IsOptional,
   IsEnum,
   Min,
-  IsBoolean,
   IsDateString,
   IsArray,
 } from 'class-validator';
@@ -14,12 +13,6 @@ import { ReadingSessionStatus } from '../../domain';
 export const DEFAULT_READING_SESSIONS_LIMIT = 12;
 export const DEFAULT_READING_SESSIONS_OFFSET = 0;
 export const DEFAULT_READING_SESSIONS_PAGE = 1;
-
-export enum ReadingSessionTimeFrame {
-  NOW = 'now',
-  UPCOMING = 'upcoming',
-  PAST = 'past',
-}
 
 export class FindAllReadingSessionsQueryDto {
   @IsOptional()
@@ -67,29 +60,6 @@ export class FindAllReadingSessionsQueryDto {
     return value;
   })
   sessionStatuses?: ReadingSessionStatus[];
-
-  @ApiProperty({
-    required: false,
-    description:
-      'Filter by the time window the session sits in, relative to now. Composes with `sessionStatuses` — e.g. `sessionStatuses=approved&timeFrame=now` is the "Right now" filter.',
-    enum: ReadingSessionTimeFrame,
-    example: ReadingSessionTimeFrame.NOW,
-  })
-  @IsOptional()
-  @IsEnum(ReadingSessionTimeFrame)
-  timeFrame?: ReadingSessionTimeFrame;
-
-  @ApiProperty({
-    required: false,
-    description:
-      'Deprecated alias for `timeFrame=upcoming`. Prefer `timeFrame`; this will be removed once clients have migrated.',
-    default: false,
-    deprecated: true,
-  })
-  @IsOptional()
-  @Transform(({ value }) => value === 'true')
-  @IsBoolean()
-  upcoming?: boolean;
 
   @ApiProperty({
     required: false,

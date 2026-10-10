@@ -10,7 +10,6 @@ import { basicUserInclude, UserMapperImplement } from '@users/user-mapper';
 import {
   DEFAULT_READING_SESSIONS_LIMIT,
   FindAllReadingSessionsQueryDto,
-  ReadingSessionTimeFrame,
 } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { messageToDomain } from './message.repository';
 
@@ -107,11 +106,10 @@ const DEFAULT_STATUSES: string[] = [
   ReadingSessionStatus.FINISHED,
 ];
 
-// Counts backing the six filter tabs in the client.
+// Counts backing the filter tabs in the client.
 export interface ReadingSessionFilterCounts {
   all: number;
-  now: number;
-  upcoming: number;
+  approved: number;
   pending: number;
   finished: number;
   missed: number;
@@ -203,41 +201,16 @@ export class ReadingSessionRepository {
   }
 
   // Builds the `where` for the list query. `overrides` lets the per-tab count
-  // breakdown reuse this exact scoping with a different filter combination.
+  // breakdown reuse this exact scoping with a different status filter.
   private buildSessionWhere(
     filterOptions:
       | (FindAllReadingSessionsQueryDto & { userId?: number })
       | undefined,
-    overrides: {
-      sessionStatuses?: ReadingSessionStatus[];
-      timeFrame?: ReadingSessionTimeFrame;
-      now?: Date;
-    } = {},
+    overrides: { sessionStatuses?: ReadingSessionStatus[] } = {},
   ): Prisma.readingSessionWhereInput {
-    const statuses =
-      overrides.sessionStatuses ??
-      filterOptions?.sessionStatuses ??
-      (filterOptions?.upcoming ? [ReadingSessionStatus.APPROVED] : undefined);
-
-    const timeFrame =
-      overrides.timeFrame ??
-      filterOptions?.timeFrame ??
-      // Deprecated `upcoming` alias — equivalent to `timeFrame=upcoming`.
-      (filterOptions?.upcoming ? ReadingSessionTimeFrame.UPCOMING : undefined);
-
     const and: Prisma.readingSessionWhereInput[] = [];
-    const now = overrides.now ?? new Date();
 
-    // Every time source appends to `and` instead of assigning `where.startedAt`.
-    // They used to overwrite each other, so only the last one applied.
-    if (timeFrame === ReadingSessionTimeFrame.NOW) {
-      and.push({ startedAt: { lte: now } }, { endedAt: { gt: now } });
-    } else if (timeFrame === ReadingSessionTimeFrame.UPCOMING) {
-      and.push({ startedAt: { gt: now } });
-    } else if (timeFrame === ReadingSessionTimeFrame.PAST) {
-      and.push({ startedAt: { lte: now } });
-    }
-
+    // The explicit date params AND together instead of overwriting each other.
     if (filterOptions?.startedAt) {
       and.push({ startedAt: { gte: new Date(filterOptions.startedAt) } });
     }
@@ -245,58 +218,43 @@ export class ReadingSessionRepository {
       and.push({ startedAt: { lte: new Date(filterOptions.endedAt) } });
     }
 
-    const scoped = this.buildScope(filterOptions, statuses);
+    const scoped = this.buildScope(
+      filterOptions,
+      overrides.sessionStatuses ?? filterOptions?.sessionStatuses,
+    );
     return and.length ? { ...scoped, AND: and } : scoped;
   }
 
   // Per-filter-option counts for the tab badges. Each option is counted
-  // against the caller's own sessions with only that option's filters applied,
-  // so the numbers stay correct no matter which tab is currently selected.
+  // against the caller's own sessions with only that option's status filter
+  // applied, so the numbers stay correct no matter which tab is selected.
   async countByFilterOption(
     filterOptions?: FindAllReadingSessionsQueryDto & { userId?: number },
   ): Promise<ReadingSessionFilterCounts> {
-    const now = new Date();
-    const base = this.buildScope(filterOptions);
-
-    // "All" spans the default statuses, "Requests" is pending only, and the
-    // two time-based tabs are approved sessions inside their window.
-    const nowScope = this.buildSessionWhere(filterOptions, {
-      sessionStatuses: [ReadingSessionStatus.APPROVED],
-      timeFrame: ReadingSessionTimeFrame.NOW,
-      now,
-    });
-    const upcomingScope = this.buildSessionWhere(filterOptions, {
-      sessionStatuses: [ReadingSessionStatus.APPROVED],
-      timeFrame: ReadingSessionTimeFrame.UPCOMING,
-      now,
-    });
-    const pendingScope = this.buildScope(filterOptions, [
+    const statuses = [
+      ReadingSessionStatus.APPROVED,
       ReadingSessionStatus.PENDING,
-    ]);
-    const finishedScope = this.buildScope(filterOptions, [
       ReadingSessionStatus.FINISHED,
-    ]);
-    const missedScope = this.buildScope(filterOptions, [
       ReadingSessionStatus.MISSED,
-    ]);
+    ];
 
-    const [all, nowCount, upcomingCount, pending, finished, missed] =
-      await this.prisma.$transaction([
-        this.prisma.readingSession.count({ where: base }),
-        this.prisma.readingSession.count({ where: nowScope }),
-        this.prisma.readingSession.count({ where: upcomingScope }),
-        this.prisma.readingSession.count({ where: pendingScope }),
-        this.prisma.readingSession.count({ where: finishedScope }),
-        this.prisma.readingSession.count({ where: missedScope }),
-      ]);
+    const [all, ...byStatus] = await this.prisma.$transaction([
+      this.prisma.readingSession.count({
+        where: this.buildScope(filterOptions),
+      }),
+      ...statuses.map((status) =>
+        this.prisma.readingSession.count({
+          where: this.buildScope(filterOptions, [status]),
+        }),
+      ),
+    ]);
 
     return {
       all,
-      now: nowCount,
-      upcoming: upcomingCount,
-      pending,
-      finished,
-      missed,
+      approved: byStatus[0],
+      pending: byStatus[1],
+      finished: byStatus[2],
+      missed: byStatus[3],
     };
   }
 
@@ -308,18 +266,13 @@ export class ReadingSessionRepository {
     paginationOptions?: IPaginationOptions;
   }): Promise<{ data: ReadingSession[]; count: number }> {
     const where = this.buildSessionWhere(filterOptions);
-    const isUpcomingOnly =
-      filterOptions?.timeFrame === ReadingSessionTimeFrame.UPCOMING ||
-      (!filterOptions?.timeFrame && filterOptions?.upcoming);
 
     const findArgs: Prisma.readingSessionFindManyArgs = {
       where,
       // Sorted on `id` as well as `startedAt` so rows with an identical start
       // time keep a stable order — otherwise offset pagination can repeat or
       // drop rows across page boundaries.
-      orderBy: isUpcomingOnly
-        ? [{ startedAt: 'asc' }, { id: 'asc' }]
-        : [{ startedAt: 'desc' }, { id: 'desc' }],
+      orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
       take: paginationOptions?.limit ?? DEFAULT_READING_SESSIONS_LIMIT,
       ...readingSessionInclude,
     };

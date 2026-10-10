@@ -237,8 +237,8 @@ export class ReadingSessionsService {
       this.readingSessionRepository.countByFilterOption(filterOptions),
     ]);
 
-    const page = pagination(data, count, paginationOptions);
-    return { ...page, meta: { ...page.meta, counts } };
+    const result = pagination(data, count, paginationOptions);
+    return { ...result, meta: { ...result.meta, counts } };
   }
 
   async findOneSession(id: number): Promise<ReadingSession> {
