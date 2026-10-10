@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   HttpStatus,
   Injectable,
   Logger,
@@ -660,7 +659,7 @@ export class UsersService {
   ) {
     const user = await this.prisma.user.findUnique({
       where: { id: Number(userId) },
-      select: { id: true, roleId: true },
+      select: { id: true },
     });
 
     if (!user) {
@@ -668,15 +667,6 @@ export class UsersService {
         status: HttpStatus.NOT_FOUND,
         errors: {
           user: 'userNotFound',
-        },
-      });
-    }
-
-    if (user.roleId !== RoleEnum.humanBook) {
-      throw new ForbiddenException({
-        status: HttpStatus.FORBIDDEN,
-        errors: {
-          role: 'onlyHumanBooksCanAddEducation',
         },
       });
     }
@@ -766,7 +756,7 @@ export class UsersService {
   ) {
     const user = await this.prisma.user.findUnique({
       where: { id: Number(userId) },
-      select: { id: true, roleId: true },
+      select: { id: true },
     });
 
     if (!user) {
@@ -774,15 +764,6 @@ export class UsersService {
         status: HttpStatus.NOT_FOUND,
         errors: {
           user: 'userNotFound',
-        },
-      });
-    }
-
-    if (user.roleId !== RoleEnum.humanBook) {
-      throw new ForbiddenException({
-        status: HttpStatus.FORBIDDEN,
-        errors: {
-          role: 'onlyHumanBooksCanAddWork',
         },
       });
     }
