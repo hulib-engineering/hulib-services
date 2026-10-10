@@ -767,7 +767,9 @@ describe('UsersService', () => {
       });
 
       expect(prisma.education.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ userId: 1 }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 1 }),
+        }),
       );
     });
 
@@ -861,7 +863,9 @@ describe('UsersService', () => {
       });
 
       expect(prisma.work.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ userId: 1 }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 1 }),
+        }),
       );
     });
 
