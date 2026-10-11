@@ -353,6 +353,7 @@ export class StoriesController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({
     summary:
