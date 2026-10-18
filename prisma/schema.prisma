@@ -409,6 +409,7 @@ enum EducationType {
   vocational
   university
   life_experience
+  high_school
 }
 
 model huberFavorite {
