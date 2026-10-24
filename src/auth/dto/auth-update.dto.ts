@@ -15,6 +15,8 @@ import { GenderEnum } from '@genders/genders.enum';
 import { GenderDto } from '@genders/dto/gender.dto';
 import { RoleDto } from '../../roles/dto/role.dto';
 
+import { CountryCode } from 'libphonenumber-js/max';
+
 export class AuthUpdateDto {
   @ApiPropertyOptional({ example: 'new.email@example.com' })
   @IsOptional()
@@ -66,8 +68,11 @@ export class AuthUpdateDto {
 
   @ApiPropertyOptional({ example: '11234567890' })
   @IsOptional()
-  @IsPhoneNumber()
   parentPhoneNumber?: string;
+
+  @ApiPropertyOptional({ example: 'VN' })
+  @IsOptional()
+  countryCode?: CountryCode;
 
   @ApiPropertyOptional({ example: '11234567891' })
   @IsOptional()
