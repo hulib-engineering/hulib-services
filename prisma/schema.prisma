@@ -119,6 +119,7 @@ model user {
   coverImageId          String?                @db.Uuid
   address               String?                @db.VarChar
   parentPhoneNumber     String?                @db.VarChar
+  parentEmail           String?                @db.VarChar
   phoneNumber           String?                @db.VarChar
   bio                   String?                @db.VarChar
   videoUrl              String?                @db.VarChar

@@ -74,6 +74,12 @@ export class AuthUpdateDto {
   @IsOptional()
   countryCode?: CountryCode;
 
+  @ApiPropertyOptional({ example: 'new.email@example.com' })
+  @IsOptional()
+  @IsEmail()
+  @Transform(lowerCaseTransformer)
+  parentEmail?: string;
+
   @ApiPropertyOptional({ example: '11234567891' })
   @IsOptional()
   @IsPhoneNumber()
