@@ -138,6 +138,39 @@ export class UsersService {
     return this.usersRepository.create(clonedPayload);
   }
 
+  async updateEmail(
+    id: number | string,
+    email: string,
+  ): Promise<User> {
+    const user = await this.usersRepository.findById(id);
+
+    if (!user) {
+      throw new NotFoundException({
+        status: HttpStatus.NOT_FOUND,
+        errors: {
+          user: 'userNotFound',
+        },
+      });
+    }
+
+    const existingUser = await this.usersRepository.findByEmail(email);
+
+    // Allow the user's current email, but reject another user's email.
+    if (
+      existingUser &&
+      String(existingUser.id) !== String(user.id)
+    ) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          email: 'emailAlreadyExists',
+        },
+      });
+    }
+
+    return this.usersRepository.update(id, { email });
+  }
+
   findManyWithPagination({
     filterOptions,
     sortOptions,
