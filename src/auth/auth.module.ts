@@ -14,6 +14,7 @@ import { CaslModule } from '@permission/casl.module';
 import { FavStoriesModule } from '@fav-stories/fav-stories.module';
 import { FilesModule } from '@files/files.module';
 import { FavHubersModule } from '../fav-hubers/fav-hubers.module';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { FavHubersModule } from '../fav-hubers/fav-hubers.module';
     FavHubersModule,
     FilesModule,
     JwtModule.register({}),
+    RedisModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtRefreshStrategy, AnonymousStrategy],

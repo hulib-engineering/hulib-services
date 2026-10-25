@@ -1,5 +1,6 @@
 import {
   HttpStatus,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -29,6 +30,8 @@ import { User } from '@users/domain/user';
 import { Approval } from '@users/approval.enum';
 import { TopicsService } from '@topics/topics.service';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { RedisClientType } from 'redis';
+import { REDIS_CLIENT } from '../redis/redis.module';
 
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
@@ -43,6 +46,7 @@ import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
 import { FilesService } from '@files/files.service';
 import { FileType } from '@files/domain/file';
 import { isPhoneNumber } from 'class-validator';
+import { RequestOTPDto } from './dto/auth-request-otp';
 
 @Injectable()
 export class AuthService {
@@ -57,6 +61,8 @@ export class AuthService {
     private topicsService: TopicsService,
     private prisma: PrismaService,
     private readonly filesService: FilesService,
+    @Inject(REDIS_CLIENT)
+    private readonly redis: RedisClientType,
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
@@ -270,6 +276,7 @@ export class AuthService {
     return { emailAvailable: !userObject };
   }
 
+  // Note: consider to stop using this method and replace this method's calls with the one using Redis instead
   async resendOTP(id: string | number): Promise<RegisterResponseDto> {
     const user = await this.usersService.findById(id);
 
@@ -291,6 +298,72 @@ export class AuthService {
     });
 
     return { id, email: user.email ?? '', code: code.toString() };
+  }
+
+  async requestOTP(
+    id: number | string,
+    email: string,
+    digits: number = 6,
+  ): Promise<{ ok: true }> {
+    if (digits !== 4 && digits !== 6) {
+      throw new BadRequestException('OTP must be 4 or 6 digits');
+    }
+
+    const otp = randomInt(0, 10 ** digits)
+      .toString()
+      .padStart(digits, '0');
+    const key = `otp:${id}`;
+    await this.redis.set(key, otp);
+
+    // Note: Consider using HMAC or something to encrypt the OTP for more security (also put secret key into the env file)
+
+    try {
+      await this.mailService.confirmNewEmail({
+        to: email,
+        data: { code: otp },
+      });
+    } catch (error) {
+      // Remove the OTP if sending the email fails.
+      await this.redis.del(key);
+      throw error;
+    }
+
+    return { ok: true };
+  }
+
+  async confirmOTP(
+    id: number | string,
+    otp: string,
+  ): Promise<{ ok: true }> {
+    if (!/^\d{4}(\d{2})?$/.test(otp)) {// Regex checks if OTP is not 4 or 6 digit long
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    const key = `otp:${id}`;
+
+    // Atomically compare and delete the OTP if it matches.
+    const result = await this.redis.eval(
+      `
+        local stored = redis.call('GET', KEYS[1])
+
+        if stored and stored == ARGV[1] then
+          redis.call('DEL', KEYS[1])
+          return 1
+        end
+
+        return 0
+      `,
+      {
+        keys: [key],
+        arguments: [otp],
+      },
+    );
+
+    if (result !== 1) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    return { ok: true };
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -450,6 +523,17 @@ export class AuthService {
     }
   }
 
+  async verifyNewEmail(
+    id: number | string,
+    newEmail: string,
+    otp: string,
+  ): Promise<{ ok: true }> {
+    await this.confirmOTP(id, otp);
+    await this.usersService.updateEmail(id, newEmail);
+
+    return { ok: true };
+  }
+
   async update(
     userJwtPayload: JwtPayloadType,
     userDto: AuthUpdateDto,
@@ -511,12 +595,12 @@ export class AuthService {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            email: 'emailExists',
+            email: 'emailExists', // Note: consider changing the name string that should notify "This email already had another owner"
           },
         });
       }
 
-      const hash = await this.jwtService.signAsync(
+      /*const hash = await this.jwtService.signAsync(
         {
           confirmEmailUserId: currentUser.id,
           newEmail: userDto.email,
@@ -529,14 +613,9 @@ export class AuthService {
             infer: true,
           }),
         },
-      );
+      );*/
 
-      await this.mailService.confirmNewEmail({
-        to: userDto.email,
-        data: {
-          hash,
-        },
-      });
+      await this.requestOTP(currentUser.id, userDto.email, 4);
     }
 
     delete userDto.email;
@@ -555,7 +634,6 @@ export class AuthService {
     }
 
     await this.usersService.update(userJwtPayload.id, userDto);
-
     return this.usersService.findById(userJwtPayload.id);
   }
 

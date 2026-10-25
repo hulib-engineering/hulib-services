@@ -59,6 +59,8 @@ import { UpdateWorkDto } from './dto/update-work.dto';
 import { UpdateUserTopicsDto } from './dto/update-user-topics.dto';
 import { AuthRoles } from './decorators/auth.decorator';
 import { UsersService } from '@users/users.service';
+import { RequestOTPDto } from './dto/auth-request-otp';
+import { VerifyNewEmailDto } from './dto/auth-verify-new-email';
 
 @ApiTags('Auth')
 @Controller({
@@ -138,6 +140,23 @@ export class AuthController {
     @Body() confirmEmailDto: AuthConfirmEmailDto,
   ): Promise<Pick<RegisterResponseDto, 'code'>> {
     return this.service.resendOTP(confirmEmailDto.id);
+  }
+
+  @Post('otp/request')
+  @HttpCode(HttpStatus.OK)
+  async requestOTP(
+    @Body() dto: RequestOTPDto,
+  ): Promise<{ ok: true }> {
+    return this.service.requestOTP(dto.id, dto.email, dto.digits ?? 6);
+  }
+
+  @Post('otp/verify-new-email')
+  @HttpCode(HttpStatus.OK)
+  // eslint-disable-next-line prettier/prettier
+  async verifyNewEmail(
+    @Body() dto: VerifyNewEmailDto,
+  ): Promise<{ ok: true }> {
+    return this.service.verifyNewEmail(dto.id, dto.newEmail, dto.otp);
   }
 
   @Post('forgot/password')
