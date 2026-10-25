@@ -461,6 +461,7 @@ describe('AuthService', () => {
       ).rejects.toThrow(UnprocessableEntityException);
     });
 
+    /* Note: 
     it('should mail a confirmation when the email changes', async () => {
       usersService.findById.mockResolvedValue(makeUser());
       usersService.findByEmail.mockResolvedValue(null);
@@ -476,6 +477,24 @@ describe('AuthService', () => {
         data: { hash: 'confirm-hash' },
       });
       expect(usersService.update).toHaveBeenCalledWith(1, {});
+    });*/
+
+    // Replacement for the above mail confirmation link test
+    it('should store and email an OTP when requesting an email change', async () => {
+      redis.set.mockResolvedValue('OK');
+      mailService.confirmNewEmail.mockResolvedValue(undefined);
+
+      await service.requestOTP(1, 'new@example.com');
+
+      const [key, otp] = redis.set.mock.calls[0];
+
+      expect(key).toBe('otp:1');
+      expect(otp).toMatch(/^\d{6}$/);
+
+      expect(mailService.confirmNewEmail).toHaveBeenCalledWith({
+        to: 'new@example.com',
+        data: { code: otp },
+      });
     });
 
     it('should persist simple profile updates', async () => {
