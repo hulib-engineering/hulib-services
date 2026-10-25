@@ -40,6 +40,7 @@ describe('AuthService', () => {
   let prisma: Record<string, any>;
   let jwtService: { signAsync: jest.Mock; verifyAsync: jest.Mock };
   let configService: { getOrThrow: jest.Mock };
+  let redis: Record<string, jest.Mock>;
 
   const makeJwtPayload = (overrides: Record<string, any> = {}) => ({
     id: 1,
@@ -91,6 +92,13 @@ describe('AuthService', () => {
     configService = {
       getOrThrow: jest.fn((key: string) => CONFIG_VALUES[key]),
     };
+    redis = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue('OK'),
+      del: jest.fn().mockResolvedValue(1),
+      exists: jest.fn().mockResolvedValue(0),
+      setEx: jest.fn().mockResolvedValue('OK'),
+    };
 
     service = new AuthService(
       jwtService as unknown as JwtService,
@@ -101,6 +109,7 @@ describe('AuthService', () => {
       topicsService as unknown as TopicsService,
       prisma as unknown as PrismaService,
       filesService as unknown as FilesService,
+      redis as any,
     );
   });
 

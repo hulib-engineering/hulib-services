@@ -46,7 +46,6 @@ import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
 import { FilesService } from '@files/files.service';
 import { FileType } from '@files/domain/file';
 import { isPhoneNumber } from 'class-validator';
-import { RequestOTPDto } from './dto/auth-request-otp';
 
 @Injectable()
 export class AuthService {
