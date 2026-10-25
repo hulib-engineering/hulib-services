@@ -42,6 +42,7 @@ import { RegisterResponseDto } from './dto/register-response.dto';
 import { RegisterToHumanBookDto } from './dto/register-to-humanbook';
 import { FilesService } from '@files/files.service';
 import { FileType } from '@files/domain/file';
+import { isPhoneNumber } from 'class-validator';
 
 @Injectable()
 export class AuthService {
@@ -540,6 +541,18 @@ export class AuthService {
 
     delete userDto.email;
     delete userDto.oldPassword;
+
+    if (
+      userDto.parentPhoneNumber &&
+      !isPhoneNumber(userDto.parentPhoneNumber, userDto.countryCode)
+    ) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        errors: {
+          parentPhoneNumber: 'invalidPhoneNumber',
+        },
+      });
+    }
 
     await this.usersService.update(userJwtPayload.id, userDto);
 

@@ -156,6 +156,18 @@ export class ReadingSession {
 
   @ApiProperty({
     type: Date,
+    nullable: true,
+  })
+  huberJoinedAt?: Date;
+
+  @ApiProperty({
+    type: Date,
+    nullable: true,
+  })
+  readerJoinedAt?: Date;
+
+  @ApiProperty({
+    type: Date,
   })
   createdAt: Date;
 

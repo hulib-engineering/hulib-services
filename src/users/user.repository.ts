@@ -237,6 +237,7 @@ export class UserRepository {
     if ('phoneNumber' in payload) data.phoneNumber = payload.phoneNumber;
     if ('parentPhoneNumber' in payload)
       data.parentPhoneNumber = payload.parentPhoneNumber;
+    if ('parentEmail' in payload) data.parentEmail = payload.parentEmail;
     if ('bio' in payload) data.bio = payload.bio;
     if ('videoUrl' in payload) data.videoUrl = payload.videoUrl;
     if ('warnCount' in payload) data.warnCount = payload.warnCount;

@@ -4,12 +4,15 @@ import {
   IsOptional,
   IsEnum,
   Min,
-  IsBoolean,
   IsDateString,
   IsArray,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ReadingSessionStatus } from '../../domain';
+
+export const DEFAULT_READING_SESSIONS_LIMIT = 12;
+export const DEFAULT_READING_SESSIONS_OFFSET = 0;
+export const DEFAULT_READING_SESSIONS_PAGE = 1;
 
 export class FindAllReadingSessionsQueryDto {
   @IsOptional()
@@ -43,22 +46,20 @@ export class FindAllReadingSessionsQueryDto {
   @IsArray()
   @IsEnum(ReadingSessionStatus, { each: true })
   @Transform(({ value }) => {
+    // Accepts a repeated param (`?sessionStatuses=pending&sessionStatuses=approved`),
+    // a single value, or a comma-separated list, since clients differ on which
+    // they send for a multi-select.
     if (typeof value === 'string') {
-      return [value];
+      return value.split(',').map((item) => item.trim());
+    }
+    if (Array.isArray(value)) {
+      return value.flatMap((item) =>
+        typeof item === 'string' ? item.split(',').map((s) => s.trim()) : item,
+      );
     }
     return value;
   })
   sessionStatuses?: ReadingSessionStatus[];
-
-  @ApiProperty({
-    required: false,
-    description: 'Get upcoming reading sessions',
-    default: false,
-  })
-  @IsOptional()
-  @Transform(({ value }) => value === 'true')
-  @IsBoolean()
-  upcoming?: boolean;
 
   @ApiProperty({
     required: false,
@@ -78,15 +79,41 @@ export class FindAllReadingSessionsQueryDto {
   @IsDateString({ strict: true })
   endedAt?: string;
 
+  @ApiProperty({
+    required: false,
+    description: 'Number of sessions per page',
+    default: DEFAULT_READING_SESSIONS_LIMIT,
+    minimum: 1,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  limit: number;
+  limit?: number;
 
+  @ApiProperty({
+    required: false,
+    description:
+      'Zero-based row offset. Takes precedence over `page` when both are sent.',
+    default: DEFAULT_READING_SESSIONS_OFFSET,
+    minimum: 0,
+    deprecated: true,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  offset: number;
+  offset?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'One-based page number. Ignored when `offset` is sent.',
+    default: DEFAULT_READING_SESSIONS_PAGE,
+    minimum: 1,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  page?: number;
 }

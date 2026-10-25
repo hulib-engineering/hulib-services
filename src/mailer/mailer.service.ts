@@ -72,6 +72,14 @@ export class MailerService {
     return compiled;
   }
 
+  async renderTemplate(
+    templatePath: string,
+    context: Record<string, unknown>,
+  ): Promise<string> {
+    const template = await this.getCompiledTemplate(templatePath);
+    return template(context);
+  }
+
   async sendMail({
     templatePath,
     context,
@@ -86,8 +94,7 @@ export class MailerService {
   }): Promise<void> {
     let html: string | undefined;
     if (templatePath) {
-      const template = await this.getCompiledTemplate(templatePath);
-      html = template(context);
+      html = await this.renderTemplate(templatePath, context);
     }
 
     try {

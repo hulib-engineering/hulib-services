@@ -11,7 +11,9 @@ import {
   ApiProperty,
   ApiPropertyOptional,
 } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { FileDto } from '@files/dto/file.dto';
+import { topicIdsTransformer } from '@utils/transformers/topic-ids.transformer';
 import { PublishStatus } from '@stories/status.enum';
 import { Topic } from '../../topics/domain/topics';
 
@@ -32,6 +34,7 @@ export class CreateStoryDto {
 
   @ApiProperty({ example: [{ id: '1' }, { id: '2' }], type: () => [Topic] })
   @IsOptional()
+  @Transform(topicIdsTransformer)
   topics?: Topic[] | [];
 
   @ApiPropertyOptional({

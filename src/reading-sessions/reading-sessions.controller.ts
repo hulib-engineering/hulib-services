@@ -20,6 +20,8 @@ import {
   ApiOperation,
   ApiResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiParam,
 } from '@nestjs/swagger';
 import { ReadingSessionsService } from './reading-sessions.service';
@@ -39,6 +41,7 @@ import { Roles } from '@roles/roles.decorator';
 import { CheckAbilities } from '@permission/decorators/casl.decorator';
 import { Action } from '@permission/ability.factory';
 import { CaslGuard } from '@permission/guards/casl.guard';
+import { ReadingSessionPageResponseDto } from '@utils/dto/pagination-response.dto';
 
 @ApiTags('Reading Sessions')
 @ApiBearerAuth()
@@ -63,14 +66,16 @@ export class ReadingSessionsController {
   }
 
   @ApiOperation({ summary: 'Query many reading sessions' })
-  @ApiResponse({ type: [ReadingSessionResponseDto] })
+  @ApiResponse({
+    type: ReadingSessionPageResponseDto<ReadingSessionResponseDto>,
+  })
   @Get()
   @CheckAbilities((ability) => ability.can(Action.Read, 'ReadingSession'))
   @UseGuards(AuthGuard('jwt'), CaslGuard)
   async findAllSessions(
     @Query() queryDto: FindAllReadingSessionsQueryDto,
     @Request() request,
-  ): Promise<ReadingSessionResponseDto[]> {
+  ): Promise<ReadingSessionPageResponseDto<ReadingSessionResponseDto>> {
     return this.readingSessionsService.findAllSessions(
       queryDto,
       request.user.id,
@@ -117,5 +122,27 @@ export class ReadingSessionsController {
   @Delete(':id')
   async deleteSession(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.readingSessionsService.deleteSession(id);
+  }
+
+  @ApiOperation({
+    summary:
+      'Record that the caller has joined the meeting room. Idempotent — the first join time wins.',
+  })
+  @Post(':id/attend')
+  @Roles(RoleEnum.reader, RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiForbiddenResponse({ description: 'Caller is not a session participant.' })
+  @ApiNotFoundResponse({ description: 'Reading session not found.' })
+  async markAttendance(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() request,
+  ): Promise<void> {
+    return this.readingSessionsService.markAttendance(id, request.user.id);
   }
 }

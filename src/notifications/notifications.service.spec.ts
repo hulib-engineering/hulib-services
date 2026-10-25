@@ -70,5 +70,73 @@ describe('NotificationsService', () => {
       expect(data.relatedEntityId).toBe(5);
       expect(result).toEqual({ id: 2, ...data });
     });
+
+    it('should create a time slot reminder without a related entity', async () => {
+      prisma.notification.create.mockResolvedValue({
+        id: 3,
+        recipientId: 4,
+        notificationType: NotificationTypeEnum.timeSlotReminder,
+      });
+
+      const result = await service.create({
+        recipientId: 4,
+        senderId: 1,
+        type: NotificationTypeEnum.timeSlotReminder,
+        extraNote: 'Please set your available meeting time slots.',
+      });
+
+      expect(prisma.notification.create).toHaveBeenCalledWith({
+        data: {
+          recipientId: 4,
+          senderId: 1,
+          notificationType: NotificationTypeEnum.timeSlotReminder,
+          relatedEntityId: null,
+          extraNote: 'Please set your available meeting time slots.',
+        },
+      });
+      expect(result).toEqual({
+        id: 3,
+        recipientId: 4,
+        notificationType: NotificationTypeEnum.timeSlotReminder,
+      });
+    });
+  });
+
+  describe('pushNotiAndWait', () => {
+    it('should return true and emit the refreshed notification list', async () => {
+      prisma.notification.create.mockResolvedValue({
+        id: 3,
+        recipientId: 4,
+      });
+      jest.spyOn(service, 'findAllWithPagination').mockResolvedValue({
+        data: [],
+        unseenCount: 0,
+      } as never);
+
+      await expect(
+        service.pushNotiAndWait({
+          senderId: 1,
+          recipientId: 4,
+          type: NotificationTypeEnum.timeSlotReminder,
+        }),
+      ).resolves.toBe(true);
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'notification.list.fetch',
+        expect.objectContaining({ userId: 4 }),
+      );
+    });
+
+    it('should return false when the notification is not persisted', async () => {
+      jest.spyOn(service, 'create').mockResolvedValue(null);
+
+      await expect(
+        service.pushNotiAndWait({
+          senderId: 1,
+          recipientId: 4,
+          type: NotificationTypeEnum.timeSlotReminder,
+        }),
+      ).resolves.toBe(false);
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
   });
 });

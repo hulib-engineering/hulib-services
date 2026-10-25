@@ -141,8 +141,14 @@ export class TopicsRepository {
   }
 
   async findByIds(ids: Topics['id'][]): Promise<Topics[]> {
+    const validIds = Array.from(
+      new Set(ids.map(Number).filter((id) => Number.isInteger(id) && id > 0)),
+    );
+    if (validIds.length === 0) {
+      return [];
+    }
     const rows = await this.prisma.topics.findMany({
-      where: { id: { in: ids.map(Number) } },
+      where: { id: { in: validIds } },
     });
     return rows.map((row) => toDomain(row));
   }

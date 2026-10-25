@@ -478,7 +478,7 @@ async function seedEducationAndWork(hubers: SeededUser[]) {
           endedAt: stillOngoing
             ? null
             : faker.date.between({ from: startedAt, to: new Date() }),
-          huberId: huber.id,
+          userId: huber.id,
           type: pick(Object.values(EducationType)),
           isPublic: faker.datatype.boolean(0.7),
         },
@@ -496,7 +496,7 @@ async function seedEducationAndWork(hubers: SeededUser[]) {
           endedAt: stillOngoing
             ? null
             : faker.date.between({ from: startedAt, to: new Date() }),
-          huberId: huber.id,
+          userId: huber.id,
         },
       });
     }

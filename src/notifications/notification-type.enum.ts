@@ -13,8 +13,11 @@ export enum NotificationTypeEnum {
   rejectReadingSession = 'rejectReadingSession',
   cancelReadingSession = 'cancelReadingSession',
   missReadingSession = 'missReadingSession',
+  huberNoShowReadingSession = 'huberNoShowReadingSession',
+  autoCancelReadingSession = 'autoCancelReadingSession',
   huberWarning = 'huberWarning',
   userAppeal = 'userAppeal',
   appealResponse = 'appealResponse',
+  timeSlotReminder = 'timeSlotReminder',
   other = 'other',
 }

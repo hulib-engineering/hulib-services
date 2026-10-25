@@ -87,6 +87,12 @@ export class User {
 
   @ApiProperty({
     type: String,
+    example: 'john.doe@example.com',
+  })
+  parentEmail?: string | null;
+
+  @ApiProperty({
+    type: String,
     example: '11234567891',
   })
   phoneNumber?: string | null;
