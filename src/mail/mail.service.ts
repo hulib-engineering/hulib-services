@@ -148,33 +148,33 @@ export class MailService {
     });
   }
 
-  async confirmNewEmail(mailData: MailData<{ hash: string }>): Promise<void> {
+  async confirmNewEmail(mailData: MailData<{ code: string }>): Promise<void> {
     const i18n = I18nContext.current();
     let emailConfirmTitle: MaybeType<string>;
-    let text1: MaybeType<string>;
-    let text2: MaybeType<string>;
-    let text3: MaybeType<string>;
+    let guide: MaybeType<string>;
+    let contact: MaybeType<string>;
+    let welcome: MaybeType<string>;
+    let regard: MaybeType<string>;
 
     if (i18n) {
-      [emailConfirmTitle, text1, text2, text3] = await Promise.all([
-        i18n.t('common.confirmEmail'),
-        i18n.t('confirm-new-email.text1'),
-        i18n.t('confirm-new-email.text2'),
-        i18n.t('confirm-new-email.text3'),
-      ]);
+      [emailConfirmTitle, guide, contact, welcome, regard] =
+        await Promise.all([
+          i18n.t('confirm-new-email.title'),
+          i18n.t('confirm-new-email.guide'),
+          i18n.t('confirm-email.contact'),
+          i18n.t('confirm-email.welcome'),
+          i18n.t('common.bestRegards'),
+        ]);
     }
 
-    const url = new URL(
-      this.configService.getOrThrow('app.frontendDomain', {
-        infer: true,
-      }) + '/confirm-new-email',
-    );
-    url.searchParams.set('hash', mailData.data.hash);
+    const url = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
 
     await this.mailerService.sendMail({
       to: mailData.to,
       subject: emailConfirmTitle,
-      text: `${url.toString()} ${emailConfirmTitle}`,
+      text: `${mailData.data.code.toString()} ${emailConfirmTitle}`,
       templatePath: path.join(
         this.configService.getOrThrow('app.workingDirectory', {
           infer: true,
@@ -187,11 +187,11 @@ export class MailService {
       context: {
         title: emailConfirmTitle,
         url: url.toString(),
-        actionTitle: emailConfirmTitle,
-        app_name: this.configService.get('app.name', { infer: true }),
-        text1,
-        text2,
-        text3,
+        code: mailData.data.code.toString().split('').join(' '),
+        guide,
+        contact,
+        welcome,
+        regard,
       },
     });
   }

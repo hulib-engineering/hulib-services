@@ -40,6 +40,7 @@ describe('AuthService', () => {
   let prisma: Record<string, any>;
   let jwtService: { signAsync: jest.Mock; verifyAsync: jest.Mock };
   let configService: { getOrThrow: jest.Mock };
+  let redis: Record<string, jest.Mock>;
 
   const makeJwtPayload = (overrides: Record<string, any> = {}) => ({
     id: 1,
@@ -91,6 +92,13 @@ describe('AuthService', () => {
     configService = {
       getOrThrow: jest.fn((key: string) => CONFIG_VALUES[key]),
     };
+    redis = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue('OK'),
+      del: jest.fn().mockResolvedValue(1),
+      exists: jest.fn().mockResolvedValue(0),
+      setEx: jest.fn().mockResolvedValue('OK'),
+    };
 
     service = new AuthService(
       jwtService as unknown as JwtService,
@@ -101,6 +109,7 @@ describe('AuthService', () => {
       topicsService as unknown as TopicsService,
       prisma as unknown as PrismaService,
       filesService as unknown as FilesService,
+      redis as any,
     );
   });
 
@@ -452,6 +461,7 @@ describe('AuthService', () => {
       ).rejects.toThrow(UnprocessableEntityException);
     });
 
+    /* Note: 
     it('should mail a confirmation when the email changes', async () => {
       usersService.findById.mockResolvedValue(makeUser());
       usersService.findByEmail.mockResolvedValue(null);
@@ -467,6 +477,24 @@ describe('AuthService', () => {
         data: { hash: 'confirm-hash' },
       });
       expect(usersService.update).toHaveBeenCalledWith(1, {});
+    });*/
+
+    // Replacement for the above mail confirmation link test
+    it('should store and email an OTP when requesting an email change', async () => {
+      redis.set.mockResolvedValue('OK');
+      mailService.confirmNewEmail.mockResolvedValue(undefined);
+
+      await service.requestOTP(1, 'new@example.com');
+
+      const [key, otp] = redis.set.mock.calls[0];
+
+      expect(key).toBe('otp:1');
+      expect(otp).toMatch(/^\d{6}$/);
+
+      expect(mailService.confirmNewEmail).toHaveBeenCalledWith({
+        to: 'new@example.com',
+        data: { code: otp },
+      });
     });
 
     it('should persist simple profile updates', async () => {
