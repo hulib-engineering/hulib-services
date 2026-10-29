@@ -1,8 +1,8 @@
 {
-  "title": "We've Received Your Story",
-  "subTitle": "Thanks for sharing!",
+  "title": "HuLib Has Received Your Story",
+  "subTitle": "",
   "storyTitleLabel": "Story title:",
-  "p1": "We've received your submission and it's now waiting for review by our team.",
-  "p2": "We'll notify you by email as soon as a decision has been made.",
+  "p1": "Your story has been successfully submitted and is now pending review.",
+  "p2": "HuLib will review it within 24–48 hours and notify you of the result by email. Thank you for sharing your story with HuLib 💙",
   "buttonLabel": "View my story"
 }

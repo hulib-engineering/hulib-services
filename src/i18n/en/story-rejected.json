@@ -1,7 +1,7 @@
 {
-  "title": "Your Story Needs Some Changes",
-  "subTitle": "It wasn't approved this time",
-  "p1": "Your story “{storyTitle}” was declined for the following reason:",
-  "p2": "You're welcome to revise and resubmit it any time.",
-  "buttonLabel": "Edit my story"
+  "title": "Your story wasn’t approved this time",
+  "subTitle": "",
+  "p1": "Your story, “{storyTitle},” wasn’t approved this time because:",
+  "p2": "Don’t worry! 💙 You can update your story and resubmit it anytime. Thank you for taking the time to share your story with HuLib!",
+  "buttonLabel": "Resubmit Your Story"
 }

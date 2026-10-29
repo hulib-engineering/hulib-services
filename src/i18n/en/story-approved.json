@@ -1,7 +1,7 @@
 {
-  "title": "Your Story Is Live",
-  "subTitle": "Congratulations!",
-  "p1": "Your story “{storyTitle}” has been successfully published.",
-  "p2": "Thank you for sharing your voice with our community.",
-  "buttonLabel": "View my story"
+  "title": "Your Story Has Been Published",
+  "subTitle": "Congratulations! 🎉",
+  "p1": "Your story, “{storyTitle},” has been successfully published.",
+  "p2": "Thank you for sharing your voice with our HuLib community. Want to have a free conversation with young people navigating a journey you have been through? Just 30 minutes a week can create a meaningful connection. 💙",
+  "buttonLabel": "View My Story"
 }
