@@ -1,7 +1,7 @@
 {
-  "title": "Câu Chuyện Của Bạn Cần Chỉnh Sửa",
-  "subTitle": "Chưa được duyệt lần này",
-  "p1": "Câu chuyện “{storyTitle}” của bạn chưa đạt yêu cầu với lí do:",
-  "p2": "Bạn có thể chỉnh sửa và gửi lại bất cứ lúc nào.",
-  "buttonLabel": "Chỉnh sửa câu chuyện"
+  "title": "Câu chuyện của bạn chưa được duyệt lần này",
+  "subTitle": "",
+  "p1": "Câu chuyện “{storyTitle}” của bạn chưa được duyệt lần này vì:",
+  "p2": "Đừng lo nhé! 💙 Bạn có thể cập nhật nội dung và nộp lại câu chuyện bất cứ lúc nào. Cảm ơn bạn đã dành thời gian chia sẻ cùng HuLib!",
+  "buttonLabel": "Nộp Lại Câu Chuyện"
 }
