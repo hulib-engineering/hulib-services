@@ -35,7 +35,8 @@ import { ReadingSessionPageResponseDto } from '@utils/dto/pagination-response.dt
 import { pagination } from '@utils/pagination';
 
 const AUTO_CANCEL_REASON =
-  'Huber did not respond before the session start time';
+  'Huber did not respond within 24 hours of the meeting request';
+const AUTO_CANCEL_AFTER_MS = 24 * 60 * 60 * 1000;
 
 // Matches how far ahead of the start the meeting link and Agora token exist.
 const ATTENDANCE_GRACE_MS = 30 * 60 * 1000;
@@ -147,6 +148,14 @@ export class ReadingSessionsService {
       }),
       this.reminderQueue.add(
         'send-booking-email',
+        { sessionId: newReadingSession.id },
+        {
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      ),
+      this.reminderQueue.add(
+        'send-meeting-request-sent-email',
         { sessionId: newReadingSession.id },
         {
           removeOnComplete: true,
@@ -395,6 +404,7 @@ export class ReadingSessionsService {
         type: NotificationTypeEnum.rejectReadingSession,
         relatedEntityId: session.id,
       });
+      await this.queueMeetingStatusEmail('send-meeting-declined-email', id);
     }
 
     if (dto.sessionStatus === 'canceled') {
@@ -404,6 +414,7 @@ export class ReadingSessionsService {
         type: NotificationTypeEnum.cancelReadingSession,
         relatedEntityId: session.id,
       });
+      await this.queueMeetingStatusEmail('send-meeting-canceled-email', id);
     }
   }
 
@@ -470,6 +481,20 @@ export class ReadingSessionsService {
     return `Sorry! Your meeting request (${this.formatSessionWhen(session)}) has been auto cancelled because ${huberName} has not responded yet.`;
   }
 
+  private async queueMeetingStatusEmail(
+    jobName:
+      | 'send-meeting-declined-email'
+      | 'send-meeting-auto-canceled-email'
+      | 'send-meeting-canceled-email',
+    sessionId: number,
+  ): Promise<void> {
+    await this.reminderQueue.add(
+      jobName,
+      { sessionId },
+      { removeOnComplete: true, removeOnFail: true },
+    );
+  }
+
   @Cron('0 */30 * * * *', { timeZone: 'UTC' }) // Every 30 mins, starting from 00:00 UTC
   async checkAndScheduleReminders() {
     const now = new Date();
@@ -519,13 +544,13 @@ export class ReadingSessionsService {
     }
   }
 
-  // A pending session whose start time has passed is hard proof the huber never
-  // responded, so no attendance data is needed. Detection latency is up to one
-  // cron interval (30 min) after the start time.
+  // Requests are allowed a full 24 hours for a response, independently of their
+  // scheduled start time. Detection latency is up to one cron interval.
   private async autoCancelStalePendingSessions(now: Date) {
+    const responseDeadline = new Date(now.getTime() - AUTO_CANCEL_AFTER_MS);
     const staleSessions = await this.prisma.readingSession.findMany({
       where: {
-        startedAt: { lt: now },
+        createdAt: { lte: responseDeadline },
         sessionStatus: ReadingSessionStatus.PENDING,
       },
       include: { humanBook: { select: { fullName: true } } },
@@ -567,6 +592,10 @@ export class ReadingSessionsService {
       }
 
       this.logger.log(`[CRON] Auto canceled session ${session.id}`);
+      await this.queueMeetingStatusEmail(
+        'send-meeting-auto-canceled-email',
+        session.id,
+      );
     }
   }
 

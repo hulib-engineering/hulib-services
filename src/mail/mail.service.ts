@@ -157,14 +157,13 @@ export class MailService {
     let regard: MaybeType<string>;
 
     if (i18n) {
-      [emailConfirmTitle, guide, contact, welcome, regard] =
-        await Promise.all([
-          i18n.t('confirm-new-email.title'),
-          i18n.t('confirm-new-email.guide'),
-          i18n.t('confirm-email.contact'),
-          i18n.t('confirm-email.welcome'),
-          i18n.t('common.bestRegards'),
-        ]);
+      [emailConfirmTitle, guide, contact, welcome, regard] = await Promise.all([
+        i18n.t('confirm-new-email.title'),
+        i18n.t('confirm-new-email.guide'),
+        i18n.t('confirm-email.contact'),
+        i18n.t('confirm-email.welcome'),
+        i18n.t('common.bestRegards'),
+      ]);
     }
 
     const url = this.configService.getOrThrow('app.frontendDomain', {
@@ -398,16 +397,7 @@ export class MailService {
     fullName: string,
     locale = 'vi',
   ) {
-    const [
-      title,
-      dear,
-      p1,
-      p3,
-      p4,
-      p5,
-      p6,
-      buttonLabel,
-    ] = await Promise.all([
+    const [title, dear, p1, p3, p4, p5, p6, buttonLabel] = await Promise.all([
       this.i18n.t('upload-story-liber.title', { lang: locale }),
       this.i18n.t('common.dear', { lang: locale }),
       this.i18n.t('upload-story-liber.p1', { lang: locale }),
@@ -790,6 +780,93 @@ export class MailService {
         buttonUrl: `${webAppLink}/profile`,
         webAppLink,
       },
+    });
+  }
+
+  async meetingStatus(mailData: {
+    to: string;
+    data: {
+      type: 'sent' | 'declined' | 'autoCanceled' | 'canceled';
+      recipientName: string;
+      huberName?: string;
+      liberName?: string;
+      meetingDate?: string;
+      meetingTime?: string;
+      reason?: string;
+      locale?: string;
+    };
+  }): Promise<void> {
+    const { data } = mailData;
+    const locale = data.locale || 'vi';
+    const baseKey = `meeting-status.${data.type}`;
+    const [
+      title,
+      messageTemplate,
+      closing,
+      greeting,
+      signoff,
+      meetingLabel,
+      reasonLabel,
+      findHuber,
+    ] = await Promise.all([
+      this.i18n.t(`${baseKey}.title`, { lang: locale }),
+      this.i18n.t(`${baseKey}.message`, { lang: locale }),
+      this.i18n.t(`${baseKey}.closing`, { lang: locale }),
+      this.i18n.t('meeting-status.greeting', { lang: locale }),
+      this.i18n.t('meeting-status.signoff', { lang: locale }),
+      this.i18n.t('meeting-status.meetingLabel', { lang: locale }),
+      this.i18n.t('meeting-status.reasonLabel', { lang: locale }),
+      this.i18n.t('meeting-status.findHuber', { lang: locale }),
+    ]);
+    const message = String(messageTemplate)
+      .replace('{huberName}', data.huberName || '')
+      .replace('{liberName}', data.liberName || '');
+    const webAppLink = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: String(title),
+      text: `${String(greeting)} ${data.recipientName}, ${message}`,
+      throwOnError: true,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', { infer: true }),
+        'src',
+        'mail',
+        'mail-templates',
+        'meeting-status.hbs',
+      ),
+      context: {
+        locale,
+        title,
+        greeting,
+        signoff,
+        recipientName: data.recipientName,
+        message,
+        closing,
+        meetingDate: data.meetingDate,
+        meetingTime: data.meetingTime,
+        meetingLabel,
+        reason: data.reason,
+        reasonLabel,
+        actionLabel:
+          data.type === 'declined' || data.type === 'autoCanceled'
+            ? findHuber
+            : undefined,
+        actionUrl: webAppLink,
+        webAppLink,
+      },
+    });
+  }
+
+  async sendNotification(mailData: { to: string; title: string; name: string; body: string; actionLabel?: string; actionUrl?: string }): Promise<void> {
+    const webAppLink = this.configService.getOrThrow('app.frontendDomain', { infer: true });
+    await this.mailerService.sendMail({
+      to: mailData.to, subject: mailData.title, text: `${mailData.title}\n\n${mailData.body.replace(/<[^>]+>/g, '')}`,
+      throwOnError: true,
+      templatePath: path.join(this.configService.getOrThrow('app.workingDirectory', { infer: true }), 'src', 'mail', 'mail-templates', 'notification.hbs'),
+      context: { ...mailData, greeting: 'Hi', signoff: 'Best,', actionUrl: mailData.actionUrl || webAppLink },
     });
   }
 }
