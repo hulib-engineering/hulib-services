@@ -1,0 +1,27 @@
+{
+  "sent": {
+    "title": "Your Meeting Request Has Been Sent",
+    "message": "Your meeting request has been sent to Huber {huberName}.",
+    "closing": "If the Huber does not accept or decline the request within 24 hours, it will be automatically canceled. We’ll keep you updated. Thank you for creating a meaningful connection. 💙"
+  },
+  "declined": {
+    "title": "Your meeting request was declined",
+    "message": "{huberName} has declined your meeting request with the reason below.",
+    "closing": "No worries — you can try another time or explore other Hubers on HuLib and send a new request whenever you’re ready. We hope you find a meaningful connection soon 💙"
+  },
+  "autoCanceled": {
+    "title": "Your meeting request has been auto-canceled",
+    "message": "Your meeting request with {huberName} has been automatically canceled because it was not accepted within 24 hours.",
+    "closing": "You can explore other Hubers and send a new request on HuLib."
+  },
+  "canceled": {
+    "title": "Meeting Cancellation Notice",
+    "message": "{liberName} has canceled their meeting request.",
+    "closing": "We hope you will have another opportunity to connect and share with each other in the future. Thank you for your time and understanding! 💙"
+  },
+  "meetingLabel": "Date & Time:",
+  "reasonLabel": "Reason:",
+  "findHuber": "Find a Huber",
+  "greeting": "Hi",
+  "signoff": "Best,"
+}

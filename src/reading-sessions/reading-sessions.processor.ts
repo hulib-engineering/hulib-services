@@ -84,4 +84,94 @@ export class ReadingSessionsProcessor {
       });
     }
   }
+
+  @Process('send-meeting-request-sent-email')
+  async handleMeetingRequestSentEmail(job: Job) {
+    const session = await this.readingSessionsService.findOneSession(
+      job.data.sessionId,
+    );
+    if (!session.reader?.email) return;
+
+    await this.mailService.meetingStatus({
+      to: session.reader.email,
+      data: {
+        type: 'sent',
+        recipientName: session.reader.fullName || 'Liber',
+        huberName: session.humanBook?.fullName || 'Huber',
+        ...this.meetingWhen(session),
+      },
+    });
+  }
+
+  @Process('send-meeting-declined-email')
+  async handleMeetingDeclinedEmail(job: Job) {
+    const session = await this.readingSessionsService.findOneSession(
+      job.data.sessionId,
+    );
+    if (!session.reader?.email) return;
+
+    await this.mailService.meetingStatus({
+      to: session.reader.email,
+      data: {
+        type: 'declined',
+        recipientName: session.reader.fullName || 'Liber',
+        huberName: session.humanBook?.fullName || 'Huber',
+        reason: session.rejectReason,
+        ...this.meetingWhen(session),
+      },
+    });
+  }
+
+  @Process('send-meeting-auto-canceled-email')
+  async handleMeetingAutoCanceledEmail(job: Job) {
+    const session = await this.readingSessionsService.findOneSession(
+      job.data.sessionId,
+    );
+    if (!session.reader?.email) return;
+
+    await this.mailService.meetingStatus({
+      to: session.reader.email,
+      data: {
+        type: 'autoCanceled',
+        recipientName: session.reader.fullName || 'Liber',
+        huberName: session.humanBook?.fullName || 'Huber',
+        ...this.meetingWhen(session),
+      },
+    });
+  }
+
+  @Process('send-meeting-canceled-email')
+  async handleMeetingCanceledEmail(job: Job) {
+    const session = await this.readingSessionsService.findOneSession(
+      job.data.sessionId,
+    );
+    if (!session.humanBook?.email) return;
+
+    await this.mailService.meetingStatus({
+      to: session.humanBook.email,
+      data: {
+        type: 'canceled',
+        recipientName: session.humanBook.fullName || 'Huber',
+        liberName: session.reader?.fullName || 'Liber',
+        reason: session.rejectReason,
+        ...this.meetingWhen(session),
+      },
+    });
+  }
+
+  private meetingWhen(session: {
+    startedAt: Date;
+    startTime: string;
+    endTime: string;
+  }) {
+    return {
+      meetingDate: session.startedAt.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      meetingTime: `${session.startTime} - ${session.endTime}`,
+    };
+  }
 }

@@ -1,0 +1,27 @@
+{
+  "sent": {
+    "title": "Gửi Yêu Cầu Lịch Hẹn Thành Công",
+    "message": "Yêu cầu lịch hẹn của bạn đã được gửi tới Huber {huberName}.",
+    "closing": "Nếu Huber không chấp nhận hoặc từ chối trong vòng 24 giờ, yêu cầu sẽ tự động bị hủy. Chúng mình sẽ cập nhật cho bạn. Cảm ơn bạn đã tạo nên một kết nối ý nghĩa. 💙"
+  },
+  "declined": {
+    "title": "Yêu cầu gặp mặt của bạn đã bị từ chối",
+    "message": "{huberName} đã từ chối yêu cầu gặp mặt của bạn với lý do bên dưới.",
+    "closing": "Không sao cả — bạn có thể thử lại vào thời điểm khác hoặc khám phá Huber khác trên HuLib và gửi yêu cầu mới khi sẵn sàng. Chúng mình hy vọng bạn sẽ sớm tìm được kết nối ý nghĩa 💙"
+  },
+  "autoCanceled": {
+    "title": "Yêu cầu gặp mặt của bạn đã được tự động hủy",
+    "message": "Yêu cầu gặp mặt của bạn với {huberName} đã được tự động hủy vì chưa được chấp nhận trong vòng 24 giờ.",
+    "closing": "Bạn có thể khám phá những Huber khác và gửi một yêu cầu mới trên HuLib."
+  },
+  "canceled": {
+    "title": "Yêu cầu lịch hẹn đã huỷ",
+    "message": "{liberName} đã hủy yêu cầu đặt lịch trò chuyện với bạn.",
+    "closing": "HuLib hy vọng hai bạn sẽ có cơ hội kết nối và chia sẻ cùng nhau vào một dịp khác. Cảm ơn bạn đã dành thời gian và thông cảm nhé! 💙"
+  },
+  "meetingLabel": "Thời gian:",
+  "reasonLabel": "Lý do:",
+  "findHuber": "Tìm Huber",
+  "greeting": "Xin chào",
+  "signoff": "Thân mến,"
+}
