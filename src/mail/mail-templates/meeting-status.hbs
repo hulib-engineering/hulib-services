@@ -1,0 +1,63 @@
+<html lang='{{locale}}'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>{{title}}</title>
+  </head>
+  <body
+    style='margin:0;background:#f5f6f7;font-family:Arial,sans-serif;color:#010D26'
+  >
+    <table role='presentation' width='100%' cellspacing='0' cellpadding='0'>
+      <tr><td align='center' style='padding:32px 12px'>
+          <table
+            role='presentation'
+            width='100%'
+            cellspacing='0'
+            cellpadding='0'
+            style='max-width:630px;background:#fff'
+          >
+            <tr><td style='padding:40px 50px'>
+                <h1
+                  style='margin:0 0 28px;text-align:center;font-size:25px;font-weight:600'
+                >{{title}}</h1>
+                <p style='font-size:16px;line-height:1.55'>{{greeting}}
+                  <strong>{{recipientName}}</strong>,</p>
+                <p style='font-size:16px;line-height:1.55'>{{message}}</p>
+                {{#if meetingDate}}
+                  <div
+                    style='margin:22px 0;padding:14px 16px;background:#f0f5ff;border:1px solid #84acfc;border-radius:8px;font-size:15px;line-height:1.7'
+                  >
+                    <strong>{{meetingLabel}}</strong><br />
+                    {{meetingDate}},
+                    {{meetingTime}}
+                  </div>
+                {{/if}}
+                {{#if reason}}
+                  <p
+                    style='margin:22px 0 8px;font-size:16px;line-height:1.55'
+                  ><strong>{{reasonLabel}}</strong></p>
+                  <div
+                    style='padding:14px 16px;background:#f5f6f7;border-radius:8px;font-size:15px;line-height:1.55'
+                  >{{reason}}</div>
+                {{/if}}
+                {{#if actionLabel}}
+                  <p style='margin:30px 0;text-align:center'><a
+                      href='{{actionUrl}}'
+                      style='display:inline-block;padding:12px 28px;background:#0442BF;border-radius:24px;color:#fff;text-decoration:none;font-weight:700'
+                    >{{actionLabel}}</a></p>
+                {{/if}}
+                <p style='font-size:16px;line-height:1.55'>{{closing}}</p>
+                <p
+                  style='font-size:16px;line-height:1.55;margin-bottom:0'
+                >{{signoff}}<br />HuLib Team</p>
+              </td></tr>
+            <tr><td
+                style='padding:22px 50px;border-top:2px solid #E3E4E5;text-align:center;font-size:14px'
+              >
+                <a href='{{webAppLink}}' style='color:#0442BF'>HuLib</a>
+              </td></tr>
+          </table>
+        </td></tr>
+    </table>
+  </body>
+</html>

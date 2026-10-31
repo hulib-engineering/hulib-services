@@ -197,6 +197,11 @@ describe('ReadingSessionsService', () => {
         { sessionId: 1 },
         expect.any(Object),
       );
+      expect(reminderQueue.add).toHaveBeenCalledWith(
+        'send-meeting-request-sent-email',
+        { sessionId: 1 },
+        expect.any(Object),
+      );
     });
   });
 
@@ -385,6 +390,24 @@ describe('ReadingSessionsService', () => {
       );
     });
 
+    it('should queue a declined-email after the huber rejects a session', async () => {
+      const session = makeSession({
+        sessionStatus: ReadingSessionStatus.PENDING,
+      });
+      readingSessionRepository.findById.mockResolvedValue(session);
+
+      await service.updateSession(1, {
+        sessionStatus: ReadingSessionStatus.REJECTED,
+        rejectReason: 'Not available',
+      });
+
+      expect(reminderQueue.add).toHaveBeenCalledWith(
+        'send-meeting-declined-email',
+        { sessionId: 1 },
+        expect.any(Object),
+      );
+    });
+
     it('should notify the huber when the session is canceled', async () => {
       const session = makeSession({
         sessionStatus: ReadingSessionStatus.PENDING,
@@ -399,6 +422,11 @@ describe('ReadingSessionsService', () => {
           type: NotificationTypeEnum.cancelReadingSession,
           recipientId: 10,
         }),
+      );
+      expect(reminderQueue.add).toHaveBeenCalledWith(
+        'send-meeting-canceled-email',
+        { sessionId: 1 },
+        expect.any(Object),
       );
     });
 
@@ -594,13 +622,14 @@ describe('ReadingSessionsService', () => {
       );
     });
 
-    it('should only look for pending sessions that already started', async () => {
+    it('should only look for pending sessions waiting longer than 24 hours', async () => {
       stubScans([], [], []);
 
       await service.checkAndScheduleReminders();
 
       expect(scanWhere(1)).toEqual(
         expect.objectContaining({
+          createdAt: { lte: expect.any(Date) },
           sessionStatus: ReadingSessionStatus.PENDING,
         }),
       );
