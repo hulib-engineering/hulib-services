@@ -17,6 +17,15 @@ import {
   FindAllReadingSessionsQueryDto,
 } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
+import {
+  DEFAULT_UPCOMING_READING_SESSIONS_LIMIT,
+  DEFAULT_UPCOMING_READING_SESSIONS_WITHIN_HOURS,
+  FindUpcomingReadingSessionsQueryDto,
+} from './dto/reading-session/find-upcoming-reading-sessions-query.dto';
+import {
+  UpcomingReadingSessionResponseDto,
+  UpcomingReadingSessionsResponseDto,
+} from './dto/reading-session/upcoming-reading-session-response.dto';
 import { UsersService } from '@users/users.service';
 import { StoriesService } from '@stories/stories.service';
 import { User } from '@users/domain/user';
@@ -248,6 +257,56 @@ export class ReadingSessionsService {
 
     const result = pagination(data, count, paginationOptions);
     return { ...result, meta: { ...result.meta, counts } };
+  }
+
+  async findUpcomingSessions(
+    queryDto: FindUpcomingReadingSessionsQueryDto,
+    userId: User['id'],
+  ): Promise<UpcomingReadingSessionsResponseDto> {
+    const now = new Date();
+    const withinHours =
+      queryDto.withinHours ?? DEFAULT_UPCOMING_READING_SESSIONS_WITHIN_HOURS;
+    const limit = queryDto.limit ?? DEFAULT_UPCOMING_READING_SESSIONS_LIMIT;
+
+    const sessions = await this.readingSessionRepository.findUpcoming({
+      userId: Number(userId),
+      now,
+      withinHours,
+      limit,
+    });
+
+    const data = sessions.map((session) =>
+      this.toUpcomingSessionResponse(session, Number(userId)),
+    );
+
+    return {
+      data,
+      meta: {
+        count: data.length,
+        serverTime: now.toISOString(),
+      },
+    };
+  }
+
+  private toUpcomingSessionResponse(
+    session: ReadingSession,
+    userId: number,
+  ): UpcomingReadingSessionResponseDto {
+    const counterpart =
+      session.humanBookId === userId ? session.reader : session.humanBook;
+
+    return {
+      id: session.id,
+      sessionStatus: session.sessionStatus,
+      startedAt: session.startedAt,
+      endedAt: session.endedAt,
+      counterpart: {
+        id: Number(counterpart.id),
+        fullName: counterpart.fullName ?? null,
+        photo: counterpart.photo ?? null,
+        role: counterpart.role ?? null,
+      },
+    };
   }
 
   async findOneSession(id: number): Promise<ReadingSession> {
