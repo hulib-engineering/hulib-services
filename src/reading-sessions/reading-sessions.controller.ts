@@ -28,6 +28,8 @@ import { ReadingSessionsService } from './reading-sessions.service';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
 import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
+import { FindUpcomingReadingSessionsQueryDto } from './dto/reading-session/find-upcoming-reading-sessions-query.dto';
+import { UpcomingReadingSessionsResponseDto } from './dto/reading-session/upcoming-reading-session-response.dto';
 import {
   ReadingSessionResponseDto,
   ReadingSessionResponseDtoWithRelations,
@@ -77,6 +79,22 @@ export class ReadingSessionsController {
     @Request() request,
   ): Promise<ReadingSessionPageResponseDto<ReadingSessionResponseDto>> {
     return this.readingSessionsService.findAllSessions(
+      queryDto,
+      request.user.id,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Query upcoming approved reading sessions for the caller',
+  })
+  @ApiResponse({ type: UpcomingReadingSessionsResponseDto })
+  @Get('upcoming')
+  @UseGuards(AuthGuard('jwt'))
+  async findUpcomingSessions(
+    @Query() queryDto: FindUpcomingReadingSessionsQueryDto,
+    @Request() request,
+  ): Promise<UpcomingReadingSessionsResponseDto> {
+    return this.readingSessionsService.findUpcomingSessions(
       queryDto,
       request.user.id,
     );

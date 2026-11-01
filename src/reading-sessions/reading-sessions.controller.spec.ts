@@ -5,6 +5,7 @@ describe('ReadingSessionsController', () => {
   let service: {
     createSession: jest.Mock;
     findAllSessions: jest.Mock;
+    findUpcomingSessions: jest.Mock;
     findOneSession: jest.Mock;
     updateSession: jest.Mock;
     deleteSession: jest.Mock;
@@ -14,6 +15,7 @@ describe('ReadingSessionsController', () => {
     service = {
       createSession: jest.fn(),
       findAllSessions: jest.fn(),
+      findUpcomingSessions: jest.fn(),
       findOneSession: jest.fn(),
       updateSession: jest.fn(),
       deleteSession: jest.fn(),
@@ -34,6 +36,20 @@ describe('ReadingSessionsController', () => {
       controller.findAllSessions({} as never, { user: { id: 5 } } as never),
     ).resolves.toEqual([]);
     expect(service.findAllSessions).toHaveBeenCalledWith({}, 5);
+  });
+
+  it('should delegate findUpcomingSessions with the query and authenticated user id', async () => {
+    const query = { withinHours: 24, limit: 5 };
+    const result = {
+      data: [],
+      meta: { count: 0, serverTime: '2026-11-01T13:46:00.000Z' },
+    };
+    service.findUpcomingSessions.mockResolvedValue(result);
+
+    await expect(
+      controller.findUpcomingSessions(query, { user: { id: 5 } } as never),
+    ).resolves.toBe(result);
+    expect(service.findUpcomingSessions).toHaveBeenCalledWith(query, 5);
   });
 
   it('should delegate findOneSession and strip scalar id fields', async () => {
