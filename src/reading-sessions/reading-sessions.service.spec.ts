@@ -14,6 +14,7 @@ describe('ReadingSessionsService', () => {
     findById: jest.Mock;
     findOverlapping: jest.Mock;
     findManyWithPagination: jest.Mock;
+    findUpcoming: jest.Mock;
     countByFilterOption: jest.Mock;
     update: jest.Mock;
     softDelete: jest.Mock;
@@ -68,6 +69,7 @@ describe('ReadingSessionsService', () => {
       findById: jest.fn(),
       findOverlapping: jest.fn(),
       findManyWithPagination: jest.fn(),
+      findUpcoming: jest.fn(),
       countByFilterOption: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
@@ -322,6 +324,101 @@ describe('ReadingSessionsService', () => {
       );
       expect(readingSessionRepository.countByFilterOption).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 5 }),
+      );
+    });
+  });
+
+  describe('findUpcomingSessions', () => {
+    const humanBook = {
+      id: 10,
+      fullName: 'Huber',
+      photo: { id: 'file-1', path: 'avatars/huber.png' },
+      role: { id: 2, name: 'humanBook' },
+    };
+    const reader = {
+      id: 20,
+      fullName: 'Reader',
+      photo: { id: 'file-2', path: 'avatars/reader.png' },
+      role: { id: 3, name: 'reader' },
+    };
+
+    beforeEach(() => {
+      readingSessionRepository.findUpcoming.mockResolvedValue([]);
+    });
+
+    it('should default withinHours to 24 and limit to 5', async () => {
+      await service.findUpcomingSessions({}, 10);
+
+      expect(readingSessionRepository.findUpcoming).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 10, withinHours: 24, limit: 5 }),
+      );
+    });
+
+    it('should forward the requested withinHours and limit', async () => {
+      await service.findUpcomingSessions({ withinHours: 6, limit: 2 }, 10);
+
+      expect(readingSessionRepository.findUpcoming).toHaveBeenCalledWith(
+        expect.objectContaining({ withinHours: 6, limit: 2 }),
+      );
+    });
+
+    it('should resolve the reader as counterpart when the caller is the human book', async () => {
+      readingSessionRepository.findUpcoming.mockResolvedValue([
+        makeSession({ id: 7, humanBookId: 10, readerId: 20, humanBook, reader }),
+      ]);
+
+      const result = await service.findUpcomingSessions({}, 10);
+
+      expect(result.data[0].counterpart).toEqual({
+        id: 20,
+        fullName: 'Reader',
+        photo: reader.photo,
+        role: reader.role,
+      });
+    });
+
+    it('should resolve the human book as counterpart when the caller is the reader', async () => {
+      readingSessionRepository.findUpcoming.mockResolvedValue([
+        makeSession({ id: 7, humanBookId: 10, readerId: 20, humanBook, reader }),
+      ]);
+
+      const result = await service.findUpcomingSessions({}, 20);
+
+      expect(result.data[0].counterpart).toEqual({
+        id: 10,
+        fullName: 'Huber',
+        photo: humanBook.photo,
+        role: humanBook.role,
+      });
+    });
+
+    it('should return only the minimal session fields', async () => {
+      readingSessionRepository.findUpcoming.mockResolvedValue([
+        makeSession({ id: 7, humanBookId: 10, readerId: 20, humanBook, reader }),
+      ]);
+
+      const result = await service.findUpcomingSessions({}, 10);
+
+      expect(Object.keys(result.data[0]).sort()).toEqual([
+        'counterpart',
+        'endedAt',
+        'id',
+        'sessionStatus',
+        'startedAt',
+      ]);
+    });
+
+    it('should return count and a UTC server time in meta', async () => {
+      readingSessionRepository.findUpcoming.mockResolvedValue([
+        makeSession({ id: 7, humanBookId: 10, readerId: 20, humanBook, reader }),
+        makeSession({ id: 8, humanBookId: 10, readerId: 20, humanBook, reader }),
+      ]);
+
+      const result = await service.findUpcomingSessions({}, 10);
+
+      expect(result.meta.count).toBe(2);
+      expect(new Date(result.meta.serverTime).toISOString()).toBe(
+        result.meta.serverTime,
       );
     });
   });

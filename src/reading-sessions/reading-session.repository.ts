@@ -291,6 +291,36 @@ export class ReadingSessionRepository {
     };
   }
 
+  async findUpcoming({
+    userId,
+    now,
+    withinHours,
+    limit,
+  }: {
+    userId: number;
+    now: Date;
+    withinHours: number;
+    limit: number;
+  }): Promise<ReadingSession[]> {
+    const windowEnd = new Date(now.getTime() + withinHours * 60 * 60 * 1000);
+    const approvedStatus =
+      ReadingSessionStatus.APPROVED as unknown as Prisma.readingSessionWhereInput['sessionStatus'];
+
+    const rows = await this.prisma.readingSession.findMany({
+      where: {
+        sessionStatus: approvedStatus,
+        OR: [{ humanBookId: userId }, { readerId: userId }],
+        endedAt: { gte: now },
+        startedAt: { lte: windowEnd },
+      },
+      orderBy: [{ startedAt: 'asc' }, { id: 'asc' }],
+      take: limit,
+      ...readingSessionInclude,
+    });
+
+    return rows.map((row) => readingSessionToDomain(row));
+  }
+
   async update(
     id: number,
     domain: Partial<ReadingSession>,
