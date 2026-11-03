@@ -53,6 +53,45 @@ describe('Reading Sessions Module', () => {
       });
   });
 
+  it('should require authentication for upcoming sessions: /api/v1/reading-sessions/upcoming (GET)', () => {
+    return request(app).get('/api/v1/reading-sessions/upcoming').expect(401);
+  });
+
+  it('should reject invalid upcoming query params: /api/v1/reading-sessions/upcoming (GET)', () => {
+    return request(app)
+      .get('/api/v1/reading-sessions/upcoming?withinHours=0&limit=0')
+      .auth(apiToken, { type: 'bearer' })
+      .expect(400);
+  });
+
+  it('should list upcoming approved sessions: /api/v1/reading-sessions/upcoming (GET)', async () => {
+    const { body } = await request(app)
+      .get('/api/v1/reading-sessions/upcoming?withinHours=24&limit=5')
+      .auth(apiToken, { type: 'bearer' })
+      .expect(200);
+
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.meta).toEqual({
+      count: body.data.length,
+      serverTime: expect.any(String),
+    });
+
+    for (const session of body.data) {
+      expect(session).toEqual(
+        expect.objectContaining({
+          id: expect.any(Number),
+          sessionStatus: 'approved',
+          startedAt: expect.any(String),
+          endedAt: expect.any(String),
+          counterpart: expect.objectContaining({
+            id: expect.any(Number),
+            role: expect.anything(),
+          }),
+        }),
+      );
+    }
+  });
+
   it('should get/update/delete own reading session: /api/v1/reading-sessions/:id (GET/PATCH/DELETE)', async () => {
     const { body } = await request(app)
       .get('/api/v1/reading-sessions')
