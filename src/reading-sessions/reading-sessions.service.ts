@@ -17,6 +17,7 @@ import {
   FindAllReadingSessionsQueryDto,
 } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
+import { SubmitFeedbackDto } from './dto/reading-session/submit-feedback.dto';
 import {
   DEFAULT_UPCOMING_READING_SESSIONS_LIMIT,
   DEFAULT_UPCOMING_READING_SESSIONS_WITHIN_HOURS,
@@ -393,6 +394,7 @@ export class ReadingSessionsService {
           preRating: dto.presurvey[3].rating,
           rating: 0,
         },
+        id,
       );
     }
 
@@ -480,6 +482,114 @@ export class ReadingSessionsService {
   async deleteSession(id: number): Promise<void> {
     await this.findOneSession(id);
     await this.readingSessionRepository.softDelete(id);
+  }
+
+  async submitFeedback(
+    id: number,
+    userId: number,
+    dto: SubmitFeedbackDto,
+  ): Promise<ReadingSession> {
+    const session = await this.findOneSession(id);
+
+    if (session.readerId !== userId) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'notSessionReader',
+      });
+    }
+
+    if (session.sessionStatus !== ReadingSessionStatus.FINISHED) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'sessionNotFinished',
+      });
+    }
+
+    // A second submission is a no-op: editing feedback after submit is out of
+    // scope, and returning the stored state keeps the endpoint idempotent.
+    if (session.feedbackSubmittedAt) {
+      return session;
+    }
+
+    const skipped = dto.huber.skipped === true;
+
+    if (!skipped) {
+      await this.syncReaderHuberFeedback(session, dto);
+    }
+
+    return this.readingSessionRepository.update(id, {
+      feelingRating: dto.feelingRating,
+      satisfactionRating: dto.satisfactionRating,
+      sessionContent: dto.sessionContent ?? null,
+      huberRating: skipped ? null : (dto.huber.rating ?? null),
+      huberContent: skipped ? null : (dto.huber.content ?? null),
+      huberFeedbackSkipped: skipped,
+      feedbackSubmittedAt: new Date(),
+    });
+  }
+
+  private async syncReaderHuberFeedback(
+    session: ReadingSession,
+    dto: SubmitFeedbackDto,
+  ): Promise<void> {
+    const rating = dto.huber.rating;
+    if (rating === undefined) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'huberRatingRequired',
+      });
+    }
+
+    const data = {
+      rating,
+      content: dto.huber.content ?? null,
+    };
+
+    const existing = await this.prisma.feedback.findFirst({
+      where: {
+        readingSessionId: session.id,
+        feedbackById: session.readerId,
+        feedbackToId: session.humanBookId,
+        deletedAt: null,
+      },
+    });
+
+    if (existing) {
+      await this.prisma.feedback.update({
+        where: { id: existing.id },
+        data,
+      });
+      return;
+    }
+
+    // Rows created before feedback was linked to a session have no
+    // readingSessionId; adopt the most recent pair row for this session.
+    const legacy = await this.prisma.feedback.findFirst({
+      where: {
+        readingSessionId: null,
+        feedbackById: session.readerId,
+        feedbackToId: session.humanBookId,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (legacy) {
+      await this.prisma.feedback.update({
+        where: { id: legacy.id },
+        data: { ...data, readingSessionId: session.id },
+      });
+      return;
+    }
+
+    await this.prisma.feedback.create({
+      data: {
+        readingSessionId: session.id,
+        feedbackById: session.readerId,
+        feedbackToId: session.humanBookId,
+        ...data,
+      },
+    });
   }
 
   async updateSessionStatus(
