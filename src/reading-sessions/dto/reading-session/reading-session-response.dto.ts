@@ -5,6 +5,10 @@ import {
   IsUrl,
   IsEnum,
   IsDate,
+  IsInt,
+  IsBoolean,
+  Min,
+  Max,
 } from 'class-validator';
 import { FeedbackResponseDto } from './feedback-response.dto';
 import { Type } from 'class-transformer';
@@ -65,6 +69,40 @@ export class ReadingSessionResponseDto {
   @IsOptional()
   @IsDate()
   deletedAt?: Date;
+
+  @IsOptional()
+  @IsDate()
+  feedbackSubmittedAt?: Date | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  feelingRating?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  satisfactionRating?: number | null;
+
+  @IsOptional()
+  @IsString()
+  sessionContent?: string | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  huberRating?: number | null;
+
+  @IsOptional()
+  @IsString()
+  huberContent?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  huberFeedbackSkipped?: boolean;
 
   @IsOptional()
   @Type(() => FeedbackResponseDto)
