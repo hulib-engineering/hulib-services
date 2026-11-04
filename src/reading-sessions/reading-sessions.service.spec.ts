@@ -40,7 +40,14 @@ describe('ReadingSessionsService', () => {
     getAdminId: jest.Mock;
     softDeleteSessionReminderNotification: jest.Mock;
   };
-  let prisma: { readingSession: { findMany: jest.Mock; update: jest.Mock } };
+  let prisma: {
+    readingSession: { findMany: jest.Mock; update: jest.Mock };
+    feedback: {
+      findFirst: jest.Mock;
+      update: jest.Mock;
+      create: jest.Mock;
+    };
+  };
   let configService: { get: jest.Mock };
   let reminderQueue: { add: jest.Mock };
 
@@ -95,7 +102,14 @@ describe('ReadingSessionsService', () => {
       getAdminId: jest.fn(),
       softDeleteSessionReminderNotification: jest.fn(),
     };
-    prisma = { readingSession: { findMany: jest.fn(), update: jest.fn() } };
+    prisma = {
+      readingSession: { findMany: jest.fn(), update: jest.fn() },
+      feedback: {
+        findFirst: jest.fn(),
+        update: jest.fn(),
+        create: jest.fn(),
+      },
+    };
     configService = { get: jest.fn() };
     reminderQueue = { add: jest.fn() };
     service = new ReadingSessionsService(
@@ -364,7 +378,13 @@ describe('ReadingSessionsService', () => {
 
     it('should resolve the reader as counterpart when the caller is the human book', async () => {
       readingSessionRepository.findUpcoming.mockResolvedValue([
-        makeSession({ id: 7, humanBookId: 10, readerId: 20, humanBook, reader }),
+        makeSession({
+          id: 7,
+          humanBookId: 10,
+          readerId: 20,
+          humanBook,
+          reader,
+        }),
       ]);
 
       const result = await service.findUpcomingSessions({}, 10);
@@ -379,7 +399,13 @@ describe('ReadingSessionsService', () => {
 
     it('should resolve the human book as counterpart when the caller is the reader', async () => {
       readingSessionRepository.findUpcoming.mockResolvedValue([
-        makeSession({ id: 7, humanBookId: 10, readerId: 20, humanBook, reader }),
+        makeSession({
+          id: 7,
+          humanBookId: 10,
+          readerId: 20,
+          humanBook,
+          reader,
+        }),
       ]);
 
       const result = await service.findUpcomingSessions({}, 20);
@@ -394,7 +420,13 @@ describe('ReadingSessionsService', () => {
 
     it('should return only the minimal session fields', async () => {
       readingSessionRepository.findUpcoming.mockResolvedValue([
-        makeSession({ id: 7, humanBookId: 10, readerId: 20, humanBook, reader }),
+        makeSession({
+          id: 7,
+          humanBookId: 10,
+          readerId: 20,
+          humanBook,
+          reader,
+        }),
       ]);
 
       const result = await service.findUpcomingSessions({}, 10);
@@ -410,8 +442,20 @@ describe('ReadingSessionsService', () => {
 
     it('should return count and a UTC server time in meta', async () => {
       readingSessionRepository.findUpcoming.mockResolvedValue([
-        makeSession({ id: 7, humanBookId: 10, readerId: 20, humanBook, reader }),
-        makeSession({ id: 8, humanBookId: 10, readerId: 20, humanBook, reader }),
+        makeSession({
+          id: 7,
+          humanBookId: 10,
+          readerId: 20,
+          humanBook,
+          reader,
+        }),
+        makeSession({
+          id: 8,
+          humanBookId: 10,
+          readerId: 20,
+          humanBook,
+          reader,
+        }),
       ]);
 
       const result = await service.findUpcomingSessions({}, 10);
@@ -879,6 +923,153 @@ describe('ReadingSessionsService', () => {
 
       await expect(service.getSessionMessages(1)).resolves.toEqual([]);
       expect(messageRepository.findByReadingSessionId).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('submitFeedback', () => {
+    const dto = {
+      feelingRating: 4,
+      satisfactionRating: 5,
+      sessionContent: 'Very helpful',
+      huber: { rating: 5, content: 'Great listener', skipped: false },
+    };
+
+    it('should throw NotFound when no session exists', async () => {
+      readingSessionRepository.findById.mockResolvedValue(null);
+
+      await expect(service.submitFeedback(9, 20, dto)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('should throw Forbidden when the caller is not the reader', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ sessionStatus: ReadingSessionStatus.FINISHED }),
+      );
+
+      await expect(service.submitFeedback(1, 10, dto)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(readingSessionRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw UnprocessableEntity when the session is not finished', async () => {
+      readingSessionRepository.findById.mockResolvedValue(makeSession());
+
+      await expect(service.submitFeedback(1, 20, dto)).rejects.toBeInstanceOf(
+        UnprocessableEntityException,
+      );
+    });
+
+    it('should return the stored state without writing when already submitted', async () => {
+      const session = makeSession({
+        sessionStatus: ReadingSessionStatus.FINISHED,
+        feedbackSubmittedAt: new Date('2026-11-01T00:00:00Z'),
+      });
+      readingSessionRepository.findById.mockResolvedValue(session);
+
+      await expect(service.submitFeedback(1, 20, dto)).resolves.toBe(session);
+      expect(readingSessionRepository.update).not.toHaveBeenCalled();
+      expect(prisma.feedback.create).not.toHaveBeenCalled();
+    });
+
+    it('should persist feedback and create the reader-to-huber row', async () => {
+      const session = makeSession({
+        sessionStatus: ReadingSessionStatus.FINISHED,
+      });
+      readingSessionRepository.findById.mockResolvedValue(session);
+      prisma.feedback.findFirst.mockResolvedValueOnce(null);
+      prisma.feedback.findFirst.mockResolvedValueOnce(null);
+      readingSessionRepository.update.mockResolvedValue(session);
+
+      await service.submitFeedback(1, 20, dto);
+
+      expect(readingSessionRepository.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          feelingRating: 4,
+          satisfactionRating: 5,
+          sessionContent: 'Very helpful',
+          huberRating: 5,
+          huberContent: 'Great listener',
+          huberFeedbackSkipped: false,
+          feedbackSubmittedAt: expect.any(Date),
+        }),
+      );
+      expect(prisma.feedback.create).toHaveBeenCalledWith({
+        data: {
+          readingSessionId: 1,
+          feedbackById: 20,
+          feedbackToId: 10,
+          rating: 5,
+          content: 'Great listener',
+        },
+      });
+    });
+
+    it('should update an existing session-linked feedback row', async () => {
+      const session = makeSession({
+        sessionStatus: ReadingSessionStatus.FINISHED,
+      });
+      readingSessionRepository.findById.mockResolvedValue(session);
+      prisma.feedback.findFirst.mockResolvedValueOnce({ id: 99 });
+      readingSessionRepository.update.mockResolvedValue(session);
+
+      await service.submitFeedback(1, 20, dto);
+
+      expect(prisma.feedback.update).toHaveBeenCalledWith({
+        where: { id: 99 },
+        data: { rating: 5, content: 'Great listener' },
+      });
+      expect(prisma.feedback.create).not.toHaveBeenCalled();
+    });
+
+    it('should adopt a legacy pair feedback row for the session', async () => {
+      const session = makeSession({
+        sessionStatus: ReadingSessionStatus.FINISHED,
+      });
+      readingSessionRepository.findById.mockResolvedValue(session);
+      prisma.feedback.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 88 });
+      readingSessionRepository.update.mockResolvedValue(session);
+
+      await service.submitFeedback(1, 20, dto);
+
+      expect(prisma.feedback.update).toHaveBeenCalledWith({
+        where: { id: 88 },
+        data: {
+          rating: 5,
+          content: 'Great listener',
+          readingSessionId: 1,
+        },
+      });
+    });
+
+    it('should store a skip without touching the feedback row', async () => {
+      const session = makeSession({
+        sessionStatus: ReadingSessionStatus.FINISHED,
+      });
+      readingSessionRepository.findById.mockResolvedValue(session);
+      readingSessionRepository.update.mockResolvedValue(session);
+
+      await service.submitFeedback(1, 20, {
+        feelingRating: 3,
+        satisfactionRating: 3,
+        huber: { skipped: true },
+      });
+
+      expect(prisma.feedback.findFirst).not.toHaveBeenCalled();
+      expect(prisma.feedback.create).not.toHaveBeenCalled();
+      expect(readingSessionRepository.update).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          huberRating: null,
+          huberContent: null,
+          huberFeedbackSkipped: true,
+          feedbackSubmittedAt: expect.any(Date),
+        }),
+      );
     });
   });
 });
