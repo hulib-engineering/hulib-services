@@ -27,6 +27,7 @@ import {
 import { ReadingSessionsService } from './reading-sessions.service';
 import { CreateReadingSessionDto } from './dto/reading-session/create-reading-session.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
+import { SubmitFeedbackDto } from './dto/reading-session/submit-feedback.dto';
 import { FindAllReadingSessionsQueryDto } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { FindUpcomingReadingSessionsQueryDto } from './dto/reading-session/find-upcoming-reading-sessions-query.dto';
 import { UpcomingReadingSessionsResponseDto } from './dto/reading-session/upcoming-reading-session-response.dto';
@@ -121,6 +122,29 @@ export class ReadingSessionsController {
       'readerId',
       'storyId',
     ]) as ReadingSessionResponseDtoWithRelations;
+  }
+
+  @ApiOperation({
+    summary: 'Submit post-session feedback as the session reader (Liber)',
+  })
+  @ApiResponse({ type: ReadingSessionResponseDto })
+  @Post(':id/feedback')
+  @Roles(RoleEnum.reader)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiForbiddenResponse({ description: 'Caller is not the session reader.' })
+  @ApiNotFoundResponse({ description: 'Reading session not found.' })
+  async submitFeedback(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SubmitFeedbackDto,
+    @Request() request,
+  ) {
+    return this.readingSessionsService.submitFeedback(id, request.user.id, dto);
   }
 
   @ApiOperation({
