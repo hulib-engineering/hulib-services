@@ -56,6 +56,14 @@ export class ReadingSessionsProcessor {
     }
   }
 
+  @Process('auto-end-session')
+  async handleAutoEndSession(job: Job<{ sessionId: number }>) {
+    const { sessionId } = job.data;
+    // Idempotent: skips non-approved / not-yet-due / unattended / already
+    // finished sessions; the every-minute sweep covers a lost job.
+    await this.readingSessionsService.autoEndSession(sessionId);
+  }
+
   @Process('send-booking-email')
   async handleSendBookingEmail(job: Job) {
     const { sessionId } = job.data;

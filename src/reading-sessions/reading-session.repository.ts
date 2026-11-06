@@ -80,6 +80,13 @@ export function readingSessionToDomain(raw: ReadingSessionRow): ReadingSession {
   domain.deletedAt = raw.deletedAt ?? undefined;
   domain.rating = raw.rating;
   domain.preRating = raw.preRating;
+  domain.feedbackSubmittedAt = raw.feedbackSubmittedAt ?? null;
+  domain.feelingRating = raw.feelingRating ?? null;
+  domain.satisfactionRating = raw.satisfactionRating ?? null;
+  domain.sessionContent = raw.sessionContent ?? null;
+  domain.huberRating = raw.huberRating ?? null;
+  domain.huberContent = raw.huberContent ?? null;
+  domain.huberFeedbackSkipped = raw.huberFeedbackSkipped;
 
   if (raw.humanBook) {
     domain.humanBook = UserMapperImplement.toDomain(raw.humanBook);
@@ -343,6 +350,13 @@ export class ReadingSessionRepository {
         endedAt: domain.endedAt,
         rating: domain.rating,
         preRating: domain.preRating,
+        feedbackSubmittedAt: domain.feedbackSubmittedAt,
+        feelingRating: domain.feelingRating,
+        satisfactionRating: domain.satisfactionRating,
+        sessionContent: domain.sessionContent,
+        huberRating: domain.huberRating,
+        huberContent: domain.huberContent,
+        huberFeedbackSkipped: domain.huberFeedbackSkipped,
       },
     });
     return readingSessionToDomain(updated);

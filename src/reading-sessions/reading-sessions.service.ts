@@ -17,6 +17,7 @@ import {
   FindAllReadingSessionsQueryDto,
 } from './dto/reading-session/find-all-reading-sessions-query.dto';
 import { UpdateReadingSessionDto } from './dto/reading-session/update-reading-session.dto';
+import { SubmitFeedbackDto } from './dto/reading-session/submit-feedback.dto';
 import {
   DEFAULT_UPCOMING_READING_SESSIONS_LIMIT,
   DEFAULT_UPCOMING_READING_SESSIONS_WITHIN_HOURS,
@@ -42,6 +43,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from '@prisma-client/prisma-client.service';
 import { ReadingSessionPageResponseDto } from '@utils/dto/pagination-response.dto';
 import { pagination } from '@utils/pagination';
+import { SocketService } from '../socket/socket.service';
 
 const AUTO_CANCEL_REASON =
   'Huber did not respond within 24 hours of the meeting request';
@@ -85,6 +87,7 @@ export class ReadingSessionsService {
     private prisma: PrismaService,
     private readonly configService: ConfigService<AllConfigType>,
     @InjectQueue('reminder') private readonly reminderQueue: Queue,
+    private readonly socketService: SocketService,
   ) {}
 
   async createSession(dto: CreateReadingSessionDto): Promise<ReadingSession> {
@@ -147,6 +150,10 @@ export class ReadingSessionsService {
 
     const newReadingSession =
       await this.readingSessionRepository.create(session);
+
+    // Fast path: a delayed Bull job fires exactly at endedAt. The every-minute
+    // sweep is the safety net if this job is lost.
+    this.scheduleAutoEnd(newReadingSession);
 
     await Promise.all([
       this.notificationService.pushNoti({
@@ -350,6 +357,140 @@ export class ReadingSessionsService {
     await this.readingSessionRepository.markAttendance(id, role);
   }
 
+  /**
+   * Ends a live reading session. Idempotent: a second call after the session is
+   * already finished is a no-op (no duplicate notification / socket emit).
+   * Either participant may end at any time — `endedAt` is not enforced here.
+   */
+  async endSession(id: number, userId: number): Promise<void> {
+    const session = await this.findOneSession(id);
+
+    const isParticipant =
+      session.humanBookId === userId || session.readerId === userId;
+
+    if (!isParticipant) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'notSessionParticipant',
+      });
+    }
+
+    if (session.sessionStatus === ReadingSessionStatus.FINISHED) {
+      return;
+    }
+
+    const peerId =
+      session.humanBookId === userId ? session.readerId : session.humanBookId;
+
+    await this.finalizeSession(session, [peerId]);
+  }
+
+  /**
+   * System-side end at the booked `endedAt` — the BE enforces the end time
+   * itself so the meeting does not depend on any FE timer being alive.
+   * Idempotent against manual /end, the delayed Bull job, and the minute sweep.
+   *
+   * Only APPROVED sessions that actually had someone join are finished here:
+   * an unattended session is left for `markOverdueSessionsAsMissed` (huber
+   * no-show) so its MISSED semantics are preserved.
+   *
+   * Emits `call-ended` to BOTH participants — there is no "caller" to spare.
+   */
+  async autoEndSession(sessionId: number): Promise<boolean> {
+    const session = await this.findOneSession(sessionId);
+
+    if (session.sessionStatus !== ReadingSessionStatus.APPROVED) {
+      return false;
+    }
+
+    const endedAtMs = new Date(session.endedAt).getTime();
+    if (Number.isNaN(endedAtMs) || Date.now() < endedAtMs) {
+      return false; // job ran early — the every-minute sweep picks it up
+    }
+
+    const attended =
+      session.huberJoinedAt != null || session.readerJoinedAt != null;
+    if (!attended) {
+      return false;
+    }
+
+    this.logger.log(
+      `[auto-end] session ${session.id} reached endedAt ${new Date(
+        session.endedAt,
+      ).toISOString()} — finishing and notifying both sides`,
+    );
+    await this.finalizeSession(session, [
+      session.readerId,
+      session.humanBookId,
+    ]);
+    return true;
+  }
+
+  /**
+   * Flips a session to FINISHED exactly once (atomic compare-and-set via
+   * `updateMany`), then notifies the reader, clears the reminder, and emits
+   * `call-ended` to every listed user so each open FE tears down — even one
+   * whose own timer missed the deadline.
+   */
+  private async finalizeSession(
+    session: ReadingSession,
+    emitTo: (string | number)[],
+  ): Promise<void> {
+    // Manual /end, the delayed job, the minute sweep, and both FEs can race
+    // the same session; only the winner of this flip sends notifications.
+    const { count } = await this.prisma.readingSession.updateMany({
+      where: {
+        id: session.id,
+        sessionStatus: { not: ReadingSessionStatus.FINISHED },
+      },
+      data: { sessionStatus: ReadingSessionStatus.FINISHED },
+    });
+    if (count === 0) {
+      return;
+    }
+    session.sessionStatus = ReadingSessionStatus.FINISHED;
+
+    const adminId = await this.notificationService.getAdminId();
+    if (adminId) {
+      await this.notificationService.pushNoti({
+        senderId: adminId,
+        recipientId: session.readerId,
+        type: NotificationTypeEnum.sessionFinish,
+        relatedEntityId: session.id,
+      });
+    }
+    await this.notificationService.softDeleteSessionReminderNotification(
+      session.id,
+    );
+
+    for (const userId of emitTo) {
+      await this.socketService.emitToUser(userId, 'call-ended');
+    }
+  }
+
+  /**
+   * Best-effort fast path: a delayed Bull job fires exactly at `endedAt`.
+   * The every-minute sweep (`autoEndDueSessions`) is the safety net when this
+   * job is lost (Redis or worker down at the due time).
+   */
+  private scheduleAutoEnd(
+    session: Pick<ReadingSession, 'id' | 'endedAt'>,
+  ): void {
+    const endMs = new Date(session.endedAt).getTime();
+    if (Number.isNaN(endMs)) {
+      return;
+    }
+    void this.reminderQueue.add(
+      'auto-end-session',
+      { sessionId: session.id },
+      {
+        delay: Math.max(endMs - Date.now(), 0),
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+  }
+
   async updateSession(id: number, dto: UpdateReadingSessionDto): Promise<void> {
     const session = await this.findOneSession(id);
 
@@ -393,6 +534,7 @@ export class ReadingSessionsService {
           preRating: dto.presurvey[3].rating,
           rating: 0,
         },
+        id,
       );
     }
 
@@ -448,6 +590,10 @@ export class ReadingSessionsService {
     await this.readingSessionRepository.update(id, session);
 
     if (dto.sessionStatus === 'approved') {
+      // (Re)schedule the system end in case the create-time job was already
+      // consumed or the approval landed after the original due time (delay
+      // clamps to 0 and autoEndSession decides from there).
+      this.scheduleAutoEnd(session);
       await this.notificationService.pushNoti({
         senderId: session.humanBookId,
         recipientId: session.readerId,
@@ -480,6 +626,114 @@ export class ReadingSessionsService {
   async deleteSession(id: number): Promise<void> {
     await this.findOneSession(id);
     await this.readingSessionRepository.softDelete(id);
+  }
+
+  async submitFeedback(
+    id: number,
+    userId: number,
+    dto: SubmitFeedbackDto,
+  ): Promise<ReadingSession> {
+    const session = await this.findOneSession(id);
+
+    if (session.readerId !== userId) {
+      throw new ForbiddenException({
+        status: HttpStatus.FORBIDDEN,
+        error: 'notSessionReader',
+      });
+    }
+
+    if (session.sessionStatus !== ReadingSessionStatus.FINISHED) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'sessionNotFinished',
+      });
+    }
+
+    // A second submission is a no-op: editing feedback after submit is out of
+    // scope, and returning the stored state keeps the endpoint idempotent.
+    if (session.feedbackSubmittedAt) {
+      return session;
+    }
+
+    const skipped = dto.huber.skipped === true;
+
+    if (!skipped) {
+      await this.syncReaderHuberFeedback(session, dto);
+    }
+
+    return this.readingSessionRepository.update(id, {
+      feelingRating: dto.feelingRating,
+      satisfactionRating: dto.satisfactionRating,
+      sessionContent: dto.sessionContent ?? null,
+      huberRating: skipped ? null : (dto.huber.rating ?? null),
+      huberContent: skipped ? null : (dto.huber.content ?? null),
+      huberFeedbackSkipped: skipped,
+      feedbackSubmittedAt: new Date(),
+    });
+  }
+
+  private async syncReaderHuberFeedback(
+    session: ReadingSession,
+    dto: SubmitFeedbackDto,
+  ): Promise<void> {
+    const rating = dto.huber.rating;
+    if (rating === undefined) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'huberRatingRequired',
+      });
+    }
+
+    const data = {
+      rating,
+      content: dto.huber.content ?? null,
+    };
+
+    const existing = await this.prisma.feedback.findFirst({
+      where: {
+        readingSessionId: session.id,
+        feedbackById: session.readerId,
+        feedbackToId: session.humanBookId,
+        deletedAt: null,
+      },
+    });
+
+    if (existing) {
+      await this.prisma.feedback.update({
+        where: { id: existing.id },
+        data,
+      });
+      return;
+    }
+
+    // Rows created before feedback was linked to a session have no
+    // readingSessionId; adopt the most recent pair row for this session.
+    const legacy = await this.prisma.feedback.findFirst({
+      where: {
+        readingSessionId: null,
+        feedbackById: session.readerId,
+        feedbackToId: session.humanBookId,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (legacy) {
+      await this.prisma.feedback.update({
+        where: { id: legacy.id },
+        data: { ...data, readingSessionId: session.id },
+      });
+      return;
+    }
+
+    await this.prisma.feedback.create({
+      data: {
+        readingSessionId: session.id,
+        feedbackById: session.readerId,
+        feedbackToId: session.humanBookId,
+        ...data,
+      },
+    });
   }
 
   async updateSessionStatus(
@@ -706,6 +960,39 @@ export class ReadingSessionsService {
         }
 
         this.logger.log(`[CRON] Marked session ${session.id} as MISSED`);
+      }
+    }
+  }
+
+  /**
+   * Third enforcement layer for the booked end time (after the FE timer and
+   * the delayed Bull job): catches sessions whose job was lost — Redis or
+   * worker down at the due time — and anything that became due between job
+   * scheduling and execution. Minute granularity is enough: the FE timer
+   * normally ends the call first; this only has to catch the misses.
+   */
+  @Cron('* * * * *', { timeZone: 'UTC' })
+  async autoEndDueSessions() {
+    const dueSessions = await this.prisma.readingSession.findMany({
+      where: {
+        sessionStatus: ReadingSessionStatus.APPROVED,
+        endedAt: { lte: new Date() },
+        OR: [
+          { huberJoinedAt: { not: null } },
+          { readerJoinedAt: { not: null } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    for (const { id } of dueSessions) {
+      try {
+        await this.autoEndSession(id);
+      } catch (error) {
+        this.logger.error(
+          `[auto-end] sweep failed for session ${id}`,
+          error instanceof Error ? error.stack : String(error),
+        );
       }
     }
   }

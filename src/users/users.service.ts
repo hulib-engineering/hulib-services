@@ -573,12 +573,19 @@ export class UsersService {
     byId: PrismaUser['id'],
     toId: PrismaUser['id'],
     payload: Omit<CreateFeedbackDto, 'createdAt' | 'updatedAt' | 'deletedAt'>,
+    readingSessionId?: number,
   ) {
     return this.prisma.user.update({
       where: { id: byId },
       data: {
         feedbackBys: {
-          create: { ...payload, feedbackTo: { connect: { id: toId } } },
+          create: {
+            ...payload,
+            ...(readingSessionId !== undefined
+              ? { readingSession: { connect: { id: readingSessionId } } }
+              : {}),
+            feedbackTo: { connect: { id: toId } },
+          },
         },
       },
     });

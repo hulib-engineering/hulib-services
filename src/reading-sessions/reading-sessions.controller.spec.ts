@@ -9,6 +9,7 @@ describe('ReadingSessionsController', () => {
     findOneSession: jest.Mock;
     updateSession: jest.Mock;
     deleteSession: jest.Mock;
+    submitFeedback: jest.Mock;
   };
 
   beforeEach(() => {
@@ -19,6 +20,7 @@ describe('ReadingSessionsController', () => {
       findOneSession: jest.fn(),
       updateSession: jest.fn(),
       deleteSession: jest.fn(),
+      submitFeedback: jest.fn(),
     };
     controller = new ReadingSessionsController(service as never);
   });
@@ -76,5 +78,15 @@ describe('ReadingSessionsController', () => {
     service.deleteSession.mockResolvedValue(undefined);
     await expect(controller.deleteSession(1)).resolves.toBeUndefined();
     expect(service.deleteSession).toHaveBeenCalledWith(1);
+  });
+
+  it('should delegate submitFeedback with the authenticated user id', async () => {
+    const dto = { feelingRating: 4, satisfactionRating: 5 } as never;
+    service.submitFeedback.mockResolvedValue('updated');
+
+    await expect(
+      controller.submitFeedback(1, dto, { user: { id: 20 } } as never),
+    ).resolves.toBe('updated');
+    expect(service.submitFeedback).toHaveBeenCalledWith(1, 20, dto);
   });
 });
