@@ -41,7 +41,11 @@ describe('ReadingSessionsService', () => {
     softDeleteSessionReminderNotification: jest.Mock;
   };
   let prisma: {
-    readingSession: { findMany: jest.Mock; update: jest.Mock };
+    readingSession: {
+      findMany: jest.Mock;
+      update: jest.Mock;
+      updateMany: jest.Mock;
+    };
     feedback: {
       findFirst: jest.Mock;
       update: jest.Mock;
@@ -50,6 +54,7 @@ describe('ReadingSessionsService', () => {
   };
   let configService: { get: jest.Mock };
   let reminderQueue: { add: jest.Mock };
+  let socketService: { emitToUser: jest.Mock };
 
   const makeSession = (overrides: Record<string, unknown> = {}): any =>
     ({
@@ -103,7 +108,11 @@ describe('ReadingSessionsService', () => {
       softDeleteSessionReminderNotification: jest.fn(),
     };
     prisma = {
-      readingSession: { findMany: jest.fn(), update: jest.fn() },
+      readingSession: {
+        findMany: jest.fn(),
+        update: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
       feedback: {
         findFirst: jest.fn(),
         update: jest.fn(),
@@ -112,6 +121,7 @@ describe('ReadingSessionsService', () => {
     };
     configService = { get: jest.fn() };
     reminderQueue = { add: jest.fn() };
+    socketService = { emitToUser: jest.fn() };
     service = new ReadingSessionsService(
       readingSessionRepository as never,
       messageRepository as never,
@@ -123,6 +133,7 @@ describe('ReadingSessionsService', () => {
       prisma as never,
       configService as never,
       reminderQueue as never,
+      socketService as never,
     );
   });
 
@@ -190,7 +201,10 @@ describe('ReadingSessionsService', () => {
       usersService.findById.mockResolvedValue({ id: 10 });
       storiesService.findDetailedStory.mockResolvedValue({ id: 30 });
       readingSessionRepository.findOverlapping.mockResolvedValue([]);
-      readingSessionRepository.create.mockResolvedValue({ id: 1 });
+      readingSessionRepository.create.mockResolvedValue({
+        id: 1,
+        endedAt: new Date(dto.endedAt),
+      });
 
       await service.createSession(dto);
 
@@ -217,6 +231,13 @@ describe('ReadingSessionsService', () => {
         'send-meeting-request-sent-email',
         { sessionId: 1 },
         expect.any(Object),
+      );
+      // System end scheduled at endedAt (delay clamped at 0 here — dto times
+      // are in the past).
+      expect(reminderQueue.add).toHaveBeenCalledWith(
+        'auto-end-session',
+        { sessionId: 1 },
+        expect.objectContaining({ delay: expect.any(Number) }),
       );
     });
   });
@@ -612,6 +633,143 @@ describe('ReadingSessionsService', () => {
       await service.updateSession(1, { sessionStatus: 'approved' });
 
       expect(readingSessionRepository.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('endSession', () => {
+    it('should forbid a non-participant', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({
+          sessionStatus: ReadingSessionStatus.APPROVED,
+        }),
+      );
+
+      await expect(service.endSession(1, 99)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(readingSessionRepository.update).not.toHaveBeenCalled();
+      expect(socketService.emitToUser).not.toHaveBeenCalled();
+    });
+
+    it('should finish once, notify, and emit call-ended to the peer', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({
+          sessionStatus: ReadingSessionStatus.APPROVED,
+        }),
+      );
+      notificationService.getAdminId.mockResolvedValue(1);
+      prisma.readingSession.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.endSession(1, 10);
+
+      expect(prisma.readingSession.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: 1,
+          sessionStatus: { not: ReadingSessionStatus.FINISHED },
+        },
+        data: { sessionStatus: ReadingSessionStatus.FINISHED },
+      });
+      expect(notificationService.pushNoti).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: NotificationTypeEnum.sessionFinish,
+          recipientId: 20,
+        }),
+      );
+      expect(
+        notificationService.softDeleteSessionReminderNotification,
+      ).toHaveBeenCalledWith(1);
+      expect(socketService.emitToUser).toHaveBeenCalledWith(20, 'call-ended');
+    });
+
+    it('should no-op when the session is already finished', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({
+          sessionStatus: ReadingSessionStatus.FINISHED,
+        }),
+      );
+
+      await service.endSession(1, 20);
+
+      expect(readingSessionRepository.update).not.toHaveBeenCalled();
+      expect(notificationService.pushNoti).not.toHaveBeenCalled();
+      expect(socketService.emitToUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('autoEndSession', () => {
+    it('should skip when the session is not approved', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ sessionStatus: ReadingSessionStatus.PENDING }),
+      );
+
+      await expect(service.autoEndSession(1)).resolves.toBe(false);
+      expect(prisma.readingSession.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should skip before endedAt', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({
+          sessionStatus: ReadingSessionStatus.APPROVED,
+          endedAt: new Date(Date.now() + 60_000),
+          huberJoinedAt: new Date(),
+        }),
+      );
+
+      await expect(service.autoEndSession(1)).resolves.toBe(false);
+      expect(prisma.readingSession.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should skip when nobody joined (leave for the missed-session cron)', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({
+          sessionStatus: ReadingSessionStatus.APPROVED,
+          endedAt: new Date(Date.now() - 1000),
+        }),
+      );
+
+      await expect(service.autoEndSession(1)).resolves.toBe(false);
+      expect(prisma.readingSession.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should finish and emit call-ended to BOTH participants', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({
+          sessionStatus: ReadingSessionStatus.APPROVED,
+          endedAt: new Date(Date.now() - 1000),
+          huberJoinedAt: new Date(),
+          readerJoinedAt: new Date(),
+        }),
+      );
+      notificationService.getAdminId.mockResolvedValue(1);
+      prisma.readingSession.updateMany.mockResolvedValue({ count: 1 });
+
+      await expect(service.autoEndSession(1)).resolves.toBe(true);
+
+      expect(prisma.readingSession.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: 1,
+          sessionStatus: { not: ReadingSessionStatus.FINISHED },
+        },
+        data: { sessionStatus: ReadingSessionStatus.FINISHED },
+      });
+      expect(socketService.emitToUser).toHaveBeenCalledWith(20, 'call-ended');
+      expect(socketService.emitToUser).toHaveBeenCalledWith(10, 'call-ended');
+    });
+
+    it('should no-op when the session was already finished by another trigger', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({
+          sessionStatus: ReadingSessionStatus.APPROVED,
+          endedAt: new Date(Date.now() - 1000),
+          huberJoinedAt: new Date(),
+        }),
+      );
+      prisma.readingSession.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(service.autoEndSession(1)).resolves.toBe(true);
+
+      expect(notificationService.pushNoti).not.toHaveBeenCalled();
+      expect(socketService.emitToUser).not.toHaveBeenCalled();
     });
   });
 

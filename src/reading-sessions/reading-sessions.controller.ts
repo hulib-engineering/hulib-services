@@ -187,4 +187,26 @@ export class ReadingSessionsController {
   ): Promise<void> {
     return this.readingSessionsService.markAttendance(id, request.user.id);
   }
+
+  @ApiOperation({
+    summary:
+      'End a reading session. Idempotent — already-finished sessions return success without re-notifying. Emits call-ended to the peer.',
+  })
+  @Post(':id/end')
+  @Roles(RoleEnum.reader, RoleEnum.humanBook)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiForbiddenResponse({ description: 'Caller is not a session participant.' })
+  @ApiNotFoundResponse({ description: 'Reading session not found.' })
+  async endSession(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() request,
+  ): Promise<void> {
+    return this.readingSessionsService.endSession(id, request.user.id);
+  }
 }
