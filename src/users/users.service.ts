@@ -686,6 +686,61 @@ export class UsersService {
     });
   }
 
+  async getFeedbacks({
+    userId,
+    paginationOptions,
+  }: {
+    userId: User['id'];
+    paginationOptions: IPaginationOptions;
+  }) {
+    const skip = (paginationOptions.page - 1) * paginationOptions.limit;
+    const take = paginationOptions.limit;
+    const where = {
+      feedbackToId: Number(userId),
+      deletedAt: null,
+    };
+
+    const [totalItems, rows] = await this.prisma.$transaction([
+      this.prisma.feedback.count({ where }),
+      this.prisma.feedback.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          feedbackBy: {
+            select: {
+              id: true,
+              fullName: true,
+              file: { select: { id: true, path: true } },
+            },
+          },
+        },
+        skip,
+        take,
+      }),
+    ]);
+
+    const data = await Promise.all(
+      rows.map(async (row) => ({
+        id: row.id,
+        content: row.content ?? null,
+        rating: row.rating,
+        createdAt: row.createdAt,
+        feedbackBy: row.feedbackBy
+          ? {
+              id: row.feedbackBy.id,
+              fullName: row.feedbackBy.fullName,
+              photo: await this.transformFileUrl(row.feedbackBy.file),
+            }
+          : null,
+      })),
+    );
+
+    return pagination(data, totalItems, {
+      page: paginationOptions.page,
+      limit: paginationOptions.limit,
+    });
+  }
+
   async addEducation(
     userId: User['id'],
     educationData: {
