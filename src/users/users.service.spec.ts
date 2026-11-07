@@ -741,6 +741,59 @@ describe('UsersService', () => {
     });
   });
 
+  describe('getFeedbacks', () => {
+    it('should paginate feedbacks about the user newest-first', async () => {
+      const createdAt = new Date('2026-01-01');
+      prisma.feedback = {
+        count: jest.fn().mockResolvedValue(12),
+        findMany: jest.fn(),
+      };
+      prisma.$transaction = jest.fn().mockResolvedValue([
+        12,
+        [
+          {
+            id: 1,
+            content: 'Great',
+            rating: 5,
+            createdAt,
+            feedbackBy: { id: 9, fullName: 'Reader', file: null },
+          },
+        ],
+      ]);
+
+      const result = await service.getFeedbacks({
+        userId: 3,
+        paginationOptions: { page: 2, limit: 5 },
+      });
+
+      expect(prisma.feedback.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { feedbackToId: 3, deletedAt: null },
+          orderBy: { createdAt: 'desc' },
+          skip: 5,
+          take: 5,
+        }),
+      );
+      expect(result).toEqual({
+        data: [
+          {
+            id: 1,
+            content: 'Great',
+            rating: 5,
+            createdAt,
+            feedbackBy: { id: 9, fullName: 'Reader', photo: null },
+          },
+        ],
+        meta: {
+          totalItems: 12,
+          itemsPerPage: 5,
+          totalPages: 3,
+          currentPage: 2,
+        },
+      });
+    });
+  });
+
   describe('educations', () => {
     it('should throw when the user does not exist', async () => {
       prisma.user = { findUnique: jest.fn().mockResolvedValue(null) };
