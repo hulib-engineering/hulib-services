@@ -32,6 +32,26 @@ export class SocketService {
     }
   }
 
+  /**
+   * Emits a named Socket.IO event to every live socket for `userId`.
+   * Prefer this over `sendTo` when the FE listens with `socket.on(event)`.
+   */
+  async emitToUser(userId: string | number, event: string, data?: unknown) {
+    const userClients = await this.cacheService.get<string[]>({
+      key: 'UserSocketClients',
+      args: [userId.toString()],
+    });
+    if (!userClients || !Array.isArray(userClients)) {
+      return;
+    }
+    for (const clientId of userClients) {
+      const client = this.socketGateway.getClient(clientId);
+      if (client) {
+        client.emit(event, data);
+      }
+    }
+  }
+
   sendToAll(event: string, data: any) {
     const allClients = this.socketGateway.getAllClients();
     for (const client of allClients.values()) {
