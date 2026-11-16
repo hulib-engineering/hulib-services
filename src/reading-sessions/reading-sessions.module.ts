@@ -19,6 +19,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { BullModule } from '@nestjs/bull';
 import { MailModule } from '@mail/mail.module';
 import { ReadingSessionsProcessor } from '@reading-sessions/reading-sessions.processor';
+import { SocketModule } from '../socket/socket.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ReadingSessionsProcessor } from '@reading-sessions/reading-sessions.pro
       name: 'reminder',
     }),
     MailModule,
+    SocketModule,
   ],
   controllers: [ReadingSessionsController],
   providers: [

@@ -5,18 +5,22 @@ describe('ReadingSessionsController', () => {
   let service: {
     createSession: jest.Mock;
     findAllSessions: jest.Mock;
+    findUpcomingSessions: jest.Mock;
     findOneSession: jest.Mock;
     updateSession: jest.Mock;
     deleteSession: jest.Mock;
+    submitFeedback: jest.Mock;
   };
 
   beforeEach(() => {
     service = {
       createSession: jest.fn(),
       findAllSessions: jest.fn(),
+      findUpcomingSessions: jest.fn(),
       findOneSession: jest.fn(),
       updateSession: jest.fn(),
       deleteSession: jest.fn(),
+      submitFeedback: jest.fn(),
     };
     controller = new ReadingSessionsController(service as never);
   });
@@ -34,6 +38,20 @@ describe('ReadingSessionsController', () => {
       controller.findAllSessions({} as never, { user: { id: 5 } } as never),
     ).resolves.toEqual([]);
     expect(service.findAllSessions).toHaveBeenCalledWith({}, 5);
+  });
+
+  it('should delegate findUpcomingSessions with the query and authenticated user id', async () => {
+    const query = { withinHours: 24, limit: 5 };
+    const result = {
+      data: [],
+      meta: { count: 0, serverTime: '2026-11-01T13:46:00.000Z' },
+    };
+    service.findUpcomingSessions.mockResolvedValue(result);
+
+    await expect(
+      controller.findUpcomingSessions(query, { user: { id: 5 } } as never),
+    ).resolves.toBe(result);
+    expect(service.findUpcomingSessions).toHaveBeenCalledWith(query, 5);
   });
 
   it('should delegate findOneSession and strip scalar id fields', async () => {
@@ -60,5 +78,15 @@ describe('ReadingSessionsController', () => {
     service.deleteSession.mockResolvedValue(undefined);
     await expect(controller.deleteSession(1)).resolves.toBeUndefined();
     expect(service.deleteSession).toHaveBeenCalledWith(1);
+  });
+
+  it('should delegate submitFeedback with the authenticated user id', async () => {
+    const dto = { feelingRating: 4, satisfactionRating: 5 } as never;
+    service.submitFeedback.mockResolvedValue('updated');
+
+    await expect(
+      controller.submitFeedback(1, dto, { user: { id: 20 } } as never),
+    ).resolves.toBe('updated');
+    expect(service.submitFeedback).toHaveBeenCalledWith(1, 20, dto);
   });
 });

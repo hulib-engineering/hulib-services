@@ -16,6 +16,7 @@ describe('UsersController', () => {
     remove: jest.Mock;
     upgrade: jest.Mock;
     getReadingSessions: jest.Mock;
+    getFeedbacks: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -28,6 +29,7 @@ describe('UsersController', () => {
       remove: jest.fn(),
       upgrade: jest.fn(),
       getReadingSessions: jest.fn(),
+      getFeedbacks: jest.fn(),
     };
 
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -181,6 +183,30 @@ describe('UsersController', () => {
           paginationOptions: { page: 1, limit: 50 },
         }),
       );
+    });
+  });
+
+  describe('getFeedbacks', () => {
+    it('should forward default pagination', async () => {
+      service.getFeedbacks.mockResolvedValue({ data: [], meta: {} });
+
+      await controller.getFeedbacks(3, {} as any);
+
+      expect(service.getFeedbacks).toHaveBeenCalledWith({
+        userId: 3,
+        paginationOptions: { page: 1, limit: 10 },
+      });
+    });
+
+    it('should cap the limit at 50 and forward the page', async () => {
+      service.getFeedbacks.mockResolvedValue({ data: [], meta: {} });
+
+      await controller.getFeedbacks(3, { page: 2, limit: 999 } as any);
+
+      expect(service.getFeedbacks).toHaveBeenCalledWith({
+        userId: 3,
+        paginationOptions: { page: 2, limit: 50 },
+      });
     });
   });
 });

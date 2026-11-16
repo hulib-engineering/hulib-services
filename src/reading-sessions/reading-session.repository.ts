@@ -80,6 +80,13 @@ export function readingSessionToDomain(raw: ReadingSessionRow): ReadingSession {
   domain.deletedAt = raw.deletedAt ?? undefined;
   domain.rating = raw.rating;
   domain.preRating = raw.preRating;
+  domain.feedbackSubmittedAt = raw.feedbackSubmittedAt ?? null;
+  domain.feelingRating = raw.feelingRating ?? null;
+  domain.satisfactionRating = raw.satisfactionRating ?? null;
+  domain.sessionContent = raw.sessionContent ?? null;
+  domain.huberRating = raw.huberRating ?? null;
+  domain.huberContent = raw.huberContent ?? null;
+  domain.huberFeedbackSkipped = raw.huberFeedbackSkipped;
 
   if (raw.humanBook) {
     domain.humanBook = UserMapperImplement.toDomain(raw.humanBook);
@@ -291,6 +298,36 @@ export class ReadingSessionRepository {
     };
   }
 
+  async findUpcoming({
+    userId,
+    now,
+    withinHours,
+    limit,
+  }: {
+    userId: number;
+    now: Date;
+    withinHours: number;
+    limit: number;
+  }): Promise<ReadingSession[]> {
+    const windowEnd = new Date(now.getTime() + withinHours * 60 * 60 * 1000);
+    const approvedStatus =
+      ReadingSessionStatus.APPROVED as unknown as Prisma.readingSessionWhereInput['sessionStatus'];
+
+    const rows = await this.prisma.readingSession.findMany({
+      where: {
+        sessionStatus: approvedStatus,
+        OR: [{ humanBookId: userId }, { readerId: userId }],
+        endedAt: { gte: now },
+        startedAt: { lte: windowEnd },
+      },
+      orderBy: [{ startedAt: 'asc' }, { id: 'asc' }],
+      take: limit,
+      ...readingSessionInclude,
+    });
+
+    return rows.map((row) => readingSessionToDomain(row));
+  }
+
   async update(
     id: number,
     domain: Partial<ReadingSession>,
@@ -313,6 +350,13 @@ export class ReadingSessionRepository {
         endedAt: domain.endedAt,
         rating: domain.rating,
         preRating: domain.preRating,
+        feedbackSubmittedAt: domain.feedbackSubmittedAt,
+        feelingRating: domain.feelingRating,
+        satisfactionRating: domain.satisfactionRating,
+        sessionContent: domain.sessionContent,
+        huberRating: domain.huberRating,
+        huberContent: domain.huberContent,
+        huberFeedbackSkipped: domain.huberFeedbackSkipped,
       },
     });
     return readingSessionToDomain(updated);

@@ -81,6 +81,31 @@ export class SocketGateway extends BaseSocketGateway {
   }
 
   @UseGuards(SocketGuard)
+  @SubscribeMessage('call-ended')
+  async handleCallEnded(
+    @MessageBody() data: { recipientId: string },
+    @ConnectedSocket() client: SocketWithSession,
+  ) {
+    const senderId = client.session?.id;
+
+    this.logger.log(`Call ended from ${senderId} to ${data.recipientId}`);
+
+    const recipientSockets = await this.cacheService.get<string[]>({
+      key: 'UserSocketClients',
+      args: [data.recipientId.toString()],
+    });
+
+    if (recipientSockets && Array.isArray(recipientSockets)) {
+      for (const socketId of recipientSockets) {
+        const targetSocket = this.clients.get(socketId);
+        if (targetSocket) {
+          targetSocket.emit('call-ended');
+        }
+      }
+    }
+  }
+
+  @UseGuards(SocketGuard)
   @SubscribeMessage('chat-in-call:send')
   async handleMeetingMessage(
     @MessageBody() message: CreateChatDto,

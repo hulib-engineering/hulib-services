@@ -1,4 +1,7 @@
-import { ReadingSessionRepository } from './reading-session.repository';
+import {
+  ReadingSessionRepository,
+  readingSessionToDomain,
+} from './reading-session.repository';
 import { ReadingSessionStatus } from './domain';
 
 describe('ReadingSessionRepository', () => {
@@ -156,6 +159,63 @@ describe('ReadingSessionRepository', () => {
     });
   });
 
+  describe('findUpcoming', () => {
+    const now = new Date('2026-11-01T12:00:00.000Z');
+
+    it('should scope to approved sessions the caller participates in', async () => {
+      await repository.findUpcoming({
+        userId: 5,
+        now,
+        withinHours: 24,
+        limit: 5,
+      });
+
+      expect(whereOf()).toEqual({
+        sessionStatus: ReadingSessionStatus.APPROVED,
+        OR: [{ humanBookId: 5 }, { readerId: 5 }],
+        endedAt: { gte: now },
+        startedAt: { lte: new Date('2026-11-02T12:00:00.000Z') },
+      });
+    });
+
+    it('should order by startedAt ascending with a stable id tie-breaker', async () => {
+      await repository.findUpcoming({
+        userId: 5,
+        now,
+        withinHours: 24,
+        limit: 5,
+      });
+
+      expect(findArgs().orderBy).toEqual([{ startedAt: 'asc' }, { id: 'asc' }]);
+    });
+
+    it('should take at most the requested limit', async () => {
+      await repository.findUpcoming({
+        userId: 5,
+        now,
+        withinHours: 6,
+        limit: 3,
+      });
+
+      expect(findArgs().take).toBe(3);
+      expect(whereOf().startedAt.lte).toEqual(
+        new Date('2026-11-01T18:00:00.000Z'),
+      );
+    });
+
+    it('should include both participants', async () => {
+      await repository.findUpcoming({
+        userId: 5,
+        now,
+        withinHours: 24,
+        limit: 5,
+      });
+
+      expect(findArgs().include.humanBook).toBeDefined();
+      expect(findArgs().include.reader).toBeDefined();
+    });
+  });
+
   describe('countByFilterOption', () => {
     it('should return a count for every filter option', async () => {
       const counts = await repository.countByFilterOption(filters);
@@ -198,6 +258,96 @@ describe('ReadingSessionRepository', () => {
       for (const call of prisma.readingSession.count.mock.calls) {
         expect(call[0].where.OR).toEqual([{ humanBookId: 5 }, { readerId: 5 }]);
       }
+    });
+  });
+
+  describe('readingSessionToDomain', () => {
+    it('should map the feedback fields', () => {
+      const feedbackSubmittedAt = new Date('2026-11-01T00:00:00Z');
+      const domain = readingSessionToDomain({
+        id: 1,
+        humanBookId: 10,
+        readerId: 20,
+        storyId: 30,
+        sessionUrl: 'https://meet.example.com',
+        note: null,
+        preRating: 0,
+        rating: 0,
+        sessionStatus: ReadingSessionStatus.FINISHED,
+        startTime: '08:00',
+        endTime: '09:00',
+        startedAt: feedbackSubmittedAt,
+        endedAt: feedbackSubmittedAt,
+        huberJoinedAt: null,
+        readerJoinedAt: null,
+        createdAt: feedbackSubmittedAt,
+        updatedAt: feedbackSubmittedAt,
+        deletedAt: null,
+        rejectReason: null,
+        feedbackSubmittedAt,
+        feelingRating: 4,
+        satisfactionRating: 5,
+        sessionContent: 'Helpful',
+        huberRating: 3,
+        huberContent: 'Good',
+        huberFeedbackSkipped: false,
+      } as never);
+
+      expect(domain).toEqual(
+        expect.objectContaining({
+          feedbackSubmittedAt,
+          feelingRating: 4,
+          satisfactionRating: 5,
+          sessionContent: 'Helpful',
+          huberRating: 3,
+          huberContent: 'Good',
+          huberFeedbackSkipped: false,
+        }),
+      );
+    });
+
+    it('should keep unsubmitted feedback fields null', () => {
+      const now = new Date('2026-11-01T00:00:00Z');
+      const domain = readingSessionToDomain({
+        id: 1,
+        humanBookId: 10,
+        readerId: 20,
+        storyId: 30,
+        sessionUrl: 'https://meet.example.com',
+        note: null,
+        preRating: 0,
+        rating: 0,
+        sessionStatus: ReadingSessionStatus.FINISHED,
+        startTime: '08:00',
+        endTime: '09:00',
+        startedAt: now,
+        endedAt: now,
+        huberJoinedAt: null,
+        readerJoinedAt: null,
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+        rejectReason: null,
+        feedbackSubmittedAt: null,
+        feelingRating: null,
+        satisfactionRating: null,
+        sessionContent: null,
+        huberRating: null,
+        huberContent: null,
+        huberFeedbackSkipped: false,
+      } as never);
+
+      expect(domain).toEqual(
+        expect.objectContaining({
+          feedbackSubmittedAt: null,
+          feelingRating: null,
+          satisfactionRating: null,
+          sessionContent: null,
+          huberRating: null,
+          huberContent: null,
+          huberFeedbackSkipped: false,
+        }),
+      );
     });
   });
 });

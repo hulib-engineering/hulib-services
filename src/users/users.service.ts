@@ -573,12 +573,19 @@ export class UsersService {
     byId: PrismaUser['id'],
     toId: PrismaUser['id'],
     payload: Omit<CreateFeedbackDto, 'createdAt' | 'updatedAt' | 'deletedAt'>,
+    readingSessionId?: number,
   ) {
     return this.prisma.user.update({
       where: { id: byId },
       data: {
         feedbackBys: {
-          create: { ...payload, feedbackTo: { connect: { id: toId } } },
+          create: {
+            ...payload,
+            ...(readingSessionId !== undefined
+              ? { readingSession: { connect: { id: readingSessionId } } }
+              : {}),
+            feedbackTo: { connect: { id: toId } },
+          },
         },
       },
     });
@@ -672,6 +679,61 @@ export class UsersService {
       humanBook: toClientUser(session.humanBook),
       reader: toClientUser(session.reader),
     }));
+
+    return pagination(data, totalItems, {
+      page: paginationOptions.page,
+      limit: paginationOptions.limit,
+    });
+  }
+
+  async getFeedbacks({
+    userId,
+    paginationOptions,
+  }: {
+    userId: User['id'];
+    paginationOptions: IPaginationOptions;
+  }) {
+    const skip = (paginationOptions.page - 1) * paginationOptions.limit;
+    const take = paginationOptions.limit;
+    const where = {
+      feedbackToId: Number(userId),
+      deletedAt: null,
+    };
+
+    const [totalItems, rows] = await this.prisma.$transaction([
+      this.prisma.feedback.count({ where }),
+      this.prisma.feedback.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          feedbackBy: {
+            select: {
+              id: true,
+              fullName: true,
+              file: { select: { id: true, path: true } },
+            },
+          },
+        },
+        skip,
+        take,
+      }),
+    ]);
+
+    const data = await Promise.all(
+      rows.map(async (row) => ({
+        id: row.id,
+        content: row.content ?? null,
+        rating: row.rating,
+        createdAt: row.createdAt,
+        feedbackBy: row.feedbackBy
+          ? {
+              id: row.feedbackBy.id,
+              fullName: row.feedbackBy.fullName,
+              photo: await this.transformFileUrl(row.feedbackBy.file),
+            }
+          : null,
+      })),
+    );
 
     return pagination(data, totalItems, {
       page: paginationOptions.page,

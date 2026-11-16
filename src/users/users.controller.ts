@@ -37,6 +37,8 @@ import { ReadingSessionResponseDto } from '@reading-sessions/dto/reading-session
 import { Roles } from '@roles/roles.decorator';
 import { RoleEnum } from '@roles/roles.enum';
 import { GetUserReadingSessionsQueryDto } from './dto/get-user-reading-sessions-query.dto';
+import { GetUserFeedbacksQueryDto } from './dto/get-user-feedbacks-query.dto';
+import { UserFeedbackResponseDto } from './dto/user-feedback-response.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { UpdateLanguageDto } from './dto/update-language.dto';
 import { PaginationResponseDto } from '@utils/dto/pagination-response.dto';
@@ -220,6 +222,40 @@ export class UsersController {
     return this.usersService.getReadingSessions({
       userId: id,
       status: query.sessionStatus,
+      paginationOptions: {
+        page,
+        limit,
+      },
+    });
+  }
+
+  @ApiOkResponse({
+    type: UserFeedbackResponseDto,
+    isArray: true,
+  })
+  @ApiOperation({
+    summary: 'Get feedbacks received by a user, newest first.',
+  })
+  @Get(':id/feedbacks')
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  getFeedbacks(
+    @Param('id') id: User['id'],
+    @Query() query: GetUserFeedbacksQueryDto,
+  ) {
+    const page = query?.page ?? 1;
+    let limit = query?.limit ?? 10;
+    if (limit > 50) {
+      limit = 50;
+    }
+
+    return this.usersService.getFeedbacks({
+      userId: id,
       paginationOptions: {
         page,
         limit,

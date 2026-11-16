@@ -93,6 +93,56 @@ export class ReadingSession {
   preRating?: number;
 
   @ApiProperty({
+    type: Date,
+    nullable: true,
+  })
+  feedbackSubmittedAt?: Date | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    minimum: 1,
+    maximum: 5,
+  })
+  feelingRating?: number | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    minimum: 1,
+    maximum: 5,
+  })
+  satisfactionRating?: number | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'I felt heard and understood.',
+  })
+  sessionContent?: string | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    minimum: 1,
+    maximum: 5,
+  })
+  huberRating?: number | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'Very thoughtful and open.',
+  })
+  huberContent?: string | null;
+
+  @ApiProperty({
+    type: Boolean,
+    example: false,
+  })
+  huberFeedbackSkipped?: boolean;
+
+  @ApiProperty({
     type: String,
     nullable: true,
     example: 'https://drive.google.com/file/d/123/view',

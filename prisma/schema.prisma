@@ -277,13 +277,24 @@ model readingSession {
   deletedAt DateTime?
 
   rejectReason String?
-  // feedbacks feedback[] @relation("ReadingSessionFeedback")
-  messages     message[] @relation("ReadingSessionMessage")
-  // feedback  feedback[]
+
+  feedbackSubmittedAt   DateTime? @db.Timestamp(6)
+  feelingRating         Int?
+  satisfactionRating    Int?
+  sessionContent        String?   @db.VarChar(4000)
+  huberRating           Int?
+  huberContent          String?   @db.VarChar(4000)
+  huberFeedbackSkipped  Boolean   @default(false)
+
+  feedbacks feedback[] @relation("ReadingSessionFeedback")
+  messages  message[]  @relation("ReadingSessionMessage")
 }
 
 model feedback {
   id Int @id @default(autoincrement())
+
+  readingSessionId Int?
+  readingSession   readingSession? @relation(name: "ReadingSessionFeedback", fields: [readingSessionId], references: [id], onDelete: Cascade)
 
   feedbackById Int?
   feedbackBy   user? @relation(name: "UserFeedbackBy", fields: [feedbackById], references: [id], onDelete: Cascade)
