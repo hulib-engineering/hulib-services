@@ -41,6 +41,7 @@ describe('ReadingSessionsService', () => {
     softDeleteSessionReminderNotification: jest.Mock;
   };
   let prisma: {
+    $transaction: jest.Mock;
     readingSession: {
       findMany: jest.Mock;
       update: jest.Mock;
@@ -108,6 +109,7 @@ describe('ReadingSessionsService', () => {
       softDeleteSessionReminderNotification: jest.fn(),
     };
     prisma = {
+      $transaction: jest.fn(),
       readingSession: {
         findMany: jest.fn(),
         update: jest.fn(),
@@ -119,6 +121,7 @@ describe('ReadingSessionsService', () => {
         create: jest.fn(),
       },
     };
+    prisma.$transaction.mockImplementation((callback) => callback(prisma));
     configService = { get: jest.fn() };
     reminderQueue = { add: jest.fn() };
     socketService = { emitToUser: jest.fn() };
@@ -637,6 +640,26 @@ describe('ReadingSessionsService', () => {
   });
 
   describe('endSession', () => {
+    it('should reject ending a canceled session', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ sessionStatus: ReadingSessionStatus.CANCELED }),
+      );
+      await expect(service.endSession(1, 10)).rejects.toBeInstanceOf(
+        UnprocessableEntityException,
+      );
+      expect(prisma.readingSession.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should still emit call-ended if notification delivery fails', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ sessionStatus: ReadingSessionStatus.APPROVED }),
+      );
+      notificationService.getAdminId.mockRejectedValue(
+        new Error('notification unavailable'),
+      );
+      await service.endSession(1, 10);
+      expect(socketService.emitToUser).toHaveBeenCalledWith(20, 'call-ended');
+    });
     it('should forbid a non-participant', async () => {
       readingSessionRepository.findById.mockResolvedValue(
         makeSession({
@@ -665,7 +688,7 @@ describe('ReadingSessionsService', () => {
       expect(prisma.readingSession.updateMany).toHaveBeenCalledWith({
         where: {
           id: 1,
-          sessionStatus: { not: ReadingSessionStatus.FINISHED },
+          sessionStatus: ReadingSessionStatus.APPROVED,
         },
         data: { sessionStatus: ReadingSessionStatus.FINISHED },
       });
@@ -748,7 +771,7 @@ describe('ReadingSessionsService', () => {
       expect(prisma.readingSession.updateMany).toHaveBeenCalledWith({
         where: {
           id: 1,
-          sessionStatus: { not: ReadingSessionStatus.FINISHED },
+          sessionStatus: ReadingSessionStatus.APPROVED,
         },
         data: { sessionStatus: ReadingSessionStatus.FINISHED },
       });
@@ -1092,6 +1115,16 @@ describe('ReadingSessionsService', () => {
       huber: { rating: 5, content: 'Great listener', skipped: false },
     };
 
+    it('should skip feedback writes when another submission has already claimed the session', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ sessionStatus: ReadingSessionStatus.FINISHED }),
+      );
+      prisma.readingSession.updateMany.mockResolvedValue({ count: 0 });
+      await service.submitFeedback(1, 20, dto);
+      expect(prisma.feedback.findFirst).not.toHaveBeenCalled();
+      expect(prisma.feedback.create).not.toHaveBeenCalled();
+    });
+
     it('should throw NotFound when no session exists', async () => {
       readingSessionRepository.findById.mockResolvedValue(null);
 
@@ -1142,16 +1175,17 @@ describe('ReadingSessionsService', () => {
 
       await service.submitFeedback(1, 20, dto);
 
-      expect(readingSessionRepository.update).toHaveBeenCalledWith(
-        1,
+      expect(prisma.readingSession.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          feelingRating: 4,
-          satisfactionRating: 5,
-          sessionContent: 'Very helpful',
-          huberRating: 5,
-          huberContent: 'Great listener',
-          huberFeedbackSkipped: false,
-          feedbackSubmittedAt: expect.any(Date),
+          data: expect.objectContaining({
+            feelingRating: 4,
+            satisfactionRating: 5,
+            sessionContent: 'Very helpful',
+            huberRating: 5,
+            huberContent: 'Great listener',
+            huberFeedbackSkipped: false,
+            feedbackSubmittedAt: expect.any(Date),
+          }),
         }),
       );
       expect(prisma.feedback.create).toHaveBeenCalledWith({
@@ -1219,13 +1253,14 @@ describe('ReadingSessionsService', () => {
 
       expect(prisma.feedback.findFirst).not.toHaveBeenCalled();
       expect(prisma.feedback.create).not.toHaveBeenCalled();
-      expect(readingSessionRepository.update).toHaveBeenCalledWith(
-        1,
+      expect(prisma.readingSession.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          huberRating: null,
-          huberContent: null,
-          huberFeedbackSkipped: true,
-          feedbackSubmittedAt: expect.any(Date),
+          data: expect.objectContaining({
+            huberRating: null,
+            huberContent: null,
+            huberFeedbackSkipped: true,
+            feedbackSubmittedAt: expect.any(Date),
+          }),
         }),
       );
     });

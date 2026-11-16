@@ -41,6 +41,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationTypeEnum } from '../notifications/notification-type.enum';
 import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from '@prisma-client/prisma-client.service';
+import { Prisma } from '@prisma/client';
 import { ReadingSessionPageResponseDto } from '@utils/dto/pagination-response.dto';
 import { pagination } from '@utils/pagination';
 import { SocketService } from '../socket/socket.service';
@@ -378,6 +379,12 @@ export class ReadingSessionsService {
     if (session.sessionStatus === ReadingSessionStatus.FINISHED) {
       return;
     }
+    if (session.sessionStatus !== ReadingSessionStatus.APPROVED) {
+      throw new UnprocessableEntityException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'sessionNotApproved',
+      });
+    }
 
     const peerId =
       session.humanBookId === userId ? session.readerId : session.humanBookId;
@@ -441,7 +448,7 @@ export class ReadingSessionsService {
     const { count } = await this.prisma.readingSession.updateMany({
       where: {
         id: session.id,
-        sessionStatus: { not: ReadingSessionStatus.FINISHED },
+        sessionStatus: ReadingSessionStatus.APPROVED,
       },
       data: { sessionStatus: ReadingSessionStatus.FINISHED },
     });
@@ -450,21 +457,32 @@ export class ReadingSessionsService {
     }
     session.sessionStatus = ReadingSessionStatus.FINISHED;
 
-    const adminId = await this.notificationService.getAdminId();
-    if (adminId) {
-      await this.notificationService.pushNoti({
-        senderId: adminId,
-        recipientId: session.readerId,
-        type: NotificationTypeEnum.sessionFinish,
-        relatedEntityId: session.id,
-      });
-    }
-    await this.notificationService.softDeleteSessionReminderNotification(
-      session.id,
-    );
-
-    for (const userId of emitTo) {
-      await this.socketService.emitToUser(userId, 'call-ended');
+    const outcomes = await Promise.allSettled([
+      (async () => {
+        const adminId = await this.notificationService.getAdminId();
+        if (adminId) {
+          await this.notificationService.pushNoti({
+            senderId: adminId,
+            recipientId: session.readerId,
+            type: NotificationTypeEnum.sessionFinish,
+            relatedEntityId: session.id,
+          });
+        }
+      })(),
+      this.notificationService.softDeleteSessionReminderNotification(
+        session.id,
+      ),
+      ...emitTo.map((userId) =>
+        this.socketService.emitToUser(userId, 'call-ended'),
+      ),
+    ]);
+    for (const outcome of outcomes) {
+      if (outcome.status === 'rejected') {
+        this.logger.error(
+          `Failed to notify end of session ${session.id}`,
+          outcome.reason,
+        );
+      }
     }
   }
 
@@ -657,24 +675,35 @@ export class ReadingSessionsService {
 
     const skipped = dto.huber.skipped === true;
 
-    if (!skipped) {
-      await this.syncReaderHuberFeedback(session, dto);
-    }
-
-    return this.readingSessionRepository.update(id, {
-      feelingRating: dto.feelingRating,
-      satisfactionRating: dto.satisfactionRating,
-      sessionContent: dto.sessionContent ?? null,
-      huberRating: skipped ? null : (dto.huber.rating ?? null),
-      huberContent: skipped ? null : (dto.huber.content ?? null),
-      huberFeedbackSkipped: skipped,
-      feedbackSubmittedAt: new Date(),
+    await this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.readingSession.updateMany({
+        where: {
+          id,
+          readerId: userId,
+          sessionStatus: ReadingSessionStatus.FINISHED,
+          feedbackSubmittedAt: null,
+        },
+        data: {
+          feelingRating: dto.feelingRating,
+          satisfactionRating: dto.satisfactionRating,
+          sessionContent: dto.sessionContent ?? null,
+          huberRating: skipped ? null : (dto.huber.rating ?? null),
+          huberContent: skipped ? null : (dto.huber.content ?? null),
+          huberFeedbackSkipped: skipped,
+          feedbackSubmittedAt: new Date(),
+        },
+      });
+      if (count && !skipped) {
+        await this.syncReaderHuberFeedback(session, dto, tx);
+      }
     });
+    return this.findOneSession(id);
   }
 
   private async syncReaderHuberFeedback(
     session: ReadingSession,
     dto: SubmitFeedbackDto,
+    tx: Prisma.TransactionClient,
   ): Promise<void> {
     const rating = dto.huber.rating;
     if (rating === undefined) {
@@ -689,7 +718,7 @@ export class ReadingSessionsService {
       content: dto.huber.content ?? null,
     };
 
-    const existing = await this.prisma.feedback.findFirst({
+    const existing = await tx.feedback.findFirst({
       where: {
         readingSessionId: session.id,
         feedbackById: session.readerId,
@@ -699,7 +728,7 @@ export class ReadingSessionsService {
     });
 
     if (existing) {
-      await this.prisma.feedback.update({
+      await tx.feedback.update({
         where: { id: existing.id },
         data,
       });
@@ -708,7 +737,7 @@ export class ReadingSessionsService {
 
     // Rows created before feedback was linked to a session have no
     // readingSessionId; adopt the most recent pair row for this session.
-    const legacy = await this.prisma.feedback.findFirst({
+    const legacy = await tx.feedback.findFirst({
       where: {
         readingSessionId: null,
         feedbackById: session.readerId,
@@ -719,14 +748,14 @@ export class ReadingSessionsService {
     });
 
     if (legacy) {
-      await this.prisma.feedback.update({
+      await tx.feedback.update({
         where: { id: legacy.id },
         data: { ...data, readingSessionId: session.id },
       });
       return;
     }
 
-    await this.prisma.feedback.create({
+    await tx.feedback.create({
       data: {
         readingSessionId: session.id,
         feedbackById: session.readerId,

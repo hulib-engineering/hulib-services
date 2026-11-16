@@ -11,6 +11,8 @@ import { AuthService } from '@auth/auth.service';
 import { CacheService } from '@cache/cache.service';
 import { CreateChatDto } from '@chats/dto/create-chat.dto';
 import { ChatTypeEnum } from '@chat-types/chat-types.enum';
+import { PrismaService } from '@prisma-client/prisma-client.service';
+import { WsException } from '@nestjs/websockets';
 
 import {
   defaultCorsConfig,
@@ -24,6 +26,7 @@ export class SocketGateway extends BaseSocketGateway {
   constructor(
     protected override readonly authService: AuthService,
     protected override readonly cacheService: CacheService,
+    private readonly prisma: PrismaService,
   ) {
     super(authService, cacheService);
   }
@@ -87,6 +90,34 @@ export class SocketGateway extends BaseSocketGateway {
     @ConnectedSocket() client: SocketWithSession,
   ) {
     const senderId = client.session?.id;
+
+    const sender = Number(senderId);
+    const recipient = Number(data?.recipientId);
+    if (
+      !Number.isSafeInteger(sender) ||
+      sender <= 0 ||
+      !Number.isSafeInteger(recipient) ||
+      recipient <= 0 ||
+      sender === recipient
+    ) {
+      throw new WsException('Invalid call participants');
+    }
+    const session = await this.prisma.readingSession.findFirst({
+      where: {
+        sessionStatus: 'approved',
+        deletedAt: null,
+        startedAt: { lte: new Date(Date.now() + 30 * 60 * 1000) },
+        endedAt: { gte: new Date() },
+        OR: [
+          { readerId: sender, humanBookId: recipient },
+          { readerId: recipient, humanBookId: sender },
+        ],
+      },
+      select: { id: true },
+    });
+    if (!session) {
+      throw new WsException('Not an active call participant');
+    }
 
     this.logger.log(`Call ended from ${senderId} to ${data.recipientId}`);
 
