@@ -17,13 +17,13 @@ export class ChatService {
   ) {}
 
   async create(createChatDto: CreateChatDto, userId: number) {
-    const sender = await this.userService.findById(userId);
+    const [sender, recipient] = await Promise.all([
+      this.userService.findById(userId),
+      this.userService.findById(createChatDto.recipientId),
+    ]);
     if (!sender) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
-    const recipient = await this.userService.findById(
-      createChatDto.recipientId,
-    );
     if (!recipient) {
       throw new NotFoundException(
         `Recipient with id ${createChatDto.recipientId} not found`,
