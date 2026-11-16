@@ -7,11 +7,32 @@ jest.mock('@users/user-mapper', () => ({
 }));
 
 describe('ChatRepository sticker images', () => {
-  it('preserves FileType serialization for sticker image paths', async () => {
+  it('should preserve FileType serialization for sticker image paths', async () => {
     const now = new Date();
     const prisma = {
-      chat: { findMany: jest.fn().mockResolvedValue([{ id: 1, sender: {}, recipient: {}, stickerId: 2, createdAt: now, updatedAt: now }]) },
-      sticker: { findMany: jest.fn().mockResolvedValue([{ id: 2, name: 'sticker', image: { id: 'image-id', path: 'Untitled Artwork 2.png' }, createdAt: now, updatedAt: now }]) },
+      chat: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 1,
+            sender: {},
+            recipient: {},
+            stickerId: 2,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ]),
+      },
+      sticker: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 2,
+            name: 'sticker',
+            image: { id: 'image-id', path: 'Untitled Artwork 2.png' },
+            createdAt: now,
+            updatedAt: now,
+          },
+        ]),
+      },
     };
     const repository = new ChatRepository(prisma as never);
     const [chat] = await repository.findByUsers(1, 2);
