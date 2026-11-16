@@ -79,13 +79,14 @@ export class ChatGateway extends BaseSocketGateway implements OnGatewayInit {
             from: newMsg.senderId,
             to: newMsg.recipientId,
             msg: newMsg.message,
-            type: 'txt',
+            type: newMsg.chatType?.id === ChatTypeEnum.img ? 'img' : 'txt',
             time: newMsg.createdAt.getTime(),
           };
           recipientClient.emit('receive', sanitizedMessage);
         }
       }
     }
+    return { id: newMsg.id };
   }
 
   @SubscribeMessage('read')

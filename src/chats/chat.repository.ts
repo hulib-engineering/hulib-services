@@ -7,6 +7,7 @@ import { User } from '@users/domain/user';
 import { ChatTypeEnum } from '@chat-types/chat-types.enum';
 import { Chat, ChatStatus } from './domain/chat';
 import { Sticker } from '../stickers/domain/sticker';
+import { FileType } from '@files/domain/file';
 import { basicUserInclude, UserMapperImplement } from '@users/user-mapper';
 
 export const chatInclude = {
@@ -46,10 +47,10 @@ function toDomain(raw: ChatRow): Chat {
     sticker.id = raw.sticker.id;
     sticker.name = raw.sticker.name;
     if (raw.sticker.image) {
-      sticker.image = {
-        id: raw.sticker.image.id,
-        path: raw.sticker.image.path,
-      };
+      const image = new FileType();
+      image.id = raw.sticker.image.id;
+      image.path = raw.sticker.image.path;
+      sticker.image = image;
     }
     sticker.createdAt = raw.sticker.createdAt;
     sticker.updatedAt = raw.sticker.updatedAt;
