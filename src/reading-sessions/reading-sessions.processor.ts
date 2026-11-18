@@ -111,6 +111,24 @@ export class ReadingSessionsProcessor {
     });
   }
 
+  @Process('send-meeting-confirmed-email')
+  async handleMeetingConfirmedEmail(job: Job<{ sessionId: number }>) {
+    const session = await this.readingSessionsService.findOneSession(
+      job.data.sessionId,
+    );
+    if (!session.reader?.email) return;
+
+    await this.mailService.meetingConfirmed({
+      to: session.reader.email,
+      data: {
+        sessionId: session.id,
+        recipientName: session.reader.fullName || 'Liber',
+        huberName: session.humanBook?.fullName || 'Huber',
+        ...this.meetingWhen(session),
+      },
+    });
+  }
+
   @Process('send-meeting-declined-email')
   async handleMeetingDeclinedEmail(job: Job) {
     const session = await this.readingSessionsService.findOneSession(
