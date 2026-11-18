@@ -783,6 +783,40 @@ export class MailService {
     });
   }
 
+  async meetingConfirmed(mailData: {
+    to: string;
+    data: {
+      sessionId: number;
+      recipientName: string;
+      huberName: string;
+      meetingDate: string;
+      meetingTime: string;
+    };
+  }): Promise<void> {
+    const webAppLink = this.configService
+      .getOrThrow('app.frontendDomain', { infer: true })
+      .replace(/\/$/, '');
+    const { data } = mailData;
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: 'Your meeting is confirmed',
+      text: `Chào ${data.recipientName}, ${data.huberName} đã chấp nhận yêu cầu trò chuyện của bạn. Thời gian: ${data.meetingDate}, ${data.meetingTime}. Xem lịch hẹn: ${webAppLink}/my-schedule/${data.sessionId}`,
+      throwOnError: true,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', { infer: true }),
+        'src',
+        'mail',
+        'mail-templates',
+        'meeting-confirmed.hbs',
+      ),
+      context: {
+        ...data,
+        webAppLink,
+        meetingUrl: `${webAppLink}/my-schedule/${data.sessionId}`,
+      },
+    });
+  }
+
   async meetingStatus(mailData: {
     to: string;
     data: {
@@ -860,13 +894,35 @@ export class MailService {
     });
   }
 
-  async sendNotification(mailData: { to: string; title: string; name: string; body: string; actionLabel?: string; actionUrl?: string }): Promise<void> {
-    const webAppLink = this.configService.getOrThrow('app.frontendDomain', { infer: true });
+  async sendNotification(mailData: {
+    to: string;
+    title: string;
+    name: string;
+    body: string;
+    actionLabel?: string;
+    actionUrl?: string;
+  }): Promise<void> {
+    const webAppLink = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
     await this.mailerService.sendMail({
-      to: mailData.to, subject: mailData.title, text: `${mailData.title}\n\n${mailData.body.replace(/<[^>]+>/g, '')}`,
+      to: mailData.to,
+      subject: mailData.title,
+      text: `${mailData.title}\n\n${mailData.body.replace(/<[^>]+>/g, '')}`,
       throwOnError: true,
-      templatePath: path.join(this.configService.getOrThrow('app.workingDirectory', { infer: true }), 'src', 'mail', 'mail-templates', 'notification.hbs'),
-      context: { ...mailData, greeting: 'Hi', signoff: 'Best,', actionUrl: mailData.actionUrl || webAppLink },
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', { infer: true }),
+        'src',
+        'mail',
+        'mail-templates',
+        'notification.hbs',
+      ),
+      context: {
+        ...mailData,
+        greeting: 'Hi',
+        signoff: 'Best,',
+        actionUrl: mailData.actionUrl || webAppLink,
+      },
     });
   }
 }

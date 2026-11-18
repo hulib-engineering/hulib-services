@@ -511,6 +511,7 @@ export class ReadingSessionsService {
 
   async updateSession(id: number, dto: UpdateReadingSessionDto): Promise<void> {
     const session = await this.findOneSession(id);
+    const wasApproved = session.sessionStatus === ReadingSessionStatus.APPROVED;
 
     // Without this, a huber approving just after the cron auto-cancelled the
     // session would flip it back to approved — an unjoinable session with a
@@ -618,6 +619,9 @@ export class ReadingSessionsService {
         type: NotificationTypeEnum.approveReadingSession,
         relatedEntityId: session.id,
       });
+      if (!wasApproved) {
+        await this.queueMeetingStatusEmail('send-meeting-confirmed-email', id);
+      }
     }
 
     if (dto.sessionStatus === 'rejected') {
@@ -825,6 +829,7 @@ export class ReadingSessionsService {
 
   private async queueMeetingStatusEmail(
     jobName:
+      | 'send-meeting-confirmed-email'
       | 'send-meeting-declined-email'
       | 'send-meeting-auto-canceled-email'
       | 'send-meeting-canceled-email',
@@ -833,7 +838,13 @@ export class ReadingSessionsService {
     await this.reminderQueue.add(
       jobName,
       { sessionId },
-      { removeOnComplete: true, removeOnFail: true },
+      jobName === 'send-meeting-confirmed-email'
+        ? {
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 5000 },
+            removeOnComplete: true,
+          }
+        : { removeOnComplete: true, removeOnFail: true },
     );
   }
 

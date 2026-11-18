@@ -508,6 +508,27 @@ describe('ReadingSessionsService', () => {
   });
 
   describe('updateSession', () => {
+    it('should queue a confirmation email only when the session becomes approved', async () => {
+      readingSessionRepository.findById.mockResolvedValue(makeSession());
+      await service.updateSession(1, { sessionStatus: 'approved' });
+      expect(reminderQueue.add).toHaveBeenCalledWith(
+        'send-meeting-confirmed-email',
+        { sessionId: 1 },
+        expect.any(Object),
+      );
+    });
+
+    it('should not queue another confirmation email for an already approved session', async () => {
+      readingSessionRepository.findById.mockResolvedValue(
+        makeSession({ sessionStatus: ReadingSessionStatus.APPROVED }),
+      );
+      await service.updateSession(1, { sessionStatus: 'approved' });
+      expect(reminderQueue.add).not.toHaveBeenCalledWith(
+        'send-meeting-confirmed-email',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
     it('should throw NotFound when no session exists', async () => {
       readingSessionRepository.findById.mockResolvedValue(null);
 
