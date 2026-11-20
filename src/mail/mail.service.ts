@@ -196,9 +196,14 @@ export class MailService {
   }
 
   async remindParticipants(
-    mailData: MailData<{ name: string; sessionUrl: string; isHuber: boolean }>,
+    mailData: MailData<{
+      name: string;
+      sessionUrl: string;
+      isHuber: boolean;
+      locale?: string;
+    }>,
   ): Promise<void> {
-    const locale = 'en'; // or dynamically determine it (e.g., from mailData)
+    const locale = mailData.data.locale === 'en' ? 'en' : 'vi';
 
     const [
       reminderLiberEmailTitle,
@@ -241,6 +246,7 @@ export class MailService {
           'reminder.hbs',
         ),
         context: {
+          locale,
           title: reminderHubberEmailTitle,
           fullname: mailData.data.name.toString(),
           url,
@@ -251,6 +257,9 @@ export class MailService {
           reminderPt3,
           reminderPt4,
           regard,
+          footerDescription: this.i18n.t('meeting-email.footerDescription', {
+            lang: locale,
+          }),
         },
       });
     } else {
@@ -268,6 +277,7 @@ export class MailService {
           'reminder.hbs',
         ),
         context: {
+          locale,
           title: reminderLiberEmailTitle,
           fullname: mailData.data.name.toString(),
           url,
@@ -278,6 +288,9 @@ export class MailService {
           reminderPt3,
           reminderPt4,
           regard,
+          footerDescription: this.i18n.t('meeting-email.footerDescription', {
+            lang: locale,
+          }),
         },
       });
     }
@@ -291,9 +304,11 @@ export class MailService {
       sessionDate: string;
       storyTitle: string;
       message: string;
+      sessionId?: number;
+      locale?: string;
     }>,
   ): Promise<void> {
-    const locale = 'en';
+    const locale = mailData.data.locale === 'en' ? 'en' : 'vi';
 
     const [
       bookingEmailTitle,
@@ -328,15 +343,17 @@ export class MailService {
     });
 
     const schedulingUrl = new URL(
-      this.configService.getOrThrow('app.frontendDomain', {
-        infer: true,
-      }) + '/schedule-meeting/weekly-schedule',
-    );
+      mailData.data.sessionId
+        ? `/my-schedule/${mailData.data.sessionId}`
+        : '/my-schedule',
+      url,
+    ).toString();
 
     await this.mailerService.sendMail({
       to: mailData.to,
       subject: bookingEmailTitle,
       text: bookingEmailTitle,
+      throwOnError: true,
       templatePath: path.join(
         this.configService.getOrThrow('app.workingDirectory', {
           infer: true,
@@ -347,6 +364,7 @@ export class MailService {
         'booking.hbs',
       ),
       context: {
+        locale,
         title: bookingEmailTitle,
         huberName: mailData.data.huberName,
         liberName: mailData.data.liberName,
@@ -367,6 +385,9 @@ export class MailService {
         url,
         schedulingUrl,
         regard,
+        footerDescription: this.i18n.t('meeting-email.footerDescription', {
+          lang: locale,
+        }),
       },
     });
   }
@@ -791,16 +812,21 @@ export class MailService {
       huberName: string;
       meetingDate: string;
       meetingTime: string;
+      locale?: string;
     };
   }): Promise<void> {
     const webAppLink = this.configService
       .getOrThrow('app.frontendDomain', { infer: true })
       .replace(/\/$/, '');
     const { data } = mailData;
+    const locale = data.locale === 'en' ? 'en' : 'vi';
+    const text = (key: string) =>
+      String(this.i18n.t(`meeting-email.${key}`, { lang: locale }));
+    const title = text('confirmed.title');
     await this.mailerService.sendMail({
       to: mailData.to,
-      subject: 'Your meeting is confirmed',
-      text: `Chào ${data.recipientName}, ${data.huberName} đã chấp nhận yêu cầu trò chuyện của bạn. Thời gian: ${data.meetingDate}, ${data.meetingTime}. Xem lịch hẹn: ${webAppLink}/my-schedule/${data.sessionId}`,
+      subject: title,
+      text: `${text('confirmed.greeting')} ${data.recipientName}, ${data.huberName} ${text('confirmed.message')} ${text('confirmed.time')}: ${data.meetingDate}, ${data.meetingTime}. ${webAppLink}/my-schedule/${data.sessionId}`,
       throwOnError: true,
       templatePath: path.join(
         this.configService.getOrThrow('app.workingDirectory', { infer: true }),
@@ -811,6 +837,17 @@ export class MailService {
       ),
       context: {
         ...data,
+        locale,
+        title,
+        greeting: text('confirmed.greeting'),
+        confirmationMessage: text('confirmed.message'),
+        detailsLabel: text('confirmed.details'),
+        timeLabel: text('confirmed.time'),
+        partnerLabel: text('confirmed.partner'),
+        reminder: text('confirmed.reminder'),
+        linkLabel: text('confirmed.link'),
+        signoff: text('confirmed.signoff'),
+        footerDescription: text('footerDescription'),
         webAppLink,
         meetingUrl: `${webAppLink}/my-schedule/${data.sessionId}`,
       },

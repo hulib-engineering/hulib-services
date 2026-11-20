@@ -1,0 +1,14 @@
+{
+  "footerDescription": "Lan tỏa hạnh phúc bằng cách kết nối những câu chuyện rất riêng với các cuốn sách người.",
+  "confirmed": {
+    "title": "Lịch hẹn của bạn đã được xác nhận",
+    "greeting": "Chào",
+    "message": "đã chấp nhận yêu cầu trò chuyện của bạn.",
+    "details": "Chi tiết lịch hẹn",
+    "time": "Thời gian",
+    "partner": "Người trò chuyện",
+    "reminder": "Hãy tham gia đúng giờ. Xem chi tiết lịch hẹn tại",
+    "link": "đây",
+    "signoff": "Trân trọng,"
+  }
+}

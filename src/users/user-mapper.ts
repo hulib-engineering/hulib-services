@@ -81,6 +81,7 @@ export class UserMapperImplement {
     domainEntity.provider = raw.provider;
     domainEntity.socialId = raw.socialId;
     domainEntity.fullName = raw.fullName;
+    domainEntity.languageCode = raw.languageCode;
     domainEntity.birthday = raw.birthday;
 
     if (raw.file) {
