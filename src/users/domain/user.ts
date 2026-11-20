@@ -10,6 +10,8 @@ import { Approval } from '@users/approval.enum';
 const idType = Number;
 
 export class User {
+  @Exclude({ toPlainOnly: true })
+  languageCode?: string;
   @ApiProperty({
     type: idType,
   })

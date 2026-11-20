@@ -167,8 +167,9 @@ export class ReadingSessionsService {
         'send-booking-email',
         { sessionId: newReadingSession.id },
         {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
           removeOnComplete: true,
-          removeOnFail: true,
         },
       ),
       this.reminderQueue.add(

@@ -1,0 +1,14 @@
+{
+  "footerDescription": "Promote happiness values by connecting very personal stories with human books.",
+  "confirmed": {
+    "title": "Your meeting is confirmed",
+    "greeting": "Dear",
+    "message": "has accepted your meeting request.",
+    "details": "Meeting details",
+    "time": "Time",
+    "partner": "Meeting partner",
+    "reminder": "Remember to join the meeting on time. View your meeting details at",
+    "link": "this link",
+    "signoff": "Best regards,"
+  }
+}
