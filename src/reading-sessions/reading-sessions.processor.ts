@@ -25,6 +25,7 @@ export class ReadingSessionsProcessor {
           name: session.humanBook.fullName ?? '',
           isHuber: true,
           sessionUrl: session.sessionUrl,
+          locale: session.humanBook.languageCode,
         },
       });
     }
@@ -35,6 +36,7 @@ export class ReadingSessionsProcessor {
           name: session.reader.fullName ?? '',
           isHuber: false,
           sessionUrl: session.sessionUrl,
+          locale: session.reader.languageCode,
         },
       });
     }
@@ -69,12 +71,15 @@ export class ReadingSessionsProcessor {
     const { sessionId } = job.data;
     const session = await this.readingSessionsService.findOneSession(sessionId);
 
-    const sessionDate = session.startedAt.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    const sessionDate = session.startedAt.toLocaleDateString(
+      session.humanBook?.languageCode === 'en' ? 'en-US' : 'vi-VN',
+      {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      },
+    );
 
     const sessionTime = `${session.startTime} - ${session.endTime}`;
 
@@ -88,6 +93,8 @@ export class ReadingSessionsProcessor {
           sessionDate,
           storyTitle: session.story?.title || '',
           message: session.note || '',
+          sessionId: session.id,
+          locale: session.humanBook.languageCode,
         },
       });
     }
@@ -106,7 +113,8 @@ export class ReadingSessionsProcessor {
         type: 'sent',
         recipientName: session.reader.fullName || 'Liber',
         huberName: session.humanBook?.fullName || 'Huber',
-        ...this.meetingWhen(session),
+        locale: session.reader.languageCode,
+        ...this.meetingWhen(session, session.reader.languageCode),
       },
     });
   }
@@ -124,7 +132,8 @@ export class ReadingSessionsProcessor {
         sessionId: session.id,
         recipientName: session.reader.fullName || 'Liber',
         huberName: session.humanBook?.fullName || 'Huber',
-        ...this.meetingWhen(session),
+        locale: session.reader.languageCode,
+        ...this.meetingWhen(session, session.reader.languageCode),
       },
     });
   }
@@ -185,18 +194,24 @@ export class ReadingSessionsProcessor {
     });
   }
 
-  private meetingWhen(session: {
-    startedAt: Date;
-    startTime: string;
-    endTime: string;
-  }) {
+  private meetingWhen(
+    session: {
+      startedAt: Date;
+      startTime: string;
+      endTime: string;
+    },
+    locale?: string,
+  ) {
     return {
-      meetingDate: session.startedAt.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
+      meetingDate: session.startedAt.toLocaleDateString(
+        locale === 'en' ? 'en-US' : 'vi-VN',
+        {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        },
+      ),
       meetingTime: `${session.startTime} - ${session.endTime}`,
     };
   }
