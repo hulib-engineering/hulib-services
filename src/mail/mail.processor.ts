@@ -11,6 +11,11 @@ export class MailProcessor {
     await this.mailService.storySubmitted(job.data);
   }
 
+  @Process('story-submitted-admin')
+  async handleStorySubmittedAdmin(job: Job) {
+    await this.mailService.storySubmittedAdmin(job.data);
+  }
+
   @Process('story-rejected')
   async handleStoryRejected(job: Job) {
     await this.mailService.storyRejected(job.data);

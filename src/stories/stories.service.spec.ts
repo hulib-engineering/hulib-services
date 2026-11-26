@@ -78,6 +78,33 @@ describe('StoriesService', () => {
   });
 
   describe('create', () => {
+    it('should enqueue an admin email for a pending story', async () => {
+      storiesRepository.create.mockResolvedValue({
+        id: 7,
+        title: 'T',
+        humanBook: { email: 'a@b.com' },
+      });
+      await service.create(5, { title: 'T' } as never);
+      expect(mailQueue.add).toHaveBeenCalledWith(
+        'story-submitted-admin',
+        { storyId: 7, storyTitle: 'T' },
+        expect.objectContaining({ attempts: 3 }),
+      );
+    });
+
+    it('should not enqueue an admin email for a draft', async () => {
+      storiesRepository.create.mockResolvedValue({
+        id: 7,
+        title: 'T',
+        humanBook: { email: 'a@b.com' },
+      });
+      await service.create(5, { title: 'T', publishStatus: 'draft' } as never);
+      expect(mailQueue.add).not.toHaveBeenCalledWith(
+        'story-submitted-admin',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
     it('should default to pending and notify the admin on success', async () => {
       topicsRepository.findByIds.mockResolvedValue([]);
       storiesRepository.create.mockResolvedValue({
@@ -124,6 +151,19 @@ describe('StoriesService', () => {
   });
 
   describe('createFirst', () => {
+    it('should enqueue an admin email for the first pending story', async () => {
+      storiesRepository.create.mockResolvedValue({
+        id: 8,
+        title: 'X',
+        humanBook: { email: 'b@c.com' },
+      });
+      await service.createFirst(3, { title: 'X' } as never);
+      expect(mailQueue.add).toHaveBeenCalledWith(
+        'story-submitted-admin',
+        { storyId: 8, storyTitle: 'X' },
+        expect.objectContaining({ attempts: 3 }),
+      );
+    });
     it('should notify the admin with the account type', async () => {
       topicsRepository.findByIds.mockResolvedValue([]);
       storiesRepository.create.mockResolvedValue({
@@ -180,6 +220,24 @@ describe('StoriesService', () => {
   });
 
   describe('update', () => {
+    it('should notify admin when a draft is submitted for review', async () => {
+      prisma.story.findUnique.mockResolvedValue(
+        makeStoryRow({ publishStatus: PublishStatus.draft }),
+      );
+      prisma.$queryRaw.mockResolvedValue([{}]);
+      storyReviewService.getReviewsOverview.mockResolvedValue({});
+      storiesRepository.update.mockResolvedValue({ id: 1 });
+      await service.update(1, { publishStatus: 'pending' } as never, {
+        id: 10,
+        roleId: RoleEnum.humanBook,
+      });
+      expect(mailQueue.add).toHaveBeenCalledWith(
+        'story-submitted-admin',
+        { storyId: 1, storyTitle: 'T' },
+        expect.objectContaining({ attempts: 3 }),
+      );
+    });
+
     it('should throw UnprocessableEntity when the story does not exist', async () => {
       prisma.story.findUnique.mockResolvedValue(null);
 
