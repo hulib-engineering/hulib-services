@@ -586,6 +586,42 @@ export class MailService {
     });
   }
 
+  async storySubmittedAdmin(data: {
+    storyId: number;
+    storyTitle: string;
+  }): Promise<void> {
+    const webAppLink = this.configService.getOrThrow('app.frontendDomain', {
+      infer: true,
+    });
+    const to = this.configService.getOrThrow('mail.storyAdminEmail', {
+      infer: true,
+    });
+    await this.mailerService.sendMail({
+      to,
+      subject: 'Câu chuyện mới được gửi',
+      text: `Xin chào HuLib Admin,\n\nMột câu chuyện mới đã được gửi và đang chờ xét duyệt.\nTên câu chuyện: ${data.storyTitle}\n${webAppLink}/admin/awaiting-stories`,
+      throwOnError: true,
+      templatePath: path.join(
+        this.configService.getOrThrow('app.workingDirectory', { infer: true }),
+        'src',
+        'mail',
+        'mail-templates',
+        'story-status.hbs',
+      ),
+      context: {
+        title: 'Câu chuyện mới được gửi',
+        dear: 'Xin chào',
+        fullName: 'HuLib Admin',
+        p1: 'Một câu chuyện mới đã được gửi và đang chờ xét duyệt.',
+        storyTitleLabel: 'Tên câu chuyện:',
+        storyTitle: data.storyTitle,
+        buttonLabel: 'Xem câu chuyện chờ duyệt',
+        buttonUrl: `${webAppLink.replace(/\/$/, '')}/admin/awaiting-stories`,
+        webAppLink,
+      },
+    });
+  }
+
   async storySubmitted(mailData: {
     to: string;
     data: {

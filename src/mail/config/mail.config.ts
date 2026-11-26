@@ -36,6 +36,10 @@ class EnvironmentVariablesValidator {
   @IsString()
   MAIL_DEFAULT_NAME: string;
 
+  @IsEmail()
+  @IsOptional()
+  MAIL_STORY_ADMIN_EMAIL: string;
+
   @IsBoolean()
   MAIL_IGNORE_TLS: boolean;
 
@@ -56,6 +60,8 @@ export default registerAs<MailConfig>('mail', () => {
     password: process.env.MAIL_PASSWORD,
     defaultEmail: process.env.MAIL_DEFAULT_EMAIL,
     defaultName: process.env.MAIL_DEFAULT_NAME,
+    storyAdminEmail:
+      process.env.MAIL_STORY_ADMIN_EMAIL || 'hulibvietnam@gmail.com',
     ignoreTLS: process.env.MAIL_IGNORE_TLS === 'true',
     secure: process.env.MAIL_SECURE === 'true',
     requireTLS: process.env.MAIL_REQUIRE_TLS === 'true',
