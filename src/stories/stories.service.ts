@@ -73,6 +73,12 @@ export class StoriesService {
       topics: topicsEntities,
     });
 
+    await this.enqueueAdminStoryMail(
+      newStory.id,
+      newStory.title,
+      createStoriesDto.publishStatus,
+    );
+
     const adminId = await this.notifsService.getAdminId();
     if (adminId) {
       await this.notifsService.pushNoti({
@@ -114,6 +120,30 @@ export class StoriesService {
     }
   }
 
+  private async enqueueAdminStoryMail(
+    storyId: number,
+    storyTitle: string,
+    publishStatus?: string,
+  ): Promise<void> {
+    if (publishStatus && publishStatus !== PublishStatus[PublishStatus.pending])
+      return;
+    try {
+      await this.mailQueue.add(
+        'story-submitted-admin',
+        { storyId, storyTitle },
+        {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to enqueue admin story email for story ${storyId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
   async createFirst(userId: User['id'], createStoriesDto: CreateStoryDto) {
     let topicsEntities: Topic[] = [];
     if (createStoriesDto.topics && createStoriesDto.topics.length > 0) {
@@ -128,6 +158,12 @@ export class StoriesService {
       humanBook: { id: Number(userId) } as User,
       topics: topicsEntities,
     });
+
+    await this.enqueueAdminStoryMail(
+      newStory.id,
+      newStory.title,
+      createStoriesDto.publishStatus,
+    );
 
     const adminId = await this.notifsService.getAdminId();
 
@@ -390,6 +426,17 @@ export class StoriesService {
       ...updateStoriesDto,
       ...(topicsEntities.length > 0 ? { topics: topicsEntities } : {}),
     });
+
+    if (
+      updateStoriesDto.publishStatus === 'pending' &&
+      story.publishStatus !== PublishStatus.pending
+    ) {
+      await this.enqueueAdminStoryMail(
+        id,
+        updateStoriesDto.title ?? story.title,
+        'pending',
+      );
+    }
 
     if (
       !!updateStoriesDto.publishStatus &&
